@@ -487,6 +487,18 @@
       animation: slideIn 0.3s ease-out;
     }
     
+    /* Warning notification */
+    .refresh-warning {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: rgba(245, 158, 11, 0.9);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      text-align: center;
+      animation: slideIn 0.3s ease-out;
+    }
+    
     @keyframes slideIn {
       from {
         opacity: 0;
@@ -994,6 +1006,17 @@
         
       } catch (error) {
         
+        // Check if we have cached data to show as fallback
+        const cachedJobs = getCachedJobs();
+        if (cachedJobs && cachedJobs.length > 0) {
+          console.log('Showing cached jobs due to network error');
+          renderJobs(cachedJobs);
+          
+          // Show a subtle notification about using cached data
+          showRefreshNotification('📡 Showing cached data - refresh for latest updates', 'warning');
+          return;
+        }
+        
         // Show error state
         loadingElement.style.display = 'none';
         jobsGrid.style.display = 'none';
@@ -1016,54 +1039,83 @@
           if (errorDiv) {
             errorDiv.textContent = `Unable to Load Job Listings: ${error.message}`;
           }
-          
-          
         }
       }
     }
     
-    // Fetch with timeout for faster failure detection
-    async function fetchWithTimeout(url, timeout = 5000) {
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    // Multiple proxy services for better reliability
+    const PROXY_SERVICES = [
+      'https://api.allorigins.win/raw?url=',
+      'https://cors-anywhere.herokuapp.com/',
+      'https://thingproxy.freeboard.io/fetch/'
+    ];
+    
+    // Fetch with timeout and multiple proxy fallbacks
+    async function fetchWithTimeout(url, timeout = 10000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
       
-      try {
-        const response = await fetch(proxyUrl + encodeURIComponent(url), {
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        return response;
-      } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-      }
-    }
-    
-    // Try all URLs in parallel for fastest response
-    async function tryAllUrlsParallel() {
-      const promises = GOOGLE_SHEET_URLS.map(async (url, index) => {
+      // Try each proxy service
+      for (let i = 0; i < PROXY_SERVICES.length; i++) {
         try {
-          const response = await fetchWithTimeout(url, 8000);
+          const proxyUrl = PROXY_SERVICES[i];
+          const response = await fetch(proxyUrl + encodeURIComponent(url), {
+            signal: controller.signal,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; CochranFilms/1.0)'
+            }
+          });
+          
           if (response.ok) {
             const text = await response.text();
             if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
-              // Remember this URL as fastest for next time
-              localStorage.setItem('fastestGoogleSheetUrl', url);
-              return text;
+              clearTimeout(timeoutId);
+              return response;
             }
           }
-          throw new Error('Invalid response');
         } catch (error) {
-          throw new Error(`URL ${index + 1} failed: ${error.message}`);
+          // Continue to next proxy if this one fails
+          continue;
         }
-      });
+      }
       
-      // Return the first successful response
-      try {
-        return await Promise.any(promises);
-      } catch (error) {
-        throw new Error('All parallel requests failed');
+      clearTimeout(timeoutId);
+      throw new Error('All proxy services failed');
+    }
+    
+    // Try all URLs with retry logic
+    async function tryAllUrlsParallel() {
+      const maxRetries = 2;
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const promises = GOOGLE_SHEET_URLS.map(async (url, index) => {
+            try {
+              const response = await fetchWithTimeout(url, 12000); // Increased timeout
+              if (response.ok) {
+                const text = await response.text();
+                if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
+                  // Remember this URL as fastest for next time
+                  localStorage.setItem('fastestGoogleSheetUrl', url);
+                  return text;
+                }
+              }
+              throw new Error('Invalid response');
+            } catch (error) {
+              throw new Error(`URL ${index + 1} failed: ${error.message}`);
+            }
+          });
+          
+          // Return the first successful response
+          return await Promise.any(promises);
+          
+        } catch (error) {
+          if (attempt === maxRetries) {
+            throw new Error(`All requests failed after ${maxRetries} attempts`);
+          }
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        }
       }
     }
     
@@ -1145,12 +1197,18 @@
     // Show refresh notification
     function showRefreshNotification(message, type = 'success') {
       // Remove existing notifications
-      const existingNotifications = document.querySelectorAll('.refresh-success, .refresh-error');
+      const existingNotifications = document.querySelectorAll('.refresh-success, .refresh-error, .refresh-warning');
       existingNotifications.forEach(notification => notification.remove());
       
       // Create notification
       const notification = document.createElement('div');
-      notification.className = type === 'error' ? 'refresh-error' : 'refresh-success';
+      let className = 'refresh-success';
+      if (type === 'error') {
+        className = 'refresh-error';
+      } else if (type === 'warning') {
+        className = 'refresh-warning';
+      }
+      notification.className = className;
       notification.textContent = message;
       
       // Insert before jobs grid
