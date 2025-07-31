@@ -578,11 +578,13 @@
                 <p><strong>Workflow:</strong></p>
                 <ol>
                     <li><strong>Add/Edit Jobs</strong> → Use this admin panel to create job listings</li>
-                    <li><strong>Export JSON</strong> → Download the updated jobs-data.json file</li>
-                    <li><strong>Update Website</strong> → Replace the jobs-data.json file on your server</li>
+                    <li><strong>Save Changes</strong> → Click "💾 Save Changes" to download jobs-data.json</li>
+                    <li><strong>Upload to GitHub</strong> → Upload the file to your repository</li>
+                    <li><strong>Auto-Update</strong> → GitHub Action automatically updates your live site</li>
                     <li><strong>Google Sheet</strong> → Handles all applicant submissions automatically</li>
                 </ol>
                 <p><strong>Note:</strong> The Google Sheet handles applicant data separately - this admin panel only manages job listings.</p>
+                <p><strong>GitHub Action:</strong> Once you upload jobs-data.json to GitHub, it will automatically update your live site at collaborate.cochranfilms.com</p>
             </div>
             
             <h2>Add/Edit Job</h2>
@@ -629,6 +631,7 @@
             <p>Export your job listings to update <code>jobs-data.json</code>:</p>
             <button class="btn" onclick="exportData()">Generate JSON</button>
             <button class="btn" onclick="downloadJSON()" id="downloadBtn" style="display: none;">Download jobs-data.json</button>
+            <button class="btn" onclick="saveJobsData()" style="margin-top: 1rem;">💾 Save Changes</button>
             <button class="btn" onclick="refreshPublicPage()" style="margin-top: 1rem;">🔄 Refresh Public Page</button>
             <pre id="exportData"></pre>
         </div>
@@ -733,7 +736,7 @@
         }
 
         // Add/Edit job
-        document.getElementById('jobForm').addEventListener('submit', function(e) {
+        document.getElementById('jobForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
@@ -756,6 +759,9 @@
 
             displayJobs();
             clearForm();
+            
+            // Auto-save the updated jobs data
+            await saveJobsData();
             notifyJobListingsPage(); // Notify the public page
         });
 
@@ -773,10 +779,13 @@
         }
 
         // Delete job
-        function deleteJob(index) {
+        async function deleteJob(index) {
             if (confirm('Are you sure you want to delete this job?')) {
                 jobs.splice(index, 1);
                 displayJobs();
+                
+                // Auto-save the updated jobs data
+                await saveJobsData();
                 notifyJobListingsPage(); // Notify the public page
             }
         }
@@ -785,6 +794,36 @@
         function clearForm() {
             document.getElementById('jobForm').reset();
             delete document.getElementById('jobForm').dataset.editIndex;
+        }
+
+        // Save jobs data to file
+        async function saveJobsData() {
+            const data = {
+                jobs: jobs,
+                lastUpdated: new Date().toISOString().split('T')[0],
+                totalJobs: jobs.length
+            };
+            
+            try {
+                // Create a blob with the JSON data
+                const jsonString = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                
+                // Create a download link and trigger it
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'jobs-data.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('Jobs data saved! Please upload the downloaded jobs-data.json file to your server.', 'success');
+            } catch (error) {
+                console.error('Error saving jobs data:', error);
+                showNotification('Error saving jobs data. Please try again.', 'error');
+            }
         }
 
         // Export data
