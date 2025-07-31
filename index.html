@@ -372,34 +372,50 @@
       color: var(--white);
     }
     
-    /* Sticky Apply Button - REMOVED */
-    /* .sticky-apply {
+    /* Floating Admin Button */
+    .floating-admin {
       position: fixed;
       bottom: 20px;
       right: 20px;
       z-index: 1000;
-      display: none;
-      animation: bounceIn 0.5s ease-out;
     }
     
-    .sticky-apply.show {
-      display: block;
+    .admin-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 178, 0, 0.1);
+      border: 2px solid rgba(255, 178, 0, 0.3);
+      border-radius: 50%;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
     }
     
-    @keyframes bounceIn {
-      0% {
-        transform: scale(0) rotate(180deg);
-        opacity: 0;
+    .admin-link:hover {
+      background: rgba(255, 178, 0, 0.2);
+      border-color: var(--primary);
+      transform: scale(1.1);
+      box-shadow: 0 4px 15px rgba(255, 178, 0, 0.3);
+    }
+    
+    /* Hide on very small screens */
+    @media (max-width: 480px) {
+      .floating-admin {
+        bottom: 15px;
+        right: 15px;
       }
-      50% {
-        transform: scale(1.2) rotate(10deg);
-        opacity: 0.8;
+      
+      .admin-link {
+        width: 45px;
+        height: 45px;
+        font-size: 1rem;
       }
-      100% {
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
-      }
-    } */
+    }
     
     /* Footer */
     .footer {
@@ -585,13 +601,10 @@
     <section class="jobs-section">
       <div class="section-header">
         <h2 class="section-title">Current Opportunities</h2>
-        <div style="display: flex; gap: 1rem; align-items: center;">
-          <button id="refresh-jobs-btn" class="refresh-btn" onclick="refreshJobs()">
-            <span class="refresh-icon">🔄</span>
-            <span class="refresh-text">Refresh Jobs</span>
-          </button>
-          <a href="admin-jobs.html" style="color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600;">⚙️ Admin</a>
-        </div>
+        <button id="refresh-jobs-btn" class="refresh-btn" onclick="refreshJobs()">
+          <span class="refresh-icon">🔄</span>
+          <span class="refresh-text">Refresh Jobs</span>
+        </button>
       </div>
       <p class="section-subtitle">
         Explore our latest openings in photography, videography, and creative production. 
@@ -617,12 +630,12 @@
     </section>
   </main>
 
-  <!-- Sticky Apply Button - REMOVED -->
-  <!-- <div id="sticky-apply" class="sticky-apply">
-    <a href="#" class="btn btn-primary" id="sticky-apply-btn">
-      📝 Quick Apply
+  <!-- Floating Admin Button -->
+  <div class="floating-admin">
+    <a href="admin-jobs.html" class="admin-link" title="Admin Panel">
+      ⚙️
     </a>
-  </div> -->
+  </div>
 
   <!-- Footer -->
   <footer class="footer">
