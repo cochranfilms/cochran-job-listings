@@ -2,17 +2,17 @@
   "jobs": [
     {
       "title": "Backdrop Photographer Base",
-      "date": "",
+      "date": "2025-11-08",
       "location": "Douglasville, GA",
-      "pay": "$300",
+      "pay": "$400",
       "description": "You will be taking pictures for on-site printing at the 2nd annual Stranger Things block party from 4-9pm. I will be on site to assist and print the photos.",
       "status": "Active"
     },
     {
       "title": "Backdrop Photographer Spotlight",
-      "date": "2025-11-08",
+      "date": "2025-10-24",
       "location": "Douglasville, GA",
-      "pay": "$400",
+      "pay": "$300 + Tip",
       "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.",
       "status": "Active"
     }
