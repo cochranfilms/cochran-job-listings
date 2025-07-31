@@ -3,11 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="X-Frame-Options" content="DENY">
-  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
-  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://docs.google.com https://api.allorigins.win;">
   <title>Job Listings - Cochran Films</title>
   
  <!-- SEO Meta Tags -->
@@ -178,9 +173,10 @@
     }
     
     .refresh-btn.loading {
-      background: var(--gray-medium);
+      background: linear-gradient(135deg, var(--primary), var(--gold));
       cursor: not-allowed;
       pointer-events: none;
+      opacity: 0.8;
     }
     
     .refresh-btn.loading .refresh-icon {
@@ -645,12 +641,10 @@
   </footer>
 
   <script>
-    // Configuration - Multiple URL formats to try
+    // Configuration - Simplified Google Sheets access
     const SHEET_ID = '16TQDK8y1iP-ZemI3_YmrZKqrrq69UNe2fpXkB0SyDL4';
     const GOOGLE_SHEET_URLS = [
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`,
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`,
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`
     ];
     const BASE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdA6Gw-w1wbs1RiLtu2cVz6e0hrrIFdv3A62NNIrQWTC6yegA/viewform?usp=pp_url";
     
@@ -899,30 +893,17 @@
         
         const startTime = performance.now();
         
-        // Use fastest URL format first (based on previous success)
-        const fastUrl = localStorage.getItem('fastestGoogleSheetUrl') || GOOGLE_SHEET_URLS[0];
+        // Simple direct fetch
+        const response = await fetchWithTimeout(GOOGLE_SHEET_URLS[0], 10000);
         
-        let csvText = null;
-        let successUrl = null;
-        
-        // Try fastest URL first
-        try {
-          const response = await fetchWithTimeout(fastUrl, 5000);
-          
-          if (response.ok) {
-            const text = await response.text();
-            if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
-              csvText = text;
-              successUrl = fastUrl;
-            }
-          }
-        } catch (fastError) {
-          // Try alternative URLs
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        // If fast URL failed, try all URLs in parallel
-        if (!csvText) {
-          csvText = await tryAllUrlsParallel();
+        const csvText = await response.text();
+        
+        if (!csvText || csvText.length < 50) {
+          throw new Error('Invalid or empty response from Google Sheets');
         }
         
         if (!csvText) {
@@ -975,10 +956,7 @@
               // Use fast rendering function
               renderJobs(jobs);
               
-              // Remember successful URL for faster future requests
-              if (successUrl) {
-                localStorage.setItem('fastestGoogleSheetUrl', successUrl);
-              }
+
               
             } catch (error) {
               throw new Error(`Error processing sheet data: ${error.message}`);
@@ -1008,26 +986,29 @@
             errorText.innerHTML = "No open roles are available right now. Please check back soon or reach out to us at <a href='mailto:info@cochranfilms.com' style='color: var(--primary);'>info@cochranfilms.com</a> if you'd like to stay in the loop.";
           }
         } else {
-          // Show technical error message for real issues
+          // Show user-friendly error message
           const errorDiv = document.querySelector('.error-message h3');
           if (errorDiv) {
-            errorDiv.textContent = `Unable to Load Job Listings: ${error.message}`;
+            errorDiv.textContent = "Unable to Load Job Listings";
           }
           
-          
+          const errorText = document.querySelector('.error-message p');
+          if (errorText) {
+            errorText.innerHTML = "Please check back later or contact us directly at <a href='mailto:info@cochranfilms.com' style='color: var(--primary);'>info@cochranfilms.com</a>";
+          }
         }
       }
     }
     
     // Fetch with timeout for faster failure detection
     async function fetchWithTimeout(url, timeout = 5000) {
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
       
       try {
-        const response = await fetch(proxyUrl + encodeURIComponent(url), {
-          signal: controller.signal
+        const response = await fetch(url, {
+          signal: controller.signal,
+          mode: 'cors'
         });
         clearTimeout(timeoutId);
         return response;
@@ -1037,32 +1018,7 @@
       }
     }
     
-    // Try all URLs in parallel for fastest response
-    async function tryAllUrlsParallel() {
-      const promises = GOOGLE_SHEET_URLS.map(async (url, index) => {
-        try {
-          const response = await fetchWithTimeout(url, 8000);
-          if (response.ok) {
-            const text = await response.text();
-            if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
-              // Remember this URL as fastest for next time
-              localStorage.setItem('fastestGoogleSheetUrl', url);
-              return text;
-            }
-          }
-          throw new Error('Invalid response');
-        } catch (error) {
-          throw new Error(`URL ${index + 1} failed: ${error.message}`);
-        }
-      });
-      
-      // Return the first successful response
-      try {
-        return await Promise.any(promises);
-      } catch (error) {
-        throw new Error('All parallel requests failed');
-      }
-    }
+
     
     // Fast job rendering function
     function renderJobs(jobs) {
@@ -1111,7 +1067,6 @@
         
         // Show success state
         refreshBtn.classList.remove('loading');
-        refreshBtn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
         refreshText.textContent = 'Updated!';
         
         // Show success notification
@@ -1119,21 +1074,18 @@
         
         // Reset button after 2 seconds
         setTimeout(() => {
-          refreshBtn.style.background = '';
           refreshText.textContent = 'Refresh Jobs';
         }, 2000);
         
       } catch (error) {
         // Show error state
         refreshBtn.classList.remove('loading');
-        refreshBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
         refreshText.textContent = 'Failed';
         
         showRefreshNotification('❌ Failed to update listings. Please try again.', 'error');
         
         // Reset button after 3 seconds
         setTimeout(() => {
-          refreshBtn.style.background = '';
           refreshText.textContent = 'Refresh Jobs';
         }, 3000);
       }
