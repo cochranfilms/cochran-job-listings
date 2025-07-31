@@ -928,7 +928,7 @@
         const data = await response.json();
         console.log('JSON data loaded:', data);
         
-        // Filter for active jobs
+        // Filter for active jobs and exclude applicant submissions
         const jobs = data.jobs.filter(job => {
           const cleanStatus = String(job.status || '')
             .toLowerCase()
@@ -936,7 +936,43 @@
             .replace(/['"]/g, '')
             .replace(/\s+/g, ' ');
           
-          return job.title && cleanStatus === 'active';
+          // Check if this row contains applicant information (email, phone, etc.)
+          const hasApplicantInfo = job.email || job.Email || job['Email Address'] || 
+                                 job.phone || job.Phone || job['Phone Number'] ||
+                                 job['Full Name'] || job.full_name || job.name ||
+                                 job.instagram || job.Instagram || job['Instagram or Portfolio Website'] ||
+                                 job['How did you hear about Cochran Films?'] || job['how_did_you_hear'] ||
+                                 // Check for timestamp (applicants have timestamps, job listings usually don't)
+                                 job.timestamp || job.Timestamp ||
+                                 // Check for common applicant form fields
+                                 job['Applying For Which Job'] || job['applying_for_which_job'];
+          
+          // Additional check: if the "title" field contains applicant names instead of job titles
+          const titleLooksLikeApplicantName = job.title && (
+            job.title.includes('@') || // Contains email
+            job.title.match(/^\d{3}-\d{3}-\d{4}$/) || // Looks like phone number
+            job.title.match(/^[A-Za-z]+\s+[A-Za-z]+$/) && !job.title.toLowerCase().includes('photographer') && !job.title.toLowerCase().includes('videographer') && !job.title.toLowerCase().includes('editor') // Looks like a person's name
+          );
+          
+          // Debug logging
+          if (job.title) {
+            console.log(`Row with title "${job.title}":`, {
+              status: cleanStatus,
+              hasApplicantInfo: !!hasApplicantInfo,
+              titleLooksLikeApplicantName: !!titleLooksLikeApplicantName,
+              willInclude: job.title && cleanStatus === 'active' && !hasApplicantInfo && !titleLooksLikeApplicantName
+            });
+          }
+          
+          // Only include rows that:
+          // 1. Have a job title
+          // 2. Have "Active" status
+          // 3. DON'T contain applicant information (email, phone, etc.)
+          // 4. DON'T have a title that looks like an applicant name
+          return job.title && 
+                 cleanStatus === 'active' && 
+                 !hasApplicantInfo &&
+                 !titleLooksLikeApplicantName;
         });
         
         if (jobs.length === 0) {
