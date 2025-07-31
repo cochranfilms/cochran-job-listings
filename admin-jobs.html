@@ -567,9 +567,9 @@
             <a href="#" class="logout-btn" onclick="logout()">🚪 Logout</a>
             <h1>🎬 Job Listings Admin</h1>
             <p>Cochran Films - Manage Job Postings</p>
-            <div style="margin-top: 1rem;">
+                          <div style="margin-top: 1rem;">
                 <a href="https://collaborate.cochranfilms.com" style="color: #FFB200; text-decoration: none; font-weight: 600;">← Back to Job Listings</a>
-            </div>
+              </div>
         </div>
 
         <div class="job-form">
@@ -578,13 +578,11 @@
                 <p><strong>Workflow:</strong></p>
                 <ol>
                     <li><strong>Add/Edit Jobs</strong> → Use this admin panel to create job listings</li>
-                    <li><strong>Save Changes</strong> → Click "💾 Save Changes" to download jobs-data.json</li>
-                    <li><strong>Upload to GitHub</strong> → Upload the file to your repository</li>
-                    <li><strong>Auto-Update</strong> → GitHub Action automatically updates your live site</li>
+                    <li><strong>Export JSON</strong> → Download the updated jobs-data.json file</li>
+                    <li><strong>Update Website</strong> → Replace the jobs-data.json file on your server</li>
                     <li><strong>Google Sheet</strong> → Handles all applicant submissions automatically</li>
                 </ol>
                 <p><strong>Note:</strong> The Google Sheet handles applicant data separately - this admin panel only manages job listings.</p>
-                <p><strong>GitHub Action:</strong> Once you upload jobs-data.json to GitHub, it will automatically update your live site at collaborate.cochranfilms.com</p>
             </div>
             
             <h2>Add/Edit Job</h2>
@@ -631,8 +629,6 @@
             <p>Export your job listings to update <code>jobs-data.json</code>:</p>
             <button class="btn" onclick="exportData()">Generate JSON</button>
             <button class="btn" onclick="downloadJSON()" id="downloadBtn" style="display: none;">Download jobs-data.json</button>
-            <button class="btn" onclick="saveJobsData()" style="margin-top: 1rem;">💾 Save Changes</button>
-            <button class="btn" onclick="refreshPublicPage()" style="margin-top: 1rem;">🔄 Refresh Public Page</button>
             <pre id="exportData"></pre>
         </div>
     </div>
@@ -736,7 +732,7 @@
         }
 
         // Add/Edit job
-        document.getElementById('jobForm').addEventListener('submit', async function(e) {
+        document.getElementById('jobForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
@@ -759,10 +755,6 @@
 
             displayJobs();
             clearForm();
-            
-            // Auto-save the updated jobs data
-            await saveJobsData();
-            notifyJobListingsPage(); // Notify the public page
         });
 
         // Edit job
@@ -779,14 +771,10 @@
         }
 
         // Delete job
-        async function deleteJob(index) {
+        function deleteJob(index) {
             if (confirm('Are you sure you want to delete this job?')) {
                 jobs.splice(index, 1);
                 displayJobs();
-                
-                // Auto-save the updated jobs data
-                await saveJobsData();
-                notifyJobListingsPage(); // Notify the public page
             }
         }
 
@@ -794,36 +782,6 @@
         function clearForm() {
             document.getElementById('jobForm').reset();
             delete document.getElementById('jobForm').dataset.editIndex;
-        }
-
-        // Save jobs data to file
-        async function saveJobsData() {
-            const data = {
-                jobs: jobs,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalJobs: jobs.length
-            };
-            
-            try {
-                // Create a blob with the JSON data
-                const jsonString = JSON.stringify(data, null, 2);
-                const blob = new Blob([jsonString], { type: 'application/json' });
-                
-                // Create a download link and trigger it
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'jobs-data.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                showNotification('Jobs data saved! Please upload the downloaded jobs-data.json file to your server.', 'success');
-            } catch (error) {
-                console.error('Error saving jobs data:', error);
-                showNotification('Error saving jobs data. Please try again.', 'error');
-            }
         }
 
         // Export data
@@ -855,101 +813,6 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-        }
-
-        // Auto-refresh job listings page when changes are made
-        function notifyJobListingsPage() {
-            // Try to refresh the job listings page if it's open in another tab
-            try {
-                // Check if the job listings page is open and refresh it
-                const jobListingsWindow = window.open('https://collaborate.cochranfilms.com', 'job-listings');
-                if (jobListingsWindow && !jobListingsWindow.closed) {
-                    jobListingsWindow.location.reload();
-                }
-            } catch (e) {
-                console.log('Job listings page not open or cannot be refreshed');
-            }
-            
-            // Show notification to user
-            showNotification('Job listings updated! The changes will appear on the public page.', 'success');
-        }
-
-        // Manual refresh of public page
-        function refreshPublicPage() {
-            try {
-                // Try to open the job listings page in a new tab and refresh it
-                const jobListingsWindow = window.open('https://collaborate.cochranfilms.com', 'job-listings');
-                if (jobListingsWindow) {
-                    setTimeout(() => {
-                        jobListingsWindow.location.reload();
-                        showNotification('Public page refreshed!', 'success');
-                    }, 1000);
-                }
-            } catch (e) {
-                showNotification('Could not refresh public page. Please refresh manually.', 'info');
-            }
-        }
-
-        // Show notification
-        function showNotification(message, type = 'info') {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.admin-notification');
-            existingNotifications.forEach(notification => notification.remove());
-            
-            // Create notification
-            const notification = document.createElement('div');
-            notification.className = `admin-notification admin-notification-${type}`;
-            notification.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span>${type === 'success' ? '✅' : 'ℹ️'}</span>
-                    <span>${message}</span>
-                </div>
-            `;
-            
-            // Style the notification
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${type === 'success' ? 'rgba(34, 197, 94, 0.9)' : 'rgba(255, 178, 0, 0.9)'};
-                color: #000;
-                padding: 1rem 1.5rem;
-                border-radius: 8px;
-                font-weight: 600;
-                z-index: 10000;
-                backdrop-filter: blur(10px);
-                border: 1px solid ${type === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(255, 178, 0, 0.3)'};
-                animation: slideInRight 0.3s ease-out;
-            `;
-            
-            // Add animation keyframes
-            if (!document.querySelector('#notification-styles')) {
-                const style = document.createElement('style');
-                style.id = 'notification-styles';
-                style.textContent = `
-                    @keyframes slideInRight {
-                        from {
-                            opacity: 0;
-                            transform: translateX(100%);
-                        }
-                        to {
-                            opacity: 1;
-                            transform: translateX(0);
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            document.body.appendChild(notification);
-            
-            // Auto-remove after 4 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.style.animation = 'slideInRight 0.3s ease-out reverse';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, 4000);
         }
 
         // Initialize on page load
