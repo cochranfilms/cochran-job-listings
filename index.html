@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
-
+  <meta http-equiv="X-Frame-Options" content="DENY">
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://docs.google.com https://api.allorigins.win;">
   <title>Job Listings - Cochran Films</title>
   
  <!-- SEO Meta Tags -->
@@ -487,18 +487,6 @@
       animation: slideIn 0.3s ease-out;
     }
     
-    /* Warning notification */
-    .refresh-warning {
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      color: rgba(245, 158, 11, 0.9);
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 2rem;
-      text-align: center;
-      animation: slideIn 0.3s ease-out;
-    }
-    
     @keyframes slideIn {
       from {
         opacity: 0;
@@ -657,9 +645,6 @@
   </footer>
 
   <script>
-    // Cache busting version
-    const VERSION = '1.0.1';
-    
     // Configuration - Multiple URL formats to try
     const SHEET_ID = '16TQDK8y1iP-ZemI3_YmrZKqrrq69UNe2fpXkB0SyDL4';
     const GOOGLE_SHEET_URLS = [
@@ -728,9 +713,6 @@
       if (description) {
         params.append(FORM_FIELDS.description, description);
       }
-      
-      // Always include status as "Active" since only active jobs are displayed
-      params.append(FORM_FIELDS.status, 'Active');
       
       const finalUrl = `${BASE_FORM_URL}&${params.toString()}`;
       
@@ -1009,17 +991,6 @@
         
       } catch (error) {
         
-        // Check if we have cached data to show as fallback
-        const cachedJobs = getCachedJobs();
-        if (cachedJobs && cachedJobs.length > 0) {
-          console.log('Showing cached jobs due to network error');
-          renderJobs(cachedJobs);
-          
-          // Show a subtle notification about using cached data
-          showRefreshNotification('📡 Showing cached data - refresh for latest updates', 'warning');
-          return;
-        }
-        
         // Show error state
         loadingElement.style.display = 'none';
         jobsGrid.style.display = 'none';
@@ -1042,107 +1013,54 @@
           if (errorDiv) {
             errorDiv.textContent = `Unable to Load Job Listings: ${error.message}`;
           }
+          
+          
         }
       }
     }
     
-    // Use a more reliable approach with multiple strategies
-    const PROXY_URLS = [
-      'https://api.allorigins.win/raw?url=',
-      'https://corsproxy.io/?',
-      'https://api.codetabs.com/v1/proxy?quest='
-    ];
-    
-    // Fetch with timeout and multiple fallbacks
-    async function fetchWithTimeout(url, timeout = 15000) {
+    // Fetch with timeout for faster failure detection
+    async function fetchWithTimeout(url, timeout = 5000) {
+      const proxyUrl = 'https://api.allorigins.win/raw?url=';
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
       
       try {
-        // Strategy 1: Try direct fetch (works in some browsers)
-        try {
-          const directResponse = await fetch(url, {
-            signal: controller.signal,
-            mode: 'no-cors'
-          });
-          
-          if (directResponse.ok) {
-            const text = await directResponse.text();
-            if (text && text.length > 50) {
-              clearTimeout(timeoutId);
-              return directResponse;
-            }
-          }
-        } catch (directError) {
-          console.log('Direct fetch failed, trying proxies');
-        }
-        
-        // Strategy 2: Try multiple proxy services
-        for (let i = 0; i < PROXY_URLS.length; i++) {
-          try {
-            const proxyUrl = PROXY_URLS[i];
-            const response = await fetch(proxyUrl + encodeURIComponent(url), {
-              signal: controller.signal,
-              headers: {
-                'Accept': 'text/csv,text/plain,*/*'
-              }
-            });
-            
-            if (response.ok) {
-              const text = await response.text();
-              if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
-                clearTimeout(timeoutId);
-                return response;
-              }
-            }
-          } catch (proxyError) {
-            console.log(`Proxy ${i + 1} failed, trying next`);
-            continue;
-          }
-        }
-        
-        throw new Error('All fetch strategies failed');
+        const response = await fetch(proxyUrl + encodeURIComponent(url), {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response;
       } catch (error) {
         clearTimeout(timeoutId);
         throw error;
       }
     }
     
-    // Try all URLs with simplified retry logic
+    // Try all URLs in parallel for fastest response
     async function tryAllUrlsParallel() {
-      const maxRetries = 3;
-      
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const promises = GOOGLE_SHEET_URLS.map(async (url, index) => {
         try {
-          // Try URLs sequentially instead of parallel for better reliability
-          for (let i = 0; i < GOOGLE_SHEET_URLS.length; i++) {
-            const url = GOOGLE_SHEET_URLS[i];
-            try {
-              const response = await fetchWithTimeout(url, 15000);
-              if (response.ok) {
-                const text = await response.text();
-                if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
-                  // Remember this URL as fastest for next time
-                  localStorage.setItem('fastestGoogleSheetUrl', url);
-                  return text;
-                }
-              }
-            } catch (urlError) {
-              // Continue to next URL if this one fails
-              continue;
+          const response = await fetchWithTimeout(url, 8000);
+          if (response.ok) {
+            const text = await response.text();
+            if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
+              // Remember this URL as fastest for next time
+              localStorage.setItem('fastestGoogleSheetUrl', url);
+              return text;
             }
           }
-          
-          // If we get here, all URLs failed in this attempt
-          throw new Error('All URLs failed');
-          
+          throw new Error('Invalid response');
         } catch (error) {
-          if (attempt === maxRetries) {
-            throw new Error(`All requests failed after ${maxRetries} attempts`);
-          }
-          // Wait before retry with exponential backoff
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          throw new Error(`URL ${index + 1} failed: ${error.message}`);
         }
+      });
+      
+      // Return the first successful response
+      try {
+        return await Promise.any(promises);
+      } catch (error) {
+        throw new Error('All parallel requests failed');
       }
     }
     
@@ -1224,18 +1142,12 @@
     // Show refresh notification
     function showRefreshNotification(message, type = 'success') {
       // Remove existing notifications
-      const existingNotifications = document.querySelectorAll('.refresh-success, .refresh-error, .refresh-warning');
+      const existingNotifications = document.querySelectorAll('.refresh-success, .refresh-error');
       existingNotifications.forEach(notification => notification.remove());
       
       // Create notification
       const notification = document.createElement('div');
-      let className = 'refresh-success';
-      if (type === 'error') {
-        className = 'refresh-error';
-      } else if (type === 'warning') {
-        className = 'refresh-warning';
-      }
-      notification.className = className;
+      notification.className = type === 'error' ? 'refresh-error' : 'refresh-success';
       notification.textContent = message;
       
       // Insert before jobs grid
@@ -1266,13 +1178,6 @@
     }
     
 
-    
-    // Force cache refresh for this version
-    if (localStorage.getItem('jobListingsVersion') !== VERSION) {
-      localStorage.clear();
-      localStorage.setItem('jobListingsVersion', VERSION);
-      console.log('Cache cleared for new version');
-    }
     
     // Preload jobs data even before DOM is ready
     let preloadPromise = null;
