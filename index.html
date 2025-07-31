@@ -714,6 +714,9 @@
         params.append(FORM_FIELDS.description, description);
       }
       
+      // Always include status as "Active" since only active jobs are displayed
+      params.append(FORM_FIELDS.status, 'Active');
+      
       const finalUrl = `${BASE_FORM_URL}&${params.toString()}`;
       
       return finalUrl;
