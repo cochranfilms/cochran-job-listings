@@ -1,0 +1,74 @@
+name: Update Job Listings
+
+on:
+  push:
+    paths:
+      - 'jobs-data.json'
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  update-jobs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Validate JSON
+      run: |
+        echo "Validating jobs-data.json..."
+        if [ -f "jobs-data.json" ]; then
+          node -e "
+            const fs = require('fs');
+            try {
+              const data = JSON.parse(fs.readFileSync('jobs-data.json', 'utf8'));
+              console.log('✅ JSON is valid');
+              console.log('📊 Jobs count:', data.jobs ? data.jobs.length : 0);
+              console.log('📅 Last updated:', data.lastUpdated || 'Not specified');
+            } catch (e) {
+              console.error('❌ Invalid JSON:', e.message);
+              process.exit(1);
+            }
+          "
+        else
+          echo "❌ jobs-data.json not found"
+          exit 1
+        fi
+        
+    - name: Create commit message
+      id: commit-msg
+      run: |
+        if [ -f "jobs-data.json" ]; then
+          LAST_UPDATED=$(node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('jobs-data.json', 'utf8'));
+            console.log(data.lastUpdated || 'Unknown');
+          ")
+          JOBS_COUNT=$(node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('jobs-data.json', 'utf8'));
+            console.log(data.jobs ? data.jobs.length : 0);
+          ")
+          echo "message=🤖 Auto-update job listings - $JOBS_COUNT jobs (Last updated: $LAST_UPDATED)" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add jobs-data.json
+        git commit -m "${{ steps.commit-msg.outputs.message }}" || echo "No changes to commit"
+        git push
+        
+    - name: Notify success
+      run: |
+        echo "✅ Job listings updated successfully!"
+        echo "📊 Jobs count: ${{ steps.commit-msg.outputs.jobs_count }}"
+        echo "🌐 Live site: https://collaborate.cochranfilms.com" 
