@@ -12,6 +12,106 @@
             padding: 20px;
             background: #f5f5f5;
         }
+        
+        /* Login Screen Styles */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+        }
+        
+        .login-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .login-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 2rem;
+        }
+        
+        .login-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #FFB200;
+            margin-bottom: 1rem;
+        }
+        
+        .login-subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        
+        .login-form {
+            text-align: left;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #FFB200;
+        }
+        
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,178,0,0.3);
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        /* Main Admin Interface Styles */
+        .admin-interface {
+            display: none;
+        }
+        
         .header {
             background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
             color: white;
@@ -20,6 +120,25 @@
             margin-bottom: 2rem;
             text-align: center;
         }
+        
+        .logout-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
         .job-form {
             background: white;
             padding: 2rem;
@@ -27,14 +146,7 @@
             margin-bottom: 2rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
+        
         input, textarea, select {
             width: 100%;
             padding: 0.8rem;
@@ -42,10 +154,12 @@
             border-radius: 8px;
             font-size: 1rem;
         }
+        
         textarea {
             height: 100px;
             resize: vertical;
         }
+        
         .btn {
             background: linear-gradient(135deg, #FFB200, #FFD700);
             color: #000;
@@ -56,26 +170,31 @@
             cursor: pointer;
             margin-right: 1rem;
         }
+        
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255,178,0,0.3);
         }
+        
         .jobs-list {
             background: white;
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
+        
         .job-item {
             border: 1px solid #e0e0e0;
             padding: 1rem;
             margin-bottom: 1rem;
             border-radius: 8px;
         }
+        
         .job-item h3 {
             margin: 0 0 0.5rem 0;
             color: #FFB200;
         }
+        
         .job-meta {
             display: flex;
             gap: 1rem;
@@ -83,25 +202,31 @@
             font-size: 0.9rem;
             color: #666;
         }
+        
         .status-active {
             color: #22c55e;
             font-weight: 600;
         }
+        
         .status-inactive {
             color: #ef4444;
             font-weight: 600;
         }
+        
         .actions {
             margin-top: 1rem;
         }
+        
         .btn-small {
             padding: 0.5rem 1rem;
             font-size: 0.9rem;
         }
+        
         .btn-danger {
             background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
         }
+        
         .export-section {
             background: white;
             padding: 2rem;
@@ -109,6 +234,7 @@
             margin-bottom: 2rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
+        
         pre {
             background: #f5f5f5;
             padding: 1rem;
@@ -118,73 +244,155 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Job Listings Admin</h1>
-        <p>Cochran Films - Manage Job Postings</p>
-    </div>
-
-    <div class="job-form">
-        <h2>📋 How This Works</h2>
-        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-            <p><strong>Workflow:</strong></p>
-            <ol>
-                <li><strong>Add/Edit Jobs</strong> → Use this admin panel to create job listings</li>
-                <li><strong>Export JSON</strong> → Download the updated jobs-data.json file</li>
-                <li><strong>Update Website</strong> → Replace the jobs-data.json file on your server</li>
-                <li><strong>Google Sheet</strong> → Handles all applicant submissions automatically</li>
-            </ol>
-            <p><strong>Note:</strong> The Google Sheet handles applicant data separately - this admin panel only manages job listings.</p>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <img src="Logo.png" alt="Cochran Films" class="login-logo">
+            <h1 class="login-title">🎬 Admin Access</h1>
+            <p class="login-subtitle">Enter password to manage job listings</p>
+            
+            <div id="errorMessage" class="error-message">
+                Incorrect password. Please try again.
+            </div>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">🔐 Login</button>
+            </form>
         </div>
-        
-        <h2>Add/Edit Job</h2>
-        <form id="jobForm">
-            <div class="form-group">
-                <label for="title">Job Title *</label>
-                <input type="text" id="title" name="title" required>
-            </div>
-            <div class="form-group">
-                <label for="date">Event Date</label>
-                <input type="date" id="date" name="date">
-            </div>
-            <div class="form-group">
-                <label for="location">Location</label>
-                <input type="text" id="location" name="location" value="Atlanta Area">
-            </div>
-            <div class="form-group">
-                <label for="pay">Pay Rate</label>
-                <input type="text" id="pay" name="pay" placeholder="$150/day">
-            </div>
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" placeholder="Describe the role, requirements, and responsibilities..."></textarea>
-            </div>
-            <div class="form-group">
-                <label for="status">Status</label>
-                <select id="status" name="status">
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                </select>
-            </div>
-            <button type="submit" class="btn">Save Job</button>
-            <button type="button" class="btn" onclick="clearForm()">Clear Form</button>
-        </form>
     </div>
 
-    <div class="jobs-list">
-        <h2>Current Jobs</h2>
-        <div id="jobsList"></div>
-    </div>
+    <!-- Main Admin Interface -->
+    <div id="adminInterface" class="admin-interface">
+        <div class="header">
+            <a href="#" class="logout-btn" onclick="logout()">🚪 Logout</a>
+            <h1>🎬 Job Listings Admin</h1>
+            <p>Cochran Films - Manage Job Postings</p>
+            <div style="margin-top: 1rem;">
+                <a href="Job-Listings.html" style="color: #FFB200; text-decoration: none; font-weight: 600;">← Back to Job Listings</a>
+            </div>
+        </div>
 
-    <div class="export-section">
-        <h2>Export Data</h2>
-        <p>Export your job listings to update <code>jobs-data.json</code>:</p>
-        <button class="btn" onclick="exportData()">Generate JSON</button>
-        <button class="btn" onclick="downloadJSON()" id="downloadBtn" style="display: none;">Download jobs-data.json</button>
-        <pre id="exportData"></pre>
+        <div class="job-form">
+            <h2>📋 How This Works</h2>
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                <p><strong>Workflow:</strong></p>
+                <ol>
+                    <li><strong>Add/Edit Jobs</strong> → Use this admin panel to create job listings</li>
+                    <li><strong>Export JSON</strong> → Download the updated jobs-data.json file</li>
+                    <li><strong>Update Website</strong> → Replace the jobs-data.json file on your server</li>
+                    <li><strong>Google Sheet</strong> → Handles all applicant submissions automatically</li>
+                </ol>
+                <p><strong>Note:</strong> The Google Sheet handles applicant data separately - this admin panel only manages job listings.</p>
+            </div>
+            
+            <h2>Add/Edit Job</h2>
+            <form id="jobForm">
+                <div class="form-group">
+                    <label for="title">Job Title *</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="date">Event Date</label>
+                    <input type="date" id="date" name="date">
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" value="Atlanta Area">
+                </div>
+                <div class="form-group">
+                    <label for="pay">Pay Rate</label>
+                    <input type="text" id="pay" name="pay" placeholder="$150/day">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" placeholder="Describe the role, requirements, and responsibilities..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" name="status">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Save Job</button>
+                <button type="button" class="btn" onclick="clearForm()">Clear Form</button>
+            </form>
+        </div>
+
+        <div class="jobs-list">
+            <h2>Current Jobs</h2>
+            <div id="jobsList"></div>
+        </div>
+
+        <div class="export-section">
+            <h2>Export Data</h2>
+            <p>Export your job listings to update <code>jobs-data.json</code>:</p>
+            <button class="btn" onclick="exportData()">Generate JSON</button>
+            <button class="btn" onclick="downloadJSON()" id="downloadBtn" style="display: none;">Download jobs-data.json</button>
+            <pre id="exportData"></pre>
+        </div>
     </div>
 
     <script>
+        // Password Configuration - CHANGE THIS PASSWORD!
+        const ADMIN_PASSWORD = 'Deannajack3#';
+        
+        // Session management
+        let isAuthenticated = false;
         let jobs = [];
+
+        // Check if already authenticated
+        function checkAuth() {
+            const session = sessionStorage.getItem('adminAuthenticated');
+            if (session === 'true') {
+                isAuthenticated = true;
+                showAdminInterface();
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('adminInterface').style.display = 'none';
+        }
+
+        // Show admin interface
+        function showAdminInterface() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminInterface').style.display = 'block';
+            loadJobs();
+        }
+
+        // Handle login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                isAuthenticated = true;
+                sessionStorage.setItem('adminAuthenticated', 'true');
+                showAdminInterface();
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('password').value = '';
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            }
+        });
+
+        // Logout function
+        function logout() {
+            isAuthenticated = false;
+            sessionStorage.removeItem('adminAuthenticated');
+            showLoginScreen();
+        }
 
         // Load existing jobs
         async function loadJobs() {
@@ -311,8 +519,8 @@
             URL.revokeObjectURL(url);
         }
 
-        // Load jobs on page load
-        loadJobs();
+        // Initialize on page load
+        checkAuth();
     </script>
 </body>
 </html> 
