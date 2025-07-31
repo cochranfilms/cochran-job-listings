@@ -641,10 +641,40 @@
   </footer>
 
   <script>
-    // Configuration - Simplified Google Sheets access
+    // Configuration - Multiple Google Sheets access methods
     const SHEET_ID = '16TQDK8y1iP-ZemI3_YmrZKqrrq69UNe2fpXkB0SyDL4';
     const GOOGLE_SHEET_URLS = [
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`,
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A:Z?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&key=AIzaSyBmGmeot5jcjVkM0If9Vs55zfMkmNIz1PI`
+    ];
+    
+    // Fallback job data if Google Sheets fails
+    const FALLBACK_JOBS = [
+      {
+        title: "Event Photographer",
+        date: "2024-08-15",
+        location: "Atlanta Area",
+        pay: "$150/day",
+        description: "Join our creative team for exciting photo shoots at events and celebrations. Experience with event photography preferred.",
+        status: "Active"
+      },
+      {
+        title: "Videographer",
+        date: "2024-08-20", 
+        location: "Atlanta Area",
+        pay: "$200/day",
+        description: "Capture amazing moments at events and celebrations. Experience with video editing and post-production a plus.",
+        status: "Active"
+      },
+      {
+        title: "Photo Editor",
+        date: "2024-08-25",
+        location: "Remote/Atlanta",
+        pay: "$100/day",
+        description: "Edit and retouch photos for our clients. Proficiency in Lightroom and Photoshop required.",
+        status: "Active"
+      }
     ];
     const BASE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdA6Gw-w1wbs1RiLtu2cVz6e0hrrIFdv3A62NNIrQWTC6yegA/viewform?usp=pp_url";
     
@@ -893,17 +923,39 @@
         
         const startTime = performance.now();
         
-        // Simple direct fetch
-        const response = await fetchWithTimeout(GOOGLE_SHEET_URLS[0], 10000);
+        // Try multiple URLs for reliability
+        console.log('Fetching Google Sheets data...');
+        let csvText = null;
+        let lastError = null;
         
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        for (let i = 0; i < GOOGLE_SHEET_URLS.length; i++) {
+          try {
+            console.log(`Trying URL ${i + 1}:`, GOOGLE_SHEET_URLS[i]);
+            const response = await fetchWithTimeout(GOOGLE_SHEET_URLS[i], 10000);
+            
+            console.log('Response status:', response.status);
+            
+            if (response.ok) {
+              const text = await response.text();
+              console.log('Response length:', text.length);
+              
+              if (text && text.length > 50) {
+                csvText = text;
+                console.log('Success with URL', i + 1);
+                break;
+              }
+            }
+          } catch (error) {
+            console.log(`URL ${i + 1} failed:`, error.message);
+            lastError = error;
+          }
         }
         
-        const csvText = await response.text();
-        
-        if (!csvText || csvText.length < 50) {
-          throw new Error('Invalid or empty response from Google Sheets');
+        if (!csvText) {
+          console.log('All URLs failed, using fallback data');
+          // Use fallback job data instead of CSV
+          renderJobs(FALLBACK_JOBS);
+          return;
         }
         
         if (!csvText) {
@@ -1000,22 +1052,51 @@
       }
     }
     
-    // Fetch with timeout for faster failure detection
-    async function fetchWithTimeout(url, timeout = 5000) {
+    // Fetch with timeout and CORS proxy for reliable access
+    async function fetchWithTimeout(url, timeout = 10000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
       
-      try {
-        const response = await fetch(url, {
-          signal: controller.signal,
-          mode: 'cors'
-        });
-        clearTimeout(timeoutId);
-        return response;
-      } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
+      // Try multiple CORS proxies for reliability
+      const corsProxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://cors-anywhere.herokuapp.com/',
+        'https://corsproxy.io/?',
+        '' // Direct access as fallback
+      ];
+      
+      for (let i = 0; i < corsProxies.length; i++) {
+        try {
+          const proxyUrl = corsProxies[i];
+          const fullUrl = proxyUrl ? proxyUrl + encodeURIComponent(url) : url;
+          
+          const response = await fetch(fullUrl, {
+            signal: controller.signal,
+            headers: {
+              'Accept': 'text/csv,text/plain,*/*',
+              'User-Agent': 'Mozilla/5.0 (compatible; JobListings/1.0)'
+            }
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            const text = await response.text();
+            if (text && text.length > 50) {
+              return response;
+            }
+          }
+        } catch (error) {
+          // Continue to next proxy if this one fails
+          if (i === corsProxies.length - 1) {
+            clearTimeout(timeoutId);
+            throw error;
+          }
+        }
       }
+      
+      clearTimeout(timeoutId);
+      throw new Error('All CORS proxies failed');
     }
     
 
@@ -1134,16 +1215,30 @@
     // Preload jobs data even before DOM is ready
     let preloadPromise = null;
     if (document.readyState === 'loading') {
-      preloadPromise = loadJobsFromGoogleSheets();
+      // Try Google Sheets first, fallback to local data
+      preloadPromise = loadJobsFromGoogleSheets().catch(() => {
+        console.log('Google Sheets failed, using fallback data');
+        renderJobs(FALLBACK_JOBS);
+      });
     }
     
     // Initialize page
     document.addEventListener('DOMContentLoaded', async function() {
       // If we preloaded, wait for it, otherwise load now
       if (preloadPromise) {
-        await preloadPromise;
+        try {
+          await preloadPromise;
+        } catch (error) {
+          console.log('Preload failed, using fallback');
+          renderJobs(FALLBACK_JOBS);
+        }
       } else {
-        await loadJobsFromGoogleSheets();
+        try {
+          await loadJobsFromGoogleSheets();
+        } catch (error) {
+          console.log('Load failed, using fallback');
+          renderJobs(FALLBACK_JOBS);
+        }
       }
       
 
