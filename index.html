@@ -641,15 +641,10 @@
   </footer>
 
   <script>
-    // Configuration - Multiple Google Sheets access methods
-    const SHEET_ID = '16TQDK8y1iP-ZemI3_YmrZKqrrq69UNe2fpXkB0SyDL4';
-    const GOOGLE_SHEET_URLS = [
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`,
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`,
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A:Z?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&key=AIzaSyBmGmeot5jcjVkM0If9Vs55zfMkmNIz1PI`
-    ];
+    // Configuration - JSON file data source
+    const JOBS_DATA_URL = 'jobs-data.json';
     
-    // Fallback job data if Google Sheets fails
+    // Fallback job data if JSON file fails
     const FALLBACK_JOBS = [
       {
         title: "Event Photographer",
@@ -900,8 +895,8 @@
       jobsCache.timestamp = Date.now();
     }
     
-    // Optimized Google Sheets Integration Function
-    async function loadJobsFromGoogleSheets(forceRefresh = false) {
+    // Simple JSON Data Loader
+    async function loadJobsFromJSON(forceRefresh = false) {
       const loadingElement = document.getElementById('loading');
       const jobsGrid = document.getElementById('jobs-grid');
       const errorElement = document.getElementById('error-message');
@@ -921,103 +916,38 @@
         jobsGrid.style.display = 'none';
         errorElement.style.display = 'none';
         
-        const startTime = performance.now();
+        console.log('Loading jobs from JSON file...');
         
-        // Try multiple URLs for reliability
-        console.log('Fetching Google Sheets data...');
-        let csvText = null;
-        let lastError = null;
+        // Fetch JSON data
+        const response = await fetch(JOBS_DATA_URL);
         
-        for (let i = 0; i < GOOGLE_SHEET_URLS.length; i++) {
-          try {
-            console.log(`Trying URL ${i + 1}:`, GOOGLE_SHEET_URLS[i]);
-            const response = await fetchWithTimeout(GOOGLE_SHEET_URLS[i], 10000);
-            
-            console.log('Response status:', response.status);
-            
-            if (response.ok) {
-              const text = await response.text();
-              console.log('Response length:', text.length);
-              
-              if (text && text.length > 50) {
-                csvText = text;
-                console.log('Success with URL', i + 1);
-                break;
-              }
-            }
-          } catch (error) {
-            console.log(`URL ${i + 1} failed:`, error.message);
-            lastError = error;
-          }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        if (!csvText) {
-          console.log('All URLs failed, using fallback data');
-          // Use fallback job data instead of CSV
-          renderJobs(FALLBACK_JOBS);
-          return;
-        }
+        const data = await response.json();
+        console.log('JSON data loaded:', data);
         
-        if (!csvText) {
-          throw new Error('All URL formats failed - check sheet permissions');
-        }
-        
-
-        Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          transformHeader: function(header) {
-            // Clean up header names to handle variations
-            return header.trim().toLowerCase().replace(/\s+/g, '_');
-          },
-          complete: function(results) {
-            try {
-              
-              const jobs = results.data.filter(job => {
-                // Only include jobs with a title and "Active" status
-                const jobTitle = job.title || job['Applying For Which Job'] || job.applying_for_which_job || job['applying for which job'];
-                const rawStatus = job.status || job.Status || '';
-                
-                // Handle multiple choice responses that might have extra formatting
-                const cleanStatus = String(rawStatus)
-                  .toLowerCase()
-                  .trim()
-                  .replace(/['"]/g, '') // Remove quotes
-                  .replace(/\s+/g, ' '); // Normalize spaces
-                
-                const hasTitle = jobTitle && jobTitle.trim() !== '';
-                const isActive = cleanStatus === 'active';
-                
-                return hasTitle && isActive;
-              });
-              
-              if (jobs.length === 0) {
-                throw new Error('NO_ACTIVE_JOBS');
-              }
-              
-              // Generate job cards HTML
-              const jobsHTML = jobs.map(job => createJobCard(job)).filter(html => html !== '').join('');
-              
-              if (!jobsHTML) {
-                throw new Error('No valid job cards could be created');
-              }
-              
-              // Cache the jobs for faster future loads
-              setCachedJobs(jobs);
-              
-              // Use fast rendering function
-              renderJobs(jobs);
-              
-
-              
-            } catch (error) {
-              throw new Error(`Error processing sheet data: ${error.message}`);
-            }
-          },
-          error: function(error) {
-            throw new Error(`CSV parsing error: ${error.message}`);
-          }
+        // Filter for active jobs
+        const jobs = data.jobs.filter(job => {
+          const cleanStatus = String(job.status || '')
+            .toLowerCase()
+            .trim()
+            .replace(/['"]/g, '')
+            .replace(/\s+/g, ' ');
+          
+          return job.title && cleanStatus === 'active';
         });
+        
+        if (jobs.length === 0) {
+          throw new Error('NO_ACTIVE_JOBS');
+        }
+        
+        // Cache the jobs for faster future loads
+        setCachedJobs(jobs);
+        
+        // Render the jobs
+        renderJobs(jobs);
         
       } catch (error) {
         
@@ -1052,52 +982,7 @@
       }
     }
     
-    // Fetch with timeout and CORS proxy for reliable access
-    async function fetchWithTimeout(url, timeout = 10000) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-      
-      // Try multiple CORS proxies for reliability
-      const corsProxies = [
-        'https://api.allorigins.win/raw?url=',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://corsproxy.io/?',
-        '' // Direct access as fallback
-      ];
-      
-      for (let i = 0; i < corsProxies.length; i++) {
-        try {
-          const proxyUrl = corsProxies[i];
-          const fullUrl = proxyUrl ? proxyUrl + encodeURIComponent(url) : url;
-          
-          const response = await fetch(fullUrl, {
-            signal: controller.signal,
-            headers: {
-              'Accept': 'text/csv,text/plain,*/*',
-              'User-Agent': 'Mozilla/5.0 (compatible; JobListings/1.0)'
-            }
-          });
-          
-          clearTimeout(timeoutId);
-          
-          if (response.ok) {
-            const text = await response.text();
-            if (text && text.length > 50) {
-              return response;
-            }
-          }
-        } catch (error) {
-          // Continue to next proxy if this one fails
-          if (i === corsProxies.length - 1) {
-            clearTimeout(timeoutId);
-            throw error;
-          }
-        }
-      }
-      
-      clearTimeout(timeoutId);
-      throw new Error('All CORS proxies failed');
-    }
+
     
 
     
@@ -1144,7 +1029,7 @@
       refreshText.textContent = 'Refreshing...';
       
       try {
-        await loadJobsFromGoogleSheets(true); // Force refresh, bypass cache
+        await loadJobsFromJSON(true); // Force refresh, bypass cache
         
         // Show success state
         refreshBtn.classList.remove('loading');
@@ -1215,9 +1100,9 @@
     // Preload jobs data even before DOM is ready
     let preloadPromise = null;
     if (document.readyState === 'loading') {
-      // Try Google Sheets first, fallback to local data
-      preloadPromise = loadJobsFromGoogleSheets().catch(() => {
-        console.log('Google Sheets failed, using fallback data');
+      // Try JSON file first, fallback to local data
+      preloadPromise = loadJobsFromJSON().catch(() => {
+        console.log('JSON file failed, using fallback data');
         renderJobs(FALLBACK_JOBS);
       });
     }
@@ -1234,7 +1119,7 @@
         }
       } else {
         try {
-          await loadJobsFromGoogleSheets();
+          await loadJobsFromJSON();
         } catch (error) {
           console.log('Load failed, using fallback');
           renderJobs(FALLBACK_JOBS);
