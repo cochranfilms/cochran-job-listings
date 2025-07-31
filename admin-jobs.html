@@ -823,7 +823,7 @@
             // Try to refresh the job listings page if it's open in another tab
             try {
                 // Check if the job listings page is open and refresh it
-                const jobListingsWindow = window.open('', 'job-listings');
+                const jobListingsWindow = window.open('https://collaborate.cochranfilms.com', 'job-listings');
                 if (jobListingsWindow && !jobListingsWindow.closed) {
                     jobListingsWindow.location.reload();
                 }
@@ -839,7 +839,7 @@
         function refreshPublicPage() {
             try {
                 // Try to open the job listings page in a new tab and refresh it
-                const jobListingsWindow = window.open('Job-Listings.html', 'job-listings');
+                const jobListingsWindow = window.open('https://collaborate.cochranfilms.com', 'job-listings');
                 if (jobListingsWindow) {
                     setTimeout(() => {
                         jobListingsWindow.location.reload();
