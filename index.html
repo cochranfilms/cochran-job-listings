@@ -585,11 +585,13 @@
     <section class="jobs-section">
       <div class="section-header">
         <h2 class="section-title">Current Opportunities</h2>
-        <button id="refresh-jobs-btn" class="refresh-btn" onclick="refreshJobs()">
-          <span class="refresh-icon">🔄</span>
-          <span class="refresh-text">Refresh Jobs</span>
-        </button>
-
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <button id="refresh-jobs-btn" class="refresh-btn" onclick="refreshJobs()">
+            <span class="refresh-icon">🔄</span>
+            <span class="refresh-text">Refresh Jobs</span>
+          </button>
+          <a href="admin-jobs.html" style="color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600;">⚙️ Admin</a>
+        </div>
       </div>
       <p class="section-subtitle">
         Explore our latest openings in photography, videography, and creative production. 
