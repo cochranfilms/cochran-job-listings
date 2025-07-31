@@ -1,0 +1,46 @@
+{
+  "jobs": [
+    {
+      "title": "Backdrop Photographer Base",
+      "date": "10/24/2025",
+      "location": "Douglasville, GA",
+      "pay": "$300",
+      "description": "You will be taking pictures",
+      "status": "Active"
+    },
+    {
+      "title": "Backdrop Photographer Spot",
+      "date": "11/08/2025", 
+      "location": "Douglasville, GA",
+      "pay": "$400",
+      "description": "You will be taking pictures",
+      "status": "Active"
+    },
+    {
+      "title": "Event Photographer",
+      "date": "2024-08-15",
+      "location": "Atlanta Area",
+      "pay": "$150/day",
+      "description": "Join our creative team for exciting photo shoots at events and celebrations. Experience with event photography preferred. Must have own equipment and be available for weekend events.",
+      "status": "Active"
+    },
+    {
+      "title": "Videographer",
+      "date": "2024-08-20",
+      "location": "Atlanta Area", 
+      "pay": "$200/day",
+      "description": "Capture amazing moments at events and celebrations. Experience with video editing and post-production a plus. Looking for someone with strong storytelling skills and technical expertise.",
+      "status": "Active"
+    },
+    {
+      "title": "Photo Editor",
+      "date": "2024-08-25",
+      "location": "Remote/Atlanta",
+      "pay": "$100/day", 
+      "description": "Edit and retouch photos for our clients. Proficiency in Lightroom and Photoshop required. Must have strong attention to detail and ability to work under deadlines.",
+      "status": "Active"
+    }
+  ],
+  "lastUpdated": "2025-07-31",
+  "totalJobs": 5
+}
