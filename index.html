@@ -376,8 +376,8 @@
       color: var(--white);
     }
     
-    /* Sticky Apply Button */
-    .sticky-apply {
+    /* Sticky Apply Button - REMOVED */
+    /* .sticky-apply {
       position: fixed;
       bottom: 20px;
       right: 20px;
@@ -403,7 +403,7 @@
         transform: scale(1) rotate(0deg);
         opacity: 1;
       }
-    }
+    } */
     
     /* Footer */
     .footer {
@@ -515,6 +515,7 @@
       
       .section-title {
         font-size: 2rem;
+        text-align: center;
       }
       
       .refresh-btn {
@@ -553,6 +554,7 @@
       
       .section-title {
         font-size: 2rem;
+        text-align: center;
       }
       
       .jobs-grid {
@@ -617,12 +619,12 @@
     </section>
   </main>
 
-  <!-- Sticky Apply Button -->
-  <div id="sticky-apply" class="sticky-apply">
+  <!-- Sticky Apply Button - REMOVED -->
+  <!-- <div id="sticky-apply" class="sticky-apply">
     <a href="#" class="btn btn-primary" id="sticky-apply-btn">
       📝 Quick Apply
     </a>
-  </div>
+  </div> -->
 
   <!-- Footer -->
   <footer class="footer">
@@ -637,7 +639,7 @@
       </div>
       
       <p class="footer-copyright">
-        © 2025 Cochran Films. All rights reserved.
+        © 2024 Cochran Films. All rights reserved.
       </p>
     </div>
   </footer>
@@ -825,28 +827,28 @@
         description.classList.add('expanded');
         button.innerHTML = '<span>📋</span> Hide Details';
         
-        // Show sticky apply button with pre-filled data
-        const jobCard = button.closest('.job-card');
-        const jobData = {
-          title: jobCard.dataset.jobTitle,
-          date: jobCard.dataset.eventDate,
-          location: jobCard.dataset.location,
-          pay: jobCard.dataset.pay
-        };
-        
-        const stickyBtn = document.getElementById('sticky-apply-btn');
-        stickyBtn.href = generateApplyLink(jobData.title, jobData.date, jobData.location, jobData.pay);
-        document.getElementById('sticky-apply').classList.add('show');
+        // Sticky apply button functionality removed
+        // const jobCard = button.closest('.job-card');
+        // const jobData = {
+        //   title: jobCard.dataset.jobTitle,
+        //   date: jobCard.dataset.eventDate,
+        //   location: jobCard.dataset.location,
+        //   pay: jobCard.dataset.pay
+        // };
+        // 
+        // const stickyBtn = document.getElementById('sticky-apply-btn');
+        // stickyBtn.href = generateApplyLink(jobData.title, jobData.date, jobData.location, jobData.pay);
+        // document.getElementById('sticky-apply').classList.add('show');
       }
     }
     
-    // Hide sticky button when scrolling away from expanded jobs
-    function checkStickyButtonVisibility() {
-      const expandedJobs = document.querySelectorAll('.job-description.expanded');
-      if (expandedJobs.length === 0) {
-        document.getElementById('sticky-apply').classList.remove('show');
-      }
-    }
+    // Hide sticky button when scrolling away from expanded jobs - REMOVED
+    // function checkStickyButtonVisibility() {
+    //   const expandedJobs = document.querySelectorAll('.job-description.expanded');
+    //   if (expandedJobs.length === 0) {
+    //     document.getElementById('sticky-apply').classList.remove('show');
+    //   }
+    // }
     
 
     
@@ -1194,12 +1196,12 @@
       
 
       
-      // Hide sticky button when clicking outside expanded jobs
-      document.addEventListener('click', function(e) {
-        if (!e.target.closest('.job-card') && !e.target.closest('#sticky-apply')) {
-          setTimeout(checkStickyButtonVisibility, 100);
-        }
-      });
+      // Hide sticky button when clicking outside expanded jobs - REMOVED
+      // document.addEventListener('click', function(e) {
+      //   if (!e.target.closest('.job-card') && !e.target.closest('#sticky-apply')) {
+      //     setTimeout(checkStickyButtonVisibility, 100);
+      //   }
+      // });
       
       // Smooth scroll behavior for internal links
       document.querySelectorAll('a[href^="#"]').forEach(anchor => {
