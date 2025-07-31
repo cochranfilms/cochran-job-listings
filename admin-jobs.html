@@ -9,6 +9,9 @@
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root {
             --primary: #FFB200;
@@ -364,6 +367,104 @@
             min-height: 80px;
         }
         
+        /* Rich Text Editor Styles */
+        .rich-text-editor {
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+        
+        .editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.6);
+            border-bottom: 1px solid rgba(255, 178, 0, 0.3);
+            align-items: center;
+        }
+        
+        .toolbar-group {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+        
+        .toolbar-divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 178, 0, 0.3);
+            margin: 0 0.5rem;
+        }
+        
+        .format-btn {
+            background: rgba(255, 178, 0, 0.1);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            color: #FFB200;
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            min-width: 32px;
+            text-align: center;
+        }
+        
+        .format-btn:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: #FFB200;
+        }
+        
+        .format-btn.active {
+            background: #FFB200;
+            color: #000;
+        }
+        
+        .format-btn i {
+            font-size: 0.8rem;
+        }
+        
+        .color-picker {
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 4px;
+            background: none;
+            cursor: pointer;
+        }
+        
+        .font-size-select {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            color: #fff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .editor-content {
+            padding: 1rem;
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+            color: #fff;
+            line-height: 1.5;
+        }
+        
+        .editor-content:focus {
+            outline: none;
+        }
+        
+        .editor-content[contenteditable="true"] {
+            outline: none;
+        }
+        
+        .editor-content[contenteditable="true"]:focus {
+            background: rgba(0, 0, 0, 0.6);
+        }
+        
         .btn {
             background: linear-gradient(135deg, #FFB200, #FFD700);
             color: #000;
@@ -445,6 +546,21 @@
             color: #FFB200;
             font-family: 'Cinzel', serif;
             font-size: 1.3rem;
+        }
+        
+        .job-description {
+            margin: 1rem 0;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .job-description p {
+            margin-bottom: 0.5rem;
+        }
+        
+        .job-description ul, .job-description ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
         }
         
         .job-meta {
@@ -536,6 +652,19 @@
                 margin-bottom: 0.5rem;
                 width: 100%;
             }
+            
+            .editor-toolbar {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .toolbar-group {
+                justify-content: center;
+            }
+            
+            .editor-content {
+                min-height: 80px;
+            }
         }
     </style>
 </head>
@@ -589,7 +718,29 @@
             <form id="jobForm">
                 <div class="form-group">
                     <label for="title">Job Title *</label>
-                    <input type="text" id="title" name="title" required>
+                    <div class="rich-text-editor">
+                        <div class="editor-toolbar" id="titleToolbar">
+                            <div class="toolbar-group">
+                                <button type="button" class="format-btn" data-command="bold" title="Bold"><i class="fas fa-bold"></i></button>
+                                <button type="button" class="format-btn" data-command="italic" title="Italic"><i class="fas fa-italic"></i></button>
+                                <button type="button" class="format-btn" data-command="underline" title="Underline"><i class="fas fa-underline"></i></button>
+                            </div>
+                            <div class="toolbar-divider"></div>
+                            <div class="toolbar-group">
+                                <select class="font-size-select" id="titleFontSize">
+                                    <option value="1">Small</option>
+                                    <option value="3" selected>Normal</option>
+                                    <option value="5">Large</option>
+                                    <option value="7">Extra Large</option>
+                                </select>
+                            </div>
+                            <div class="toolbar-divider"></div>
+                            <div class="toolbar-group">
+                                <input type="color" class="color-picker" id="titleColor" value="#FFB200" title="Text Color">
+                            </div>
+                        </div>
+                        <div class="editor-content" id="titleEditor" contenteditable="true" data-field="title" placeholder="Enter job title..."></div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="date">Event Date</label>
@@ -605,7 +756,34 @@
                 </div>
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" name="description" placeholder="Describe the role, requirements, and responsibilities..."></textarea>
+                    <div class="rich-text-editor">
+                        <div class="editor-toolbar" id="descriptionToolbar">
+                            <div class="toolbar-group">
+                                <button type="button" class="format-btn" data-command="bold" title="Bold"><i class="fas fa-bold"></i></button>
+                                <button type="button" class="format-btn" data-command="italic" title="Italic"><i class="fas fa-italic"></i></button>
+                                <button type="button" class="format-btn" data-command="underline" title="Underline"><i class="fas fa-underline"></i></button>
+                            </div>
+                            <div class="toolbar-divider"></div>
+                            <div class="toolbar-group">
+                                <button type="button" class="format-btn" data-command="insertUnorderedList" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                                <button type="button" class="format-btn" data-command="insertOrderedList" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                            </div>
+                            <div class="toolbar-divider"></div>
+                            <div class="toolbar-group">
+                                <select class="font-size-select" id="descriptionFontSize">
+                                    <option value="1">Small</option>
+                                    <option value="3" selected>Normal</option>
+                                    <option value="5">Large</option>
+                                    <option value="7">Extra Large</option>
+                                </select>
+                            </div>
+                            <div class="toolbar-divider"></div>
+                            <div class="toolbar-group">
+                                <input type="color" class="color-picker" id="descriptionColor" value="#FFFFFF" title="Text Color">
+                            </div>
+                        </div>
+                        <div class="editor-content" id="descriptionEditor" contenteditable="true" data-field="description" placeholder="Describe the role, requirements, and responsibilities..."></div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="status">Status</label>
@@ -634,6 +812,92 @@
     </div>
 
     <script>
+        // Rich Text Editor Functionality
+        class RichTextEditor {
+            constructor(editorId, toolbarId) {
+                this.editor = document.getElementById(editorId);
+                this.toolbar = document.getElementById(toolbarId);
+                this.init();
+            }
+            
+            init() {
+                this.setupToolbar();
+                this.setupEditor();
+            }
+            
+            setupToolbar() {
+                // Format buttons
+                this.toolbar.querySelectorAll('.format-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const command = btn.dataset.command;
+                        this.executeCommand(command);
+                        this.updateButtonStates();
+                    });
+                });
+                
+                // Font size
+                const fontSizeSelect = this.toolbar.querySelector('.font-size-select');
+                if (fontSizeSelect) {
+                    fontSizeSelect.addEventListener('change', (e) => {
+                        this.executeCommand('fontSize', e.target.value);
+                    });
+                }
+                
+                // Color picker
+                const colorPicker = this.toolbar.querySelector('.color-picker');
+                if (colorPicker) {
+                    colorPicker.addEventListener('change', (e) => {
+                        this.executeCommand('foreColor', e.target.value);
+                    });
+                }
+            }
+            
+            setupEditor() {
+                this.editor.addEventListener('input', () => {
+                    this.updateButtonStates();
+                });
+                
+                this.editor.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && e.shiftKey) {
+                        e.preventDefault();
+                        this.executeCommand('insertLineBreak');
+                    }
+                });
+            }
+            
+            executeCommand(command, value = null) {
+                document.execCommand(command, false, value);
+                this.editor.focus();
+            }
+            
+            updateButtonStates() {
+                this.toolbar.querySelectorAll('.format-btn').forEach(btn => {
+                    const command = btn.dataset.command;
+                    if (document.queryCommandState(command)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+            
+            getContent() {
+                return this.editor.innerHTML;
+            }
+            
+            setContent(content) {
+                this.editor.innerHTML = content;
+            }
+            
+            clear() {
+                this.editor.innerHTML = '';
+            }
+        }
+        
+        // Initialize rich text editors
+        let titleEditor, descriptionEditor;
+        
         // Password Configuration - CHANGE THIS PASSWORD!
         const ADMIN_PASSWORD = 'Deannajack3#';
         
@@ -662,6 +926,11 @@
         function showAdminInterface() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminInterface').style.display = 'block';
+            
+            // Initialize rich text editors
+            titleEditor = new RichTextEditor('titleEditor', 'titleToolbar');
+            descriptionEditor = new RichTextEditor('descriptionEditor', 'descriptionToolbar');
+            
             loadJobs();
         }
 
@@ -714,14 +983,14 @@
                 const jobDiv = document.createElement('div');
                 jobDiv.className = 'job-item';
                 jobDiv.innerHTML = `
-                    <h3>${job.title}</h3>
+                    <h3>${job.title || 'Untitled Job'}</h3>
                     <div class="job-meta">
                         <span>📅 ${job.date || 'TBD'}</span>
-                        <span>📍 ${job.location}</span>
-                        <span>💰 ${job.pay}</span>
-                        <span class="status-${job.status.toLowerCase()}">${job.status}</span>
+                        <span>📍 ${job.location || 'Location TBD'}</span>
+                        <span>💰 ${job.pay || 'Pay TBD'}</span>
+                        <span class="status-${(job.status || 'Active').toLowerCase()}">${job.status || 'Active'}</span>
                     </div>
-                    <p>${job.description}</p>
+                    <div class="job-description">${job.description || 'No description provided'}</div>
                     <div class="actions">
                         <button class="btn btn-small" onclick="editJob(${index})">Edit</button>
                         <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">Delete</button>
@@ -737,11 +1006,11 @@
             
             const formData = new FormData(e.target);
             const job = {
-                title: formData.get('title'),
+                title: titleEditor.getContent(),
                 date: formData.get('date'),
                 location: formData.get('location'),
                 pay: formData.get('pay'),
-                description: formData.get('description'),
+                description: descriptionEditor.getContent(),
                 status: formData.get('status')
             };
 
@@ -760,12 +1029,12 @@
         // Edit job
         function editJob(index) {
             const job = jobs[index];
-            document.getElementById('title').value = job.title;
-            document.getElementById('date').value = job.date;
-            document.getElementById('location').value = job.location;
-            document.getElementById('pay').value = job.pay;
-            document.getElementById('description').value = job.description;
-            document.getElementById('status').value = job.status;
+            titleEditor.setContent(job.title || '');
+            document.getElementById('date').value = job.date || '';
+            document.getElementById('location').value = job.location || '';
+            document.getElementById('pay').value = job.pay || '';
+            descriptionEditor.setContent(job.description || '');
+            document.getElementById('status').value = job.status || 'Active';
             
             document.getElementById('jobForm').dataset.editIndex = index;
         }
@@ -781,6 +1050,8 @@
         // Clear form
         function clearForm() {
             document.getElementById('jobForm').reset();
+            titleEditor.clear();
+            descriptionEditor.clear();
             delete document.getElementById('jobForm').dataset.editIndex;
         }
 
