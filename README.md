@@ -10,16 +10,17 @@
 
 ## 🚀 About This System
 
-**Cochran Films** has built an innovative in-house job application system that seamlessly connects talented creatives with exciting opportunities in media production. This dynamic web platform automatically syncs with our Google Sheets database to display real-time job openings, making it effortless for applicants to discover and apply for positions.
+**Cochran Films** has built an innovative in-house job application system that seamlessly connects talented creatives with exciting opportunities in media production. This dynamic web platform automatically syncs with our JSON data source to display real-time job openings, making it effortless for applicants to discover and apply for positions.
 
 ### ✨ Key Features
 
-- **🔄 Real-Time Updates**: Automatically syncs with Google Sheets for instant job posting updates
+- **🔄 Real-Time Updates**: Automatically syncs with JSON data source for instant job posting updates
 - **📱 Mobile-First Design**: Optimized for all devices with responsive layout
-- **🎯 Smart Filtering**: Only displays active job opportunities
+- **🎯 Smart Filtering**: Only displays active job opportunities with intelligent data filtering
 - **📝 One-Click Applications**: Pre-filled Google Forms for seamless application process
 - **⚡ Lightning Fast**: Cached data and optimized loading for instant results
 - **🎨 Brand-Consistent**: Matches Cochran Films' visual identity and aesthetic
+- **🛡️ Robust Error Handling**: Graceful fallbacks and user-friendly error messages
 
 ---
 
@@ -58,7 +59,7 @@
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Google Sheets │───▶│  Job Listings    │───▶│  Google Forms   │
+│   JSON Data     │───▶│  Job Listings    │───▶│  Google Forms   │
 │   (Database)    │    │  Web System      │    │  (Applications) │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
@@ -66,28 +67,57 @@
 ### Technology Stack
 
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Data Source**: Google Sheets API via CSV export
+- **Data Source**: JSON file with structured job data
 - **Forms**: Google Forms with pre-filled parameters
 - **Styling**: Custom CSS with responsive design
 - **Performance**: Client-side caching and optimized loading
 
 ### Key Technical Features
 
-#### 🔄 Real-Time Data Sync
+#### 🔄 JSON Data Integration
 ```javascript
-// Multiple URL formats for reliability
-const GOOGLE_SHEET_URLS = [
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`,
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`,
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`
+// Primary data source configuration
+const JOBS_DATA_URL = 'jobs-data.json';
+
+// Fallback job data for reliability
+const FALLBACK_JOBS = [
+  {
+    title: "Event Photographer",
+    date: "2024-08-15",
+    location: "Atlanta Area",
+    pay: "$150/day",
+    description: "Join our creative team for exciting photo shoots...",
+    status: "Active"
+  }
+  // ... more fallback jobs
 ];
+```
+
+#### 🧠 Intelligent Data Filtering
+```javascript
+// Smart filtering to exclude applicant submissions
+const jobs = data.jobs.filter(job => {
+  const cleanStatus = String(job.status || '')
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, '')
+    .replace(/\s+/g, ' ');
+  
+  // Check for applicant information to exclude
+  const hasApplicantInfo = job.email || job.phone || job['Full Name'] || 
+                           job.timestamp || job['Applying For Which Job'];
+  
+  return job.title && 
+         cleanStatus === 'active' && 
+         !hasApplicantInfo;
+});
 ```
 
 #### ⚡ Performance Optimizations
 - **Client-side caching** (15-second TTL)
-- **Parallel URL testing** for fastest response
 - **DocumentFragment rendering** for smooth UI updates
 - **Progressive loading** with loading states
+- **Preload data** before DOM is ready
 
 #### 📱 Responsive Design
 ```css
@@ -102,13 +132,23 @@ const GOOGLE_SHEET_URLS = [
 
 ### Data Structure
 
-The system expects Google Sheets with these columns:
-- **Title**: Job position name
-- **Date**: Event or project date
-- **Location**: Work location
-- **Pay**: Compensation details
-- **Description**: Full job description
-- **Status**: "Active" for visible jobs
+The system expects JSON data with this structure:
+```json
+{
+  "jobs": [
+    {
+      "title": "Job Position Name",
+      "date": "2024-08-15",
+      "location": "Work Location",
+      "pay": "Compensation Details",
+      "description": "Full job description",
+      "status": "Active"
+    }
+  ],
+  "lastUpdated": "2024-07-31",
+  "totalJobs": 2
+}
+```
 
 ---
 
@@ -147,10 +187,10 @@ The system expects Google Sheets with these columns:
    cd cochran-films-job-system
    ```
 
-2. **Configure Google Sheets**
-   - Create a Google Sheet with the required columns
-   - Set sharing permissions to "Anyone with link can view"
-   - Update the `SHEET_ID` in `Job-Listings.html`
+2. **Configure JSON Data Source**
+   - Create a `jobs-data.json` file with the required structure
+   - Ensure all job entries have the required fields
+   - Set status to "Active" for visible jobs
 
 3. **Configure Google Forms**
    - Create a Google Form for job applications
@@ -163,8 +203,8 @@ The system expects Google Sheets with these columns:
 ### For Business Users
 
 1. **Add Job Listings**
-   - Open your Google Sheet
-   - Add new rows with job details
+   - Edit the `jobs-data.json` file
+   - Add new job objects with required details
    - Set status to "Active" for visible jobs
 
 2. **Monitor Applications**
@@ -182,6 +222,7 @@ The system expects Google Sheets with these columns:
 - **📈 Scalable**: Handle growing hiring needs efficiently
 - **💼 Professional Image**: Showcase company through branded interface
 - **📊 Easy Management**: Centralized job and application tracking
+- **🛡️ Reliable**: Robust error handling and fallback systems
 
 ### For Applicants
 - **🔍 Easy Discovery**: Browse all opportunities in one place
@@ -189,6 +230,7 @@ The system expects Google Sheets with these columns:
 - **📱 Mobile Access**: Apply from any device
 - **🔄 Real-Time Updates**: See new jobs as they're posted
 - **🎯 Relevant Opportunities**: Filtered for active positions only
+- **📝 Clear Information**: Detailed job descriptions and requirements
 
 ---
 
@@ -204,6 +246,7 @@ The system expects Google Sheets with these columns:
 - Implement email notifications
 - Add application tracking dashboard
 - Integrate with CRM systems
+- Add job search functionality
 
 ---
 
