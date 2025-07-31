@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="X-Frame-Options" content="DENY">
+
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 
@@ -1043,55 +1043,67 @@
       }
     }
     
-    // Multiple proxy services for better reliability
-    const PROXY_SERVICES = [
-      'https://api.allorigins.win/raw?url=',
-      'https://cors-anywhere.herokuapp.com/',
-      'https://thingproxy.freeboard.io/fetch/'
-    ];
+    // Use a more reliable proxy service
+    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
     
-    // Fetch with timeout and multiple proxy fallbacks
-    async function fetchWithTimeout(url, timeout = 10000) {
+    // Fetch with timeout and fallback
+    async function fetchWithTimeout(url, timeout = 15000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
       
-      // Try each proxy service
-      for (let i = 0; i < PROXY_SERVICES.length; i++) {
+      try {
+        // Try direct fetch first (works in some browsers)
         try {
-          const proxyUrl = PROXY_SERVICES[i];
-          const response = await fetch(proxyUrl + encodeURIComponent(url), {
+          const directResponse = await fetch(url, {
             signal: controller.signal,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (compatible; CochranFilms/1.0)'
-            }
+            mode: 'cors'
           });
           
-          if (response.ok) {
-            const text = await response.text();
-            if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
+          if (directResponse.ok) {
+            const text = await directResponse.text();
+            if (text && text.length > 50) {
               clearTimeout(timeoutId);
-              return response;
+              return directResponse;
             }
           }
-        } catch (error) {
-          // Continue to next proxy if this one fails
-          continue;
+        } catch (directError) {
+          // Continue to proxy if direct fails
         }
+        
+        // Try proxy service
+        const response = await fetch(PROXY_URL + encodeURIComponent(url), {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'text/csv,text/plain,*/*'
+          }
+        });
+        
+        if (response.ok) {
+          const text = await response.text();
+          if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
+            clearTimeout(timeoutId);
+            return response;
+          }
+        }
+        
+        throw new Error('Proxy request failed');
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
       }
-      
-      clearTimeout(timeoutId);
-      throw new Error('All proxy services failed');
     }
     
-    // Try all URLs with retry logic
+    // Try all URLs with simplified retry logic
     async function tryAllUrlsParallel() {
-      const maxRetries = 2;
+      const maxRetries = 3;
       
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          const promises = GOOGLE_SHEET_URLS.map(async (url, index) => {
+          // Try URLs sequentially instead of parallel for better reliability
+          for (let i = 0; i < GOOGLE_SHEET_URLS.length; i++) {
+            const url = GOOGLE_SHEET_URLS[i];
             try {
-              const response = await fetchWithTimeout(url, 12000); // Increased timeout
+              const response = await fetchWithTimeout(url, 15000);
               if (response.ok) {
                 const text = await response.text();
                 if (text && text.length > 50 && !text.includes('Sorry, unable to open')) {
@@ -1100,21 +1112,21 @@
                   return text;
                 }
               }
-              throw new Error('Invalid response');
-            } catch (error) {
-              throw new Error(`URL ${index + 1} failed: ${error.message}`);
+            } catch (urlError) {
+              // Continue to next URL if this one fails
+              continue;
             }
-          });
+          }
           
-          // Return the first successful response
-          return await Promise.any(promises);
+          // If we get here, all URLs failed in this attempt
+          throw new Error('All URLs failed');
           
         } catch (error) {
           if (attempt === maxRetries) {
             throw new Error(`All requests failed after ${maxRetries} attempts`);
           }
-          // Wait before retry
-          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+          // Wait before retry with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
       }
     }
