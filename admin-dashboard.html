@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Cochran Films</title>
     
+    <!-- Content Security Policy - Allow Google APIs -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://ssl.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://apis.google.com https://accounts.google.com https://www.googleapis.com;">
+    
+    <!-- Allow Google API iframe if needed -->
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+    
     <!-- Fonts -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -12,47 +18,46 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Drive API - Multiple Loading Methods -->
+    <!-- Google Drive API - Traditional Loading -->
     <script>
-        // Method 1: Try direct script loading
-        window.gapiLoadAttempts = 0;
+        // Initialize loading state
         window.gapiLoaded = false;
+        window.gapiLoadAttempts = 0;
         
-        function loadGoogleAPI() {
+        // Callback for when gapi loads
+        function onGapiLoad() {
+            console.log('📡 Google API script loaded successfully via traditional method');
+            window.gapiLoaded = true;
+        }
+        
+        // Error handler for script loading
+        function onGapiError() {
+            console.error('❌ Google API script failed to load via traditional method');
             window.gapiLoadAttempts++;
-            console.log(`🔄 Attempt ${window.gapiLoadAttempts}: Loading Google API...`);
             
+            if (window.gapiLoadAttempts < 3) {
+                console.log('🔄 Retrying Google API load...');
+                setTimeout(tryDynamicLoad, 2000);
+            } else {
+                console.error('❌ All Google API loading methods failed');
+            }
+        }
+        
+        // Fallback dynamic loading
+        function tryDynamicLoad() {
+            console.log('🔄 Trying dynamic Google API loading...');
             const script = document.createElement('script');
             script.src = 'https://apis.google.com/js/api.js';
             script.async = true;
             script.defer = true;
-            
-            script.onload = function() {
-                console.log('📡 Google API script loaded successfully');
-                window.gapiLoaded = true;
-            };
-            
-            script.onerror = function() {
-                console.error(`❌ Attempt ${window.gapiLoadAttempts}: Failed to load Google API script`);
-                
-                if (window.gapiLoadAttempts < 3) {
-                    console.log('🔄 Retrying in 2 seconds...');
-                    setTimeout(loadGoogleAPI, 2000);
-                } else {
-                    console.error('❌ All attempts to load Google API failed. Possible causes:');
-                    console.error('   • Ad blocker blocking Google APIs');
-                    console.error('   • Corporate firewall blocking googleapis.com');
-                    console.error('   • Browser security settings');
-                    console.error('   • Internet connection issues');
-                }
-            };
-            
+            script.onload = onGapiLoad;
+            script.onerror = onGapiError;
             document.head.appendChild(script);
         }
-        
-        // Start loading immediately
-        loadGoogleAPI();
     </script>
+    
+    <!-- Traditional Google API Script Tag -->
+    <script src="https://apis.google.com/js/api.js" async defer onload="onGapiLoad()" onerror="onGapiError()"></script>
     
     <style>
         :root {
