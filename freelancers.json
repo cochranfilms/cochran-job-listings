@@ -18,14 +18,14 @@
       "role": "Editor",
       "approvedDate": "2025-04-13"
     },
-    "Sarah Jackson": {
-      "email": "sarah@gmail.com",
-      "contractUrl": "https://collaborate.cocohranfilms.com/contracts/sarah-jackson.pdf",
+    "Bob Ross": {
+      "email": "bobross@gmail.com",
+      "contractUrl": "contracts/bob-ross.html",
       "role": "Editor",
       "location": "Atlanta Area",
       "projectStart": "August 16th, 2025 at 2:00pm",
       "rate": "$400.00 USD (Flat)",
-      "approvedDate": "2025-03-14"
+      "approvedDate": "2025-04-19"
     }
   },
   "lastUpdated": "2025-08-01",
