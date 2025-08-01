@@ -12,6 +12,9 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Google Drive API -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    
     <style>
         :root {
             --primary: #FFB200;
@@ -982,10 +985,13 @@
                     <p><strong>💡 Benefits:</strong> Complete automation, legal compliance, and centralized access to all signed contracts.</p>
                 </div>
                 
-                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
                     <button class="btn" onclick="loadSignedContracts()">🔄 Refresh Data</button>
                     <button class="btn" onclick="exportAllSignedContracts()">📦 Export All Contracts</button>
+                    <button class="btn" onclick="setupGoogleDriveSync()" id="driveSetupBtn" style="background: linear-gradient(135deg, #4285f4, #1a73e8);">☁️ Setup Google Drive</button>
+                    <button class="btn" onclick="forceSyncToGoogleDrive()" id="forceSyncBtn" style="background: linear-gradient(135deg, #34a853, #137333); display: none;">💾 Force Sync</button>
                     <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
+                    <span id="syncStatus" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-left: auto;"></span>
                 </div>
             </div>
 
@@ -1004,20 +1010,52 @@
                     <!-- Analytics will be populated here -->
                 </div>
                 
+                <h3>☁️ Google Drive Sync Setup</h3>
+                <div style="background: rgba(66, 133, 244, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(66, 133, 244, 0.3); margin-bottom: 2rem;">
+                    <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem;">
+                        <strong>Cross-Device Contract Sync:</strong> Your signed contracts will be stored in Google Drive for access from any browser/device.
+                    </p>
+                    
+                    <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <h4 style="color: #4285f4; margin-bottom: 1rem;">📋 Setup Instructions:</h4>
+                        <ol style="color: rgba(255,255,255,0.9); line-height: 1.8;">
+                            <li><strong>Go to Google Cloud Console:</strong> <a href="https://console.cloud.google.com/" target="_blank" style="color: #4285f4;">console.cloud.google.com</a></li>
+                            <li><strong>Create New Project:</strong> Name it "Cochran Films Contracts"</li>
+                            <li><strong>Enable Google Drive API:</strong> Search for "Google Drive API" and enable it</li>
+                            <li><strong>Create Credentials:</strong>
+                                <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                                    <li>Go to "Credentials" → "Create Credentials" → "API Key"</li>
+                                    <li>Copy your API Key</li>
+                                    <li>Create "OAuth 2.0 Client ID" for web application</li>
+                                    <li>Add your domain to "Authorized JavaScript origins"</li>
+                                    <li>Copy your Client ID</li>
+                                </ul>
+                            </li>
+                            <li><strong>Update Configuration:</strong> Replace the placeholder values in GOOGLE_DRIVE_CONFIG</li>
+                        </ol>
+                    </div>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,178,0,0.3);">
+                        <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 0.9rem;">
+                            💡 <strong>Benefits:</strong> Once configured, contracts will automatically sync across all your devices. 
+                            The file "cochran-films-signed-contracts.json" will be created in your Google Drive.
+                        </p>
+                    </div>
+                </div>
+                
                 <h3>💾 Data Storage Notes</h3>
                 <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.3);">
                     <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem;">
-                        <strong>Current Setup:</strong> Contract data is stored in browser localStorage.
+                        <strong>Current Setup:</strong> Hybrid storage with Google Drive sync + localStorage backup.
                     </p>
                     <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-size: 0.9rem;">
-                        <strong>For Production:</strong> Consider implementing server-side storage for enterprise use. 
-                        This would require:
+                        <strong>How it works:</strong>
                     </p>
                     <ul style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0; padding-left: 1.5rem;">
-                        <li>Database setup (MySQL, PostgreSQL, MongoDB, etc.)</li>
-                        <li>Server endpoint to save signed contracts</li>
-                        <li>Admin dashboard API to fetch signed contracts</li>
-                        <li>Enhanced authentication and security</li>
+                        <li>✅ Contracts automatically save to Google Drive (cross-device sync)</li>
+                        <li>✅ LocalStorage backup ensures offline access</li>
+                        <li>✅ No server setup required - pure client-side solution</li>
+                        <li>✅ Access contracts from any browser after Google sign-in</li>
                     </ul>
                 </div>
             </div>
@@ -1027,6 +1065,21 @@
     <script>
         // Password Configuration - CHANGE THIS PASSWORD!
         const ADMIN_PASSWORD = 'Deannajack3#';
+        
+        // Google Drive API Configuration
+        const GOOGLE_DRIVE_CONFIG = {
+            apiKey: 'YOUR_API_KEY_HERE', // Replace with your Google Drive API key
+            clientId: 'YOUR_CLIENT_ID_HERE', // Replace with your OAuth2 client ID
+            discoveryDoc: 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
+            scopes: 'https://www.googleapis.com/auth/drive.file',
+            contractsFileName: 'cochran-films-signed-contracts.json'
+        };
+        
+        // Google Drive API state
+        let gapi;
+        let isGoogleDriveInitialized = false;
+        let isGoogleDriveSignedIn = false;
+        let contractsFileId = null; // Will store the Google Drive file ID
         
         // Session management
         let isAuthenticated = false;
@@ -1052,9 +1105,13 @@
         }
 
         // Show admin interface
-        function showAdminInterface() {
+        async function showAdminInterface() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminInterface').style.display = 'block';
+            
+            // Initialize Google Drive API
+            await initializeGoogleDrive();
+            
             loadJobs();
             loadFreelancers();
             loadSignedContracts();
@@ -1389,19 +1446,241 @@
             contractUrlField.value = 'contract.html'; // Always reset to contract.html
         }
 
-        // ==================== SIGNED CONTRACTS FUNCTIONALITY ====================
+        // ==================== GOOGLE DRIVE API INTEGRATION ====================
         
-        // Load signed contracts from localStorage (in production, this would be from server)
-        function loadSignedContracts() {
+        // Initialize Google Drive API
+        async function initializeGoogleDrive() {
             try {
-                const contractData = localStorage.getItem('signedContracts');
-                signedContracts = contractData ? JSON.parse(contractData) : [];
+                if (GOOGLE_DRIVE_CONFIG.apiKey === 'YOUR_API_KEY_HERE') {
+                    console.log('📝 Google Drive API not configured - using localStorage only');
+                    return false;
+                }
+                
+                await new Promise((resolve) => {
+                    gapi.load('client:auth2', resolve);
+                });
+                
+                await gapi.client.init({
+                    apiKey: GOOGLE_DRIVE_CONFIG.apiKey,
+                    clientId: GOOGLE_DRIVE_CONFIG.clientId,
+                    discoveryDocs: [GOOGLE_DRIVE_CONFIG.discoveryDoc],
+                    scope: GOOGLE_DRIVE_CONFIG.scopes
+                });
+                
+                isGoogleDriveInitialized = true;
+                isGoogleDriveSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
+                
+                console.log('✅ Google Drive API initialized');
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Google Drive initialization failed:', error);
+                return false;
+            }
+        }
+        
+        // Sign in to Google Drive
+        async function signInToGoogleDrive() {
+            try {
+                if (!isGoogleDriveInitialized) {
+                    throw new Error('Google Drive API not initialized');
+                }
+                
+                const authInstance = gapi.auth2.getAuthInstance();
+                if (!authInstance.isSignedIn.get()) {
+                    await authInstance.signIn();
+                }
+                
+                isGoogleDriveSignedIn = true;
+                console.log('✅ Signed in to Google Drive');
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Google Drive sign-in failed:', error);
+                return false;
+            }
+        }
+        
+        // Find or create contracts file in Google Drive
+        async function findOrCreateContractsFile() {
+            try {
+                // Search for existing file
+                const response = await gapi.client.drive.files.list({
+                    q: `name='${GOOGLE_DRIVE_CONFIG.contractsFileName}' and trashed=false`,
+                    spaces: 'drive'
+                });
+                
+                if (response.result.files.length > 0) {
+                    contractsFileId = response.result.files[0].id;
+                    console.log('📁 Found existing contracts file:', contractsFileId);
+                    return contractsFileId;
+                }
+                
+                // Create new file if it doesn't exist
+                const fileMetadata = {
+                    name: GOOGLE_DRIVE_CONFIG.contractsFileName,
+                    mimeType: 'application/json'
+                };
+                
+                const media = {
+                    mimeType: 'application/json',
+                    body: JSON.stringify({
+                        signedContracts: [],
+                        lastUpdated: new Date().toISOString(),
+                        totalContracts: 0
+                    }, null, 2)
+                };
+                
+                const createResponse = await gapi.client.request({
+                    path: 'https://www.googleapis.com/upload/drive/v3/files',
+                    method: 'POST',
+                    params: { uploadType: 'multipart' },
+                    headers: { 'Content-Type': 'multipart/related; boundary="boundary"' },
+                    body: [
+                        '--boundary',
+                        'Content-Type: application/json; charset=UTF-8',
+                        '',
+                        JSON.stringify(fileMetadata),
+                        '--boundary',
+                        'Content-Type: application/json',
+                        '',
+                        media.body,
+                        '--boundary--'
+                    ].join('\r\n')
+                });
+                
+                contractsFileId = createResponse.result.id;
+                console.log('✅ Created new contracts file:', contractsFileId);
+                return contractsFileId;
+                
+            } catch (error) {
+                console.error('❌ Error managing contracts file:', error);
+                return null;
+            }
+        }
+        
+        // Load contracts from Google Drive
+        async function loadContractsFromGoogleDrive() {
+            try {
+                if (!isGoogleDriveSignedIn || !contractsFileId) {
+                    return null;
+                }
+                
+                const response = await gapi.client.drive.files.get({
+                    fileId: contractsFileId,
+                    alt: 'media'
+                });
+                
+                const data = JSON.parse(response.body);
+                console.log('📥 Loaded contracts from Google Drive:', data.signedContracts?.length || 0);
+                return data.signedContracts || [];
+                
+            } catch (error) {
+                console.error('❌ Error loading contracts from Google Drive:', error);
+                return null;
+            }
+        }
+        
+        // Save contracts to Google Drive
+        async function saveContractsToGoogleDrive(contracts) {
+            try {
+                if (!isGoogleDriveSignedIn || !contractsFileId) {
+                    return false;
+                }
+                
+                const fileData = {
+                    signedContracts: contracts,
+                    lastUpdated: new Date().toISOString(),
+                    totalContracts: contracts.length,
+                    savedFrom: 'Admin Dashboard'
+                };
+                
+                await gapi.client.request({
+                    path: `https://www.googleapis.com/upload/drive/v3/files/${contractsFileId}`,
+                    method: 'PATCH',
+                    params: { uploadType: 'media' },
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(fileData, null, 2)
+                });
+                
+                console.log('💾 Saved contracts to Google Drive:', contracts.length);
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Error saving contracts to Google Drive:', error);
+                return false;
+            }
+        }
+        
+        // ==================== ENHANCED SIGNED CONTRACTS FUNCTIONALITY ====================
+        
+        // Load signed contracts with Google Drive sync
+        async function loadSignedContracts() {
+            try {
+                // Try Google Drive first
+                if (isGoogleDriveInitialized && isGoogleDriveSignedIn) {
+                    const driveContracts = await loadContractsFromGoogleDrive();
+                    if (driveContracts) {
+                        signedContracts = driveContracts;
+                        // Also save to localStorage as backup
+                        localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
+                        displaySignedContracts();
+                        updateContractAnalytics();
+                        updateSyncStatus('✅ Synced with Google Drive');
+                        return;
+                    }
+                }
+                
+                // Fallback to localStorage
+                const localData = localStorage.getItem('signedContracts');
+                signedContracts = localData ? JSON.parse(localData) : [];
                 displaySignedContracts();
                 updateContractAnalytics();
+                updateSyncStatus('⚠️ Using local storage only');
+                
             } catch (error) {
                 console.error('Error loading signed contracts:', error);
                 signedContracts = [];
                 displaySignedContracts();
+                updateSyncStatus('❌ Error loading contracts');
+            }
+        }
+        
+        // Enhanced contract saving with Google Drive sync
+        async function saveSignedContract(contractData) {
+            try {
+                // Add to local array
+                signedContracts.push(contractData);
+                
+                // Save to localStorage as backup
+                localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
+                
+                // Try to save to Google Drive
+                if (isGoogleDriveInitialized && isGoogleDriveSignedIn) {
+                    const success = await saveContractsToGoogleDrive(signedContracts);
+                    if (success) {
+                        updateSyncStatus('✅ Synced to Google Drive');
+                        return true;
+                    }
+                }
+                
+                updateSyncStatus('⚠️ Saved locally only');
+                return true;
+                
+            } catch (error) {
+                console.error('Error saving signed contract:', error);
+                updateSyncStatus('❌ Save failed');
+                return false;
+            }
+        }
+        
+        // Update sync status indicator
+        function updateSyncStatus(message) {
+            const syncStatus = document.getElementById('syncStatus');
+            if (syncStatus) {
+                syncStatus.textContent = message;
+                syncStatus.style.color = message.includes('✅') ? '#22c55e' : 
+                                      message.includes('⚠️') ? '#f59e0b' : '#ef4444';
             }
         }
 
@@ -1826,6 +2105,87 @@ Status: ${contract.status}
             URL.revokeObjectURL(url);
         }
 
+        // ==================== GOOGLE DRIVE SETUP FUNCTIONS ====================
+        
+        // Setup Google Drive sync from UI
+        async function setupGoogleDriveSync() {
+            const setupBtn = document.getElementById('driveSetupBtn');
+            const originalText = setupBtn.textContent;
+            setupBtn.textContent = '☁️ Setting up...';
+            setupBtn.disabled = true;
+            
+            try {
+                if (!isGoogleDriveInitialized) {
+                    updateSyncStatus('❌ Google Drive API not configured');
+                    alert('Google Drive API not configured. Please add your API credentials to GOOGLE_DRIVE_CONFIG.');
+                    return;
+                }
+                
+                // Sign in to Google Drive
+                const signInSuccess = await signInToGoogleDrive();
+                if (!signInSuccess) {
+                    throw new Error('Failed to sign in to Google Drive');
+                }
+                
+                // Find or create contracts file
+                const fileId = await findOrCreateContractsFile();
+                if (!fileId) {
+                    throw new Error('Failed to create contracts file');
+                }
+                
+                // Sync existing localStorage contracts to Google Drive
+                const localContracts = JSON.parse(localStorage.getItem('signedContracts') || '[]');
+                if (localContracts.length > 0) {
+                    const syncSuccess = await saveContractsToGoogleDrive(localContracts);
+                    if (syncSuccess) {
+                        signedContracts = localContracts;
+                        displaySignedContracts();
+                        updateContractAnalytics();
+                    }
+                }
+                
+                // Update UI
+                setupBtn.style.display = 'none';
+                document.getElementById('forceSyncBtn').style.display = 'inline-block';
+                updateSyncStatus('✅ Google Drive connected');
+                
+                alert(`✅ Google Drive sync enabled!\n\nContracts will now be automatically saved to:\n"${GOOGLE_DRIVE_CONFIG.contractsFileName}" in your Google Drive.`);
+                
+            } catch (error) {
+                console.error('Google Drive setup failed:', error);
+                updateSyncStatus('❌ Setup failed');
+                alert(`❌ Google Drive setup failed: ${error.message}`);
+            } finally {
+                setupBtn.textContent = originalText;
+                setupBtn.disabled = false;
+            }
+        }
+        
+        // Force sync all contracts to Google Drive
+        async function forceSyncToGoogleDrive() {
+            const syncBtn = document.getElementById('forceSyncBtn');
+            const originalText = syncBtn.textContent;
+            syncBtn.textContent = '💾 Syncing...';
+            syncBtn.disabled = true;
+            
+            try {
+                const success = await saveContractsToGoogleDrive(signedContracts);
+                if (success) {
+                    updateSyncStatus('✅ Force sync completed');
+                    alert(`✅ Synced ${signedContracts.length} contracts to Google Drive`);
+                } else {
+                    throw new Error('Sync failed');
+                }
+            } catch (error) {
+                console.error('Force sync failed:', error);
+                updateSyncStatus('❌ Force sync failed');
+                alert('❌ Force sync failed. Please try again.');
+            } finally {
+                syncBtn.textContent = originalText;
+                syncBtn.disabled = false;
+            }
+        }
+        
         // Initialize on page load
         checkAuth();
 </script>
