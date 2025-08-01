@@ -2115,10 +2115,13 @@ Status: ${contract.status}
             setupBtn.disabled = true;
             
             try {
+                // Try to initialize Google Drive API if not already done
                 if (!isGoogleDriveInitialized) {
-                    updateSyncStatus('❌ Google Drive API not configured');
-                    alert('Google Drive API not configured. Please add your API credentials to GOOGLE_DRIVE_CONFIG.');
-                    return;
+                    console.log('🔄 Attempting to initialize Google Drive API...');
+                    const initSuccess = await initializeGoogleDrive();
+                    if (!initSuccess) {
+                        throw new Error('Google Drive API initialization failed. Check console for details.');
+                    }
                 }
                 
                 // Sign in to Google Drive
@@ -2154,7 +2157,19 @@ Status: ${contract.status}
             } catch (error) {
                 console.error('Google Drive setup failed:', error);
                 updateSyncStatus('❌ Setup failed');
-                alert(`❌ Google Drive setup failed: ${error.message}`);
+                
+                // More detailed error handling
+                let errorMessage = `❌ Google Drive setup failed: ${error.message}\n\n`;
+                
+                if (error.message.includes('origin')) {
+                    errorMessage += `🔧 Fix: Add "${window.location.origin}" to your OAuth 2.0 Client ID's "Authorized JavaScript origins" in Google Cloud Console.`;
+                } else if (error.message.includes('API')) {
+                    errorMessage += `🔧 Fix: Make sure the Google Drive API is enabled in your Google Cloud Console project.`;
+                } else {
+                    errorMessage += `🔧 Debug: Check browser console for more details.`;
+                }
+                
+                alert(errorMessage);
             } finally {
                 setupBtn.textContent = originalText;
                 setupBtn.disabled = false;
