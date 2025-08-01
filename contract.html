@@ -942,8 +942,10 @@
                 // Populate contract details
                 populateContractDetails();
                 
-                // Set default signature date to today
-                document.getElementById('signatureDate').value = new Date().toISOString().split('T')[0];
+                // Set default signature date to today in user's local timezone
+                const today = new Date();
+                const localDate = today.toLocaleDateString('en-CA'); // 'en-CA' gives YYYY-MM-DD format
+                document.getElementById('signatureDate').value = localDate;
                 
                 // Set up signature validation now that elements exist
                 setupSignatureValidation();
