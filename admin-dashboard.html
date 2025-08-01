@@ -795,10 +795,25 @@
             <div class="export-section">
                 <h2>Generate Contract Files</h2>
                 <p>Select freelancers to generate contract HTML files for:</p>
-                <div id="freelancerSelectionList" style="margin-bottom: 1rem;"></div>
-                <button class="btn" onclick="generateSelectedContracts()">📦 Generate Selected Contracts</button>
-                <button class="btn btn-secondary" onclick="selectAllFreelancers()">✅ Select All</button>
-                <button class="btn btn-secondary" onclick="clearAllSelections()">❌ Clear All</button>
+                <div id="freelancerSelectionList" style="margin-bottom: 2rem;"></div>
+                
+                <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2); margin-bottom: 2rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn" onclick="generateSelectedContracts()" style="background: linear-gradient(135deg, #FFB200, #FFD700); flex: 1; min-width: 200px; max-width: 300px;">
+                            <span style="font-size: 1.1em;">📦</span> Generate Selected Contracts
+                        </button>
+                        <button class="btn btn-secondary" onclick="selectAllFreelancers()" style="min-width: 120px;">
+                            <span style="font-size: 1.1em;">✅</span> Select All
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearAllSelections()" style="min-width: 120px;">
+                            <span style="font-size: 1.1em;">❌</span> Clear All
+                        </button>
+                    </div>
+                    <div style="text-align: center; margin-top: 1rem; color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                        💡 <strong>Tip:</strong> Click on any freelancer card to select/deselect them for contract generation
+                    </div>
+                </div>
+                
                 <div id="contractGenerationStatus" style="margin-top: 1rem;"></div>
             </div>
         </div>
@@ -1698,20 +1713,187 @@
             selectionList.innerHTML = '';
 
             if (Object.keys(approvedFreelancers).length === 0) {
-                selectionList.innerHTML = '<p style="color: rgba(255,255,255,0.7);">No freelancers available for contract generation.</p>';
+                selectionList.innerHTML = '<p style="color: rgba(255,255,255,0.7); text-align: center; padding: 2rem; font-style: italic;">📋 No freelancers available for contract generation.</p>';
                 return;
             }
 
+            // Add CSS for enhanced selection cards
+            const style = document.createElement('style');
+            style.textContent = `
+                .freelancer-selection-card {
+                    background: linear-gradient(135deg, rgba(255,178,0,0.1) 0%, rgba(255,178,0,0.05) 100%);
+                    border: 2px solid rgba(255,178,0,0.2);
+                    border-radius: 12px;
+                    margin-bottom: 1rem;
+                    padding: 1.5rem;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
+                    backdrop-filter: blur(10px);
+                    cursor: pointer;
+                }
+                
+                .freelancer-selection-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(135deg, rgba(255,178,0,0.1) 0%, transparent 100%);
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                    pointer-events: none;
+                }
+                
+                .freelancer-selection-card:hover {
+                    border-color: #FFB200;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(255,178,0,0.2);
+                }
+                
+                .freelancer-selection-card:hover::before {
+                    opacity: 1;
+                }
+                
+                .freelancer-selection-card.selected {
+                    background: linear-gradient(135deg, rgba(255,178,0,0.2) 0%, rgba(255,178,0,0.1) 100%);
+                    border-color: #FFB200;
+                    box-shadow: 0 4px 20px rgba(255,178,0,0.3);
+                }
+                
+                .freelancer-selection-card.selected::after {
+                    content: '✓';
+                    position: absolute;
+                    top: 1rem;
+                    right: 1rem;
+                    background: #FFB200;
+                    color: #000;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    font-size: 14px;
+                    animation: checkmark 0.3s ease;
+                }
+                
+                @keyframes checkmark {
+                    0% { transform: scale(0) rotate(180deg); opacity: 0; }
+                    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+                }
+                
+                .freelancer-card-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    margin-bottom: 0.5rem;
+                }
+                
+                .freelancer-avatar {
+                    width: 40px;
+                    height: 40px;
+                    background: linear-gradient(135deg, #FFB200, #FFD700);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    color: #000;
+                    font-size: 16px;
+                }
+                
+                .freelancer-name {
+                    font-family: 'Cinzel', serif;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    color: #FFB200;
+                    margin: 0;
+                }
+                
+                .freelancer-details {
+                    display: flex;
+                    gap: 1rem;
+                    margin-top: 0.5rem;
+                    font-size: 0.9rem;
+                    color: rgba(255,255,255,0.8);
+                    flex-wrap: wrap;
+                }
+                
+                .freelancer-detail-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                }
+                
+                .freelancer-checkbox {
+                    position: absolute;
+                    opacity: 0;
+                    pointer-events: none;
+                }
+                
+                .freelancer-selection-card:active {
+                    transform: scale(0.98);
+                }
+                
+                @media (max-width: 768px) {
+                    .freelancer-selection-card {
+                        padding: 1rem;
+                    }
+                    
+                    .freelancer-details {
+                        flex-direction: column;
+                        gap: 0.5rem;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+
             Object.keys(approvedFreelancers).forEach(freelancerName => {
-                const checkboxDiv = document.createElement('div');
-                checkboxDiv.style.cssText = 'margin-bottom: 0.5rem; padding: 0.5rem; background: rgba(255,178,0,0.1); border-radius: 6px; border: 1px solid rgba(255,178,0,0.2);';
-                checkboxDiv.innerHTML = `
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: #fff;">
-                        <input type="checkbox" value="${freelancerName}" class="freelancer-checkbox" style="margin: 0;">
-                        <span>${freelancerName}</span>
-                    </label>
+                const freelancer = approvedFreelancers[freelancerName];
+                const initials = freelancerName.split(' ').map(name => name[0]).join('').toUpperCase();
+                
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'freelancer-selection-card';
+                cardDiv.innerHTML = `
+                    <input type="checkbox" value="${freelancerName}" class="freelancer-checkbox">
+                    <div class="freelancer-card-header">
+                        <div class="freelancer-avatar">${initials}</div>
+                        <div>
+                            <h3 class="freelancer-name">${freelancerName}</h3>
+                        </div>
+                    </div>
+                    <div class="freelancer-details">
+                        <div class="freelancer-detail-item">
+                            <span>🎭</span>
+                            <span>${freelancer.role || 'Role not specified'}</span>
+                        </div>
+                        <div class="freelancer-detail-item">
+                            <span>💰</span>
+                            <span>${freelancer.rate || 'Rate not specified'}</span>
+                        </div>
+                        <div class="freelancer-detail-item">
+                            <span>📅</span>
+                            <span>${freelancer.approvedDate || 'Date not specified'}</span>
+                        </div>
+                    </div>
                 `;
-                selectionList.appendChild(checkboxDiv);
+                
+                // Add click handler for the card
+                cardDiv.addEventListener('click', function() {
+                    const checkbox = this.querySelector('.freelancer-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    
+                    if (checkbox.checked) {
+                        this.classList.add('selected');
+                    } else {
+                        this.classList.remove('selected');
+                    }
+                });
+                
+                selectionList.appendChild(cardDiv);
             });
         }
 
@@ -1719,6 +1901,7 @@
         function selectAllFreelancers() {
             document.querySelectorAll('.freelancer-checkbox').forEach(checkbox => {
                 checkbox.checked = true;
+                checkbox.closest('.freelancer-selection-card').classList.add('selected');
             });
         }
 
@@ -1726,6 +1909,7 @@
         function clearAllSelections() {
             document.querySelectorAll('.freelancer-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
+                checkbox.closest('.freelancer-selection-card').classList.remove('selected');
             });
         }
 
