@@ -26,8 +26,17 @@
       "projectStart": "August 16th, 2025 at 2:00pm",
       "rate": "$400.00 USD (Flat)",
       "approvedDate": "2025-04-19"
+    },
+    "Tammy Sue": {
+      "email": "tammys@gmail.com",
+      "contractUrl": "contracts/tammy-sue.html",
+      "role": "Editor",
+      "location": "Atlanta Area",
+      "projectStart": "August 16th, 2025 at 2:00pm",
+      "rate": "$400.00 USD (Flat)",
+      "approvedDate": "2025-05-06"
     }
   },
   "lastUpdated": "2025-08-01",
-  "totalFreelancers": 4
+  "totalFreelancers": 5
 }
