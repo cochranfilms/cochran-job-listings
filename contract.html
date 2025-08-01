@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cochran Films - Contract Access</title>
+    <style>
+        :root {
+            --primary: #FFB200;
+            --primary-dark: #FF9000;
+            --gold: #FFD700;
+            --black: #000000;
+            --white: #ffffff;
+            --gray-light: #f8f9fa;
+            --gray-medium: #6c757d;
+            --gray-dark: #343a40;
+            --border-radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--white);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: linear-gradient(135deg, var(--black) 0%, #1a1a1a 100%);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 178, 0, 0.2);
+        }
+        
+        .logo {
+            margin-bottom: 30px;
+        }
+        
+        .logo img {
+            width: 200px;
+            height: auto;
+        }
+        
+        h1 {
+            font-family: Georgia, serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: var(--white);
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--white);
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 178, 0, 0.5);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: rgba(255, 178, 0, 0.1);
+            color: var(--white);
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 178, 0, 0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--gold) 100%);
+            color: var(--black);
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 178, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .message {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .contract-link {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--black);
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .contract-link:hover {
+            background: var(--gold);
+            transform: translateY(-1px);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .security-note {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(255, 178, 0, 0.1);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--white);
+            border-left: 3px solid var(--primary);
+        }
+        
+        .test-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 6px;
+            font-size: 12px;
+            color: #ffc107;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo">
+        </div>
+        
+        <h1>🔐 Contract Access</h1>
+        <p class="subtitle">Enter your details to access your personalized contract if you've been approved to join our team.</p>
+        
+        <form id="contractForm" onsubmit="checkAccess(event)">
+            <div class="form-group">
+                <label for="freelancerName">Full Name *</label>
+                <input type="text" id="freelancerName" placeholder="Enter your full name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="freelancerEmail">Email Address *</label>
+                <input type="email" id="freelancerEmail" placeholder="Enter your email address" required>
+            </div>
+            
+            <button type="submit" class="btn">🔍 Verify Access</button>
+        </form>
+        
+        <div id="success-message" class="message success hidden">
+            <p>✅ <strong>Access Granted!</strong></p>
+            <p>Welcome to the Cochran Films team. Your contract is ready for review.</p>
+            <a href="" id="contractURL" class="contract-link" target="_blank">📄 View Your Contract</a>
+        </div>
+        
+        <div id="error-message" class="message error hidden">
+            <p>❌ <strong>Access Not Granted</strong></p>
+            <p>We couldn't verify your access at this time. Please contact us if you believe this is an error.</p>
+        </div>
+        
+        <div class="test-info">
+            <strong>🧪 TEST MODE:</strong> This is a local test version. Use "Francisco Flores" with "ciscocinema@gmail.com" to test the HTML contract, or "Cody Cochran" with "info@cochranfilms.com" for other testing.
+        </div>
+        
+        <div class="security-note">
+            <strong>🔒 Security Note:</strong> This system verifies your identity against our approved freelancer database. Your information is secure and will not be stored.
+        </div>
+    </div>
+
+    <script>
+        // Test version with hardcoded data for local testing
+        const approvedFreelancers = {
+            "Francisco Flores": {
+                email: "ciscocinema@gmail.com",
+                contractUrl: "contracts/francisco-flores.html"
+            },
+            "Demita Fields": {
+                email: "demita.fields@example.com", 
+                contractUrl: "https://yourdomain.com/contracts/demita-fields.pdf"
+            },
+            "Sarah Johnson": {
+                email: "sarah.johnson@example.com",
+                contractUrl: "https://yourdomain.com/contracts/sarah-johnson.pdf"
+            },
+            "Cody Cochran": {
+                email: "info@cochranfilms.com",
+                contractUrl: "https://yourdomain.com/contracts/cody-cochran.pdf"
+            }
+        };
+
+        function checkAccess(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById("freelancerName").value.trim();
+            const email = document.getElementById("freelancerEmail").value.trim().toLowerCase();
+            
+            const successDiv = document.getElementById("success-message");
+            const errorDiv = document.getElementById("error-message");
+            const contractLink = document.getElementById("contractURL");
+            
+            // Hide previous messages
+            successDiv.classList.add("hidden");
+            errorDiv.classList.add("hidden");
+            
+            // Check if freelancer exists and email matches (case-insensitive for both name and email)
+            const normalizedName = name.toLowerCase();
+            const matchingFreelancer = Object.keys(approvedFreelancers).find(key => 
+                key.toLowerCase() === normalizedName
+            );
+            
+            if (matchingFreelancer && approvedFreelancers[matchingFreelancer].email.toLowerCase() === email) {
+                // Access granted
+                contractLink.href = approvedFreelancers[matchingFreelancer].contractUrl;
+                successDiv.classList.remove("hidden");
+                
+                // Scroll to success message
+                successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // Access denied
+                errorDiv.classList.remove("hidden");
+                
+                // Scroll to error message
+                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Add enter key support
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                checkAccess(event);
+            }
+        });
+    </script>
+</body>
+</html> 
