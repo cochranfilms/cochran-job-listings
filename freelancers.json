@@ -6,28 +6,19 @@
       "role": "Backdrop Photographer",
       "approvedDate": "2024-11-08"
     },
-    "Demita Fields": {
-      "email": "demita.fields@example.com",
-      "contractUrl": "https://yourdomain.com/contracts/demita-fields.pdf",
-      "role": "Photographer",
-      "approvedDate": "2024-01-20"
-    },
-    "Sarah Johnson": {
-      "email": "sarah.johnson@example.com",
-      "contractUrl": "https://yourdomain.com/contracts/sarah-johnson.pdf",
-      "role": "Graphic Designer",
-      "approvedDate": "2024-02-01"
-    },
     "Cody Cochran": {
       "email": "info@cochranfilms.com",
       "contractUrl": "https://yourdomain.com/contracts/michael-chen.pdf",
       "role": "Video Editor",
       "approvedDate": "2024-02-10"
+    },
+    "Bill cooper": {
+      "email": "bill@cooper.com",
+      "contractUrl": "https://collaborate.cocohranfilms.com/contracts/bill-cooper.pdf",
+      "role": "Editor",
+      "approvedDate": "2025-04-13"
     }
   },
-  "systemInfo": {
-    "lastUpdated": "2024-01-01",
-    "version": "1.0",
-    "description": "Approved freelancer database for Cochran Films contract access system"
-  }
-} 
+  "lastUpdated": "2025-08-01",
+  "totalFreelancers": 3
+}
