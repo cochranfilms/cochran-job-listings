@@ -344,12 +344,12 @@
         }
         
         /* Aggressively prevent ALL browser overlays and loading indicators */
-        form {
+        .login-form {
             position: relative;
         }
         
-        form::before,
-        form::after {
+        .login-form::before,
+        .login-form::after {
             display: none !important;
             opacity: 0 !important;
             visibility: hidden !important;
@@ -549,7 +549,7 @@
                 <h1><i class="fas fa-lock"></i> Contract Access</h1>
                 <p class="subtitle">Enter your details to access your personalized contract if you've been approved to join our team.</p>
                 
-                <form id="contractForm" class="login-form" novalidate autocomplete="off" onsubmit="return false;">
+                <div id="contractForm" class="login-form">
                     <div class="form-group">
                         <label for="freelancerName"><i class="fas fa-user"></i> Full Name</label>
                         <input type="text" id="freelancerName" placeholder="Enter your full name" autocomplete="off" spellcheck="false">
@@ -563,7 +563,7 @@
                     <button type="button" class="btn" onclick="performAccessCheck()">
                         <i class="fas fa-search"></i> Verify Access
                     </button>
-                </form>
+                </div>
                 
                 <div class="security-note">
                     <strong><i class="fas fa-shield-alt"></i> Security Note:</strong> This system verifies your identity against our approved freelancer database. Your information is secure and will not be stored.
@@ -739,7 +739,35 @@
             
             // Aggressively disable any browser loading overlays
             forceClearLoadingStates();
+            
+            // Prevent ANY form submission or navigation
+            preventAllNavigation();
         });
+        
+        // Completely prevent any navigation or form submission
+        function preventAllNavigation() {
+            // Catch any form submission attempts
+            document.addEventListener('submit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🚫 Blocked form submission attempt');
+                return false;
+            }, true);
+            
+            // Catch any beforeunload attempts
+            window.addEventListener('beforeunload', function(e) {
+                e.preventDefault();
+                console.log('🚫 Blocked page navigation attempt');
+                return false;
+            });
+            
+            // Override form submission methods globally
+            const originalSubmit = HTMLFormElement.prototype.submit;
+            HTMLFormElement.prototype.submit = function() {
+                console.log('🚫 Blocked programmatic form submission');
+                return false;
+            };
+        }
         
         // Force clear any loading states or overlays
         function forceClearLoadingStates() {
@@ -757,11 +785,11 @@
                 }
             });
             
-            // Clear any loading states on form
-            const form = document.getElementById('contractForm');
-            if (form) {
-                form.classList.remove('loading', 'processing', 'submitting');
-                form.style.pointerEvents = 'auto';
+            // Clear any loading states on form container
+            const formContainer = document.getElementById('contractForm');
+            if (formContainer) {
+                formContainer.classList.remove('loading', 'processing', 'submitting');
+                formContainer.style.pointerEvents = 'auto';
             }
         }
 
@@ -1550,7 +1578,12 @@ This contract has been digitally signed and is legally binding.
                 if (event.key === 'Enter') {
                     event.preventDefault();
                     event.stopPropagation();
-                    performAccessCheck();
+                    event.stopImmediatePropagation();
+                    // Small delay to prevent any race conditions
+                    setTimeout(() => {
+                        performAccessCheck();
+                    }, 10);
+                    return false;
                 }
             }
             
