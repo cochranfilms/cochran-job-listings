@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cochran Films - Contract Access</title>
+    
+    <!-- Fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root {
             --primary: #FFB200;
@@ -26,143 +34,266 @@
         }
         
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: var(--white);
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
             min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Login Screen Styles */
+        .login-screen {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            position: relative;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 2rem;
+        }
+        
+        .login-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,178,0,0.1) 0%, transparent 70%);
+            pointer-events: none;
         }
         
         .container {
-            background: linear-gradient(135deg, var(--black) 0%, #1a1a1a 100%);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(255,178,0,0.2);
             text-align: center;
-            border: 1px solid rgba(255, 178, 0, 0.2);
-            transition: max-width 0.3s ease;
+            max-width: 450px;
+            width: 100%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.3);
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        /* Expand container when contract details are shown */
+        /* Expanded state for contract view */
+        .login-screen.expanded {
+            align-items: flex-start;
+            padding: 2rem 1rem;
+        }
+        
         .container.expanded {
-            max-width: 900px;
+            max-width: 1200px;
+            width: 100%;
+            margin-top: 2rem;
         }
         
         .logo {
-            margin-bottom: 30px;
+            margin-bottom: 2rem;
         }
         
         .logo img {
-            width: 200px;
+            width: 140px;
             height: auto;
+            filter: 
+                drop-shadow(0 0 3px #FFB200)
+                drop-shadow(0 0 6px #FFB200)
+                drop-shadow(2px 2px 0px #000000);
+            animation: logoGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes logoGlow {
+            0% {
+                filter: 
+                    drop-shadow(0 0 3px #FFB200)
+                    drop-shadow(0 0 6px #FFB200)
+                    drop-shadow(2px 2px 0px #000000);
+            }
+            100% {
+                filter: 
+                    drop-shadow(0 0 5px #FFB200)
+                    drop-shadow(0 0 8px #FFB200)
+                    drop-shadow(2px 2px 0px #000000);
+            }
         }
         
         h1 {
-            font-family: Georgia, serif;
-            font-size: 28px;
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
             font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 10px;
+            color: #FFB200;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
         }
         
         .subtitle {
-            color: var(--white);
-            font-size: 16px;
-            margin-bottom: 30px;
-            line-height: 1.5;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
             text-align: left;
         }
         
-        label {
+        .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
             font-weight: 600;
-            color: var(--white);
-            font-size: 14px;
+            color: #FFB200;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid rgba(255, 178, 0, 0.5);
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 178, 0, 0.3);
             border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-            background: rgba(255, 178, 0, 0.1);
-            color: var(--white);
+            font-size: 1rem;
+            color: #fff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(15px);
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
         }
         
         input:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(255, 178, 0, 0.2);
+            background: rgba(0, 0, 0, 0.6);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
         }
         
         .btn {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--gold) 100%);
-            color: var(--black);
-            border: none;
-            padding: 14px 32px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
             width: 100%;
-            margin-top: 10px;
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #FFB200;
+            z-index: -1;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn:hover::before {
+            transform: scaleX(1);
         }
         
         .btn:hover {
+            color: #000;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 178, 0, 0.3);
-        }
-        
-        .btn:active {
-            transform: translateY(0);
+            box-shadow: 0 6px 20px rgba(255,178,0,0.4);
         }
         
         .message {
-            margin-top: 20px;
-            padding: 16px;
-            border-radius: 8px;
-            font-weight: 500;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-top: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+            text-align: left;
+        }
+        
+        .message h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #FFB200;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
         }
         
         .success {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-left: 4px solid #22c55e;
         }
         
         .error {
-            background: rgba(239, 68, 68, 0.2);
+            border-left: 4px solid #ef4444;
+        }
+        
+        .error h2 {
             color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.3);
         }
         
         .contract-link {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-right: 1rem;
+            margin-top: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
             display: inline-block;
-            background: var(--primary);
-            color: var(--black);
             text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-weight: 600;
-            margin-top: 15px;
-            transition: all 0.3s ease;
+        }
+        
+        .contract-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #FFB200;
+            z-index: -1;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .contract-link:hover::before {
+            transform: scaleX(1);
         }
         
         .contract-link:hover {
-            background: var(--gold);
-            transform: translateY(-1px);
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,178,0,0.4);
         }
         
         .hidden {
@@ -170,136 +301,225 @@
         }
         
         .security-note {
-            margin-top: 30px;
-            padding: 15px;
-            background: rgba(255, 178, 0, 0.1);
-            border-radius: 6px;
-            font-size: 12px;
-            color: var(--white);
-            border-left: 3px solid var(--primary);
+            background: rgba(255,178,0,0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            border: 1px solid rgba(255,178,0,0.3);
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
         }
         
-
+        /* Contract Details Styling */
+        .contract-section {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
         
-        @media (max-width: 480px) {
+        .contract-section:hover {
+            border-color: #FFB200;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,178,0,0.2);
+        }
+        
+        .contract-section h4 {
+            color: var(--primary);
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+        }
+        
+        .project-info {
+            background: rgba(255, 178, 0, 0.15);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+        }
+        
+        .signature-section {
+            background: rgba(255, 178, 0, 0.1);
+            border: 2px solid rgba(255, 178, 0, 0.3);
+        }
+        
+        .workflow-info {
+            background: rgba(255,178,0,0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255,178,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .download-instructions {
+            background: rgba(255, 178, 0, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .login-screen {
+                padding: 1rem;
+            }
+            
             .container {
-                padding: 30px 20px;
+                padding: 2rem;
             }
             
             .container.expanded {
-                max-width: 95vw;
-                padding: 20px 15px;
+                padding: 1.5rem;
+                margin-top: 1rem;
             }
             
             h1 {
-                font-size: 24px;
+                font-size: 1.8rem;
+            }
+            
+            .message {
+                padding: 1.5rem;
             }
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+            
             .container.expanded {
-                max-width: 95vw;
-                padding: 30px 20px;
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .contract-section {
+                padding: 1rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo">
-        </div>
-        
-        <h1>🔐 Contract Access</h1>
-        <p class="subtitle">Enter your details to access your personalized contract if you've been approved to join our team.</p>
-        
-        <form id="contractForm" onsubmit="checkAccess(event)">
-            <div class="form-group">
-                <label for="freelancerName">Full Name *</label>
-                <input type="text" id="freelancerName" placeholder="Enter your full name" required>
+    <div class="login-screen" id="loginScreen">
+        <div class="container" id="mainContainer">
+            <div class="logo">
+                <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo">
             </div>
             
-            <div class="form-group">
-                <label for="freelancerEmail">Email Address *</label>
-                <input type="email" id="freelancerEmail" placeholder="Enter your email address" required>
-            </div>
+            <h1><i class="fas fa-lock"></i> Contract Access</h1>
+            <p class="subtitle">Enter your details to access your personalized contract if you've been approved to join our team.</p>
             
-            <button type="submit" class="btn">🔍 Verify Access</button>
-        </form>
-        
-        <div id="success-message" class="message success hidden">
-            <p>✅ <strong>Access Granted!</strong></p>
-            <p>Welcome to the Cochran Films team. Your contract is ready for review and signing.</p>
-            
-            <!-- Contract Review Section -->
-            <div id="contractReview" style="margin-top: 2rem;">
-                <div style="text-align: left; background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
-                    <h3 style="color: var(--primary); margin-bottom: 1rem;">📋 Contract Details</h3>
-                    <div id="contractDetails">
-                        <!-- Contract details will be populated here -->
-                    </div>
+            <form id="contractForm" onsubmit="checkAccess(event)" class="login-form">
+                <div class="form-group">
+                    <label for="freelancerName"><i class="fas fa-user"></i> Full Name</label>
+                    <input type="text" id="freelancerName" placeholder="Enter your full name" required>
                 </div>
                 
-                <!-- Digital Signature Section -->
-                <div id="signatureSection" style="background: rgba(255, 178, 0, 0.1); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255, 178, 0, 0.3);">
-                    <h3 style="color: var(--primary); margin-bottom: 1rem;">✍️ Digital Signature</h3>
-                    
-                    <div class="form-group">
-                        <label for="digitalSignature">Type your full name to sign the contract:</label>
-                        <input type="text" id="digitalSignature" placeholder="Enter your full name" style="font-family: cursive; font-size: 16px;">
+                <div class="form-group">
+                    <label for="freelancerEmail"><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" id="freelancerEmail" placeholder="Enter your email address" required>
+                </div>
+                
+                <button type="submit" class="btn">
+                    <i class="fas fa-search"></i> Verify Access
+                </button>
+            </form>
+            
+            <div id="success-message" class="message success hidden">
+                <h2><i class="fas fa-check-circle"></i> Access Granted!</h2>
+                <div class="workflow-info">
+                    <p><strong>Welcome to the Cochran Films team!</strong> Your contract is ready for review and signing.</p>
+                    <p>Please review all contract details carefully before proceeding with digital signature.</p>
+                </div>
+                
+                <!-- Contract Review Section -->
+                <div id="contractReview">
+                    <div class="contract-section" id="contractDetailsSection">
+                        <h4><i class="fas fa-file-contract"></i> Contract Details</h4>
+                        <div id="contractDetails">
+                            <!-- Contract details will be populated here -->
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="signatureDate">Signature Date:</label>
-                        <input type="date" id="signatureDate">
-                    </div>
-                    
-                    <div style="margin-top: 1rem;">
+                    <!-- Digital Signature Section -->
+                    <div class="contract-section signature-section" id="signatureSection">
+                        <h4><i class="fas fa-signature"></i> Digital Signature</h4>
+                        
+                        <div class="form-group">
+                            <label for="digitalSignature"><i class="fas fa-pen"></i> Type your full name to sign the contract</label>
+                            <input type="text" id="digitalSignature" placeholder="Enter your full name" style="font-family: cursive; font-size: 16px;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="signatureDate"><i class="fas fa-calendar"></i> Signature Date</label>
+                            <input type="date" id="signatureDate">
+                        </div>
+                        
                         <button id="signContractBtn" class="btn" onclick="signContract()" disabled>
-                            ✍️ Sign Contract
+                            <i class="fas fa-signature"></i> Sign Contract
                         </button>
+                        
+                        <button id="downloadSignedBtn" class="contract-link" onclick="downloadSignedContract()" style="display: none;">
+                            <i class="fas fa-download"></i> Download Signed Contract
+                        </button>
+                        
+                        <div id="downloadInstructions" class="download-instructions" style="display: none;">
+                            <strong><i class="fas fa-info-circle"></i> How to Download:</strong> Click the button above to open a print dialog. Choose "Save as PDF" as your destination instead of printing to a physical printer. This will save the signed contract to your computer.
+                        </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Contract Signed Success Message -->
+            <div id="signed-message" class="message success hidden">
+                <h2><i class="fas fa-check-circle"></i> Contract Successfully Signed!</h2>
+                <div class="workflow-info">
+                    <p><strong>Thank you!</strong> Your signed contract has been processed and we've been notified.</p>
+                </div>
                 
-                <!-- Action Buttons -->
-                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem;">
-                    <button id="downloadSignedBtn" class="contract-link" onclick="downloadSignedContract()" style="border: none; cursor: pointer; display: none;">
-                        📄 Download Signed Contract
-                    </button>
+                <div class="contract-section" style="background: rgba(34, 197, 94, 0.1); border-color: #22c55e;">
+                    <h4 style="color: #22c55e;"><i class="fas fa-clipboard-check"></i> Next Steps</h4>
+                    <ul style="color: #22c55e; margin: 0; padding-left: 1.5rem;">
+                        <li>You'll receive a confirmation email shortly</li>
+                        <li>We'll contact you with project details</li>
+                        <li>Keep your signed contract for your records</li>
+                    </ul>
                 </div>
-                <div id="downloadInstructions" style="margin-top: 1rem; padding: 1rem; background: rgba(255, 178, 0, 0.1); border-radius: 6px; font-size: 14px; color: rgba(255,255,255,0.8); display: none;">
-                    <strong>📋 How to Download:</strong> Click the button above to open a print dialog. Choose "Save as PDF" as your destination instead of printing to a physical printer. This will save the signed contract to your computer.
+                
+                <button class="contract-link" onclick="downloadSignedContract()">
+                    <i class="fas fa-download"></i> Download Your Signed Contract
+                </button>
+                
+                <div class="download-instructions">
+                    <strong><i class="fas fa-info-circle"></i> How to Download:</strong> Click the button above to open a print dialog. Choose "Save as PDF" as your destination instead of printing to a physical printer. This will save the signed contract to your computer.
                 </div>
             </div>
-        </div>
-        
-        <!-- Contract Signed Success Message -->
-        <div id="signed-message" class="message success hidden">
-            <p>🎉 <strong>Contract Successfully Signed!</strong></p>
-            <p>Thank you! Your signed contract has been processed and we've been notified.</p>
-            <div style="margin: 1rem 0; padding: 1rem; background: rgba(0,255,0,0.1); border-radius: 6px; border: 1px solid rgba(0,255,0,0.3);">
-                <p style="margin: 0; color: #22c55e;">
-                    ✅ <strong>Next Steps:</strong><br>
-                    • You'll receive a confirmation email shortly<br>
-                    • We'll contact you with project details<br>
-                    • Keep your signed contract for your records
-                </p>
+            
+            <div id="error-message" class="message error hidden">
+                <h2><i class="fas fa-exclamation-triangle"></i> Access Not Granted</h2>
+                <p>We couldn't verify your access at this time. Please check your information and try again, or contact us if you believe this is an error.</p>
+                <div class="workflow-info" style="background: rgba(239, 68, 68, 0.1); border-color: #ef4444;">
+                    <p><strong>Common Issues:</strong></p>
+                    <ul>
+                        <li>Name spelling must match exactly as provided to us</li>
+                        <li>Email address must match your application</li>
+                        <li>You may not be in our approved freelancer database yet</li>
+                    </ul>
+                </div>
             </div>
-            <button class="contract-link" onclick="downloadSignedContract()" style="border: none; cursor: pointer;">
-                📄 Download Your Signed Contract
-            </button>
-            <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 178, 0, 0.1); border-radius: 6px; font-size: 14px; color: rgba(255,255,255,0.8);">
-                <strong>📋 How to Download:</strong> Click the button above to open a print dialog. Choose "Save as PDF" as your destination instead of printing to a physical printer. This will save the signed contract to your computer.
+            
+            <div class="security-note">
+                <strong><i class="fas fa-shield-alt"></i> Security Note:</strong> This system verifies your identity against our approved freelancer database. Your information is secure and will not be stored.
             </div>
-        </div>
-        
-        <div id="error-message" class="message error hidden">
-            <p>❌ <strong>Access Not Granted</strong></p>
-            <p>We couldn't verify your access at this time. Please contact us if you believe this is an error.</p>
-        </div>
-        
-        <div class="security-note">
-            <strong>🔒 Security Note:</strong> This system verifies your identity against our approved freelancer database. Your information is secure and will not be stored.
         </div>
     </div>
 
@@ -427,8 +647,9 @@
                 // Show success message (no need to set href since everything is on this page now)
                 successDiv.classList.remove("hidden");
                 
-                // Expand container to show more content comfortably
-                document.querySelector('.container').classList.add('expanded');
+                // Expand to show more content comfortably
+                document.getElementById('loginScreen').classList.add('expanded');
+                document.getElementById('mainContainer').classList.add('expanded');
                 
                 // Scroll to success message
                 successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -456,64 +677,68 @@
             const contractDetailsDiv = document.getElementById('contractDetails');
             contractDetailsDiv.innerHTML = `
                 <!-- Basic Contract Info -->
-                <div style="background: rgba(255, 178, 0, 0.15); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.3);">
-                    <h4 style="color: var(--primary); margin: 0 0 0.75rem 0; font-size: 16px;">📋 Project Information</h4>
-                    <div style="display: grid; gap: 0.5rem;">
-                        <div><strong>👤 Name:</strong> ${data.name}</div>
-                        <div><strong>📧 Email:</strong> ${data.email}</div>
-                        <div><strong>🎭 Role:</strong> ${role}</div>
-                        <div><strong>📍 Location:</strong> ${location}</div>
-                        <div><strong>🕒 Project Start:</strong> ${projectStart}</div>
-                        <div><strong>💰 Rate:</strong> ${rate}</div>
-                        <div><strong>📅 Effective Date:</strong> ${effectiveDate}</div>
+                <div class="contract-section project-info">
+                    <h4><i class="fas fa-info-circle"></i> Project Information</h4>
+                    <div style="display: grid; gap: 0.75rem; margin-top: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-user" style="color: #FFB200; width: 20px;"></i> <strong>Name:</strong> ${data.name}</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-envelope" style="color: #FFB200; width: 20px;"></i> <strong>Email:</strong> ${data.email}</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-briefcase" style="color: #FFB200; width: 20px;"></i> <strong>Role:</strong> ${role}</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-map-marker-alt" style="color: #FFB200; width: 20px;"></i> <strong>Location:</strong> ${location}</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-clock" style="color: #FFB200; width: 20px;"></i> <strong>Project Start:</strong> ${projectStart}</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-dollar-sign" style="color: #FFB200; width: 20px;"></i> <strong>Rate:</strong> ${rate}</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-calendar" style="color: #FFB200; width: 20px;"></i> <strong>Effective Date:</strong> ${effectiveDate}</div>
                     </div>
                 </div>
 
                 <!-- Contract Terms -->
-                <div style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.2);">
-                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">✅ Your Responsibilities</h4>
-                    <ul style="margin: 0; padding-left: 1.25rem; line-height: 1.6;">
-                        <li>Arrive at the project location on time</li>
-                        <li>Professionally manage your assigned role and responsibilities</li>
-                        <li>Complete the job to professional standards</li>
-                        <li>Use personal equipment unless otherwise arranged</li>
-                        <li>Maintain a respectful demeanor with staff and clients</li>
-                        <li>Wear company-branded gear provided (no charge)</li>
-                        <li>Wear all black regardless of branded gear provided</li>
+                <div class="contract-section">
+                    <h4><i class="fas fa-tasks"></i> Your Responsibilities</h4>
+                    <ul style="margin: 1rem 0 0 0; padding-left: 1.5rem; line-height: 1.8;">
+                        <li><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 0.5rem;"></i>Arrive at the project location on time</li>
+                        <li><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 0.5rem;"></i>Professionally manage your assigned role and responsibilities</li>
+                        <li><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 0.5rem;"></i>Complete the job to professional standards</li>
+                        <li><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 0.5rem;"></i>Use personal equipment unless otherwise arranged</li>
+                        <li><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 0.5rem;"></i>Maintain a respectful demeanor with staff and clients</li>
+                        <li><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 0.5rem;"></i>Wear company-branded gear provided (no charge)</li>
+                        <li><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 0.5rem;"></i>Wear all black regardless of branded gear provided</li>
                     </ul>
                 </div>
 
                 <!-- BTS Content Policy -->
-                <div style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.2);">
-                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">📸 BTS Content & Ownership</h4>
-                    <p style="margin: 0; line-height: 1.6;">
+                <div class="contract-section">
+                    <h4><i class="fas fa-camera"></i> BTS Content & Ownership</h4>
+                    <p style="margin: 1rem 0 0 0; line-height: 1.8; color: rgba(255,255,255,0.9);">
+                        <i class="fas fa-info-circle" style="color: #3B82F6; margin-right: 0.5rem;"></i>
                         You may freely take and share behind-the-scenes content. Cochran Films may repost with credit. 
                         Content ownership remains with you.
                     </p>
                 </div>
 
                 <!-- Payment Terms -->
-                <div style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.2);">
-                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">💵 Payment Terms</h4>
-                    <p style="margin: 0; line-height: 1.6;">
-                        Payment of <strong>${rate}</strong> will be made no later than 24 hours after the event 
+                <div class="contract-section">
+                    <h4><i class="fas fa-credit-card"></i> Payment Terms</h4>
+                    <p style="margin: 1rem 0 0 0; line-height: 1.8; color: rgba(255,255,255,0.9);">
+                        <i class="fas fa-money-bill-wave" style="color: #10B981; margin-right: 0.5rem;"></i>
+                        Payment of <strong style="color: #FFB200;">${rate}</strong> will be made no later than 24 hours after the event 
                         by the agreed method (Zelle, PayPal, etc.).
                     </p>
                 </div>
 
                 <!-- Independent Contractor -->
-                <div style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.2);">
-                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">🛡️ Independent Contractor</h4>
-                    <p style="margin: 0; line-height: 1.6;">
+                <div class="contract-section">
+                    <h4><i class="fas fa-shield-alt"></i> Independent Contractor</h4>
+                    <p style="margin: 1rem 0 0 0; line-height: 1.8; color: rgba(255,255,255,0.9);">
+                        <i class="fas fa-exclamation-triangle" style="color: #F59E0B; margin-right: 0.5rem;"></i>
                         You are not an employee. No taxes or benefits will be withheld. You handle all personal 
                         tax obligations and transportation.
                     </p>
                 </div>
 
                 <!-- Agreement -->
-                <div style="background: rgba(255, 178, 0, 0.1); padding: 1.5rem; border-radius: 8px; border: 2px solid rgba(255, 178, 0, 0.3);">
-                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">📝 Agreement</h4>
-                    <p style="margin: 0; line-height: 1.6;">
+                <div class="contract-section signature-section">
+                    <h4><i class="fas fa-handshake"></i> Agreement</h4>
+                    <p style="margin: 1rem 0 0 0; line-height: 1.8; color: rgba(255,255,255,0.9);">
+                        <i class="fas fa-pen-nib" style="color: #FFB200; margin-right: 0.5rem;"></i>
                         By signing below, both parties agree to the above terms and conditions. This creates a 
                         legally binding freelance agreement between you and Cochran Films.
                     </p>
