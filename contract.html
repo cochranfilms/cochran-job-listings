@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>Freelancer Contracts | Cochran Films</title>
 
   <!-- Meta SEO -->
@@ -341,22 +343,54 @@
             display: none;
         }
         
-        /* Prevent any browser loading overlays */
+        /* Aggressively prevent ALL browser overlays and loading indicators */
         form {
             position: relative;
         }
         
+        form::before,
         form::after {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        
+        /* Disable ALL browser form validation and autocomplete overlays */
+        input:invalid,
+        input:valid,
+        input:focus,
+        input:hover,
+        input:active {
+            box-shadow: none !important;
+            outline: none !important;
+        }
+        
+        /* Force disable any loading spinners or overlays */
+        *::before,
+        *::after {
+            animation: none !important;
+        }
+        
+        /* Prevent browser autocomplete overlays */
+        input[type="text"],
+        input[type="email"] {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+        }
+        
+        /* Kill any potential modal overlays or loading screens */
+        body > .loading-overlay,
+        body > .modal-overlay,
+        body > .spinner-overlay {
             display: none !important;
         }
         
-        /* Disable browser form validation overlays */
-        input:invalid {
-            box-shadow: none;
-        }
-        
-        input:valid {
-            box-shadow: none;
+        /* Disable any potential loading states */
+        body.loading,
+        html.loading,
+        *.loading {
+            pointer-events: auto !important;
+            opacity: 1 !important;
         }
         
 
@@ -515,15 +549,15 @@
                 <h1><i class="fas fa-lock"></i> Contract Access</h1>
                 <p class="subtitle">Enter your details to access your personalized contract if you've been approved to join our team.</p>
                 
-                <form id="contractForm" class="login-form">
+                <form id="contractForm" class="login-form" novalidate autocomplete="off" onsubmit="return false;">
                     <div class="form-group">
                         <label for="freelancerName"><i class="fas fa-user"></i> Full Name</label>
-                        <input type="text" id="freelancerName" placeholder="Enter your full name" required>
+                        <input type="text" id="freelancerName" placeholder="Enter your full name" autocomplete="off" spellcheck="false">
                     </div>
                     
                     <div class="form-group">
                         <label for="freelancerEmail"><i class="fas fa-envelope"></i> Email Address</label>
-                        <input type="email" id="freelancerEmail" placeholder="Enter your email address" required>
+                        <input type="email" id="freelancerEmail" placeholder="Enter your email address" autocomplete="off" spellcheck="false">
                     </div>
                     
                     <button type="button" class="btn" onclick="performAccessCheck()">
@@ -702,7 +736,34 @@
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadFreelancerData();
+            
+            // Aggressively disable any browser loading overlays
+            forceClearLoadingStates();
         });
+        
+        // Force clear any loading states or overlays
+        function forceClearLoadingStates() {
+            // Remove any potential loading classes from document
+            document.body.classList.remove('loading', 'spinner', 'overlay');
+            document.documentElement.classList.remove('loading', 'spinner', 'overlay');
+            
+            // Hide any potential loading overlays
+            const potentialOverlays = document.querySelectorAll('.loading, .spinner, .overlay, .modal, [class*="loading"], [class*="spinner"]');
+            potentialOverlays.forEach(el => {
+                if (el && !el.classList.contains('login-screen')) {
+                    el.style.display = 'none';
+                    el.style.visibility = 'hidden';
+                    el.style.opacity = '0';
+                }
+            });
+            
+            // Clear any loading states on form
+            const form = document.getElementById('contractForm');
+            if (form) {
+                form.classList.remove('loading', 'processing', 'submitting');
+                form.style.pointerEvents = 'auto';
+            }
+        }
 
         function checkAccess(event) {
             if (event) {
@@ -1493,8 +1554,61 @@ This contract has been digitally signed and is legally binding.
                 }
             }
             
-            if (nameInput) nameInput.addEventListener('keypress', handleEnterKey);
-            if (emailInput) emailInput.addEventListener('keypress', handleEnterKey);
+            function handleInputChange(event) {
+                // Clear any loading states whenever user types
+                forceClearLoadingStates();
+                
+                // Debug: Log any unexpected elements that might be appearing
+                setTimeout(() => {
+                    const allElements = document.querySelectorAll('*');
+                    const suspiciousElements = [];
+                    
+                    allElements.forEach(el => {
+                        const style = window.getComputedStyle(el);
+                        // Check for elements that might be loading overlays
+                        if (
+                            (style.position === 'fixed' || style.position === 'absolute') &&
+                            (style.backgroundColor === 'rgb(0, 0, 0)' || style.backgroundColor === 'rgba(0, 0, 0, 1)') &&
+                            style.zIndex > 0 &&
+                            el.offsetWidth > 100 && el.offsetHeight > 100
+                        ) {
+                            suspiciousElements.push({
+                                element: el,
+                                tagName: el.tagName,
+                                className: el.className,
+                                id: el.id,
+                                position: style.position,
+                                background: style.backgroundColor,
+                                zIndex: style.zIndex,
+                                display: style.display
+                            });
+                        }
+                    });
+                    
+                    if (suspiciousElements.length > 0) {
+                        console.warn('🚨 Suspicious black overlay elements detected:', suspiciousElements);
+                        // Force hide them
+                        suspiciousElements.forEach(item => {
+                            if (item.element && !item.element.classList.contains('login-screen')) {
+                                item.element.style.display = 'none';
+                                item.element.style.visibility = 'hidden';
+                                console.log('🔨 Force hiding suspicious element:', item);
+                            }
+                        });
+                    }
+                }, 100);
+            }
+            
+            if (nameInput) {
+                nameInput.addEventListener('keypress', handleEnterKey);
+                nameInput.addEventListener('input', handleInputChange);
+                nameInput.addEventListener('keyup', handleInputChange);
+            }
+            if (emailInput) {
+                emailInput.addEventListener('keypress', handleEnterKey);
+                emailInput.addEventListener('input', handleInputChange);
+                emailInput.addEventListener('keyup', handleInputChange);
+            }
         });
 
 
