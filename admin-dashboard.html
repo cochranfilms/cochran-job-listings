@@ -1451,30 +1451,79 @@
         // Initialize Google Drive API
         async function initializeGoogleDrive() {
             try {
+                console.log('🔄 Starting Google Drive API initialization...');
+                
                 if (GOOGLE_DRIVE_CONFIG.apiKey === 'YOUR_API_KEY_HERE') {
                     console.log('📝 Google Drive API not configured - using localStorage only');
                     return false;
                 }
                 
-                await new Promise((resolve) => {
-                    gapi.load('client:auth2', resolve);
+                console.log('📋 Config check:', {
+                    apiKey: GOOGLE_DRIVE_CONFIG.apiKey ? `✅ Set (${GOOGLE_DRIVE_CONFIG.apiKey.substring(0, 20)}...)` : '❌ Missing',
+                    clientId: GOOGLE_DRIVE_CONFIG.clientId ? `✅ Set (${GOOGLE_DRIVE_CONFIG.clientId.substring(0, 20)}...)` : '❌ Missing',
+                    scopes: GOOGLE_DRIVE_CONFIG.scopes
                 });
                 
+                // Check if gapi is loaded
+                if (typeof gapi === 'undefined') {
+                    throw new Error('Google API library (gapi) not loaded. Check internet connection or script loading.');
+                }
+                console.log('✅ gapi library loaded');
+                
+                console.log('📡 Loading client:auth2...');
+                await new Promise((resolve, reject) => {
+                    gapi.load('client:auth2', resolve, {
+                        onerror: (error) => {
+                            console.error('❌ Failed to load gapi modules:', error);
+                            reject(new Error('Failed to load Google API client:auth2 modules'));
+                        }
+                    });
+                });
+                console.log('✅ client:auth2 loaded');
+                
+                console.log('🔧 Initializing client...');
                 await gapi.client.init({
                     apiKey: GOOGLE_DRIVE_CONFIG.apiKey,
                     clientId: GOOGLE_DRIVE_CONFIG.clientId,
                     discoveryDocs: [GOOGLE_DRIVE_CONFIG.discoveryDoc],
                     scope: GOOGLE_DRIVE_CONFIG.scopes
                 });
+                console.log('✅ client initialized');
                 
                 isGoogleDriveInitialized = true;
-                isGoogleDriveSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
                 
-                console.log('✅ Google Drive API initialized');
+                console.log('👤 Checking auth status...');
+                const authInstance = gapi.auth2.getAuthInstance();
+                if (authInstance) {
+                    isGoogleDriveSignedIn = authInstance.isSignedIn.get();
+                    console.log('👤 Sign-in status:', isGoogleDriveSignedIn);
+                } else {
+                    console.log('⚠️ Auth instance not available yet');
+                    isGoogleDriveSignedIn = false;
+                }
+                
+                console.log('✅ Google Drive API initialized successfully');
                 return true;
                 
             } catch (error) {
-                console.error('❌ Google Drive initialization failed:', error);
+                console.error('❌ Google Drive initialization failed:');
+                console.error('📊 Error details:', {
+                    message: error.message,
+                    name: error.name,
+                    stack: error.stack
+                });
+                
+                // Check common issues
+                if (error.message && error.message.includes('origin')) {
+                    console.error('🔧 Fix: Add your domain to "Authorized JavaScript origins" in Google Cloud Console');
+                }
+                if (error.message && error.message.includes('API key')) {
+                    console.error('🔧 Fix: Check your API key configuration');
+                }
+                if (error.message && error.message.includes('client_id')) {
+                    console.error('🔧 Fix: Check your Client ID configuration');
+                }
+                
                 return false;
             }
         }
