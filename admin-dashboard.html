@@ -655,6 +655,9 @@
                 <button class="tab-btn" onclick="switchTab('contracts')">
                     <span>🔐</span> Contract Management
                 </button>
+                <button class="tab-btn" onclick="switchTab('signed')">
+                    <span>✍️</span> Signed Contracts
+                </button>
             </div>
         </div>
 
@@ -826,6 +829,62 @@
                 </div>
             </div>
         </div>
+
+        <!-- Signed Contracts Tab -->
+        <div id="signed-tab" class="tab-content">
+            <div class="form-section">
+                <h2>✍️ Signed Contracts Dashboard</h2>
+                <div class="workflow-info">
+                    <p><strong>📋 How This Works:</strong></p>
+                    <ol>
+                        <li><strong>Automatic Collection:</strong> When freelancers sign contracts via contract.html, their data is automatically saved here</li>
+                        <li><strong>Legal Compliance:</strong> Freelancers sign their own names - no manual intervention needed</li>
+                        <li><strong>Instant Access:</strong> View all signed contracts with full details and download PDFs</li>
+                        <li><strong>Email Notifications:</strong> You still get email alerts when contracts are signed</li>
+                    </ol>
+                    <p><strong>💡 Benefits:</strong> Complete automation, legal compliance, and centralized access to all signed contracts.</p>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                    <button class="btn" onclick="loadSignedContracts()">🔄 Refresh Data</button>
+                    <button class="btn" onclick="exportAllSignedContracts()">📦 Export All Contracts</button>
+                    <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
+                </div>
+            </div>
+
+            <div class="list-section">
+                <h2>Recently Signed Contracts</h2>
+                <div id="signedContractsList">
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
+                        Click "Refresh Data" to load signed contracts
+                    </div>
+                </div>
+            </div>
+
+            <div class="export-section">
+                <h2>📊 Contract Analytics</h2>
+                <div id="contractAnalytics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <!-- Analytics will be populated here -->
+                </div>
+                
+                <h3>💾 Data Storage Notes</h3>
+                <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.3);">
+                    <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem;">
+                        <strong>Current Setup:</strong> Contract data is stored in browser localStorage for demonstration purposes.
+                    </p>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-size: 0.9rem;">
+                        <strong>For Production:</strong> Implement server-side storage to persist data across devices and browsers. 
+                        This requires:
+                    </p>
+                    <ul style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0; padding-left: 1.5rem;">
+                        <li>Database setup (MySQL, PostgreSQL, MongoDB, etc.)</li>
+                        <li>Server endpoint to save signed contracts (see contract.html comments)</li>
+                        <li>Admin dashboard API to fetch signed contracts</li>
+                        <li>Authentication and security implementation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -836,6 +895,7 @@
         let isAuthenticated = false;
         let jobs = [];
         let approvedFreelancers = {};
+        let signedContracts = [];
 
         // Check if already authenticated
         function checkAuth() {
@@ -860,6 +920,7 @@
             document.getElementById('adminInterface').style.display = 'block';
             loadJobs();
             loadFreelancers();
+            loadSignedContracts();
         }
 
         // Handle login
@@ -1189,6 +1250,447 @@
         function resetManualEditFlag() {
             const contractUrlField = document.getElementById('contractUrl');
             contractUrlField.value = 'contract.html'; // Always reset to contract.html
+        }
+
+        // ==================== SIGNED CONTRACTS FUNCTIONALITY ====================
+        
+        // Load signed contracts from localStorage (in production, this would be from server)
+        function loadSignedContracts() {
+            try {
+                const contractData = localStorage.getItem('signedContracts');
+                signedContracts = contractData ? JSON.parse(contractData) : [];
+                console.log('✅ Loaded signed contracts:', signedContracts.length);
+                displaySignedContracts();
+                updateContractAnalytics();
+            } catch (error) {
+                console.error('❌ Error loading signed contracts:', error);
+                signedContracts = [];
+                displaySignedContracts();
+            }
+        }
+
+        // Display signed contracts
+        function displaySignedContracts() {
+            const contractsList = document.getElementById('signedContractsList');
+            const contractCount = document.getElementById('contractCount');
+
+            if (signedContracts.length === 0) {
+                contractsList.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">📋 No Signed Contracts Yet</h3>
+                        <p>Signed contracts will appear here automatically when freelancers complete the signing process via contract.html</p>
+                    </div>
+                `;
+                contractCount.textContent = '';
+                return;
+            }
+
+            contractCount.textContent = `${signedContracts.length} signed contract${signedContracts.length === 1 ? '' : 's'}`;
+
+            // Sort by most recent first
+            const sortedContracts = [...signedContracts].sort((a, b) => 
+                new Date(b.signedTimestamp || b.signedDateTime) - new Date(a.signedTimestamp || a.signedDateTime)
+            );
+
+            contractsList.innerHTML = sortedContracts.map((contract, index) => `
+                <div class="item-card" style="border-left: 4px solid #22c55e;">
+                    <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 1rem;">
+                        <div style="flex: 1;">
+                            <h3 style="color: #22c55e;">${contract.freelancerName}</h3>
+                            <div style="background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-top: 0.5rem;">
+                                ✅ SIGNED
+                            </div>
+                        </div>
+                        <div style="text-align: right; font-size: 0.85rem; color: rgba(255,255,255,0.7);">
+                            ID: ${contract.contractId}
+                        </div>
+                    </div>
+                    
+                    <div class="item-meta">
+                        <span>📧 ${contract.freelancerEmail}</span>
+                        <span>🎭 ${contract.role}</span>
+                        <span>💰 ${contract.rate}</span>
+                    </div>
+                    
+                    <div class="item-meta">
+                        <span>📍 ${contract.location}</span>
+                        <span>🕒 Start: ${contract.projectStart}</span>
+                        <span>📅 Effective: ${contract.effectiveDate}</span>
+                    </div>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                            <div>
+                                <strong style="color: #FFB200;">Signed Date:</strong><br>
+                                <span style="color: rgba(255,255,255,0.9);">${contract.signatureDate}</span>
+                            </div>
+                            <div>
+                                <strong style="color: #FFB200;">Signed Time:</strong><br>
+                                <span style="color: rgba(255,255,255,0.9);">${new Date(contract.signedTimestamp || contract.signedDateTime).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 0.75rem;">
+                            <strong style="color: #FFB200;">Digital Signature:</strong><br>
+                            <span style="color: rgba(255,255,255,0.9); font-family: cursive; font-size: 1.1rem;">${contract.signature}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="actions">
+                        <button class="btn btn-small" onclick="downloadSignedContractPDF(${index})" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                            📄 Download PDF
+                        </button>
+                        <button class="btn btn-small" onclick="viewContractDetails(${index})">
+                            👁️ View Details
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteSignedContract(${index})">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update contract analytics
+        function updateContractAnalytics() {
+            const analyticsDiv = document.getElementById('contractAnalytics');
+            
+            if (signedContracts.length === 0) {
+                analyticsDiv.innerHTML = '<p style="color: rgba(255,255,255,0.6); text-align: center;">No contracts to analyze yet</p>';
+                return;
+            }
+
+            // Calculate analytics
+            const totalContracts = signedContracts.length;
+            const uniqueRoles = [...new Set(signedContracts.map(c => c.role))].length;
+            const thisMonth = signedContracts.filter(c => {
+                const contractDate = new Date(c.signedTimestamp || c.signedDateTime);
+                const now = new Date();
+                return contractDate.getMonth() === now.getMonth() && contractDate.getFullYear() === now.getFullYear();
+            }).length;
+            const mostRecentContract = signedContracts.reduce((latest, contract) => {
+                const contractDate = new Date(contract.signedTimestamp || contract.signedDateTime);
+                const latestDate = new Date(latest.signedTimestamp || latest.signedDateTime);
+                return contractDate > latestDate ? contract : latest;
+            });
+
+            analyticsDiv.innerHTML = `
+                <div style="background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3); text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #22c55e;">${totalContracts}</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Total Contracts</div>
+                </div>
+                <div style="background: rgba(255, 178, 0, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255, 178, 0, 0.3); text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #FFB200;">${thisMonth}</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">This Month</div>
+                </div>
+                <div style="background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3); text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #6366f1;">${uniqueRoles}</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Unique Roles</div>
+                </div>
+                <div style="background: rgba(168, 85, 247, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.3); text-align: center;">
+                    <div style="font-size: 0.9rem; font-weight: 600; color: #a855f7;">Most Recent</div>
+                    <div style="color: rgba(255,255,255,0.9); font-size: 0.8rem;">${mostRecentContract.freelancerName}</div>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">${new Date(mostRecentContract.signedTimestamp || mostRecentContract.signedDateTime).toLocaleDateString()}</div>
+                </div>
+            `;
+        }
+
+        // Download signed contract PDF
+        function downloadSignedContractPDF(index) {
+            const contract = signedContracts[index];
+            if (!contract) {
+                alert('❌ Contract not found');
+                return;
+            }
+
+            console.log('📄 Generating PDF for contract:', contract.contractId);
+
+            // Create signed contract HTML for PDF generation
+            const contractHTML = createAdminSignedContractHTML(contract);
+            
+            // Open print dialog
+            const printWindow = window.open('', '_blank', 'width=800,height=1000');
+            
+            if (!printWindow) {
+                alert('❌ Pop-up blocked. Please allow pop-ups for this site and try again.');
+                return;
+            }
+
+            printWindow.document.write(contractHTML);
+            printWindow.document.close();
+
+            // Wait for content to load, then trigger print
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    printWindow.focus();
+                    printWindow.print();
+                    
+                    // Close window after delay
+                    setTimeout(() => {
+                        try {
+                            printWindow.close();
+                        } catch (e) {
+                            // Window might already be closed by user
+                        }
+                    }, 2000);
+                }, 500);
+            };
+        }
+
+        // Create signed contract HTML for admin download
+        function createAdminSignedContractHTML(contract) {
+            const adminDate = new Date().toISOString().split('T')[0];
+
+            return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>SIGNED Contract - ${contract.freelancerName}</title>
+                <style>
+                    @page { margin: 0.5in; size: letter; }
+                    @media print {
+                        body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; color-adjust: exact; }
+                    }
+                    body {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #ffffff;
+                        background-color: #000000;
+                        margin: 0;
+                        padding: 20px;
+                        -webkit-print-color-adjust: exact;
+                        color-adjust: exact;
+                    }
+                    .container {
+                        max-width: 800px;
+                        margin: 0 auto;
+                        background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+                        padding: 40px;
+                        border-radius: 12px;
+                        border: 1px solid #FFB200;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        padding-bottom: 20px;
+                        border-bottom: 2px solid #FFB200;
+                    }
+                    .logo { width: 200px; height: auto; margin-bottom: 20px; }
+                    h1 { font-size: 28px; color: #FFB200; margin-bottom: 10px; font-weight: 700; }
+                    h2 { font-size: 24px; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px; font-weight: 600; }
+                    h3 { font-size: 20px; color: #ffffff; margin: 20px 0 10px 0; font-weight: 600; }
+                    p { margin-bottom: 15px; color: #ffffff; }
+                    ul { margin: 15px 0; padding-left: 20px; }
+                    li { margin-bottom: 8px; color: #ffffff; }
+                    .project-info {
+                        background: rgba(255, 178, 0, 0.1);
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin: 20px 0;
+                        border-left: 4px solid #FFB200;
+                        border: 1px solid rgba(255, 178, 0, 0.3);
+                    }
+                    .project-info ul { list-style: none; padding-left: 0; }
+                    .project-info li { margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255, 178, 0, 0.2); }
+                    .project-info li:last-child { border-bottom: none; }
+                    .signatures {
+                        margin-top: 40px;
+                        padding-top: 30px;
+                        border-top: 2px solid rgba(255, 178, 0, 0.3);
+                        page-break-inside: avoid;
+                    }
+                    .signature-row {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-top: 20px;
+                        gap: 30px;
+                    }
+                    .signature-box {
+                        flex: 1;
+                        padding: 20px;
+                        background: rgba(255, 178, 0, 0.1);
+                        border-radius: 8px;
+                        border: 2px solid rgba(255, 178, 0, 0.3);
+                    }
+                    .signature-text {
+                        font-family: 'Brush Script MT', cursive, 'Lucida Handwriting', serif;
+                        font-size: 18px;
+                        color: #FFB200;
+                        margin-top: 15px;
+                        padding: 10px 0;
+                        border-bottom: 2px solid #FFB200;
+                    }
+                    .signature-date {
+                        font-family: 'Brush Script MT', cursive, 'Lucida Handwriting', serif;
+                        font-size: 18px;
+                        color: #FFB200;
+                        margin-top: 5px;
+                    }
+                    .signed-status {
+                        background: rgba(0, 255, 0, 0.2);
+                        border: 2px solid #00ff00;
+                        padding: 15px;
+                        text-align: center;
+                        margin: 20px 0;
+                        border-radius: 8px;
+                    }
+                    .signed-status h2 { color: #00ff00; margin: 0; border: none; padding: 0; }
+                    @media (max-width: 600px) {
+                        .signature-row { flex-direction: column; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo" class="logo">
+                        <h1>📄 Freelance Agreement</h1>
+                        <p><strong>Issued By:</strong> Cochran Films<br>
+                        <strong>Effective Date:</strong> ${contract.effectiveDate}</p>
+                    </div>
+
+                    <div class="signed-status">
+                        <h2>✅ DIGITALLY SIGNED CONTRACT</h2>
+                        <p>This contract has been digitally signed by both parties</p>
+                        <p style="font-size: 14px; margin-top: 10px;">Signed on: ${new Date(contract.signedTimestamp || contract.signedDateTime).toLocaleString()}</p>
+                        <p style="font-size: 14px; margin: 0;"><strong>Contract ID:</strong> ${contract.contractId}</p>
+                    </div>
+
+                    <h2>📌 Project Overview</h2>
+                    <p>This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>${contract.freelancerName}</strong>, hereinafter referred to as the "Contractor."</p>
+                    
+                    <div class="project-info">
+                        <ul>
+                            <li><strong>Role:</strong> ${contract.role}</li>
+                            <li><strong>Location:</strong> ${contract.location}</li>
+                            <li><strong>Project Start:</strong> ${contract.projectStart}</li>
+                            <li><strong>Rate:</strong> ${contract.rate}</li>
+                        </ul>
+                    </div>
+
+                    <h2>✅ Contractor Responsibilities</h2>
+                    <ul>
+                        <li>Arrive at the project location on time.</li>
+                        <li>Professionally manage their assigned role and responsibilities.</li>
+                        <li>Complete the job to professional standards.</li>
+                        <li>Use personal equipment unless otherwise arranged.</li>
+                        <li>Maintain a respectful demeanor with staff and clients.</li>
+                        <li>Wear our company-branded shirt, hat, OR whatever piece of branded gear is asked of you for the duration of the project. (This will be provided to you at no charge)</li>
+                        <li>Wear all black regardless of what branded gear is given to you on the day of the shoot.</li>
+                    </ul>
+
+                    <h2>📸 BTS Content & Ownership</h2>
+                    <p>The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.</p>
+
+                    <h2>💵 Payment Terms</h2>
+                    <p>Payment of ${contract.rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).</p>
+
+                    <h2>🛡️ Independent Contractor</h2>
+                    <p>The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.</p>
+
+                    <h2>📝 Agreement</h2>
+                    <p>By signing below, both parties agree to the above terms and conditions.</p>
+
+                    <div class="signatures">
+                        <h3>✍️ Digital Signatures</h3>
+                        
+                        <div class="signature-row">
+                            <div class="signature-box">
+                                <strong>Cochran Films Representative:</strong><br>
+                                Name: Cody Cochran<br>
+                                Title: Founder, Cochran Films<br>
+                                <div class="signature-text">Signature: Cody Cochran</div>
+                                <div class="signature-date">Date: ${adminDate}</div>
+                            </div>
+                            
+                            <div class="signature-box">
+                                <strong>Contractor:</strong><br>
+                                Name: ${contract.freelancerName}<br>
+                                <div class="signature-text">Signature: ${contract.signature}</div>
+                                <div class="signature-date">Date: ${contract.signatureDate}</div>
+                            </div>
+                        </div>
+                        
+                        <p style="text-align: center; margin-top: 30px; color: rgba(255,255,255,0.8); font-size: 14px;">
+                            ✅ This is a <strong>SIGNED</strong> copy with digital signatures from both parties.<br>
+                            Contract signed on: ${new Date(contract.signedTimestamp || contract.signedDateTime).toLocaleDateString()}<br>
+                            Downloaded from Admin Dashboard on: ${new Date().toLocaleDateString()}
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            `;
+        }
+
+        // View contract details in modal/alert
+        function viewContractDetails(index) {
+            const contract = signedContracts[index];
+            const details = `
+CONTRACT DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 Contract ID: ${contract.contractId}
+👤 Freelancer: ${contract.freelancerName}
+📧 Email: ${contract.freelancerEmail}
+🎭 Role: ${contract.role}
+📍 Location: ${contract.location}
+🕒 Project Start: ${contract.projectStart}
+💰 Rate: ${contract.rate}
+📅 Effective Date: ${contract.effectiveDate}
+
+✍️ SIGNATURE DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Digital Signature: ${contract.signature}
+Signed Date: ${contract.signatureDate}
+Signed Timestamp: ${new Date(contract.signedTimestamp || contract.signedDateTime).toLocaleString()}
+Status: ${contract.status}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            `.trim();
+            
+            alert(details);
+        }
+
+        // Delete signed contract
+        function deleteSignedContract(index) {
+            const contract = signedContracts[index];
+            if (confirm(`Are you sure you want to delete the signed contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis action cannot be undone.`)) {
+                signedContracts.splice(index, 1);
+                localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
+                displaySignedContracts();
+                updateContractAnalytics();
+                console.log('🗑️ Deleted signed contract:', contract.contractId);
+            }
+        }
+
+        // Export all signed contracts
+        function exportAllSignedContracts() {
+            if (signedContracts.length === 0) {
+                alert('📋 No signed contracts to export.');
+                return;
+            }
+
+            const exportData = {
+                signedContracts: signedContracts,
+                exportDate: new Date().toISOString(),
+                exportedBy: 'Admin Dashboard',
+                totalContracts: signedContracts.length
+            };
+
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `signed-contracts-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            console.log('📦 Exported signed contracts:', signedContracts.length);
         }
 
         // Initialize on page load
