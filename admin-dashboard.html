@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Google Drive API -->
-    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://apis.google.com/js/api.js" async defer onload="console.log('📡 Google API script loaded')" onerror="console.error('❌ Failed to load Google API script')"></script>
     
     <style>
         :root {
@@ -1448,6 +1448,31 @@
 
         // ==================== GOOGLE DRIVE API INTEGRATION ====================
         
+        // Wait for Google API library to load
+        function waitForGapi(maxWaitTime = 10000) {
+            return new Promise((resolve, reject) => {
+                const startTime = Date.now();
+                
+                function checkGapi() {
+                    if (typeof gapi !== 'undefined') {
+                        console.log('✅ gapi library loaded');
+                        resolve();
+                        return;
+                    }
+                    
+                    if (Date.now() - startTime > maxWaitTime) {
+                        reject(new Error('Timeout: Google API library failed to load within 10 seconds. Check internet connection.'));
+                        return;
+                    }
+                    
+                    // Check again in 100ms
+                    setTimeout(checkGapi, 100);
+                }
+                
+                checkGapi();
+            });
+        }
+        
         // Initialize Google Drive API
         async function initializeGoogleDrive() {
             try {
@@ -1464,10 +1489,9 @@
                     scopes: GOOGLE_DRIVE_CONFIG.scopes
                 });
                 
-                // Check if gapi is loaded
-                if (typeof gapi === 'undefined') {
-                    throw new Error('Google API library (gapi) not loaded. Check internet connection or script loading.');
-                }
+                // Wait for gapi to load
+                console.log('⏳ Waiting for Google API library to load...');
+                await waitForGapi();
                 console.log('✅ gapi library loaded');
                 
                 console.log('📡 Loading client:auth2...');
