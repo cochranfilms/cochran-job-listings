@@ -282,7 +282,7 @@
 
     .navigation {
       position: absolute;
-      bottom: -60px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -948,7 +948,7 @@
 
       .navigation {
         position: absolute;
-        bottom: calc(env(safe-area-inset-bottom) - 40px);
+        bottom: calc(env(safe-area-inset-bottom) + 20px);
         left: 50%;
         transform: translateX(-50%);
         background: rgba(28, 28, 30, 0.8);
@@ -1245,20 +1245,19 @@
         <p style="font-size: 1rem; opacity: 0.8; text-align: center; margin: 0;">Available for projects worldwide • Atlanta based • Remote friendly</p>
       </div>
     </div>
-  </div>
+    <!-- Navigation -->
+    <button class="prev" onclick="changeSlide(-1)">❮</button>
+    <button class="next" onclick="changeSlide(1)">❯</button>
 
-  <!-- Navigation -->
-  <button class="prev" onclick="changeSlide(-1)">❮</button>
-  <button class="next" onclick="changeSlide(1)">❯</button>
-
-  <div class="navigation">
-    <span class="nav-dot active" onclick="currentSlide(1)"></span>
-    <span class="nav-dot" onclick="currentSlide(2)"></span>
-    <span class="nav-dot" onclick="currentSlide(3)"></span>
-    <span class="nav-dot" onclick="currentSlide(4)"></span>
-    <span class="nav-dot" onclick="currentSlide(5)"></span>
-    <span class="nav-dot" onclick="currentSlide(6)"></span>
-    <span class="nav-dot" onclick="currentSlide(7)"></span>
+    <div class="navigation">
+      <span class="nav-dot active" onclick="currentSlide(1)"></span>
+      <span class="nav-dot" onclick="currentSlide(2)"></span>
+      <span class="nav-dot" onclick="currentSlide(3)"></span>
+      <span class="nav-dot" onclick="currentSlide(4)"></span>
+      <span class="nav-dot" onclick="currentSlide(5)"></span>
+      <span class="nav-dot" onclick="currentSlide(6)"></span>
+      <span class="nav-dot" onclick="currentSlide(7)"></span>
+    </div>
   </div>
 
   <!-- Main Content -->
