@@ -212,7 +212,13 @@
         <div id="success-message" class="message success hidden">
             <p>✅ <strong>Access Granted!</strong></p>
             <p>Welcome to the Cochran Films team. Your contract is ready for review.</p>
-            <a href="" id="contractURL" class="contract-link" target="_blank">📄 View Your Contract</a>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem;">
+                <a href="" id="contractURL" class="contract-link" target="_blank">📄 View & Sign Contract</a>
+                <button id="downloadPdfBtn" class="contract-link" onclick="generateContractPDF()" style="border: none; cursor: pointer;">📥 Download PDF</button>
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.9rem; color: rgba(255,255,255,0.7);">
+                💡 <strong>Tip:</strong> Use "View & Sign Contract" to digitally sign, or "Download PDF" for an unsigned copy.
+            </p>
         </div>
         
         <div id="error-message" class="message error hidden">
@@ -225,9 +231,13 @@
         </div>
     </div>
 
+    <!-- Add html2pdf.js for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <script>
         // Approved freelancers database - loaded from JSON file
         let approvedFreelancers = {};
+        let currentFreelancerData = null; // Store current user's data for PDF generation
         
         // Load freelancer data from JSON file
         async function loadFreelancerData() {
@@ -271,7 +281,12 @@
             );
             
             if (matchingFreelancer && approvedFreelancers[matchingFreelancer].email.toLowerCase() === email) {
-                // Access granted
+                // Access granted - store freelancer data for PDF generation
+                currentFreelancerData = {
+                    name: matchingFreelancer,
+                    ...approvedFreelancers[matchingFreelancer]
+                };
+                
                 contractLink.href = approvedFreelancers[matchingFreelancer].contractUrl;
                 successDiv.classList.remove("hidden");
                 
@@ -292,6 +307,176 @@
                 checkAccess(event);
             }
         });
+
+        // Generate and download contract PDF
+        function generateContractPDF() {
+            if (!currentFreelancerData) {
+                alert('❌ No contract data available. Please verify your access first.');
+                return;
+            }
+
+            // Show loading state
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            const originalText = downloadBtn.textContent;
+            downloadBtn.textContent = '📄 Generating PDF...';
+            downloadBtn.disabled = true;
+            downloadBtn.style.opacity = '0.7';
+
+            // Create PDF version of the contract
+            const pdfElement = createContractPDFElement();
+
+            // Configure html2pdf options
+            const opt = {
+                margin: 0.5,
+                filename: `Cochran_Films_Contract_${currentFreelancerData.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#000000',
+                    logging: false,
+                    width: 800,
+                    height: null
+                },
+                jsPDF: { 
+                    unit: 'in', 
+                    format: 'letter', 
+                    orientation: 'portrait',
+                    compress: true
+                },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            // Generate and download PDF
+            html2pdf().set(opt).from(pdfElement).save().then(() => {
+                // Reset button
+                downloadBtn.textContent = originalText;
+                downloadBtn.disabled = false;
+                downloadBtn.style.opacity = '1';
+                
+                // Remove PDF element
+                document.body.removeChild(pdfElement);
+                
+                // Show success message
+                alert('✅ PDF downloaded successfully! Check your Downloads folder.');
+            }).catch((error) => {
+                console.error('PDF generation failed:', error);
+                downloadBtn.textContent = originalText;
+                downloadBtn.disabled = false;
+                downloadBtn.style.opacity = '1';
+                if (document.body.contains(pdfElement)) {
+                    document.body.removeChild(pdfElement);
+                }
+                alert('❌ PDF generation failed. Please try again or contact support.');
+            });
+        }
+
+        // Create PDF-optimized contract HTML element
+        function createContractPDFElement() {
+            const data = currentFreelancerData;
+            const effectiveDate = data.approvedDate || new Date().toISOString().split('T')[0];
+            const role = data.role || 'Contractor';
+            const location = data.location || 'Atlanta Area';
+            const projectStart = data.projectStart || 'TBD';
+            const rate = data.rate || '$150/day';
+
+            // Create PDF element
+            const pdfElement = document.createElement('div');
+            pdfElement.style.position = 'absolute';
+            pdfElement.style.left = '-9999px';
+            pdfElement.style.top = '0';
+            pdfElement.style.width = '800px';
+            pdfElement.style.fontFamily = 'Arial, Helvetica, sans-serif';
+            pdfElement.style.lineHeight = '1.6';
+            pdfElement.style.color = '#ffffff';
+            pdfElement.style.backgroundColor = '#000000';
+            pdfElement.style.padding = '40px';
+
+            pdfElement.innerHTML = `
+                <div style="background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%); padding: 40px; border-radius: 12px; border: 1px solid rgba(255, 178, 0, 0.2);">
+                    <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #FFB200;">
+                        <div style="margin-bottom: 20px;">
+                            <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo" style="width: 200px; height: auto;">
+                        </div>
+                        <h1 style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #FFB200; margin-bottom: 10px;">📄 Freelance Agreement</h1>
+                        <p style="color: #ffffff;"><strong>Issued By:</strong> Cochran Films<br>
+                        <strong>Effective Date:</strong> ${effectiveDate}</p>
+                    </div>
+
+                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">📌 Project Overview</h2>
+                    <p style="margin-bottom: 15px; color: #ffffff;">
+                        This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>${data.name}</strong>, hereinafter referred to as the "Contractor."
+                    </p>
+                    
+                    <div style="background: rgba(255, 178, 0, 0.1); padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FFB200; border: 1px solid rgba(255, 178, 0, 0.3);">
+                        <ul style="list-style: none; padding-left: 0; margin: 15px 0;">
+                            <li style="margin-bottom: 10px; padding: 8px 0; color: #ffffff;"><strong>Role:</strong> ${role}</li>
+                            <li style="margin-bottom: 10px; padding: 8px 0; color: #ffffff;"><strong>Location:</strong> ${location}</li>
+                            <li style="margin-bottom: 10px; padding: 8px 0; color: #ffffff;"><strong>Project Start:</strong> ${projectStart}</li>
+                            <li style="margin-bottom: 10px; padding: 8px 0; color: #ffffff;"><strong>Rate:</strong> ${rate}</li>
+                        </ul>
+                    </div>
+
+                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">✅ Contractor Responsibilities</h2>
+                    <ul style="margin: 15px 0; padding-left: 20px;">
+                        <li style="margin-bottom: 8px; color: #ffffff;">Arrive at the project location on time.</li>
+                        <li style="margin-bottom: 8px; color: #ffffff;">Professionally manage their assigned role and responsibilities.</li>
+                        <li style="margin-bottom: 8px; color: #ffffff;">Complete the job to professional standards.</li>
+                        <li style="margin-bottom: 8px; color: #ffffff;">Use personal equipment unless otherwise arranged.</li>
+                        <li style="margin-bottom: 8px; color: #ffffff;">Maintain a respectful demeanor with staff and clients.</li>
+                        <li style="margin-bottom: 8px; color: #ffffff;">Wear our company-branded shirt, hat, OR whatever piece of branded gear is asked of you for the duration of the project. (This will be provided to you at no charge)</li>
+                        <li style="margin-bottom: 8px; color: #ffffff;">Wear all black regardless of what branded gear is given to you on the day of the shoot.</li>
+                    </ul>
+
+                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">📸 BTS Content & Ownership</h2>
+                    <p style="margin-bottom: 15px; color: #ffffff;">
+                        The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.
+                    </p>
+
+                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">💵 Payment Terms</h2>
+                    <p style="margin-bottom: 15px; color: #ffffff;">
+                        Payment of ${rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).
+                    </p>
+
+                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">🛡️ Independent Contractor</h2>
+                    <p style="margin-bottom: 15px; color: #ffffff;">
+                        The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.
+                    </p>
+
+                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">📝 Agreement</h2>
+                    <p style="margin-bottom: 15px; color: #ffffff;">This contract is provided for review. Digital signatures are available on the interactive contract page accessed through "View & Sign Contract".</p>
+
+                    <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid rgba(255, 178, 0, 0.3); page-break-inside: avoid;">
+                        <h3 style="font-family: Georgia, serif; font-size: 20px; font-weight: 600; color: #ffffff; margin: 20px 0 10px 0;">Contract Parties</h3>
+                        
+                        <div style="display: flex; justify-content: space-between; margin-top: 20px; gap: 30px;">
+                            <div style="flex: 1; padding: 20px; background: rgba(255, 178, 0, 0.1); border-radius: 8px; border: 2px solid rgba(255, 178, 0, 0.3); color: #ffffff;">
+                                <strong>Cochran Films Representative:</strong><br>
+                                Name: Cody Cochran<br>
+                                Title: Founder, Cochran Films<br>
+                                <div style="margin-top: 15px; padding: 10px 0; border-bottom: 2px solid #FFB200; color: #FFB200;">Signature: _________________</div>
+                                <div style="margin-top: 5px; color: #FFB200;">Date: _________________</div>
+                            </div>
+                            
+                            <div style="flex: 1; padding: 20px; background: rgba(255, 178, 0, 0.1); border-radius: 8px; border: 2px solid rgba(255, 178, 0, 0.3); color: #ffffff;">
+                                <strong>Contractor:</strong><br>
+                                Name: ${data.name}<br>
+                                <div style="margin-top: 15px; padding: 10px 0; border-bottom: 2px solid #FFB200; color: #FFB200;">Signature: _________________</div>
+                                <div style="margin-top: 5px; color: #FFB200;">Date: _________________</div>
+                            </div>
+                        </div>
+                        
+                        <p style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                            📝 This is an unsigned copy. For digital signing, use "View & Sign Contract" above.
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(pdfElement);
+            return pdfElement;
+        }
     </script>
 </body>
 </html> 
