@@ -745,30 +745,7 @@
                 font-size: 0.85rem !important;
             }
             
-            /* Debug and import buttons on mobile */
-            .signed-contracts-header .btn {
-                flex: 1;
-                min-width: 140px;
-                margin-bottom: 0.5rem;
-                font-size: 0.8rem;
-                padding: 0.75rem 0.5rem;
-            }
-            
-            /* Contract import section mobile */
-            #contractImportSection {
-                margin: 1rem 0 !important;
-                padding: 1rem !important;
-            }
-            
-            #contractImportSection textarea {
-                font-size: 0.85rem;
-                height: 100px;
-            }
-            
-            #contractImportSection .btn-small {
-                width: 48%;
-                margin-bottom: 0.5rem;
-            }
+
         }
     </style>
 </head>
@@ -1005,25 +982,10 @@
                     <p><strong>💡 Benefits:</strong> Complete automation, legal compliance, and centralized access to all signed contracts.</p>
                 </div>
                 
-                <div class="signed-contracts-header" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
                     <button class="btn" onclick="loadSignedContracts()">🔄 Refresh Data</button>
                     <button class="btn" onclick="exportAllSignedContracts()">📦 Export All Contracts</button>
-                    <button class="btn" onclick="debugContractData()" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">🔍 Debug Data</button>
-                    <button class="btn" onclick="showContractImport()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">📥 Import Data</button>
                     <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
-                </div>
-                
-                <!-- Contract Import Section (Hidden by default) -->
-                <div id="contractImportSection" style="display: none; background: rgba(139, 92, 246, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3); margin-bottom: 1rem;">
-                    <h3 style="color: #8b5cf6; margin-bottom: 1rem;">📥 Import Contract Data</h3>
-                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-size: 0.9rem;">
-                        If contracts aren't showing on mobile, you can manually import them. Export the data from desktop first, then paste it here on mobile.
-                    </p>
-                    <textarea id="contractImportData" placeholder="Paste exported contract JSON data here..." style="width: 100%; height: 120px; margin-bottom: 1rem;"></textarea>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button class="btn btn-small" onclick="importContractData()">Import Contracts</button>
-                        <button class="btn btn-small" onclick="hideContractImport()">Cancel</button>
-                    </div>
                 </div>
             </div>
 
@@ -1045,17 +1007,17 @@
                 <h3>💾 Data Storage Notes</h3>
                 <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.3);">
                     <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem;">
-                        <strong>Current Setup:</strong> Contract data is stored in browser localStorage for demonstration purposes.
+                        <strong>Current Setup:</strong> Contract data is stored in browser localStorage.
                     </p>
                     <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-size: 0.9rem;">
-                        <strong>For Production:</strong> Implement server-side storage to persist data across devices and browsers. 
-                        This requires:
+                        <strong>For Production:</strong> Consider implementing server-side storage for enterprise use. 
+                        This would require:
                     </p>
                     <ul style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0; padding-left: 1.5rem;">
                         <li>Database setup (MySQL, PostgreSQL, MongoDB, etc.)</li>
-                        <li>Server endpoint to save signed contracts (see contract.html comments)</li>
+                        <li>Server endpoint to save signed contracts</li>
                         <li>Admin dashboard API to fetch signed contracts</li>
-                        <li>Authentication and security implementation</li>
+                        <li>Enhanced authentication and security</li>
                     </ul>
                 </div>
             </div>
@@ -1434,14 +1396,10 @@
             try {
                 const contractData = localStorage.getItem('signedContracts');
                 signedContracts = contractData ? JSON.parse(contractData) : [];
-                console.log('✅ Loaded signed contracts:', signedContracts.length);
-                console.log('📱 User Agent:', navigator.userAgent);
-                console.log('🖥️ Screen size:', window.screen.width + 'x' + window.screen.height);
-                console.log('📋 Contract data:', signedContracts);
                 displaySignedContracts();
                 updateContractAnalytics();
             } catch (error) {
-                console.error('❌ Error loading signed contracts:', error);
+                console.error('Error loading signed contracts:', error);
                 signedContracts = [];
                 displaySignedContracts();
             }
@@ -1839,14 +1797,13 @@ Status: ${contract.status}
                 localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
                 displaySignedContracts();
                 updateContractAnalytics();
-                console.log('🗑️ Deleted signed contract:', contract.contractId);
             }
         }
 
         // Export all signed contracts
         function exportAllSignedContracts() {
             if (signedContracts.length === 0) {
-                alert('📋 No signed contracts to export.');
+                alert('No signed contracts to export.');
                 return;
             }
 
@@ -1867,109 +1824,6 @@ Status: ${contract.status}
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-
-            console.log('📦 Exported signed contracts:', signedContracts.length);
-        }
-
-        // Debug contract data
-        function debugContractData() {
-            const rawData = localStorage.getItem('signedContracts');
-            const debugInfo = `
-🔍 CONTRACT DATA DEBUG REPORT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📱 Device Info:
-• User Agent: ${navigator.userAgent}
-• Screen Size: ${window.screen.width}x${window.screen.height}
-• Window Size: ${window.innerWidth}x${window.innerHeight}
-• Is Mobile: ${/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)}
-
-💾 LocalStorage Info:
-• Raw Data Length: ${rawData ? rawData.length : 0} characters
-• Parsed Contracts: ${signedContracts.length} contracts
-• Storage Available: ${typeof(Storage) !== "undefined" ? 'YES' : 'NO'}
-
-📋 Contract Data:
-${rawData ? rawData : 'NULL - No data found!'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🔧 Troubleshooting:
-1. If "Raw Data Length" is 0, contracts haven't been saved to this browser
-2. If different between desktop/mobile, they're using different storage
-3. Use "Import Data" to manually sync contracts between devices
-            `.trim();
-            
-            alert(debugInfo);
-            console.log('🔍 Debug Info:', {
-                rawData: rawData,
-                parsedContracts: signedContracts,
-                userAgent: navigator.userAgent,
-                screenSize: `${window.screen.width}x${window.screen.height}`
-            });
-        }
-
-        // Show contract import section
-        function showContractImport() {
-            document.getElementById('contractImportSection').style.display = 'block';
-        }
-
-        // Hide contract import section
-        function hideContractImport() {
-            document.getElementById('contractImportSection').style.display = 'none';
-            document.getElementById('contractImportData').value = '';
-        }
-
-        // Import contract data
-        function importContractData() {
-            const importData = document.getElementById('contractImportData').value.trim();
-            
-            if (!importData) {
-                alert('❌ Please paste contract data to import.');
-                return;
-            }
-
-            try {
-                // Try to parse the imported data
-                const parsedData = JSON.parse(importData);
-                
-                // Check if it's the export format or just the contracts array
-                let contractsToImport = [];
-                if (parsedData.signedContracts && Array.isArray(parsedData.signedContracts)) {
-                    contractsToImport = parsedData.signedContracts;
-                } else if (Array.isArray(parsedData)) {
-                    contractsToImport = parsedData;
-                } else {
-                    throw new Error('Invalid data format');
-                }
-
-                // Validate contract structure
-                if (contractsToImport.length > 0) {
-                    const firstContract = contractsToImport[0];
-                    if (!firstContract.contractId || !firstContract.freelancerName || !firstContract.signature) {
-                        throw new Error('Contracts missing required fields');
-                    }
-                }
-
-                // Import the contracts
-                const existingContracts = signedContracts.slice(); // backup
-                signedContracts = contractsToImport;
-                
-                // Save to localStorage
-                localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
-                
-                // Refresh display
-                displaySignedContracts();
-                updateContractAnalytics();
-                hideContractImport();
-                
-                alert(`✅ Successfully imported ${contractsToImport.length} signed contract(s)!`);
-                console.log('📥 Imported contracts:', contractsToImport.length);
-                
-            } catch (error) {
-                console.error('❌ Import error:', error);
-                alert(`❌ Failed to import contracts: ${error.message}\n\nPlease check the data format and try again.`);
-            }
         }
 
         // Initialize on page load
