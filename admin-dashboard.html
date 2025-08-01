@@ -67,17 +67,119 @@
         }
 
         function handleClientLoad() {
-            if (typeof gapi !== 'undefined') {
-                console.log('✅ gapi loaded, initializing client...');
-                loadGapiClient();
-            } else {
-                console.error("❌ gapi not loaded.");
+            console.log('📡 handleClientLoad called, checking for gapi...');
+            
+            // Sometimes gapi takes a moment to become available after script load
+            let attempts = 0;
+            const maxAttempts = 50; // 5 seconds total
+            
+            function checkGapiAvailable() {
+                attempts++;
+                
+                if (typeof gapi !== 'undefined') {
+                    console.log('✅ gapi loaded after', attempts, 'attempts, initializing client...');
+                    loadGapiClient();
+                } else if (attempts < maxAttempts) {
+                    // Wait 100ms and try again
+                    setTimeout(checkGapiAvailable, 100);
+                } else {
+                    console.error("❌ gapi failed to load after", maxAttempts, "attempts (5 seconds)");
+                    console.error("🔧 This might indicate a network issue or the Google API script failed to load");
+                    console.error("🔧 Try opening browser dev tools and checking the Network tab for failed requests");
+                    console.error("🔧 You can try the manual retry button in the admin dashboard");
+                    window.isGoogleDriveInitialized = false;
+                    
+                    // Show retry button if we're on the admin page and the retry button exists
+                    const retryBtn = document.getElementById('retryAPIBtn');
+                    if (retryBtn) {
+                        retryBtn.style.display = 'inline-block';
+                        console.log('🔧 Retry button is now visible - you can click it to try loading the API again');
+                    }
+                }
             }
+            
+            checkGapiAvailable();
         }
+        
+        // Debug function - call this from console if needed
+        window.debugGoogleAPI = function() {
+            console.log('🔍 Google API Debug Info:');
+            console.log('typeof gapi:', typeof gapi);
+            console.log('window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
+            console.log('GOOGLE_DRIVE_CONFIG:', window.GOOGLE_DRIVE_CONFIG);
+            
+            if (typeof gapi !== 'undefined') {
+                console.log('gapi object exists, trying manual initialization...');
+                handleClientLoad();
+            } else {
+                console.log('❌ gapi object not found - script may not have loaded');
+                console.log('🔧 Check Network tab in dev tools for failed script requests');
+            }
+        };
+        
+        // Alternative script loading if the primary method fails
+        window.loadGoogleAPIFallback = function() {
+            console.log('🔄 Loading Google API as fallback...');
+            if (typeof gapi === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://apis.google.com/js/api.js';
+                script.onload = function() {
+                    console.log('📡 Fallback script loaded, waiting for gapi...');
+                    setTimeout(() => {
+                        if (typeof gapi !== 'undefined') {
+                            console.log('✅ Fallback successful, initializing...');
+                            handleClientLoad();
+                        } else {
+                            console.error('❌ Fallback failed - gapi still not available');
+                        }
+                    }, 1000);
+                };
+                script.onerror = function() {
+                    console.error('❌ Fallback script failed to load');
+                };
+                document.head.appendChild(script);
+            } else {
+                console.log('✅ gapi already available');
+                handleClientLoad();
+            }
+        };
+        
+        // Manual retry function for users
+        window.retryGoogleAPI = function() {
+            console.log('🔧 Manual retry initiated...');
+            const retryBtn = document.getElementById('retryAPIBtn');
+            if (retryBtn) {
+                retryBtn.textContent = '🔄 Retrying...';
+                retryBtn.disabled = true;
+            }
+            
+            // Reset flags
+            window.isGoogleDriveInitialized = false;
+            
+            // Try fallback loading
+            loadGoogleAPIFallback();
+            
+            // Re-enable button after attempt
+            setTimeout(() => {
+                if (retryBtn) {
+                    retryBtn.textContent = '🔧 Retry API';
+                    retryBtn.disabled = false;
+                    
+                    if (window.isGoogleDriveInitialized) {
+                        retryBtn.style.display = 'none';
+                        console.log('✅ Retry successful! Google Drive API is now initialized.');
+                        alert('✅ Google API retry successful! You can now try setting up Google Drive sync.');
+                    } else {
+                        console.log('❌ Retry failed. Google API still not available.');
+                        alert('❌ Retry failed. Please check your internet connection and browser console for errors.');
+                    }
+                }
+            }, 3000);
+        };
     </script>
     
     <!-- Google API Script with proper onload handling -->
-    <script src="https://apis.google.com/js/api.js" onload="handleClientLoad()" async defer></script>
+    <script src="https://apis.google.com/js/api.js" onload="handleClientLoad()"></script>
     
     <style>
         :root {
@@ -1055,6 +1157,7 @@
                     <button class="btn" onclick="showFileImport()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">📥 Import Backup</button>
                     <button class="btn" onclick="setupGoogleDriveSync()" id="driveSetupBtn" style="background: linear-gradient(135deg, #4285f4, #1a73e8);">☁️ Setup Google Drive</button>
                     <button class="btn" onclick="forceSyncToGoogleDrive()" id="forceSyncBtn" style="background: linear-gradient(135deg, #34a853, #137333); display: none;">💾 Force Sync</button>
+                    <button class="btn" onclick="retryGoogleAPI()" id="retryAPIBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706); display: none;">🔧 Retry API</button>
                     <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
                     <span id="syncStatus" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-left: auto;"></span>
                 </div>
@@ -2201,11 +2304,25 @@ Status: ${contract.status}
             
             try {
                 // Check if Google Drive API is initialized
+                console.log('🔍 Checking Google Drive initialization status...');
+                console.log('window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
+                console.log('typeof gapi:', typeof gapi);
+                
                 if (!window.isGoogleDriveInitialized) {
+                    if (typeof gapi === 'undefined') {
+                        // Show retry button
+                        const retryBtn = document.getElementById('retryAPIBtn');
+                        if (retryBtn) {
+                            retryBtn.style.display = 'inline-block';
+                        }
+                        throw new Error('Google API (gapi) not loaded. The Google API script may have failed to load or is being blocked. Try clicking the "Retry API" button.');
+                    }
+                    
                     // Try initializing once more in case it's still loading
+                    console.log('🔄 Attempting to initialize Google Drive API...');
                     await initializeGoogleDrive();
                     if (!isGoogleDriveInitialized) {
-                        throw new Error('Google Drive API not initialized. Check console for errors.');
+                        throw new Error('Google Drive API initialization failed. Check console for detailed error messages.');
                     }
                 }
                 
