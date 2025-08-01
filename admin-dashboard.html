@@ -6,7 +6,7 @@
     <title>Admin Dashboard - Cochran Films</title>
     
     <!-- Content Security Policy - Allow Google APIs -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://ssl.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://apis.google.com https://accounts.google.com https://www.googleapis.com; frame-src https://accounts.google.com;"
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://ssl.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://apis.google.com https://accounts.google.com https://www.googleapis.com; frame-src https://accounts.google.com;"
     
     <!-- Fonts -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style">
@@ -19,11 +19,22 @@
     <script>
         // Simple loading state
         window.gapiLoaded = false;
+        window.gapiReady = false;
         
         // Callback when gapi loads
         function onGapiLoad() {
-            console.log('📡 Google API loaded successfully!');
+            console.log('📡 Google API script loaded successfully!');
             window.gapiLoaded = true;
+            
+            // Give gapi time to initialize
+            setTimeout(() => {
+                if (typeof gapi !== 'undefined') {
+                    console.log('✅ gapi object is now available');
+                    window.gapiReady = true;
+                } else {
+                    console.log('⚠️ gapi object still not available after script load');
+                }
+            }, 500);
         }
     </script>
     
@@ -1475,26 +1486,31 @@
 
         // ==================== GOOGLE DRIVE API INTEGRATION ====================
         
-        // Wait for Google API library to load (Simple approach)
-        function waitForGapi(maxWaitTime = 10000) {
+        // Wait for Google API library to load properly
+        function waitForGapi(maxWaitTime = 15000) {
             return new Promise((resolve, reject) => {
                 const startTime = Date.now();
                 
                 function checkGapi() {
-                    // Check if gapi is available (same as working test)
-                    if (typeof gapi !== 'undefined') {
+                    // Check if both script loaded AND gapi is available
+                    if (window.gapiLoaded && typeof gapi !== 'undefined') {
                         console.log('✅ Google API library ready');
                         resolve();
                         return;
                     }
                     
+                    // Show progress
+                    if (window.gapiLoaded) {
+                        console.log('⏳ Script loaded, waiting for gapi object...');
+                    }
+                    
                     if (Date.now() - startTime > maxWaitTime) {
-                        reject(new Error('Google API library not available within 10 seconds'));
+                        reject(new Error(`Google API initialization timeout. Script loaded: ${window.gapiLoaded}, gapi available: ${typeof gapi !== 'undefined'}`));
                         return;
                     }
                     
-                    // Check again in 100ms
-                    setTimeout(checkGapi, 100);
+                    // Check again in 200ms
+                    setTimeout(checkGapi, 200);
                 }
                 
                 checkGapi();
