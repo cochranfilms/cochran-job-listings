@@ -341,109 +341,7 @@
             display: none;
         }
         
-        /* Loading Screen Styles */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .loading-screen.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .loading-screen::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 50% 50%, rgba(255,178,0,0.1) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        
-        .loading-logo {
-            width: 180px;
-            height: auto;
-            filter: 
-                drop-shadow(0 0 8px #FFB200)
-                drop-shadow(0 0 16px #FFB200)
-                drop-shadow(4px 4px 0px #000000);
-            animation: loadingGlow 1.5s ease-in-out infinite alternate;
-            margin-bottom: 2rem;
-            z-index: 2;
-        }
-        
-        @keyframes loadingGlow {
-            0% {
-                filter: 
-                    drop-shadow(0 0 8px #FFB200)
-                    drop-shadow(0 0 16px #FFB200)
-                    drop-shadow(4px 4px 0px #000000);
-                transform: scale(1);
-            }
-            100% {
-                filter: 
-                    drop-shadow(0 0 12px #FFB200)
-                    drop-shadow(0 0 24px #FFB200)
-                    drop-shadow(4px 4px 0px #000000);
-                transform: scale(1.05);
-            }
-        }
-        
-        .loading-text {
-            color: #FFB200;
-            font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 1rem;
-            z-index: 2;
-            animation: fadeInOut 2s ease-in-out infinite;
-        }
-        
-        .loading-subtext {
-            color: rgba(255,255,255,0.8);
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            text-align: center;
-            z-index: 2;
-            animation: fadeInOut 2s ease-in-out infinite 0.5s;
-        }
-        
-        @keyframes fadeInOut {
-            0%, 100% { opacity: 0.7; }
-            50% { opacity: 1; }
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 178, 0, 0.3);
-            border-top: 3px solid #FFB200;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-top: 1.5rem;
-            z-index: 2;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+
         
         .login-header {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -584,20 +482,6 @@
             .contract-section {
                 padding: 1rem;
             }
-            
-            /* Loading Screen Mobile */
-            .loading-logo {
-                width: 140px;
-            }
-            
-            .loading-text {
-                font-size: 1.3rem;
-            }
-            
-            .loading-subtext {
-                font-size: 0.9rem;
-                padding: 0 1rem;
-            }
         }
     </style>
 </head>
@@ -730,13 +614,7 @@
         </div>
     </div>
 
-    <!-- Loading Screen -->
-    <div id="loadingScreen" class="loading-screen">
-        <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo" class="loading-logo">
-        <div class="loading-text">Verifying Access</div>
-        <div class="loading-subtext">Please wait while we validate your credentials...</div>
-        <div class="loading-spinner"></div>
-    </div>
+
 
     <!-- Using browser's built-in print-to-PDF instead of html2pdf.js -->
     <!-- EmailJS for sending notifications -->
@@ -806,12 +684,6 @@
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadFreelancerData();
-            
-            // Ensure loading screen is hidden on page load
-            const loadingScreen = document.getElementById('loadingScreen');
-            if (loadingScreen) {
-                loadingScreen.classList.remove('show');
-            }
         });
 
         function checkAccess(event) {
@@ -819,16 +691,8 @@
             
             console.log('🔍 Starting access verification...');
             
-            // Show loading screen immediately
-            const loadingScreen = document.getElementById('loadingScreen');
-            if (loadingScreen) {
-                loadingScreen.classList.add('show');
-            }
-            
-            // Wait for 1.8 seconds before proceeding with validation
-            setTimeout(() => {
-                performAccessCheck();
-            }, 1800);
+            // Immediately proceed with validation - no loading screen
+            performAccessCheck();
         }
         
         function performAccessCheck() {
@@ -840,12 +704,6 @@
             
             const successDiv = document.getElementById("success-message");
             const errorDiv = document.getElementById("error-message");
-            const loadingScreen = document.getElementById('loadingScreen');
-            
-            // Always hide loading screen first
-            if (loadingScreen) {
-                loadingScreen.classList.remove('show');
-            }
             
             if (!successDiv || !errorDiv) {
                 console.error('❌ Could not find success or error message divs');
