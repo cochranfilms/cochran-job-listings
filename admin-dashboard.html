@@ -195,6 +195,99 @@
             }
         }
         
+        // Comprehensive diagnostic function
+        window.diagnoseGoogleAPI = function() {
+            console.log('🔍 COMPREHENSIVE GOOGLE API DIAGNOSIS');
+            console.log('=====================================');
+            
+            // 1. Basic availability
+            console.log('1. BASIC AVAILABILITY:');
+            console.log('  typeof gapi:', typeof gapi);
+            console.log('  typeof google:', typeof google);
+            console.log('  window.gapi:', window.gapi);
+            console.log('  window.google:', window.google);
+            
+            // 2. Script tag analysis
+            console.log('\n2. SCRIPT TAG ANALYSIS:');
+            const scripts = document.querySelectorAll('script[src*="googleapis.com"], script[src*="google.com"]');
+            scripts.forEach((script, index) => {
+                console.log(`  Script ${index + 1}:`, script.src);
+                console.log(`    loaded: ${script.readyState || 'unknown'}`);
+                console.log(`    error: ${script.onerror ? 'has error handler' : 'no error handler'}`);
+            });
+            
+            // 3. Network check
+            console.log('\n3. NETWORK CONNECTIVITY TEST:');
+            fetch('https://apis.google.com/js/api.js', { method: 'HEAD' })
+                .then(response => {
+                    console.log('  ✅ Can reach Google APIs:', response.status);
+                })
+                .catch(error => {
+                    console.log('  ❌ Cannot reach Google APIs:', error.message);
+                    console.log('  💡 This indicates network/firewall blocking');
+                });
+            
+            // 4. HTTPS check
+            console.log('\n4. PROTOCOL CHECK:');
+            console.log('  Current protocol:', window.location.protocol);
+            if (window.location.protocol === 'http:') {
+                console.log('  ⚠️ WARNING: Using HTTP - Google APIs may require HTTPS');
+                console.log('  💡 Try: https://localhost:8000 or deploy to HTTPS server');
+            }
+            
+            // 5. Content Security Policy check
+            console.log('\n5. CSP CHECK:');
+            const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            if (cspMeta) {
+                console.log('  CSP found:', cspMeta.content);
+                if (!cspMeta.content.includes('googleapis.com')) {
+                    console.log('  ⚠️ WARNING: CSP may not allow Google APIs');
+                }
+            } else {
+                console.log('  No CSP meta tag found');
+            }
+            
+            // 6. Ad blocker detection
+            console.log('\n6. AD BLOCKER DETECTION:');
+            const testDiv = document.createElement('div');
+            testDiv.className = 'adsbox';
+            testDiv.style.position = 'absolute';
+            testDiv.style.left = '-9999px';
+            document.body.appendChild(testDiv);
+            setTimeout(() => {
+                if (testDiv.offsetHeight === 0) {
+                    console.log('  ⚠️ LIKELY AD BLOCKER DETECTED');
+                    console.log('  💡 Try disabling ad blocker temporarily');
+                } else {
+                    console.log('  ✅ No ad blocker detected');
+                }
+                document.body.removeChild(testDiv);
+            }, 100);
+            
+            // 7. Manual loading test
+            console.log('\n7. MANUAL LOADING TEST:');
+            const testScript = document.createElement('script');
+            testScript.src = 'https://apis.google.com/js/api.js';
+            testScript.onload = () => {
+                setTimeout(() => {
+                    console.log('  Manual load result - typeof gapi:', typeof gapi);
+                    if (typeof gapi !== 'undefined') {
+                        console.log('  ✅ Manual loading successful!');
+                    } else {
+                        console.log('  ❌ Manual loading failed - API object not available');
+                        console.log('  💡 This suggests browser/security restrictions');
+                    }
+                }, 1000);
+            };
+            testScript.onerror = (error) => {
+                console.log('  ❌ Manual script loading failed:', error);
+            };
+            document.head.appendChild(testScript);
+            
+            console.log('\n=====================================');
+            console.log('🎯 WAITING FOR RESULTS... (check logs above in 2-3 seconds)');
+        };
+
         // Debug function - call this from console if needed
         window.debugGoogleAPI = function() {
             console.log('🔍 Google API Debug Info (Official Pattern):');
@@ -242,6 +335,74 @@
                 console.log('  - google.accounts available:', typeof google !== 'undefined' && google.accounts && google.accounts.oauth2);
                 console.log('🔧 Check Network tab in dev tools for failed script requests');
                 console.log('🔧 Try refreshing the page or using the "Retry API" button');
+            }
+        };
+
+        // NEW: Debug Google Drive files - helps find missing contracts
+        window.debugGoogleDriveFiles = async function() {
+            console.log('🔍 Google Drive Files Debug:');
+            
+            if (!isGoogleDriveSignedIn) {
+                console.log('❌ Not signed into Google Drive yet');
+                return;
+            }
+            
+            try {
+                // List all files in root
+                console.log('📁 Searching for all files in Google Drive root...');
+                const allFiles = await gapi.client.drive.files.list({
+                    q: "trashed=false",
+                    pageSize: 50,
+                    fields: "files(id,name,createdTime,modifiedTime,size)"
+                });
+                
+                console.log('📁 All files found:', allFiles.result.files.length);
+                allFiles.result.files.forEach(file => {
+                    console.log(`  - ${file.name} (ID: ${file.id}, Created: ${file.createdTime})`);
+                });
+                
+                // Specifically search for contracts file
+                console.log(`🔍 Searching specifically for: "${CONTRACTS_FILE_NAME}"`);
+                const contractFiles = await gapi.client.drive.files.list({
+                    q: `name='${CONTRACTS_FILE_NAME}' and trashed=false`,
+                    fields: "files(id,name,createdTime,modifiedTime,size)"
+                });
+                
+                if (contractFiles.result.files.length > 0) {
+                    console.log('✅ Found contracts file(s):');
+                    contractFiles.result.files.forEach(file => {
+                        console.log(`  - ${file.name} (ID: ${file.id})`);
+                        console.log(`    Created: ${file.createdTime}`);
+                        console.log(`    Modified: ${file.modifiedTime}`);
+                        console.log(`    Size: ${file.size} bytes`);
+                    });
+                    
+                    // Try to read the first file
+                    const fileId = contractFiles.result.files[0].id;
+                    console.log(`📖 Reading contents of file: ${fileId}`);
+                    const content = await gapi.client.drive.files.get({
+                        fileId: fileId,
+                        alt: 'media'
+                    });
+                    
+                    try {
+                        const data = JSON.parse(content.body);
+                        console.log('📄 Contracts file contents:');
+                        console.log(`  - Total contracts: ${data.totalContracts || 0}`);
+                        console.log(`  - Last updated: ${data.lastUpdated}`);
+                        console.log(`  - Saved from: ${data.savedFrom}`);
+                        console.log(`  - Contracts:`, data.signedContracts || []);
+                    } catch (e) {
+                        console.log('❌ File content is not valid JSON:', content.body);
+                    }
+                } else {
+                    console.log('❌ No contracts file found!');
+                    console.log('💡 This means contracts are not being saved to Google Drive');
+                    console.log('💡 Check the contract signing process on contract.html');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error debugging Google Drive:', error);
             }
         };
         
@@ -1990,34 +2151,133 @@
         // Load signed contracts with Google Drive sync
         async function loadSignedContracts() {
             try {
+                console.log('🔄 Loading signed contracts...');
+                
                 // Try Google Drive first
                 if (isGoogleDriveInitialized && isGoogleDriveSignedIn) {
+                    console.log('☁️ Attempting to load from Google Drive...');
+                    
+                    // Force refresh the contracts file ID to make sure we find it
+                    contractsFileId = await findOrCreateContractsFile();
+                    
                     const driveContracts = await loadContractsFromGoogleDrive();
-                    if (driveContracts) {
+                    if (driveContracts && driveContracts.length > 0) {
+                        console.log(`✅ Loaded ${driveContracts.length} contracts from Google Drive`);
                         signedContracts = driveContracts;
                         // Also save to localStorage as backup
                         localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
-                displaySignedContracts();
-                updateContractAnalytics();
-                        updateSyncStatus('✅ Synced with Google Drive');
+                        displaySignedContracts();
+                        updateContractAnalytics();
+                        updateSyncStatus(`✅ Synced with Google Drive (${driveContracts.length} contracts)`);
                         return;
+                    } else if (driveContracts && driveContracts.length === 0) {
+                        console.log('📭 Google Drive file exists but contains no contracts yet');
+                        signedContracts = [];
+                        displaySignedContracts();
+                        updateContractAnalytics();
+                        updateSyncStatus('✅ Connected to Google Drive (no contracts yet)');
+                        return;
+                    } else {
+                        console.log('⚠️ Could not load from Google Drive, falling back to localStorage');
                     }
                 }
                 
                 // Fallback to localStorage
+                console.log('📱 Loading from localStorage...');
                 const localData = localStorage.getItem('signedContracts');
                 signedContracts = localData ? JSON.parse(localData) : [];
+                console.log(`📱 Found ${signedContracts.length} contracts in localStorage`);
                 displaySignedContracts();
                 updateContractAnalytics();
-                updateSyncStatus('⚠️ Using local storage only');
+                
+                if (isGoogleDriveInitialized && isGoogleDriveSignedIn) {
+                    updateSyncStatus('⚠️ Using local storage (Google Drive file not found)');
+                } else {
+                    updateSyncStatus('⚠️ Using local storage only');
+                }
                 
             } catch (error) {
-                console.error('Error loading signed contracts:', error);
+                console.error('❌ Error loading signed contracts:', error);
                 signedContracts = [];
                 displaySignedContracts();
                 updateSyncStatus('❌ Error loading contracts');
             }
         }
+
+        // Enhanced function to find ALL contract files and debug
+        window.searchAllContractFiles = async function() {
+            console.log('🔍 Comprehensive Contract File Search...');
+            
+            if (!isGoogleDriveSignedIn) {
+                console.log('❌ Not signed into Google Drive');
+                return;
+            }
+            
+            try {
+                // Search for exact file name
+                console.log(`📁 Searching for exact name: "${CONTRACTS_FILE_NAME}"`);
+                const exactMatch = await gapi.client.drive.files.list({
+                    q: `name='${CONTRACTS_FILE_NAME}' and trashed=false`,
+                    fields: "files(id,name,createdTime,modifiedTime,size,parents)"
+                });
+                
+                // Search for partial matches
+                console.log('📁 Searching for partial matches...');
+                const partialMatch = await gapi.client.drive.files.list({
+                    q: `name contains 'contract' and trashed=false`,
+                    fields: "files(id,name,createdTime,modifiedTime,size,parents)"
+                });
+                
+                // Search for JSON files
+                console.log('📁 Searching for JSON files...');
+                const jsonFiles = await gapi.client.drive.files.list({
+                    q: `name contains '.json' and trashed=false`,
+                    fields: "files(id,name,createdTime,modifiedTime,size,parents)"
+                });
+                
+                console.log('📊 Search Results:');
+                console.log(`  Exact matches: ${exactMatch.result.files.length}`);
+                console.log(`  Contract-related files: ${partialMatch.result.files.length}`);
+                console.log(`  JSON files: ${jsonFiles.result.files.length}`);
+                
+                if (exactMatch.result.files.length > 0) {
+                    console.log('✅ FOUND CONTRACTS FILE(S):');
+                    exactMatch.result.files.forEach((file, index) => {
+                        console.log(`  ${index + 1}. ${file.name}`);
+                        console.log(`     ID: ${file.id}`);
+                        console.log(`     Created: ${file.createdTime}`);
+                        console.log(`     Modified: ${file.modifiedTime}`);
+                        console.log(`     Size: ${file.size} bytes`);
+                    });
+                    
+                    // Use the first exact match
+                    contractsFileId = exactMatch.result.files[0].id;
+                    console.log(`🎯 Set contractsFileId to: ${contractsFileId}`);
+                    
+                    // Reload contracts
+                    await loadSignedContracts();
+                } else {
+                    console.log('❌ No exact contract file matches found');
+                    
+                    if (partialMatch.result.files.length > 0) {
+                        console.log('🔍 Contract-related files found:');
+                        partialMatch.result.files.forEach(file => {
+                            console.log(`  - ${file.name} (ID: ${file.id})`);
+                        });
+                    }
+                    
+                    if (jsonFiles.result.files.length > 0) {
+                        console.log('🔍 JSON files found:');
+                        jsonFiles.result.files.forEach(file => {
+                            console.log(`  - ${file.name} (ID: ${file.id})`);
+                        });
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Error searching for contract files:', error);
+            }
+        };
         
         // Enhanced contract saving with Google Drive sync
         async function saveSignedContract(contractData) {
