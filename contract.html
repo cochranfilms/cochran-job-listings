@@ -765,6 +765,32 @@
                 console.log('✅ Main container initialized as visible');
             }
             
+            // Ensure form inputs are ready for user interaction
+            const nameInput = document.getElementById('freelancerName');
+            const emailInput = document.getElementById('freelancerEmail');
+            const contractForm = document.getElementById('contractForm');
+            
+            if (contractForm) {
+                contractForm.style.pointerEvents = 'auto';
+                contractForm.style.display = 'block';
+                contractForm.style.visibility = 'visible';
+                console.log('✅ Contract form initialized as interactive');
+            }
+            
+            if (nameInput) {
+                nameInput.disabled = false;
+                nameInput.style.pointerEvents = 'auto';
+                nameInput.readOnly = false;
+                console.log('✅ Name input enabled');
+            }
+            
+            if (emailInput) {
+                emailInput.disabled = false;
+                emailInput.style.pointerEvents = 'auto';
+                emailInput.readOnly = false;
+                console.log('✅ Email input enabled');
+            }
+            
             // Aggressively disable any browser loading overlays (but not main containers)
             forceClearLoadingStates();
             
@@ -816,12 +842,16 @@
             });
             
             // ALSO check for any duplicate/stuck login form elements (not main container)
-            const stuckLoginElements = document.querySelectorAll('.login-elements:not(.hidden), .login-form:not([style*="display: none"])');
+            const stuckLoginElements = document.querySelectorAll('.login-elements:not(.hidden)');
             if (stuckLoginElements.length > 1) {
                 console.log('🚨 Found multiple visible login form elements, hiding extras:', stuckLoginElements.length);
                 stuckLoginElements.forEach((el, index) => {
-                    // Never hide the main login-screen or main-container
-                    if (!el.classList.contains('login-screen') && el.id !== 'loginScreen' && el.id !== 'mainContainer') {
+                    // Never hide the main containers or the active form
+                    if (!el.classList.contains('login-screen') && 
+                        el.id !== 'loginScreen' && 
+                        el.id !== 'mainContainer' &&
+                        el.id !== 'contractForm' && 
+                        el.id !== 'loginElements') {
                         if (index > 0) { // Keep only the first one
                             el.style.display = 'none';
                             el.style.visibility = 'hidden';
@@ -831,11 +861,29 @@
                 });
             }
             
-            // Clear any loading states on form container
+            // Clear any loading states on form container and ensure inputs are enabled
             const formContainer = document.getElementById('contractForm');
             if (formContainer) {
                 formContainer.classList.remove('loading', 'processing', 'submitting');
                 formContainer.style.pointerEvents = 'auto';
+                formContainer.style.display = 'block';
+                formContainer.style.visibility = 'visible';
+                
+                // Ensure input fields are enabled and interactive
+                const nameInput = document.getElementById('freelancerName');
+                const emailInput = document.getElementById('freelancerEmail');
+                
+                if (nameInput) {
+                    nameInput.disabled = false;
+                    nameInput.style.pointerEvents = 'auto';
+                    nameInput.style.opacity = '1';
+                }
+                
+                if (emailInput) {
+                    emailInput.disabled = false;
+                    emailInput.style.pointerEvents = 'auto';
+                    emailInput.style.opacity = '1';
+                }
             }
         }
 
@@ -1675,59 +1723,23 @@ This contract has been digitally signed and is legally binding.
             }
             
             function handleInputChange(event) {
-                // Clear any loading states whenever user types
-                forceClearLoadingStates();
-                
-                // Debug: Log any unexpected elements that might be appearing
-                setTimeout(() => {
-                    const allElements = document.querySelectorAll('*');
-                    const suspiciousElements = [];
-                    
-                    allElements.forEach(el => {
-                        const style = window.getComputedStyle(el);
-                        // Check for elements that might be loading overlays
-                        if (
-                            (style.position === 'fixed' || style.position === 'absolute') &&
-                            (style.backgroundColor === 'rgb(0, 0, 0)' || style.backgroundColor === 'rgba(0, 0, 0, 1)') &&
-                            style.zIndex > 0 &&
-                            el.offsetWidth > 100 && el.offsetHeight > 100
-                        ) {
-                            suspiciousElements.push({
-                                element: el,
-                                tagName: el.tagName,
-                                className: el.className,
-                                id: el.id,
-                                position: style.position,
-                                background: style.backgroundColor,
-                                zIndex: style.zIndex,
-                                display: style.display
-                            });
-                        }
-                    });
-                    
-                    if (suspiciousElements.length > 0) {
-                        console.warn('🚨 Suspicious black overlay elements detected:', suspiciousElements);
-                        // Force hide them
-                        suspiciousElements.forEach(item => {
-                            if (item.element && !item.element.classList.contains('login-screen')) {
-                                item.element.style.display = 'none';
-                                item.element.style.visibility = 'hidden';
-                                console.log('🔨 Force hiding suspicious element:', item);
-                            }
-                        });
-                    }
-                }, 100);
+                // Only clear loading states occasionally, not on every keystroke
+                // This prevents interference with normal typing
+                clearTimeout(window.inputDebounceTimer);
+                window.inputDebounceTimer = setTimeout(() => {
+                    forceClearLoadingStates();
+                }, 500); // Only run after user stops typing for 500ms
             }
             
             if (nameInput) {
                 nameInput.addEventListener('keypress', handleEnterKey);
+                // Only add input listener for debounced cleanup, not keyup
                 nameInput.addEventListener('input', handleInputChange);
-                nameInput.addEventListener('keyup', handleInputChange);
             }
             if (emailInput) {
                 emailInput.addEventListener('keypress', handleEnterKey);
+                // Only add input listener for debounced cleanup, not keyup
                 emailInput.addEventListener('input', handleInputChange);
-                emailInput.addEventListener('keyup', handleInputChange);
             }
         });
 
