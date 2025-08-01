@@ -24,7 +24,7 @@
         const CLIENT_ID = '1067833350488-oht35egae1r6lpb642fl5rkjnus0rlqv.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyAqU6JXq7u2dKix2AfMk7yxvP8-PQVFxmE';
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const SCOPES = 'https://www.googleapis.com/auth/drive';
 
         let tokenClient;
         let gapiInited = false;
@@ -35,7 +35,12 @@
          */
         function gapiLoaded() {
             console.log('📡 GAPI loaded, initializing client...');
-            gapi.load('client', initializeGapiClient);
+            if (typeof gapi !== 'undefined') {
+                gapi.load('client', initializeGapiClient);
+            } else {
+                console.error('❌ GAPI not available - retrying in 500ms');
+                setTimeout(gapiLoaded, 500);
+            }
         }
 
         /**
@@ -1302,7 +1307,7 @@
                                     <li>Copy your Client ID</li>
                                 </ul>
                             </li>
-                            <li><strong>Update Configuration:</strong> Replace the placeholder values in GOOGLE_DRIVE_CONFIG</li>
+                            <li><strong>Update Configuration:</strong> Replace the placeholder values for CLIENT_ID and API_KEY at the top of the script</li>
                         </ol>
                     </div>
                     
@@ -1718,7 +1723,7 @@
             try {
                 console.log('🔄 Checking Google Drive API status...');
                 
-                if (GOOGLE_DRIVE_CONFIG.apiKey === 'YOUR_API_KEY_HERE') {
+                if (API_KEY === 'YOUR_API_KEY_HERE') {
                     console.log('📝 Google Drive API not configured - using localStorage only');
                     return false;
                 }
