@@ -315,6 +315,8 @@
                 return;
             }
 
+            console.log('Starting PDF generation for:', currentFreelancerData.name);
+
             // Show loading state
             const downloadBtn = document.getElementById('downloadPdfBtn');
             const originalText = downloadBtn.textContent;
@@ -322,58 +324,73 @@
             downloadBtn.disabled = true;
             downloadBtn.style.opacity = '0.7';
 
-            // Create PDF version of the contract
-            const pdfElement = createContractPDFElement();
+            try {
+                // Create PDF version of the contract
+                const pdfElement = createContractPDFElement();
+                console.log('PDF element created successfully');
 
-            // Configure html2pdf options
-            const opt = {
-                margin: 0.5,
-                filename: `Cochran_Films_Contract_${currentFreelancerData.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-                image: { type: 'jpeg', quality: 0.95 },
-                html2canvas: { 
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#000000',
-                    logging: false,
-                    width: 800,
-                    height: null
-                },
-                jsPDF: { 
-                    unit: 'in', 
-                    format: 'letter', 
-                    orientation: 'portrait',
-                    compress: true
-                },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
+                // Configure html2pdf options (simplified for better compatibility)
+                const opt = {
+                    margin: 0.5,
+                    filename: `Cochran_Films_Contract_${currentFreelancerData.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+                    image: { type: 'jpeg', quality: 0.8 },
+                    html2canvas: { 
+                        scale: 1.5,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#000000',
+                        logging: true,
+                        width: 800,
+                        height: null
+                    },
+                    jsPDF: { 
+                        unit: 'in', 
+                        format: 'letter', 
+                        orientation: 'portrait'
+                    }
+                };
 
-            // Generate and download PDF
-            html2pdf().set(opt).from(pdfElement).save().then(() => {
-                // Reset button
+                console.log('Starting html2pdf conversion...');
+
+                // Generate and download PDF
+                html2pdf().set(opt).from(pdfElement).save().then(() => {
+                    console.log('PDF generation successful');
+                    // Reset button
+                    downloadBtn.textContent = originalText;
+                    downloadBtn.disabled = false;
+                    downloadBtn.style.opacity = '1';
+                    
+                    // Remove PDF element
+                    if (document.body.contains(pdfElement)) {
+                        document.body.removeChild(pdfElement);
+                    }
+                    
+                    // Show success message
+                    alert('✅ PDF downloaded successfully! Check your Downloads folder.');
+                }).catch((error) => {
+                    console.error('PDF generation failed:', error);
+                    downloadBtn.textContent = originalText;
+                    downloadBtn.disabled = false;
+                    downloadBtn.style.opacity = '1';
+                    if (document.body.contains(pdfElement)) {
+                        document.body.removeChild(pdfElement);
+                    }
+                    alert('❌ PDF generation failed. Please try again or contact support.\n\nError: ' + error.message);
+                });
+
+            } catch (error) {
+                console.error('Error in PDF generation setup:', error);
                 downloadBtn.textContent = originalText;
                 downloadBtn.disabled = false;
                 downloadBtn.style.opacity = '1';
-                
-                // Remove PDF element
-                document.body.removeChild(pdfElement);
-                
-                // Show success message
-                alert('✅ PDF downloaded successfully! Check your Downloads folder.');
-            }).catch((error) => {
-                console.error('PDF generation failed:', error);
-                downloadBtn.textContent = originalText;
-                downloadBtn.disabled = false;
-                downloadBtn.style.opacity = '1';
-                if (document.body.contains(pdfElement)) {
-                    document.body.removeChild(pdfElement);
-                }
-                alert('❌ PDF generation failed. Please try again or contact support.');
-            });
+                alert('❌ PDF setup failed. Please try again or contact support.\n\nError: ' + error.message);
+            }
         }
 
         // Create PDF-optimized contract HTML element
         function createContractPDFElement() {
+            console.log('Creating PDF element with data:', currentFreelancerData);
+            
             const data = currentFreelancerData;
             const effectiveDate = data.approvedDate || new Date().toISOString().split('T')[0];
             const role = data.role || 'Contractor';
@@ -381,100 +398,131 @@
             const projectStart = data.projectStart || 'TBD';
             const rate = data.rate || '$150/day';
 
-            // Create PDF element
+            // Create PDF element with simpler approach for better compatibility
             const pdfElement = document.createElement('div');
-            pdfElement.style.position = 'absolute';
-            pdfElement.style.left = '-9999px';
-            pdfElement.style.top = '0';
-            pdfElement.style.width = '800px';
-            pdfElement.style.fontFamily = 'Arial, Helvetica, sans-serif';
-            pdfElement.style.lineHeight = '1.6';
-            pdfElement.style.color = '#ffffff';
-            pdfElement.style.backgroundColor = '#000000';
-            pdfElement.style.padding = '40px';
+            
+            // Set basic styles
+            pdfElement.style.cssText = `
+                position: absolute;
+                left: -9999px;
+                top: 0;
+                width: 800px;
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: white;
+                background-color: black;
+                padding: 40px;
+            `;
 
-            pdfElement.innerHTML = `
-                <div style="background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%); padding: 40px; border-radius: 12px; border: 1px solid rgba(255, 178, 0, 0.2);">
-                    <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #FFB200;">
-                        <div style="margin-bottom: 20px;">
-                            <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo" style="width: 200px; height: auto;">
-                        </div>
-                        <h1 style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #FFB200; margin-bottom: 10px;">📄 Freelance Agreement</h1>
-                        <p style="color: #ffffff;"><strong>Issued By:</strong> Cochran Films<br>
-                        <strong>Effective Date:</strong> ${effectiveDate}</p>
-                    </div>
+            // Create header
+            const header = document.createElement('div');
+            header.style.cssText = 'text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #FFB200;';
+            
+            const title = document.createElement('h1');
+            title.style.cssText = 'font-size: 28px; color: #FFB200; margin-bottom: 10px;';
+            title.textContent = 'Freelance Agreement';
+            
+            const issuedBy = document.createElement('p');
+            issuedBy.style.cssText = 'color: white;';
+            issuedBy.innerHTML = '<strong>Issued By:</strong> Cochran Films<br><strong>Effective Date:</strong> ' + effectiveDate;
+            
+            header.appendChild(title);
+            header.appendChild(issuedBy);
 
-                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">📌 Project Overview</h2>
-                    <p style="margin-bottom: 15px; color: #ffffff;">
-                        This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>${data.name}</strong>, hereinafter referred to as the "Contractor."
-                    </p>
-                    
-                    <div style="background: rgba(255, 178, 0, 0.1); padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FFB200; border: 1px solid rgba(255, 178, 0, 0.3);">
-                        <ul style="list-style: none; padding-left: 0; margin: 15px 0;">
-                            <li style="margin-bottom: 10px; padding: 8px 0; color: #ffffff;"><strong>Role:</strong> ${role}</li>
-                            <li style="margin-bottom: 10px; padding: 8px 0; color: #ffffff;"><strong>Location:</strong> ${location}</li>
-                            <li style="margin-bottom: 10px; padding: 8px 0; color: #ffffff;"><strong>Project Start:</strong> ${projectStart}</li>
-                            <li style="margin-bottom: 10px; padding: 8px 0; color: #ffffff;"><strong>Rate:</strong> ${rate}</li>
-                        </ul>
-                    </div>
+            // Create project overview
+            const overviewSection = document.createElement('div');
+            
+            const overviewTitle = document.createElement('h2');
+            overviewTitle.style.cssText = 'font-size: 24px; color: white; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;';
+            overviewTitle.textContent = 'Project Overview';
+            
+            const overviewText = document.createElement('p');
+            overviewText.style.cssText = 'margin-bottom: 15px; color: white;';
+            overviewText.innerHTML = 'This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>' + data.name + '</strong>, hereinafter referred to as the "Contractor."';
+            
+            // Project info box
+            const projectInfo = document.createElement('div');
+            projectInfo.style.cssText = 'background: rgba(255, 178, 0, 0.1); padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FFB200; border: 1px solid rgba(255, 178, 0, 0.3);';
+            
+            const projectList = document.createElement('ul');
+            projectList.style.cssText = 'list-style: none; padding-left: 0; margin: 15px 0;';
+            
+            const projectItems = [
+                'Role: ' + role,
+                'Location: ' + location,
+                'Project Start: ' + projectStart,
+                'Rate: ' + rate
+            ];
+            
+            projectItems.forEach(item => {
+                const li = document.createElement('li');
+                li.style.cssText = 'margin-bottom: 10px; padding: 8px 0; color: white;';
+                li.innerHTML = '<strong>' + item.split(':')[0] + ':</strong>' + item.split(':')[1];
+                projectList.appendChild(li);
+            });
+            
+            projectInfo.appendChild(projectList);
+            
+            overviewSection.appendChild(overviewTitle);
+            overviewSection.appendChild(overviewText);
+            overviewSection.appendChild(projectInfo);
 
-                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">✅ Contractor Responsibilities</h2>
-                    <ul style="margin: 15px 0; padding-left: 20px;">
-                        <li style="margin-bottom: 8px; color: #ffffff;">Arrive at the project location on time.</li>
-                        <li style="margin-bottom: 8px; color: #ffffff;">Professionally manage their assigned role and responsibilities.</li>
-                        <li style="margin-bottom: 8px; color: #ffffff;">Complete the job to professional standards.</li>
-                        <li style="margin-bottom: 8px; color: #ffffff;">Use personal equipment unless otherwise arranged.</li>
-                        <li style="margin-bottom: 8px; color: #ffffff;">Maintain a respectful demeanor with staff and clients.</li>
-                        <li style="margin-bottom: 8px; color: #ffffff;">Wear our company-branded shirt, hat, OR whatever piece of branded gear is asked of you for the duration of the project. (This will be provided to you at no charge)</li>
-                        <li style="margin-bottom: 8px; color: #ffffff;">Wear all black regardless of what branded gear is given to you on the day of the shoot.</li>
-                    </ul>
+            // Create responsibilities section
+            const responsibilitiesSection = document.createElement('div');
+            
+            const respTitle = document.createElement('h2');
+            respTitle.style.cssText = 'font-size: 24px; color: white; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;';
+            respTitle.textContent = 'Contractor Responsibilities';
+            
+            const respList = document.createElement('ul');
+            respList.style.cssText = 'margin: 15px 0; padding-left: 20px;';
+            
+            const responsibilities = [
+                'Arrive at the project location on time.',
+                'Professionally manage their assigned role and responsibilities.',
+                'Complete the job to professional standards.',
+                'Use personal equipment unless otherwise arranged.',
+                'Maintain a respectful demeanor with staff and clients.',
+                'Wear company-branded gear as provided.',
+                'Wear all black clothing.'
+            ];
+            
+            responsibilities.forEach(resp => {
+                const li = document.createElement('li');
+                li.style.cssText = 'margin-bottom: 8px; color: white;';
+                li.textContent = resp;
+                respList.appendChild(li);
+            });
+            
+            responsibilitiesSection.appendChild(respTitle);
+            responsibilitiesSection.appendChild(respList);
 
-                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">📸 BTS Content & Ownership</h2>
-                    <p style="margin-bottom: 15px; color: #ffffff;">
-                        The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.
-                    </p>
-
-                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">💵 Payment Terms</h2>
-                    <p style="margin-bottom: 15px; color: #ffffff;">
-                        Payment of ${rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).
-                    </p>
-
-                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">🛡️ Independent Contractor</h2>
-                    <p style="margin-bottom: 15px; color: #ffffff;">
-                        The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.
-                    </p>
-
-                    <h2 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">📝 Agreement</h2>
-                    <p style="margin-bottom: 15px; color: #ffffff;">This contract is provided for review. Digital signatures are available on the interactive contract page accessed through "View & Sign Contract".</p>
-
-                    <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid rgba(255, 178, 0, 0.3); page-break-inside: avoid;">
-                        <h3 style="font-family: Georgia, serif; font-size: 20px; font-weight: 600; color: #ffffff; margin: 20px 0 10px 0;">Contract Parties</h3>
-                        
-                        <div style="display: flex; justify-content: space-between; margin-top: 20px; gap: 30px;">
-                            <div style="flex: 1; padding: 20px; background: rgba(255, 178, 0, 0.1); border-radius: 8px; border: 2px solid rgba(255, 178, 0, 0.3); color: #ffffff;">
-                                <strong>Cochran Films Representative:</strong><br>
-                                Name: Cody Cochran<br>
-                                Title: Founder, Cochran Films<br>
-                                <div style="margin-top: 15px; padding: 10px 0; border-bottom: 2px solid #FFB200; color: #FFB200;">Signature: _________________</div>
-                                <div style="margin-top: 5px; color: #FFB200;">Date: _________________</div>
-                            </div>
-                            
-                            <div style="flex: 1; padding: 20px; background: rgba(255, 178, 0, 0.1); border-radius: 8px; border: 2px solid rgba(255, 178, 0, 0.3); color: #ffffff;">
-                                <strong>Contractor:</strong><br>
-                                Name: ${data.name}<br>
-                                <div style="margin-top: 15px; padding: 10px 0; border-bottom: 2px solid #FFB200; color: #FFB200;">Signature: _________________</div>
-                                <div style="margin-top: 5px; color: #FFB200;">Date: _________________</div>
-                            </div>
-                        </div>
-                        
-                        <p style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.7); font-size: 0.9rem;">
-                            📝 This is an unsigned copy. For digital signing, use "View & Sign Contract" above.
-                        </p>
-                    </div>
+            // Add additional sections with simplified content
+            const additionalSections = document.createElement('div');
+            additionalSections.innerHTML = `
+                <h2 style="font-size: 24px; color: white; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">Payment Terms</h2>
+                <p style="margin-bottom: 15px; color: white;">Payment of ${rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).</p>
+                
+                <h2 style="font-size: 24px; color: white; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px;">Independent Contractor</h2>
+                <p style="margin-bottom: 15px; color: white;">The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.</p>
+                
+                <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid rgba(255, 178, 0, 0.3);">
+                    <h3 style="font-size: 20px; color: white; margin: 20px 0 10px 0;">Contract Parties</h3>
+                    <p style="color: white; margin: 20px 0;"><strong>Cochran Films:</strong> Cody Cochran, Founder</p>
+                    <p style="color: white; margin: 20px 0;"><strong>Contractor:</strong> ${data.name}</p>
+                    <p style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.7); font-size: 14px;">This is an unsigned copy. For digital signing, use "View & Sign Contract".</p>
                 </div>
             `;
 
+            // Assemble the PDF element
+            pdfElement.appendChild(header);
+            pdfElement.appendChild(overviewSection);
+            pdfElement.appendChild(responsibilitiesSection);
+            pdfElement.appendChild(additionalSections);
+
+            console.log('PDF element created, appending to body');
             document.body.appendChild(pdfElement);
+            
             return pdfElement;
         }
     </script>
