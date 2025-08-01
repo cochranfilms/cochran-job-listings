@@ -152,9 +152,8 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 2rem;
+      padding: 2rem 2rem 80px 2rem;
       overflow-y: auto;
-      padding-bottom: 120px;
     }
 
     .slide h1 {
@@ -282,18 +281,19 @@
 
     .navigation {
       position: absolute;
-      bottom: 40px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       gap: 8px;
-      z-index: 1000;
+      z-index: 1001;
       background: rgba(28, 28, 30, 0.8);
       padding: 8px 16px;
       border-radius: 20px;
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      pointer-events: all;
     }
 
     .nav-dot {
@@ -851,10 +851,9 @@
       }
 
       .slide-overlay {
-        padding: calc(env(safe-area-inset-top) + 32px) 20px calc(env(safe-area-inset-bottom) + 160px);
+        padding: calc(env(safe-area-inset-top) + 80px) 20px calc(env(safe-area-inset-bottom) + 80px);
         min-height: 100vh;
         justify-content: flex-start;
-        padding-top: calc(env(safe-area-inset-top) + 80px);
         box-sizing: border-box;
       }
 
@@ -948,7 +947,7 @@
 
       .navigation {
         position: absolute;
-        bottom: calc(env(safe-area-inset-bottom) + 60px);
+        bottom: calc(env(safe-area-inset-bottom) + 20px);
         left: 50%;
         transform: translateX(-50%);
         background: rgba(28, 28, 30, 0.8);
@@ -957,7 +956,8 @@
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
+        z-index: 1001;
+        pointer-events: all;
       }
 
       .nav-dot {
