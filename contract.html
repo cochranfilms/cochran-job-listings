@@ -44,6 +44,12 @@
             width: 100%;
             text-align: center;
             border: 1px solid rgba(255, 178, 0, 0.2);
+            transition: max-width 0.3s ease;
+        }
+        
+        /* Expand container when contract details are shown */
+        .container.expanded {
+            max-width: 900px;
         }
         
         .logo {
@@ -180,8 +186,20 @@
                 padding: 30px 20px;
             }
             
+            .container.expanded {
+                max-width: 95vw;
+                padding: 20px 15px;
+            }
+            
             h1 {
                 font-size: 24px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container.expanded {
+                max-width: 95vw;
+                padding: 30px 20px;
             }
         }
     </style>
@@ -408,6 +426,9 @@
                 
                 // Show success message (no need to set href since everything is on this page now)
                 successDiv.classList.remove("hidden");
+                
+                // Expand container to show more content comfortably
+                document.querySelector('.container').classList.add('expanded');
                 
                 // Scroll to success message
                 successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
