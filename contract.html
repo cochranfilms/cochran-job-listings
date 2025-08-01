@@ -763,7 +763,15 @@
         }
         
         // Load data when page loads
-        document.addEventListener('DOMContentLoaded', loadFreelancerData);
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFreelancerData();
+            
+            // Ensure loading screen is hidden on page load
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.classList.remove('show');
+            }
+        });
 
         function checkAccess(event) {
             event.preventDefault();
@@ -792,6 +800,11 @@
             const successDiv = document.getElementById("success-message");
             const errorDiv = document.getElementById("error-message");
             const loadingScreen = document.getElementById('loadingScreen');
+            
+            // Always hide loading screen first
+            if (loadingScreen) {
+                loadingScreen.classList.remove('show');
+            }
             
             if (!successDiv || !errorDiv) {
                 console.error('❌ Could not find success or error message divs');
@@ -832,11 +845,6 @@
                 // Set up signature validation now that elements exist
                 setupSignatureValidation();
                 
-                // Hide loading screen first
-                if (loadingScreen) {
-                    loadingScreen.classList.remove('show');
-                }
-                
                 // Hide login elements with smooth transition
                 const loginElements = document.getElementById('loginElements');
                 if (loginElements) {
@@ -860,11 +868,6 @@
                 }, 400); // Wait for login elements to finish hiding
             } else {
                 console.log('❌ Access denied for:', { name, email });
-                
-                // Hide loading screen
-                if (loadingScreen) {
-                    loadingScreen.classList.remove('show');
-                }
                 
                 // Access denied
                 errorDiv.classList.remove("hidden");
