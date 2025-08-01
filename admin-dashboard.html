@@ -12,8 +12,47 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Drive API -->
-    <script src="https://apis.google.com/js/api.js" async defer onload="console.log('📡 Google API script loaded')" onerror="console.error('❌ Failed to load Google API script')"></script>
+    <!-- Google Drive API - Multiple Loading Methods -->
+    <script>
+        // Method 1: Try direct script loading
+        window.gapiLoadAttempts = 0;
+        window.gapiLoaded = false;
+        
+        function loadGoogleAPI() {
+            window.gapiLoadAttempts++;
+            console.log(`🔄 Attempt ${window.gapiLoadAttempts}: Loading Google API...`);
+            
+            const script = document.createElement('script');
+            script.src = 'https://apis.google.com/js/api.js';
+            script.async = true;
+            script.defer = true;
+            
+            script.onload = function() {
+                console.log('📡 Google API script loaded successfully');
+                window.gapiLoaded = true;
+            };
+            
+            script.onerror = function() {
+                console.error(`❌ Attempt ${window.gapiLoadAttempts}: Failed to load Google API script`);
+                
+                if (window.gapiLoadAttempts < 3) {
+                    console.log('🔄 Retrying in 2 seconds...');
+                    setTimeout(loadGoogleAPI, 2000);
+                } else {
+                    console.error('❌ All attempts to load Google API failed. Possible causes:');
+                    console.error('   • Ad blocker blocking Google APIs');
+                    console.error('   • Corporate firewall blocking googleapis.com');
+                    console.error('   • Browser security settings');
+                    console.error('   • Internet connection issues');
+                }
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        // Start loading immediately
+        loadGoogleAPI();
+    </script>
     
     <style>
         :root {
@@ -988,10 +1027,22 @@
                 <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
                     <button class="btn" onclick="loadSignedContracts()">🔄 Refresh Data</button>
                     <button class="btn" onclick="exportAllSignedContracts()">📦 Export All Contracts</button>
+                    <button class="btn" onclick="showFileImport()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">📥 Import Backup</button>
                     <button class="btn" onclick="setupGoogleDriveSync()" id="driveSetupBtn" style="background: linear-gradient(135deg, #4285f4, #1a73e8);">☁️ Setup Google Drive</button>
                     <button class="btn" onclick="forceSyncToGoogleDrive()" id="forceSyncBtn" style="background: linear-gradient(135deg, #34a853, #137333); display: none;">💾 Force Sync</button>
                     <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
                     <span id="syncStatus" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-left: auto;"></span>
+                </div>
+                
+                <!-- Manual File Import Section -->
+                <div id="fileImportSection" style="display: none; background: rgba(139, 92, 246, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3); margin-bottom: 1rem;">
+                    <h4 style="color: #8b5cf6; margin-bottom: 1rem;">📥 Import Contracts from Backup File</h4>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-size: 0.9rem;">Import a previously exported contracts JSON file to sync data between browsers/devices.</p>
+                    <input type="file" id="contractFileInput" accept=".json" style="margin-bottom: 1rem; color: white; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);">
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-small" onclick="processImportedFile()" style="background: #8b5cf6;">📥 Import</button>
+                        <button class="btn btn-small" onclick="hideFileImport()" style="background: #6b7280;">❌ Cancel</button>
+                    </div>
                 </div>
             </div>
 
@@ -1449,24 +1500,36 @@
         // ==================== GOOGLE DRIVE API INTEGRATION ====================
         
         // Wait for Google API library to load
-        function waitForGapi(maxWaitTime = 10000) {
+        function waitForGapi(maxWaitTime = 15000) {
             return new Promise((resolve, reject) => {
                 const startTime = Date.now();
                 
                 function checkGapi() {
-                    if (typeof gapi !== 'undefined') {
-                        console.log('✅ gapi library loaded');
+                    // Check if script loaded and gapi is available
+                    if (window.gapiLoaded && typeof gapi !== 'undefined') {
+                        console.log('✅ Google API library ready');
                         resolve();
                         return;
                     }
                     
-                    if (Date.now() - startTime > maxWaitTime) {
-                        reject(new Error('Timeout: Google API library failed to load within 10 seconds. Check internet connection.'));
+                    // Check if we've exceeded max attempts
+                    if (window.gapiLoadAttempts >= 3 && !window.gapiLoaded) {
+                        reject(new Error('Google API script failed to load after 3 attempts. This may be due to:\n' +
+                                       '• Ad blocker blocking googleapis.com\n' +
+                                       '• Corporate firewall restrictions\n' +
+                                       '• Browser security settings\n' +
+                                       '• Network connectivity issues\n\n' +
+                                       'Try disabling ad blockers or contact your IT administrator.'));
                         return;
                     }
                     
-                    // Check again in 100ms
-                    setTimeout(checkGapi, 100);
+                    if (Date.now() - startTime > maxWaitTime) {
+                        reject(new Error('Timeout: Google API library failed to load within 15 seconds. Check your internet connection and try again.'));
+                        return;
+                    }
+                    
+                    // Check again in 200ms
+                    setTimeout(checkGapi, 200);
                 }
                 
                 checkGapi();
@@ -1491,8 +1554,12 @@
                 
                 // Wait for gapi to load
                 console.log('⏳ Waiting for Google API library to load...');
+                console.log('📊 Current status:', {
+                    gapiLoadAttempts: window.gapiLoadAttempts,
+                    gapiLoaded: window.gapiLoaded,
+                    gapiAvailable: typeof gapi !== 'undefined'
+                });
                 await waitForGapi();
-                console.log('✅ gapi library loaded');
                 
                 console.log('📡 Loading client:auth2...');
                 await new Promise((resolve, reject) => {
@@ -1697,8 +1764,8 @@
                         signedContracts = driveContracts;
                         // Also save to localStorage as backup
                         localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
-                        displaySignedContracts();
-                        updateContractAnalytics();
+                displaySignedContracts();
+                updateContractAnalytics();
                         updateSyncStatus('✅ Synced with Google Drive');
                         return;
                     }
@@ -2273,9 +2340,86 @@ Status: ${contract.status}
                 syncBtn.disabled = false;
             }
         }
+
+                // ==================== FILE IMPORT FUNCTIONALITY ====================
+        
+        // Show file import interface
+        function showFileImport() {
+            document.getElementById('fileImportSection').style.display = 'block';
+            document.getElementById('contractFileInput').value = '';
+        }
+        
+        // Hide file import interface
+        function hideFileImport() {
+            document.getElementById('fileImportSection').style.display = 'none';
+        }
+        
+        // Process imported file
+        function processImportedFile() {
+            const fileInput = document.getElementById('contractFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('⚠️ Please select a JSON file to import.');
+                return;
+            }
+            
+            if (!file.name.endsWith('.json')) {
+                alert('⚠️ Please select a valid JSON file.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importData = JSON.parse(e.target.result);
+                    
+                    // Validate file structure
+                    if (!importData.signedContracts || !Array.isArray(importData.signedContracts)) {
+                        throw new Error('Invalid file format - missing signedContracts array');
+                    }
+                    
+                    // Show import preview
+                    const importCount = importData.signedContracts.length;
+                    const currentCount = signedContracts.length;
+                    
+                    const confirmMessage = `📥 Import Preview:\n\n` +
+                                         `• Current contracts: ${currentCount}\n` +
+                                         `• Import file contains: ${importCount} contracts\n` +
+                                         `• Export date: ${importData.exportDate || 'Unknown'}\n\n` +
+                                         `This will REPLACE your current contracts. Continue?`;
+                    
+                    if (confirm(confirmMessage)) {
+                        // Import the contracts
+                        signedContracts = importData.signedContracts;
+                        localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
+                        
+                        // Refresh display
+                        displaySignedContracts();
+                        updateContractAnalytics();
+                        
+                        // Hide import section
+                        hideFileImport();
+                        
+                        alert(`✅ Successfully imported ${importCount} contracts!`);
+                        console.log('📥 Contracts imported successfully:', signedContracts);
+                    }
+                    
+                } catch (error) {
+                    console.error('Import error:', error);
+                    alert(`❌ Import failed: ${error.message}\n\nPlease ensure you're importing a valid contracts export file.`);
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('❌ Error reading file. Please try again.');
+            };
+            
+            reader.readAsText(file);
+        }
         
         // Initialize on page load
         checkAuth();
-</script>
+    </script>
 </body>
 </html>
