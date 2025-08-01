@@ -152,8 +152,9 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 2rem 2rem 120px 2rem;
+      padding: 2rem 2rem 80px 2rem;
       overflow-y: auto;
+      box-sizing: border-box;
     }
 
     .slide h1 {
@@ -216,7 +217,7 @@
         0 4px 15px rgba(0, 0, 0, 0.2),
         0 0 0 1px rgba(255, 178, 0, 0.1);
       text-align: center;
-      margin: 0 auto;
+      margin: 0 auto 2rem auto;
     }
 
     .cta-button::before {
@@ -281,7 +282,7 @@
 
     .navigation {
       position: absolute;
-      bottom: 40px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -351,7 +352,7 @@
       justify-content: center;
       align-items: center;
       gap: 2rem;
-      margin: 2rem auto;
+      margin: 2rem auto 3rem auto;
       animation: fadeInUp 1s ease-out 0.9s both;
       max-width: 800px;
       width: 100%;
@@ -851,7 +852,7 @@
       }
 
       .slide-overlay {
-        padding: calc(env(safe-area-inset-top) + 80px) 20px calc(env(safe-area-inset-bottom) + 120px);
+        padding: calc(env(safe-area-inset-top) + 80px) 20px calc(env(safe-area-inset-bottom) + 80px);
         min-height: 100vh;
         justify-content: flex-start;
         box-sizing: border-box;
@@ -947,7 +948,7 @@
 
       .navigation {
         position: absolute;
-        bottom: calc(env(safe-area-inset-bottom) + 40px);
+        bottom: calc(env(safe-area-inset-bottom) + 20px);
         left: 50%;
         transform: translateX(-50%);
         background: rgba(28, 28, 30, 0.8);
