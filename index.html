@@ -116,19 +116,30 @@
       line-height: 1.7;
     }
     
-    /* Pitch Section Styles */
-    .pitch-section {
+    /* Slideshow Styles */
+    .slideshow-container {
       position: relative;
       width: 100%;
-      height: 70vh;
-      min-height: 500px;
+      height: 100vh;
+    }
+
+    .slide {
+      display: none;
+      position: relative;
+      width: 100%;
+      height: 100vh;
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
-      margin-bottom: 4rem;
+      min-height: 100vh;
+      overflow: hidden;
     }
-    
-    .pitch-overlay {
+
+    .slide.active {
+      display: block;
+    }
+
+    .slide-overlay {
       position: absolute;
       top: 0;
       left: 0;
@@ -142,85 +153,55 @@
       align-items: center;
       text-align: center;
       padding: 2rem;
+      overflow-y: auto;
+      padding-bottom: 120px;
     }
-    
-    .pitch-title {
+
+    .slide h1 {
       font-family: 'Cinzel', serif;
-      font-size: 3.5rem;
-      margin-bottom: 1.5rem;
+      font-size: 4rem;
+      margin-bottom: 1rem;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
       animation: fadeInUp 1s ease-out;
+      text-align: center;
+      max-width: 100%;
       color: var(--white);
       font-weight: 700;
     }
-    
-    .pitch-description {
+
+    .slide h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      animation: fadeInUp 1s ease-out 0.3s both;
+      text-align: center;
+      max-width: 100%;
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    .slide p {
       font-size: 1.3rem;
       max-width: 800px;
       line-height: 1.6;
       margin-bottom: 2rem;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-      animation: fadeInUp 1s ease-out 0.3s both;
-      color: var(--white);
-      opacity: 0.9;
-    }
-    
-    .pitch-stats {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 2rem;
-      margin: 2rem auto;
       animation: fadeInUp 1s ease-out 0.6s both;
-      max-width: 800px;
-      width: 100%;
-      flex-wrap: wrap;
-    }
-    
-    .pitch-stat {
       text-align: center;
-      padding: 1.5rem 1.2rem;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 12px;
-      backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 178, 0, 0.3);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      min-width: 140px;
-    }
-    
-    .pitch-stat:hover {
-      background: rgba(0, 0, 0, 0.6);
-      border-color: var(--primary);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(255, 178, 0, 0.2);
-    }
-    
-    .pitch-stat-number {
-      font-size: 2.2rem;
-      font-weight: 900;
-      color: var(--primary);
-      font-family: 'Cinzel', serif;
-      margin-bottom: 0.3rem;
-      letter-spacing: 0.5px;
-    }
-    
-    .pitch-stat-label {
-      font-size: 0.85rem;
+      margin-left: auto;
+      margin-right: auto;
       color: var(--white);
-      font-weight: 600;
       opacity: 0.9;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      line-height: 1.2;
     }
-    
-    .pitch-cta {
+
+    .cta-button {
       display: inline-block;
       padding: 16px 42px;
-      background: rgba(0, 0, 0, 0.8);
+      background: #000000;
       color: var(--primary);
       text-decoration: none;
-      border-radius: 8px;
+      border-radius: 6px;
       font-family: 'Cinzel', serif;
       font-size: 1.1rem;
       font-weight: 700;
@@ -233,11 +214,13 @@
       overflow: hidden;
       backdrop-filter: blur(10px);
       box-shadow: 
-        0 4px 15px rgba(0, 0, 0, 0.3),
+        0 4px 15px rgba(0, 0, 0, 0.2),
         0 0 0 1px rgba(255, 178, 0, 0.1);
+      text-align: center;
+      margin: 0 auto;
     }
-    
-    .pitch-cta::before {
+
+    .cta-button::before {
       content: '';
       position: absolute;
       top: 0;
@@ -250,18 +233,166 @@
       transform-origin: left;
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
-    .pitch-cta:hover::before {
+
+    .cta-button:hover::before {
       transform: scaleX(1);
     }
-    
-    .pitch-cta:hover {
+
+    .cta-button:hover {
       color: var(--black);
       border-color: var(--primary);
       transform: translateY(-2px);
       box-shadow: 
-        0 8px 25px rgba(255, 178, 0, 0.4),
+        0 8px 25px rgba(0, 0, 0, 0.3),
         0 0 0 1px rgba(255, 178, 0, 0.2);
+    }
+
+    .cta-button:active {
+      transform: translateY(0);
+      transition: transform 0.1s;
+    }
+
+    .cta-button-secondary {
+      background: transparent;
+      color: #FFFFFF;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(15px);
+      box-shadow: 
+        0 4px 15px rgba(255, 255, 255, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .cta-button-secondary::before {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .cta-button-secondary:hover {
+      color: var(--black);
+      background: rgba(255, 255, 255, 0.9);
+      border-color: #FFFFFF;
+      box-shadow: 
+        0 8px 25px rgba(255, 255, 255, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.3);
+    }
+
+    .cta-button-secondary:hover::before {
+      transform: scaleX(1);
+      background: #FFFFFF;
+    }
+
+    .navigation {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 1000;
+      background: rgba(28, 28, 30, 0.8);
+      padding: 8px 16px;
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 178, 0, 0.4);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-dot.active,
+    .nav-dot:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      transform: scale(1.2);
+    }
+
+    .prev, .next {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 178, 0, 0.3);
+      color: var(--primary);
+      padding: 15px 18px;
+      cursor: pointer;
+      font-size: 1.5rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(15px);
+      z-index: 100;
+      border-radius: 4px;
+      font-weight: 300;
+    }
+
+    .prev {
+      left: 30px;
+    }
+
+    .next {
+      right: 30px;
+    }
+
+    .prev:hover, .next:hover {
+      background: rgba(0, 0, 0, 0.6);
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      margin: 2rem auto;
+      animation: fadeInUp 1s ease-out 0.9s both;
+      max-width: 800px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 1.5rem 1.2rem;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 6px;
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 178, 0, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      min-width: 140px;
+    }
+
+    .stat:hover {
+      background: rgba(0, 0, 0, 0.6);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .stat-number {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--primary);
+      font-family: 'Cinzel', serif;
+      margin-bottom: 0.3rem;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #FFFFFF;
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
     }
     
     @keyframes fadeInUp {
@@ -713,58 +844,135 @@
         font-size: 1.1rem;
       }
       
-      /* Pitch Section Mobile */
-      .pitch-section {
-        height: 60vh;
-        min-height: 400px;
+      /* Slideshow Mobile */
+      .slide {
         background-attachment: scroll;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
       }
-      
-      .pitch-overlay {
-        padding: 1.5rem;
+
+      .slide-overlay {
+        padding: calc(env(safe-area-inset-top) + 32px) 20px calc(env(safe-area-inset-bottom) + 160px);
+        min-height: 100vh;
         justify-content: flex-start;
-        padding-top: 4rem;
+        padding-top: calc(env(safe-area-inset-top) + 80px);
+        box-sizing: border-box;
+      }
+
+      .slide h1 {
+        font-size: 28px;
+        line-height: 34px;
+        font-weight: 700;
+        margin-bottom: 24px;
+        text-align: center;
+        letter-spacing: -0.5px;
+        max-width: 100%;
       }
       
-      .pitch-title {
-        font-size: 2.2rem;
-        line-height: 1.2;
-        margin-bottom: 1rem;
+      .slide h2 {
+        font-size: 22px;
+        line-height: 28px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        text-align: center;
+        letter-spacing: -0.3px;
+        max-width: 100%;
       }
       
-      .pitch-description {
-        font-size: 1.1rem;
-        line-height: 1.5;
-        margin-bottom: 1.5rem;
+      .slide p {
+        font-size: 17px;
+        line-height: 25px;
+        font-weight: 400;
+        margin-bottom: 32px;
+        text-align: center;
+        max-width: 100%;
+        opacity: 0.9;
       }
       
-      .pitch-stats {
+      .stats {
+        display: flex;
         flex-direction: column;
-        gap: 1rem;
-        margin: 1.5rem auto;
-        max-width: 280px;
-      }
-      
-      .pitch-stat {
-        padding: 1rem;
-        min-width: auto;
+        gap: 12px;
+        margin: 32px auto;
+        max-width: 335px;
         width: 100%;
       }
-      
-      .pitch-stat-number {
-        font-size: 1.8rem;
+
+      .stat {
+        padding: 20px 16px;
+        min-width: auto;
+        width: 100%;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 178, 0, 0.2);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      }
+
+      .stat-number {
+        font-size: 24px;
+        line-height: 29px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        letter-spacing: -0.3px;
+      }
+
+      .stat-label {
+        font-size: 13px;
+        line-height: 18px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
       
-      .pitch-stat-label {
-        font-size: 0.75rem;
+      .prev, .next {
+        display: none;
       }
-      
-      .pitch-cta {
-        font-size: 0.9rem;
-        padding: 14px 28px;
+
+      .cta-button {
+        font-size: 16px;
+        line-height: 20px;
+        font-weight: 700;
+        padding: 18px 28px;
+        min-height: 56px;
         letter-spacing: 1px;
-        margin: 0.5rem;
-        min-width: 200px;
+        border-radius: 8px;
+        text-transform: uppercase;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+      }
+
+      .navigation {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom) + 60px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(28, 28, 30, 0.8);
+        padding: 8px 16px;
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+      }
+
+      .nav-dot {
+        width: 6px;
+        height: 6px;
+        margin: 0 4px;
+        padding: 12px;
+        background-clip: content-box;
+        transition: all 0.2s ease;
+      }
+
+      .nav-dot.active {
+        background: var(--primary);
+        box-shadow: 0 0 6px rgba(255, 178, 0, 0.3);
+        transform: scale(1.2);
       }
       
       .section-header {
@@ -811,31 +1019,35 @@
         font-size: 2rem;
       }
       
-      /* Pitch Section Mobile Small */
-      .pitch-section {
-        height: 50vh;
-        min-height: 350px;
+      /* Slideshow Mobile Small */
+      .slide {
+        height: 100vh;
+        min-height: 100vh;
       }
       
-      .pitch-title {
-        font-size: 1.8rem;
+      .slide h1 {
+        font-size: 24px;
       }
       
-      .pitch-description {
-        font-size: 1rem;
+      .slide h2 {
+        font-size: 20px;
       }
       
-      .pitch-stats {
+      .slide p {
+        font-size: 16px;
+      }
+      
+      .stats {
         max-width: 250px;
       }
       
-      .pitch-stat-number {
-        font-size: 1.5rem;
+      .stat-number {
+        font-size: 20px;
       }
       
-      .pitch-cta {
-        font-size: 0.8rem;
-        padding: 12px 24px;
+      .cta-button {
+        font-size: 14px;
+        padding: 16px 20px;
         margin: 0.25rem;
         min-width: 180px;
       }
@@ -879,159 +1091,174 @@
     </div>
   </header>
 
-  <!-- Pitch Showcase - All Services -->
-  
-  <!-- Slide 1: Hero/Introduction -->
-  <section class="pitch-section" style="background-image: url('Matthias Brown (TraceLoops) - Double Exposure.gif');">
-    <div class="pitch-overlay">
-      <h1 class="pitch-title">STORIES THAT TELL THEMSELVES</h1>
-      <p class="pitch-description">Through data-driven content strategy and omnichannel marketing, we ensure your visuals aren't just seen—they convert across all platforms.</p>
-      <div class="pitch-stats">
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">500+</div>
-          <div class="pitch-stat-label">Projects Completed</div>
+  <!-- Pitch Slideshow -->
+  <div class="slideshow-container">
+    <!-- Slide 1: Hero/Introduction -->
+    <div class="slide active" style="background-image: url('Matthias Brown (TraceLoops) - Double Exposure.gif');">
+      <div class="slide-overlay">
+        <h1>STORIES THAT TELL THEMSELVES</h1>
+        <p>Through data-driven content strategy and omnichannel marketing, we ensure your visuals aren't just seen—they convert across all platforms.</p>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-number">500+</div>
+            <div class="stat-label">Projects Completed</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">100+</div>
+            <div class="stat-label">Happy Clients</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label">Support</div>
+          </div>
         </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">100+</div>
-          <div class="pitch-stat-label">Happy Clients</div>
-        </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">24/7</div>
-          <div class="pitch-stat-label">Support</div>
-        </div>
+        <a href="https://www.cochranfilms.com/contact" class="cta-button">START YOUR STORY</a>
       </div>
-      <a href="https://www.cochranfilms.com/contact" class="pitch-cta">START YOUR STORY</a>
     </div>
-  </section>
 
-  <!-- Slide 2: Videography -->
-  <section class="pitch-section" style="background-image: url('Din Perlis - Crash Zoom.gif');">
-    <div class="pitch-overlay">
-      <h2 class="pitch-title" style="font-size: 2.8rem;">CINEMATIC VIDEOGRAPHY</h2>
-      <p class="pitch-description">From corporate documentaries to artistic music videos, we craft visual narratives that captivate audiences and drive engagement. Our team combines technical expertise with creative vision to deliver content that moves both hearts and metrics.</p>
-      <div class="pitch-stats">
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">4K</div>
-          <div class="pitch-stat-label">Ultra HD Quality</div>
+    <!-- Slide 2: Videography -->
+    <div class="slide" style="background-image: url('Din Perlis - Crash Zoom.gif');">
+      <div class="slide-overlay">
+        <h2>CINEMATIC VIDEOGRAPHY</h2>
+        <p>From corporate documentaries to artistic music videos, we craft visual narratives that captivate audiences and drive engagement. Our team combines technical expertise with creative vision to deliver content that moves both hearts and metrics.</p>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-number">4K</div>
+            <div class="stat-label">Ultra HD Quality</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">48HR</div>
+            <div class="stat-label">Quick Turnaround</div>
+          </div>
         </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">48HR</div>
-          <div class="pitch-stat-label">Quick Turnaround</div>
-        </div>
+        <a href="https://www.cochranfilms.com/portfolio" class="cta-button">SEE OUR WORK</a>
       </div>
-      <a href="https://www.cochranfilms.com/portfolio" class="pitch-cta">SEE OUR WORK</a>
     </div>
-  </section>
 
-  <!-- Slide 3: Photography -->
-  <section class="pitch-section" style="background-image: url('Vincent Haycock - Echo print.gif');">
-    <div class="pitch-overlay">
-      <h2 class="pitch-title" style="font-size: 2.8rem;">PROFESSIONAL PHOTOGRAPHY</h2>
-      <p class="pitch-description">Whether it's capturing the energy of a corporate event, the intimacy of portraits, or the elegance of product shots, our photography services ensure every frame tells a compelling story that resonates with your audience.</p>
-      <div class="pitch-stats">
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">∞</div>
-          <div class="pitch-stat-label">Creative Possibilities</div>
+    <!-- Slide 3: Photography -->
+    <div class="slide" style="background-image: url('Vincent Haycock - Echo print.gif');">
+      <div class="slide-overlay">
+        <h2>PROFESSIONAL PHOTOGRAPHY</h2>
+        <p>Whether it's capturing the energy of a corporate event, the intimacy of portraits, or the elegance of product shots, our photography services ensure every frame tells a compelling story that resonates with your audience.</p>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-number">∞</div>
+            <div class="stat-label">Creative Possibilities</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">Live</div>
+            <div class="stat-label">Event Printing</div>
+          </div>
         </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">Live</div>
-          <div class="pitch-stat-label">Event Printing</div>
-        </div>
+        <a href="https://www.cochranfilms.com/service-page/professional-event-photography" class="cta-button">BOOK A SESSION</a>
       </div>
-      <a href="https://www.cochranfilms.com/service-page/professional-event-photography" class="pitch-cta">BOOK A SESSION</a>
     </div>
-  </section>
 
-  <!-- Slide 4: Brand Creation -->
-  <section class="pitch-section" style="background-image: url('Dave Meyers - Bolt Cam.gif');">
-    <div class="pitch-overlay">
-      <h2 class="pitch-title" style="font-size: 2.8rem;">COMPLETE BRAND DEVELOPMENT</h2>
-      <p class="pitch-description">From strategy to execution, we build brands from scratch. Our comprehensive approach includes logo design, website development, content strategy, and ongoing digital presence management—everything you need to establish and grow your brand.</p>
-      <div class="pitch-stats">
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">360°</div>
-          <div class="pitch-stat-label">Full Service</div>
+    <!-- Slide 4: Brand Creation -->
+    <div class="slide" style="background-image: url('Dave Meyers - Bolt Cam.gif');">
+      <div class="slide-overlay">
+        <h2>COMPLETE BRAND DEVELOPMENT</h2>
+        <p>From strategy to execution, we build brands from scratch. Our comprehensive approach includes logo design, website development, content strategy, and ongoing digital presence management—everything you need to establish and grow your brand.</p>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-number">360°</div>
+            <div class="stat-label">Full Service</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">2 Days</div>
+            <div class="stat-label">Website Build</div>
+          </div>
         </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">2 Days</div>
-          <div class="pitch-stat-label">Website Build</div>
-        </div>
+        <a href="https://www.cochranfilms.com/brand-building" class="cta-button">BUILD MY BRAND</a>
       </div>
-      <a href="https://www.cochranfilms.com/brand-building" class="pitch-cta">BUILD MY BRAND</a>
     </div>
-  </section>
 
-  <!-- Slide 5: Live Event Services -->
-  <section class="pitch-section" style="background-image: url('Zac Dov Wiesel - Bolt Cam.gif');">
-    <div class="pitch-overlay">
-      <h2 class="pitch-title" style="font-size: 2.8rem;">LIVE EVENT PRINTING</h2>
-      <p class="pitch-description">Capture the moment. Print it instantly. From proms to corporate events, we deliver high-quality prints on-site with our smart camera-to-printer system. Guests walk away with real memories in hand—custom-branded and professionally captured.</p>
-      <div class="pitch-stats">
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">Instant</div>
-          <div class="pitch-stat-label">Photo Delivery</div>
+    <!-- Slide 5: Live Event Services -->
+    <div class="slide" style="background-image: url('Zac Dov Wiesel - Bolt Cam.gif');">
+      <div class="slide-overlay">
+        <h2>LIVE EVENT PRINTING</h2>
+        <p>Capture the moment. Print it instantly. From proms to corporate events, we deliver high-quality prints on-site with our smart camera-to-printer system. Guests walk away with real memories in hand—custom-branded and professionally captured.</p>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-number">Instant</div>
+            <div class="stat-label">Photo Delivery</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">Custom</div>
+            <div class="stat-label">Branded Templates</div>
+          </div>
         </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">Custom</div>
-          <div class="pitch-stat-label">Branded Templates</div>
-        </div>
+        <a href="https://www.cochranfilms.com/service-page/on-site-event-photo-printing" class="cta-button">BOOK EVENT SERVICES</a>
       </div>
-      <a href="https://www.cochranfilms.com/service-page/on-site-event-photo-printing" class="pitch-cta">BOOK EVENT SERVICES</a>
     </div>
-  </section>
 
-  <!-- Slide 6: Web Development -->
-  <section class="pitch-section" style="background-image: url('Fixed Cam.gif');">
-    <div class="pitch-overlay">
-      <h2 class="pitch-title" style="font-size: 2.8rem;">WEBSITE DEVELOPMENT & MAINTENANCE</h2>
-      <p class="pitch-description">We don't just build beautiful websites — we help your brand grow online for the long haul. From strategy and design to publishing and upkeep, we handle everything so you can focus on growing your brand.</p>
-      <div class="pitch-stats">
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">2 Days</div>
-          <div class="pitch-stat-label">Website Build</div>
+    <!-- Slide 6: Web Development -->
+    <div class="slide" style="background-image: url('Fixed Cam.gif');">
+      <div class="slide-overlay">
+        <h2>WEBSITE DEVELOPMENT & MAINTENANCE</h2>
+        <p>We don't just build beautiful websites — we help your brand grow online for the long haul. From strategy and design to publishing and upkeep, we handle everything so you can focus on growing your brand.</p>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-number">2 Days</div>
+            <div class="stat-label">Website Build</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label">Maintenance</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Mobile Optimized</div>
+          </div>
         </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">24/7</div>
-          <div class="pitch-stat-label">Maintenance</div>
-        </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">100%</div>
-          <div class="pitch-stat-label">Mobile Optimized</div>
-        </div>
+        <a href="https://www.cochranfilms.com/service-page/custom-website-design" class="cta-button">LAUNCH MY SITE</a>
       </div>
-      <a href="https://www.cochranfilms.com/service-page/custom-website-design" class="pitch-cta">LAUNCH MY SITE</a>
     </div>
-  </section>
 
-  <!-- Slide 7: Call to Action -->
-  <section class="pitch-section" style="background-image: url('Valentin Petit - Object Portal.gif');">
-    <div class="pitch-overlay">
-      <h1 class="pitch-title">READY TO ELEVATE YOUR BRAND?</h1>
-      <p class="pitch-description">Join hundreds of businesses, entrepreneurs, and creatives who have transformed their brand presence with Cochran Films. Let's create something extraordinary together.</p>
-      
-      <div class="pitch-stats" style="margin-bottom: 3rem;">
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">Fast</div>
-          <div class="pitch-stat-label">Response Time</div>
+    <!-- Slide 7: Call to Action -->
+    <div class="slide" style="background-image: url('Valentin Petit - Object Portal.gif');">
+      <div class="slide-overlay">
+        <h1>READY TO ELEVATE YOUR BRAND?</h1>
+        <p>Join hundreds of businesses, entrepreneurs, and creatives who have transformed their brand presence with Cochran Films. Let's create something extraordinary together.</p>
+        
+        <div class="stats" style="margin-bottom: 3rem;">
+          <div class="stat">
+            <div class="stat-number">Fast</div>
+            <div class="stat-label">Response Time</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">Global</div>
+            <div class="stat-label">Project Reach</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">Atlanta</div>
+            <div class="stat-label">Based</div>
+          </div>
         </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">Global</div>
-          <div class="pitch-stat-label">Project Reach</div>
+        
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">
+          <a href="https://www.cochranfilms.com/contact" class="cta-button">GET STARTED</a>
+          <a href="https://www.cochranfilms.com/pricing" class="cta-button cta-button-secondary">VIEW PRICING</a>
         </div>
-        <div class="pitch-stat">
-          <div class="pitch-stat-number">Atlanta</div>
-          <div class="pitch-stat-label">Based</div>
-        </div>
+        
+        <p style="font-size: 1rem; opacity: 0.8; text-align: center; margin: 0;">Available for projects worldwide • Atlanta based • Remote friendly</p>
       </div>
-      
-      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">
-        <a href="https://www.cochranfilms.com/contact" class="pitch-cta">GET STARTED</a>
-        <a href="https://www.cochranfilms.com/pricing" class="pitch-cta" style="background: transparent; border: 2px solid rgba(255,255,255,0.3);">VIEW PRICING</a>
-      </div>
-      
-      <p style="font-size: 1rem; opacity: 0.8; text-align: center; margin: 0;">Available for projects worldwide • Atlanta based • Remote friendly</p>
     </div>
-  </section>
+  </div>
+
+  <!-- Navigation -->
+  <button class="prev" onclick="changeSlide(-1)">❮</button>
+  <button class="next" onclick="changeSlide(1)">❯</button>
+
+  <div class="navigation">
+    <span class="nav-dot active" onclick="currentSlide(1)"></span>
+    <span class="nav-dot" onclick="currentSlide(2)"></span>
+    <span class="nav-dot" onclick="currentSlide(3)"></span>
+    <span class="nav-dot" onclick="currentSlide(4)"></span>
+    <span class="nav-dot" onclick="currentSlide(5)"></span>
+    <span class="nav-dot" onclick="currentSlide(6)"></span>
+    <span class="nav-dot" onclick="currentSlide(7)"></span>
+  </div>
 
   <!-- Main Content -->
   <main class="container">
@@ -1672,8 +1899,101 @@
       });
     });
     
+    // Slideshow functionality
+    let slideIndex = 1;
+    let slideInterval;
+
+    function showSlide(n) {
+      let slides = document.getElementsByClassName("slide");
+      let dots = document.getElementsByClassName("nav-dot");
+      
+      if (n > slides.length) { slideIndex = 1; }
+      if (n < 1) { slideIndex = slides.length; }
+      
+      for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove("active");
+      }
+      
+      for (let i = 0; i < dots.length; i++) {
+        dots[i].classList.remove("active");
+      }
+      
+      slides[slideIndex - 1].classList.add("active");
+      dots[slideIndex - 1].classList.add("active");
+    }
+
+    function changeSlide(n) {
+      slideIndex += n;
+      showSlide(slideIndex);
+      resetAutoSlide();
+    }
+
+    function currentSlide(n) {
+      slideIndex = n;
+      showSlide(slideIndex);
+      resetAutoSlide();
+    }
+
+    function autoSlide() {
+      let slides = document.getElementsByClassName("slide");
+      
+      // Don't auto-advance if we're on the last slide
+      if (slideIndex >= slides.length) {
+        clearInterval(slideInterval);
+        return;
+      }
+      
+      slideIndex++;
+      showSlide(slideIndex);
+      
+      // Stop auto-advance when reaching the last slide
+      if (slideIndex >= slides.length) {
+        clearInterval(slideInterval);
+      }
+    }
+
+    function resetAutoSlide() {
+      clearInterval(slideInterval);
+      
+      // Only restart auto-advance if we're not on the last slide
+      let slides = document.getElementsByClassName("slide");
+      if (slideIndex < slides.length) {
+        slideInterval = setInterval(autoSlide, 14000);
+      }
+    }
+
+    // Touch/swipe support for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      if (touchEndX < touchStartX - 50) changeSlide(1);
+      if (touchEndX > touchStartX + 50) changeSlide(-1);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft') changeSlide(-1);
+      if (e.key === 'ArrowRight') changeSlide(1);
+    });
+
     // Add some interactive polish
     document.addEventListener('DOMContentLoaded', function() {
+      // Initialize slideshow
+      showSlide(slideIndex);
+      
+      // Start auto-advance (will stop when reaching last slide)
+      slideInterval = setInterval(autoSlide, 14000);
+
       // Add hover effect to job cards
       document.addEventListener('mouseover', function(e) {
         if (e.target.closest('.job-card')) {
