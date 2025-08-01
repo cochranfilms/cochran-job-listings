@@ -751,8 +751,20 @@
                         <input type="url" id="contractUrl" name="contractUrl" placeholder="https://yourdomain.com/contracts/freelancer-name.html" required>
                     </div>
                     <div class="form-group">
-                        <label for="freelancerRole">Role (Optional)</label>
-                        <input type="text" id="freelancerRole" name="role" placeholder="e.g., Videographer, Photographer, Editor">
+                        <label for="freelancerRole">Role *</label>
+                        <input type="text" id="freelancerRole" name="role" placeholder="e.g., Videographer, Photographer, Editor" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="freelancerLocation">Project Location</label>
+                        <input type="text" id="freelancerLocation" name="location" placeholder="e.g., 6695 Church Street, Douglasville, GA 30134" value="Atlanta Area">
+                    </div>
+                    <div class="form-group">
+                        <label for="projectStart">Project Start Date & Time</label>
+                        <input type="text" id="projectStart" name="projectStart" placeholder="e.g., November 8, 2025 at 3:15 PM" value="TBD">
+                    </div>
+                    <div class="form-group">
+                        <label for="freelancerRate">Rate *</label>
+                        <input type="text" id="freelancerRate" name="rate" placeholder="e.g., $400.00 USD (Flat) or $25/hour" required>
                     </div>
                     <div class="form-group">
                         <label for="approvedDate">Approved Date</label>
@@ -778,9 +790,10 @@
 
             <div class="export-section">
                 <h2>Generate Contract Files</h2>
-                <p>Generate individual contract HTML files for all freelancers:</p>
-                <button class="btn" onclick="generateAllContracts()">🔄 Generate All Contracts</button>
-                <button class="btn" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📦 Download Contract Files (ZIP)</button>
+                <p>Generate individual contract HTML files for new freelancers only:</p>
+                <button class="btn" onclick="generateAllContracts()">🔄 Generate New Contracts</button>
+                <button class="btn" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📦 Download Contract Files</button>
+                <button class="btn btn-secondary" onclick="resetGeneratedContracts()" style="margin-top: 10px;">🔄 Reset & Regenerate All</button>
                 <div id="contractGenerationStatus" style="margin-top: 1rem;"></div>
             </div>
         </div>
@@ -1018,7 +1031,12 @@
                     <div class="item-meta">
                         <span>📧 ${freelancer.email}</span>
                         <span>🎭 ${freelancer.role || 'Role not specified'}</span>
+                        <span>📍 ${freelancer.location || 'Atlanta Area'}</span>
+                        <span>💰 ${freelancer.rate || 'Rate not specified'}</span>
                         <span>📅 ${freelancer.approvedDate || 'Date not specified'}</span>
+                    </div>
+                    <div class="item-meta">
+                        <span>🕒 Start: ${freelancer.projectStart || 'TBD'}</span>
                     </div>
                     <div class="item-url">${freelancer.contractUrl}</div>
                     <div class="actions">
@@ -1039,6 +1057,9 @@
                 email: formData.get('email'),
                 contractUrl: formData.get('contractUrl'),
                 role: formData.get('role'),
+                location: formData.get('location'),
+                projectStart: formData.get('projectStart'),
+                rate: formData.get('rate'),
                 approvedDate: formData.get('approvedDate')
             };
 
@@ -1064,6 +1085,9 @@
             document.getElementById('freelancerEmail').value = freelancer.email || '';
             document.getElementById('contractUrl').value = freelancer.contractUrl || '';
             document.getElementById('freelancerRole').value = freelancer.role || '';
+            document.getElementById('freelancerLocation').value = freelancer.location || 'Atlanta Area';
+            document.getElementById('projectStart').value = freelancer.projectStart || 'TBD';
+            document.getElementById('freelancerRate').value = freelancer.rate || '';
             document.getElementById('approvedDate').value = freelancer.approvedDate || '';
             
             document.getElementById('contractForm').dataset.editName = name;
@@ -1080,6 +1104,9 @@
         // Clear contract form
         function clearContractForm() {
             document.getElementById('contractForm').reset();
+            // Reset default values
+            document.getElementById('freelancerLocation').value = 'Atlanta Area';
+            document.getElementById('projectStart').value = 'TBD';
             delete document.getElementById('contractForm').dataset.editName;
         }
 
@@ -1114,246 +1141,359 @@
             URL.revokeObjectURL(url);
         }
 
-        // Generate contract HTML for a specific freelancer
+        // Track which contracts have been generated to avoid regenerating existing ones
+        let generatedContractsList = new Set();
+
+        // Generate contract HTML for a specific freelancer (matching francisco-flores.html exactly)
         function generateContractHTML(freelancerName, freelancerData) {
             const fileName = freelancerName.toLowerCase().replace(/\s+/g, '-') + '.html';
             const effectiveDate = freelancerData.approvedDate || new Date().toISOString().split('T')[0];
             
             // Default values if not specified
             const role = freelancerData.role || 'Contractor';
-            const location = 'Atlanta Area';
-            const projectStart = 'TBD';
+            const location = freelancerData.location || 'Atlanta Area';
+            const projectStart = freelancerData.projectStart || 'TBD';
             const rate = freelancerData.rate || '$150/day';
             
-            // Create a simple contract HTML using basic template replacement to avoid JavaScript parsing issues
-            const contractHTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Freelance Agreement - ${freelancerName} | Cochran Films</title>
-    <style>
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #000;
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-            margin: 0;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 40px;
-            line-height: 1.6;
-            border: 1px solid #FFB200;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #FFB200;
-        }
-        .logo img {
-            width: 200px;
-            height: auto;
-            margin-bottom: 20px;
-        }
-        h1 {
-            font-family: Georgia, serif;
-            font-size: 28px;
-            font-weight: 700;
-            color: #FFB200;
-            margin-bottom: 10px;
-        }
-        h2 {
-            font-family: Georgia, serif;
-            font-size: 24px;
-            font-weight: 600;
-            color: #fff;
-            margin: 25px 0 15px 0;
-            border-left: 4px solid #FFB200;
-            padding-left: 15px;
-        }
-        h3 {
-            font-family: Georgia, serif;
-            font-size: 20px;
-            font-weight: 600;
-            color: #fff;
-            margin: 20px 0 10px 0;
-        }
-        p {
-            margin-bottom: 15px;
-            color: #fff;
-        }
-        ul {
-            margin: 15px 0;
-            padding-left: 20px;
-        }
-        li {
-            margin-bottom: 8px;
-            color: #fff;
-        }
-        .project-info {
-            background: rgba(255, 178, 0, 0.1);
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #FFB200;
-            border: 1px solid rgba(255, 178, 0, 0.3);
-        }
-        .project-info ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        .project-info li {
-            margin-bottom: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid #333;
-        }
-        .project-info li:last-child {
-            border-bottom: none;
-        }
-        .signature-section {
-            margin-top: 40px;
-            padding-top: 30px;
-            border-top: 2px solid rgba(255, 178, 0, 0.3);
-        }
-        .signature-box {
-            margin-top: 20px;
-            padding: 20px;
-            background: rgba(255, 178, 0, 0.1);
-            border-radius: 8px;
-            border: 2px solid rgba(255, 178, 0, 0.3);
-        }
-        .signature-line {
-            border-bottom: 2px solid #FFB200;
-            height: 40px;
-            margin: 10px 0;
-        }
-        .print-note {
-            text-align: center;
-            margin-top: 30px;
-            padding: 20px;
-            background: rgba(255, 178, 0, 0.1);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 178, 0, 0.3);
-        }
-        @media print {
-            body { background: white; color: black; }
-            .container { border: none; background: white; }
-            .print-note { display: none; }
-        }
-        @media (max-width: 768px) {
-            .container { padding: 20px; }
-            h1 { font-size: 24px; }
-            h2 { font-size: 20px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo" class="logo">
-            <h1>📄 Freelance Agreement</h1>
-            <p><strong>Issued By:</strong> Cochran Films<br>
-            <strong>Effective Date:</strong> ${effectiveDate}</p>
-        </div>
-
-        <h2>📌 Project Overview</h2>
-        <p>
-            This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>${freelancerName}</strong>, hereinafter referred to as the "Contractor."
-        </p>
-        
-        <div class="project-info">
-            <ul>
-                <li><strong>Role:</strong> ${role}</li>
-                <li><strong>Location:</strong> ${location}</li>
-                <li><strong>Project Start:</strong> ${projectStart}</li>
-                <li><strong>Rate:</strong> ${rate}</li>
-            </ul>
-        </div>
-
-        <h2>✅ Contractor Responsibilities</h2>
-        <ul>
-            <li>Arrive at the project location on time.</li>
-            <li>Professionally manage their assigned role and responsibilities.</li>
-            <li>Complete the job to professional standards.</li>
-            <li>Use personal equipment unless otherwise arranged.</li>
-            <li>Maintain a respectful demeanor with staff and clients.</li>
-        </ul>
-
-        <h2>📸 BTS Content & Ownership</h2>
-        <p>
-            The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.
-        </p>
-
-        <h2>💵 Payment Terms</h2>
-        <p>
-            Payment of ${rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).
-        </p>
-
-        <h2>🛡️ Independent Contractor</h2>
-        <p>
-            The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.
-        </p>
-
-        <h2>📝 Agreement</h2>
-        <p>By continuing, the Contractor agrees to the above terms. A physical or digital signature may be collected separately.</p>
-
-        <div class="signature-section">
-            <h3>Contractor Signature</h3>
-            <div class="signature-box">
-                <strong>Contractor:</strong><br>
-                Name: ${freelancerName}<br><br>
-                Signature: <div class="signature-line"></div>
-                Date: <div class="signature-line"></div>
-            </div>
-        </div>
-
-        <div class="print-note">
-            <p><strong>📄 To Sign & Save:</strong></p>
-            <p>1. Print this contract (Ctrl+P or Cmd+P)</p>
-            <p>2. Sign and date the printed copy</p>
-            <p>3. Scan or photo the signed contract</p>
-            <p>4. Return to Cochran Films</p>
-        </div>
-    </div>
-</body>
-</html>`;
+            // Create contract HTML matching francisco-flores.html exactly
+            const contractHTML = '<!DOCTYPE html>' +
+'<html lang="en">' +
+'<head>' +
+    '<meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<title>Freelance Agreement - ' + freelancerName + ' | Cochran Films</title>' +
+    '<style>' +
+        ':root {' +
+            '--primary: #FFB200;' +
+            '--primary-dark: #FF9000;' +
+            '--gold: #FFD700;' +
+            '--black: #000000;' +
+            '--white: #ffffff;' +
+            '--gray-light: #f8f9fa;' +
+            '--gray-medium: #6c757d;' +
+            '--gray-dark: #343a40;' +
+            '--border-radius: 12px;' +
+            '--shadow: 0 4px 20px rgba(0,0,0,0.1);' +
+            '--shadow-hover: 0 8px 30px rgba(0,0,0,0.15);' +
+        '}' +
+        '* {' +
+            'margin: 0;' +
+            'padding: 0;' +
+            'box-sizing: border-box;' +
+        '}' +
+        'body {' +
+            'font-family: Arial, Helvetica, sans-serif;' +
+            'background: var(--white);' +
+            'min-height: 100vh;' +
+            'padding: 20px;' +
+            'color: var(--black);' +
+        '}' +
+        '.container {' +
+            'max-width: 800px;' +
+            'margin: auto;' +
+            'background: linear-gradient(135deg, var(--black) 0%, #1a1a1a 100%);' +
+            'border-radius: 12px;' +
+            'box-shadow: 0 8px 32px rgba(0,0,0,0.3);' +
+            'padding: 40px;' +
+            'line-height: 1.6;' +
+            'border: 1px solid rgba(255, 178, 0, 0.2);' +
+        '}' +
+        '.header {' +
+            'text-align: center;' +
+            'margin-bottom: 30px;' +
+            'padding-bottom: 20px;' +
+            'border-bottom: 2px solid #FFB200;' +
+        '}' +
+        '.logo {' +
+            'margin-bottom: 20px;' +
+        '}' +
+        '.logo img {' +
+            'width: 200px;' +
+            'height: auto;' +
+        '}' +
+        'h1 {' +
+            'font-family: Georgia, serif;' +
+            'font-size: 28px;' +
+            'font-weight: 700;' +
+            'color: var(--primary);' +
+            'margin-bottom: 10px;' +
+        '}' +
+        'h2 {' +
+            'font-family: Georgia, serif;' +
+            'font-size: 24px;' +
+            'font-weight: 600;' +
+            'color: var(--white);' +
+            'margin: 25px 0 15px 0;' +
+            'border-left: 4px solid var(--primary);' +
+            'padding-left: 15px;' +
+        '}' +
+        'h3 {' +
+            'font-family: Georgia, serif;' +
+            'font-size: 20px;' +
+            'font-weight: 600;' +
+            'color: var(--white);' +
+            'margin: 20px 0 10px 0;' +
+        '}' +
+        'p {' +
+            'margin-bottom: 15px;' +
+            'color: var(--white);' +
+        '}' +
+        'ul {' +
+            'margin: 15px 0;' +
+            'padding-left: 20px;' +
+        '}' +
+        'li {' +
+            'margin-bottom: 8px;' +
+            'color: var(--white);' +
+        '}' +
+        '.project-info {' +
+            'background: rgba(255, 178, 0, 0.1);' +
+            'padding: 20px;' +
+            'border-radius: 8px;' +
+            'margin: 20px 0;' +
+            'border-left: 4px solid var(--primary);' +
+            'border: 1px solid rgba(255, 178, 0, 0.3);' +
+        '}' +
+        '.project-info ul {' +
+            'list-style: none;' +
+            'padding-left: 0;' +
+        '}' +
+        '.project-info li {' +
+            'margin-bottom: 10px;' +
+            'padding: 8px 0;' +
+            'border-bottom: 1px solid #e9ecef;' +
+        '}' +
+        '.project-info li:last-child {' +
+            'border-bottom: none;' +
+        '}' +
+        '.signature-section {' +
+            'margin-top: 40px;' +
+            'padding-top: 30px;' +
+            'border-top: 2px solid rgba(255, 178, 0, 0.3);' +
+        '}' +
+        '.signature-box {' +
+            'display: flex;' +
+            'justify-content: space-between;' +
+            'margin-top: 20px;' +
+            'gap: 30px;' +
+        '}' +
+        '.signature-party {' +
+            'flex: 1;' +
+            'padding: 20px;' +
+            'background: rgba(255, 178, 0, 0.1);' +
+            'border-radius: 8px;' +
+            'border: 2px solid rgba(255, 178, 0, 0.3);' +
+            'color: var(--white);' +
+        '}' +
+        '.signature-line {' +
+            'border-bottom: 2px solid var(--primary);' +
+            'height: 30px;' +
+            'margin-top: 10px;' +
+        '}' +
+        '.action-buttons {' +
+            'text-align: center;' +
+            'margin-top: 30px;' +
+            'padding-top: 20px;' +
+            'border-top: 2px solid rgba(255, 178, 0, 0.3);' +
+        '}' +
+        '.btn {' +
+            'background: linear-gradient(135deg, var(--primary) 0%, var(--gold) 100%);' +
+            'color: var(--black);' +
+            'border: none;' +
+            'padding: 12px 24px;' +
+            'border-radius: 6px;' +
+            'font-size: 16px;' +
+            'font-weight: 600;' +
+            'cursor: pointer;' +
+            'transition: all 0.3s ease;' +
+            'margin: 0 10px;' +
+            'text-decoration: none;' +
+            'display: inline-block;' +
+        '}' +
+        '.btn:hover {' +
+            'transform: translateY(-2px);' +
+            'box-shadow: 0 4px 12px rgba(255, 178, 0, 0.3);' +
+        '}' +
+        '.btn-secondary {' +
+            'background: rgba(255, 178, 0, 0.2);' +
+            'color: var(--white);' +
+            'border: 1px solid rgba(255, 178, 0, 0.5);' +
+        '}' +
+        '.btn-secondary:hover {' +
+            'background: rgba(255, 178, 0, 0.3);' +
+            'border-color: var(--primary);' +
+        '}' +
+        '.signature-input {' +
+            'width: 100%;' +
+            'padding: 8px;' +
+            'border: 1px solid rgba(255, 178, 0, 0.5);' +
+            'border-radius: 4px;' +
+            'margin-top: 5px;' +
+            'font-family: cursive;' +
+            'background: rgba(255, 178, 0, 0.1);' +
+            'color: var(--white);' +
+        '}' +
+        '.date-input {' +
+            'width: 100%;' +
+            'padding: 8px;' +
+            'border: 1px solid rgba(255, 178, 0, 0.5);' +
+            'border-radius: 4px;' +
+            'margin-top: 5px;' +
+            'background: rgba(255, 178, 0, 0.1);' +
+            'color: var(--white);' +
+        '}' +
+        '@media (max-width: 768px) {' +
+            '.container {' +
+                'padding: 20px;' +
+            '}' +
+            '.signature-box {' +
+                'flex-direction: column;' +
+                'gap: 20px;' +
+            '}' +
+            'h1 {' +
+                'font-size: 24px;' +
+            '}' +
+            'h2 {' +
+                'font-size: 20px;' +
+            '}' +
+        '}' +
+    '</style>' +
+'</head>' +
+'<body>' +
+    '<div class="container">' +
+        '<div class="header">' +
+            '<div class="logo">' +
+                '<img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo">' +
+            '</div>' +
+            '<h1>📄 Freelance Agreement</h1>' +
+            '<p><strong>Issued By:</strong> Cochran Films<br>' +
+            '<strong>Effective Date:</strong> ' + effectiveDate + '</p>' +
+        '</div>' +
+        '<h2>📌 Project Overview</h2>' +
+        '<p>' +
+            'This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>' + freelancerName + '</strong>, hereinafter referred to as the "Contractor."' +
+        '</p>' +
+        '<div class="project-info">' +
+            '<ul>' +
+                '<li><strong>Role:</strong> ' + role + '</li>' +
+                '<li><strong>Location:</strong> ' + location + '</li>' +
+                '<li><strong>Project Start:</strong> ' + projectStart + '</li>' +
+                '<li><strong>Rate:</strong> ' + rate + '</li>' +
+            '</ul>' +
+        '</div>' +
+        '<h2>✅ Contractor Responsibilities</h2>' +
+        '<ul>' +
+            '<li>Arrive at the project location on time.</li>' +
+            '<li>Professionally manage their assigned role and responsibilities.</li>' +
+            '<li>Complete the job to professional standards.</li>' +
+            '<li>Use personal equipment unless otherwise arranged.</li>' +
+            '<li>Maintain a respectful demeanor with staff and clients.</li>' +
+        '</ul>' +
+        '<h2>📸 BTS Content & Ownership</h2>' +
+        '<p>' +
+            'The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.' +
+        '</p>' +
+        '<h2>💵 Payment Terms</h2>' +
+        '<p>' +
+            'Payment of ' + rate + ' will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).' +
+        '</p>' +
+        '<h2>🛡️ Independent Contractor</h2>' +
+        '<p>' +
+            'The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.' +
+        '</p>' +
+        '<h2>📝 Agreement</h2>' +
+        '<p>By continuing, the Contractor agrees to the above terms. A physical or digital signature may be collected separately.</p>' +
+        '<div class="signature-section">' +
+            '<h3>Contractor Signature</h3>' +
+            '<div class="signature-box">' +
+                '<div class="signature-party">' +
+                    '<strong>Contractor:</strong><br>' +
+                    'Name: ' + freelancerName + '<br><br>' +
+                    'Signature: <div style="border-bottom: 2px solid #FFB200; height: 40px; margin: 10px 0;"></div>' +
+                    'Date: <div style="border-bottom: 2px solid #FFB200; height: 40px; margin: 10px 0;"></div>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+    '</div>' +
+    '<div style="text-align: center; margin-top: 30px; padding: 20px; background: rgba(255, 178, 0, 0.1); border-radius: 8px; border: 1px solid rgba(255, 178, 0, 0.3);">' +
+        '<p><strong>📄 To Sign & Save:</strong></p>' +
+        '<p>1. Print this contract (Ctrl+P or Cmd+P)</p>' +
+        '<p>2. Sign and date the printed copy</p>' +
+        '<p>3. Scan or photo the signed contract</p>' +
+        '<p>4. Return to Cochran Films</p>' +
+    '</div>' +
+'</body>' +
+'</html>';
 
             return { fileName, contractHTML };
         }
 
-        // Generate all contract files
+        // Generate only NEW contract files (not previously generated ones)
         function generateAllContracts() {
             const statusDiv = document.getElementById('contractGenerationStatus');
-            statusDiv.innerHTML = '<p style="color: #FFB200;">🔄 Generating contract files...</p>';
+            statusDiv.innerHTML = '<p style="color: #FFB200;">🔄 Checking for new contracts...</p>';
             
             const contracts = {};
+            const newContracts = [];
+            const skippedContracts = [];
             
             Object.keys(approvedFreelancers).forEach(freelancerName => {
+                const fileName = freelancerName.toLowerCase().replace(/\s+/g, '-') + '.html';
+                
+                // Check if this contract was already generated
+                if (generatedContractsList.has(fileName)) {
+                    skippedContracts.push(fileName);
+                    return; // Skip already generated contracts
+                }
+                
+                // Generate new contract
                 const freelancerData = approvedFreelancers[freelancerName];
-                const { fileName, contractHTML } = generateContractHTML(freelancerName, freelancerData);
-                contracts[fileName] = contractHTML;
+                const { fileName: contractFileName, contractHTML } = generateContractHTML(freelancerName, freelancerData);
+                contracts[contractFileName] = contractHTML;
+                newContracts.push(contractFileName);
+                
+                // Mark as generated
+                generatedContractsList.add(contractFileName);
             });
             
             // Store contracts for download
             window.generatedContracts = contracts;
             
-            statusDiv.innerHTML = 
-                '<p style="color: #22c55e;">✅ Generated ' + Object.keys(contracts).length + ' contract files:</p>' +
-                '<ul style="color: #FFB200; margin-left: 20px;">' +
-                    Object.keys(contracts).map(fileName => '<li>' + fileName + '</li>').join('') +
-                '</ul>' +
-                '<p style="color: rgba(255,255,255,0.8); margin-top: 1rem;">' +
-                    '📋 Upload these files to your root directory or contracts/ folder<br>' +
+            // Show results
+            let statusHTML = '';
+            if (newContracts.length > 0) {
+                statusHTML += '<p style="color: #22c55e;">✅ Generated ' + newContracts.length + ' NEW contract files:</p>' +
+                    '<ul style="color: #FFB200; margin-left: 20px;">' +
+                        newContracts.map(fileName => '<li>' + fileName + ' (NEW)</li>').join('') +
+                    '</ul>';
+            }
+            
+            if (skippedContracts.length > 0) {
+                statusHTML += '<p style="color: #6c757d; margin-top: 1rem;">⏭️ Skipped ' + skippedContracts.length + ' existing contracts:</p>' +
+                    '<ul style="color: #6c757d; margin-left: 20px;">' +
+                        skippedContracts.map(fileName => '<li>' + fileName + ' (already exists)</li>').join('') +
+                    '</ul>';
+            }
+            
+            if (newContracts.length === 0) {
+                statusHTML += '<p style="color: #ffc107;">⚠️ No new contracts to generate - all freelancers already have contracts!</p>' +
+                    '<p style="color: rgba(255,255,255,0.8);">Add new freelancers to generate new contracts.</p>';
+            } else {
+                statusHTML += '<p style="color: rgba(255,255,255,0.8); margin-top: 1rem;">' +
+                    '📋 Upload new files to your root directory or contracts/ folder<br>' +
                     '🔗 Update the contractUrl in freelancer data to match where you upload them' +
                 '</p>';
+                document.getElementById('downloadContractsBtn').style.display = 'block';
+            }
             
-            document.getElementById('downloadContractsBtn').style.display = 'block';
+            statusDiv.innerHTML = statusHTML;
+        }
+        
+        // Reset generated contracts list (useful for testing or if you want to regenerate all)
+        function resetGeneratedContracts() {
+            generatedContractsList.clear();
+            document.getElementById('contractGenerationStatus').innerHTML = '<p style="color: #22c55e;">✅ Contract generation reset - all contracts will be regenerated on next generation.</p>';
+            document.getElementById('downloadContractsBtn').style.display = 'none';
         }
 
         // Download all contract files as individual files (no ZIP needed)
