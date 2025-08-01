@@ -791,9 +791,7 @@
             <div class="export-section">
                 <h2>Generate Contract Files</h2>
                 <p>Generate individual contract HTML files for new freelancers only:</p>
-                <button class="btn" onclick="generateAllContracts()">🔄 Generate New Contracts</button>
-                <button class="btn" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📦 Download Contract Files</button>
-                <button class="btn btn-secondary" onclick="resetGeneratedContracts()" style="margin-top: 10px;">🔄 Reset & Regenerate All</button>
+                <button class="btn" onclick="generateAndDownloadContracts()">📦 Generate New Contracts</button>
                 <div id="contractGenerationStatus" style="margin-top: 1rem;"></div>
             </div>
         </div>
@@ -1141,8 +1139,7 @@
             URL.revokeObjectURL(url);
         }
 
-        // Track which contracts have been generated to avoid regenerating existing ones
-        let generatedContractsList = new Set();
+
 
         // Generate contract HTML for a specific freelancer (matching francisco-flores.html exactly)
         function generateContractHTML(freelancerName, freelancerData) {
@@ -1155,7 +1152,7 @@
             const projectStart = freelancerData.projectStart || 'TBD';
             const rate = freelancerData.rate || '$150/day';
             
-            // Create contract HTML matching francisco-flores.html exactly
+            // Create contract HTML matching francisco-flores.html exactly with proper interactive signature
             const contractHTML = '<!DOCTYPE html>' +
 '<html lang="en">' +
 '<head>' +
@@ -1365,11 +1362,11 @@
             '<div class="logo">' +
                 '<img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo">' +
             '</div>' +
-            '<h1>📄 Freelance Agreement</h1>' +
+            '<h1>Freelance Agreement</h1>' +
             '<p><strong>Issued By:</strong> Cochran Films<br>' +
             '<strong>Effective Date:</strong> ' + effectiveDate + '</p>' +
         '</div>' +
-        '<h2>📌 Project Overview</h2>' +
+        '<h2>Project Overview</h2>' +
         '<p>' +
             'This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>' + freelancerName + '</strong>, hereinafter referred to as the "Contractor."' +
         '</p>' +
@@ -1381,7 +1378,7 @@
                 '<li><strong>Rate:</strong> ' + rate + '</li>' +
             '</ul>' +
         '</div>' +
-        '<h2>✅ Contractor Responsibilities</h2>' +
+        '<h2>Contractor Responsibilities</h2>' +
         '<ul>' +
             '<li>Arrive at the project location on time.</li>' +
             '<li>Professionally manage their assigned role and responsibilities.</li>' +
@@ -1389,138 +1386,142 @@
             '<li>Use personal equipment unless otherwise arranged.</li>' +
             '<li>Maintain a respectful demeanor with staff and clients.</li>' +
         '</ul>' +
-        '<h2>📸 BTS Content & Ownership</h2>' +
+        '<h2>BTS Content & Ownership</h2>' +
         '<p>' +
             'The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.' +
         '</p>' +
-        '<h2>💵 Payment Terms</h2>' +
+        '<h2>Payment Terms</h2>' +
         '<p>' +
             'Payment of ' + rate + ' will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).' +
         '</p>' +
-        '<h2>🛡️ Independent Contractor</h2>' +
+        '<h2>Independent Contractor</h2>' +
         '<p>' +
             'The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.' +
         '</p>' +
-        '<h2>📝 Agreement</h2>' +
+        '<h2>Agreement</h2>' +
         '<p>By continuing, the Contractor agrees to the above terms. A physical or digital signature may be collected separately.</p>' +
         '<div class="signature-section">' +
             '<h3>Contractor Signature</h3>' +
             '<div class="signature-box">' +
                 '<div class="signature-party">' +
                     '<strong>Contractor:</strong><br>' +
-                    'Name: ' + freelancerName + '<br><br>' +
-                    'Signature: <div style="border-bottom: 2px solid #FFB200; height: 40px; margin: 10px 0;"></div>' +
-                    'Date: <div style="border-bottom: 2px solid #FFB200; height: 40px; margin: 10px 0;"></div>' +
+                    'Name: ' + freelancerName + '<br>' +
+                    '<input type="text" class="signature-input" id="contractorSignature" placeholder="Type your full name to sign" required>' +
+                    '<input type="date" class="date-input" id="contractorDate" required>' +
                 '</div>' +
             '</div>' +
         '</div>' +
+        '<div class="action-buttons">' +
+            '<button class="btn" id="signButton" onclick="signContract()">Sign Contract</button>' +
+            '<button class="btn btn-secondary" id="downloadButton" onclick="downloadPDF()" style="display: none;">Download PDF</button>' +
+        '</div>' +
     '</div>' +
-    '<div style="text-align: center; margin-top: 30px; padding: 20px; background: rgba(255, 178, 0, 0.1); border-radius: 8px; border: 1px solid rgba(255, 178, 0, 0.3);">' +
-        '<p><strong>📄 To Sign & Save:</strong></p>' +
-        '<p>1. Print this contract (Ctrl+P or Cmd+P)</p>' +
-        '<p>2. Sign and date the printed copy</p>' +
-        '<p>3. Scan or photo the signed contract</p>' +
-        '<p>4. Return to Cochran Films</p>' +
-    '</div>' +
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>' +
+    '<script>' +
+        'function signContract() {' +
+            'const contractorSignature = document.getElementById("contractorSignature").value.trim();' +
+            'const contractorDate = document.getElementById("contractorDate").value;' +
+            'if (!contractorSignature || !contractorDate) {' +
+                'alert("Please fill in your signature and date to sign the contract.");' +
+                'return;' +
+            '}' +
+            'if (contractorSignature.length < 3) {' +
+                'alert("Please enter your full name as your signature.");' +
+                'return;' +
+            '}' +
+            'document.body.classList.add("signed");' +
+            'const signButton = document.getElementById("signButton");' +
+            'signButton.textContent = "✓ Contract Signed";' +
+            'signButton.style.background = "#28a745";' +
+            'signButton.disabled = true;' +
+            'const downloadButton = document.getElementById("downloadButton");' +
+            'downloadButton.style.display = "inline-block";' +
+            'const signatureInput = document.getElementById("contractorSignature");' +
+            'signatureInput.style.fontFamily = "cursive";' +
+            'signatureInput.style.color = "#000";' +
+            'signatureInput.readOnly = true;' +
+            'alert("Contract signed successfully! You can now download the signed PDF or print the contract.");' +
+        '}' +
+        'function downloadPDF() {' +
+            'const contractorSignature = document.getElementById("contractorSignature").value.trim();' +
+            'const contractorDate = document.getElementById("contractorDate").value;' +
+            'if (!contractorSignature || !contractorDate) {' +
+                'alert("Please sign the contract first before downloading.");' +
+                'return;' +
+            '}' +
+            'window.print();' +
+        '}' +
+        'document.addEventListener("DOMContentLoaded", function() {' +
+            'const today = new Date().toISOString().split("T")[0];' +
+            'document.getElementById("contractorDate").value = today;' +
+        '});' +
+        'document.getElementById("contractorSignature").addEventListener("input", function() {' +
+            'const signature = this.value.trim();' +
+            'const signButton = document.getElementById("signButton");' +
+            'if (signature.length >= 3) {' +
+                'signButton.disabled = false;' +
+            '} else {' +
+                'signButton.disabled = true;' +
+            '}' +
+        '});' +
+    '<\/script>' +
 '</body>' +
 '</html>';
 
             return { fileName, contractHTML };
         }
 
-        // Generate only NEW contract files (not previously generated ones)
-        function generateAllContracts() {
+        // Generate and download contract files for all freelancers
+        function generateAndDownloadContracts() {
             const statusDiv = document.getElementById('contractGenerationStatus');
-            statusDiv.innerHTML = '<p style="color: #FFB200;">🔄 Checking for new contracts...</p>';
+            statusDiv.innerHTML = '<p style="color: #FFB200;">🔄 Generating contract files...</p>';
             
-            const contracts = {};
-            const newContracts = [];
-            const skippedContracts = [];
-            
-            Object.keys(approvedFreelancers).forEach(freelancerName => {
-                const fileName = freelancerName.toLowerCase().replace(/\s+/g, '-') + '.html';
-                
-                // Check if this contract was already generated
-                if (generatedContractsList.has(fileName)) {
-                    skippedContracts.push(fileName);
-                    return; // Skip already generated contracts
-                }
-                
-                // Generate new contract
-                const freelancerData = approvedFreelancers[freelancerName];
-                const { fileName: contractFileName, contractHTML } = generateContractHTML(freelancerName, freelancerData);
-                contracts[contractFileName] = contractHTML;
-                newContracts.push(contractFileName);
-                
-                // Mark as generated
-                generatedContractsList.add(contractFileName);
-            });
-            
-            // Store contracts for download
-            window.generatedContracts = contracts;
-            
-            // Show results
-            let statusHTML = '';
-            if (newContracts.length > 0) {
-                statusHTML += '<p style="color: #22c55e;">✅ Generated ' + newContracts.length + ' NEW contract files:</p>' +
-                    '<ul style="color: #FFB200; margin-left: 20px;">' +
-                        newContracts.map(fileName => '<li>' + fileName + ' (NEW)</li>').join('') +
-                    '</ul>';
-            }
-            
-            if (skippedContracts.length > 0) {
-                statusHTML += '<p style="color: #6c757d; margin-top: 1rem;">⏭️ Skipped ' + skippedContracts.length + ' existing contracts:</p>' +
-                    '<ul style="color: #6c757d; margin-left: 20px;">' +
-                        skippedContracts.map(fileName => '<li>' + fileName + ' (already exists)</li>').join('') +
-                    '</ul>';
-            }
-            
-            if (newContracts.length === 0) {
-                statusHTML += '<p style="color: #ffc107;">⚠️ No new contracts to generate - all freelancers already have contracts!</p>' +
-                    '<p style="color: rgba(255,255,255,0.8);">Add new freelancers to generate new contracts.</p>';
-            } else {
-                statusHTML += '<p style="color: rgba(255,255,255,0.8); margin-top: 1rem;">' +
-                    '📋 Upload new files to your root directory or contracts/ folder<br>' +
-                    '🔗 Update the contractUrl in freelancer data to match where you upload them' +
-                '</p>';
-                document.getElementById('downloadContractsBtn').style.display = 'block';
-            }
-            
-            statusDiv.innerHTML = statusHTML;
-        }
-        
-        // Reset generated contracts list (useful for testing or if you want to regenerate all)
-        function resetGeneratedContracts() {
-            generatedContractsList.clear();
-            document.getElementById('contractGenerationStatus').innerHTML = '<p style="color: #22c55e;">✅ Contract generation reset - all contracts will be regenerated on next generation.</p>';
-            document.getElementById('downloadContractsBtn').style.display = 'none';
-        }
-
-        // Download all contract files as individual files (no ZIP needed)
-        function downloadContractFiles() {
-            if (!window.generatedContracts) {
-                alert('Please generate contracts first.');
+            if (Object.keys(approvedFreelancers).length === 0) {
+                statusDiv.innerHTML = '<p style="color: #ffc107;">⚠️ No freelancers found. Please add freelancers first.</p>';
                 return;
             }
             
-            // Download each contract file individually
-            Object.keys(window.generatedContracts).forEach(fileName => {
-                const contractHTML = window.generatedContracts[fileName];
-                const blob = new Blob([contractHTML], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                // Small delay between downloads to prevent browser blocking
-                setTimeout(() => {}, 100);
+            const contracts = {};
+            const generatedList = [];
+            
+            // Generate contracts for all current freelancers
+            Object.keys(approvedFreelancers).forEach(freelancerName => {
+                const freelancerData = approvedFreelancers[freelancerName];
+                const { fileName, contractHTML } = generateContractHTML(freelancerName, freelancerData);
+                contracts[fileName] = contractHTML;
+                generatedList.push(fileName);
             });
             
-            alert('Downloaded ' + Object.keys(window.generatedContracts).length + ' contract files!');
+            // Download each contract file immediately
+            let downloadCount = 0;
+            generatedList.forEach((fileName, index) => {
+                setTimeout(() => {
+                    const contractHTML = contracts[fileName];
+                    const blob = new Blob([contractHTML], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    downloadCount++;
+                    
+                    // Update status after all downloads complete
+                    if (downloadCount === generatedList.length) {
+                        statusDiv.innerHTML = 
+                            '<p style="color: #22c55e;">✅ Generated and downloaded ' + downloadCount + ' contract files:</p>' +
+                            '<ul style="color: #FFB200; margin-left: 20px;">' +
+                                generatedList.map(fileName => '<li>' + fileName + '</li>').join('') +
+                            '</ul>' +
+                            '<p style="color: rgba(255,255,255,0.8); margin-top: 1rem;">' +
+                                '📋 Upload files to your root directory or contracts/ folder<br>' +
+                                '🔗 Update the contractUrl in freelancer data to match where you upload them' +
+                            '</p>';
+                    }
+                }, index * 200); // 200ms delay between downloads
+            });
         }
 
         // Initialize on page load
