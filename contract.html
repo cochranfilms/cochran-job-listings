@@ -300,6 +300,10 @@
             display: none;
         }
         
+        .login-header {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
         .security-note {
             background: rgba(255,178,0,0.1);
             padding: 1.5rem;
@@ -309,6 +313,36 @@
             backdrop-filter: blur(10px);
             font-size: 0.9rem;
             color: rgba(255,255,255,0.8);
+        }
+        
+        /* Login elements transition */
+        .login-elements {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Hide login elements when contract is accessed */
+        .login-elements.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+            height: 0;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Success message starts hidden and fades in */
+        .message.success {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .message.success:not(.hidden) {
+            opacity: 1;
+            transform: translateY(0);
         }
         
         /* Contract Details Styling */
@@ -415,28 +449,45 @@
                 <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo">
             </div>
             
-            <h1><i class="fas fa-lock"></i> Contract Access</h1>
-            <p class="subtitle">Enter your details to access your personalized contract if you've been approved to join our team.</p>
-            
-            <form id="contractForm" onsubmit="checkAccess(event)" class="login-form">
-                <div class="form-group">
-                    <label for="freelancerName"><i class="fas fa-user"></i> Full Name</label>
-                    <input type="text" id="freelancerName" placeholder="Enter your full name" required>
-                </div>
+            <!-- Login Elements - will be hidden after access -->
+            <div id="loginElements" class="login-elements">
+                <h1><i class="fas fa-lock"></i> Contract Access</h1>
+                <p class="subtitle">Enter your details to access your personalized contract if you've been approved to join our team.</p>
                 
-                <div class="form-group">
-                    <label for="freelancerEmail"><i class="fas fa-envelope"></i> Email Address</label>
-                    <input type="email" id="freelancerEmail" placeholder="Enter your email address" required>
-                </div>
+                <form id="contractForm" onsubmit="checkAccess(event)" class="login-form">
+                    <div class="form-group">
+                        <label for="freelancerName"><i class="fas fa-user"></i> Full Name</label>
+                        <input type="text" id="freelancerName" placeholder="Enter your full name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="freelancerEmail"><i class="fas fa-envelope"></i> Email Address</label>
+                        <input type="email" id="freelancerEmail" placeholder="Enter your email address" required>
+                    </div>
+                    
+                    <button type="submit" class="btn">
+                        <i class="fas fa-search"></i> Verify Access
+                    </button>
+                </form>
                 
-                <button type="submit" class="btn">
-                    <i class="fas fa-search"></i> Verify Access
-                </button>
-            </form>
+                <div class="security-note">
+                    <strong><i class="fas fa-shield-alt"></i> Security Note:</strong> This system verifies your identity against our approved freelancer database. Your information is secure and will not be stored.
+                </div>
+            </div>
             
             <div id="success-message" class="message success hidden">
-                <h2><i class="fas fa-check-circle"></i> Access Granted!</h2>
+                <!-- Contract Header -->
+                <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid rgba(255, 178, 0, 0.3);">
+                    <h1 style="font-family: 'Cinzel', serif; font-size: 2.2rem; color: #FFB200; margin-bottom: 0.5rem;">
+                        <i class="fas fa-file-contract"></i> Your Freelance Contract
+                    </h1>
+                    <p style="color: rgba(255,255,255,0.8); font-size: 1.1rem; margin: 0;">
+                        Cochran Films • Digital Agreement
+                    </p>
+                </div>
+                
                 <div class="workflow-info">
+                    <h3 style="color: #22c55e; margin-bottom: 1rem;"><i class="fas fa-check-circle"></i> Access Granted!</h3>
                     <p><strong>Welcome to the Cochran Films team!</strong> Your contract is ready for review and signing.</p>
                     <p>Please review all contract details carefully before proceeding with digital signature.</p>
                 </div>
@@ -517,9 +568,6 @@
                 </div>
             </div>
             
-            <div class="security-note">
-                <strong><i class="fas fa-shield-alt"></i> Security Note:</strong> This system verifies your identity against our approved freelancer database. Your information is secure and will not be stored.
-            </div>
         </div>
     </div>
 
@@ -644,15 +692,27 @@
                 // Set up signature validation now that elements exist
                 setupSignatureValidation();
                 
-                // Show success message (no need to set href since everything is on this page now)
-                successDiv.classList.remove("hidden");
+                // Hide login elements with smooth transition
+                const loginElements = document.getElementById('loginElements');
+                if (loginElements) {
+                    loginElements.classList.add('hidden');
+                }
                 
-                // Expand to show more content comfortably
-                document.getElementById('loginScreen').classList.add('expanded');
-                document.getElementById('mainContainer').classList.add('expanded');
-                
-                // Scroll to success message
-                successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Show success message after a brief delay for smooth transition
+                setTimeout(() => {
+                    successDiv.classList.remove("hidden");
+                    
+                    // Expand to show more content comfortably
+                    document.getElementById('loginScreen').classList.add('expanded');
+                    document.getElementById('mainContainer').classList.add('expanded');
+                    
+                    // Smooth scroll to the top of the success message (contract header)
+                    // This allows users to see the contract title and read from the beginning
+                    successDiv.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 400); // Wait for login elements to finish hiding
             } else {
                 console.log('❌ Access denied for:', { name, email });
                 // Access denied
