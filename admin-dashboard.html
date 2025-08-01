@@ -728,12 +728,13 @@
                 <div class="workflow-info">
                     <p><strong>Workflow:</strong></p>
                     <ol>
-                        <li><strong>Add/Edit Freelancers</strong> → Use this admin panel to manage freelancer access</li>
-                        <li><strong>Export JSON</strong> → Download the updated freelancers.json file</li>
-                        <li><strong>Update Website</strong> → Replace the freelancers.json file on your server</li>
-                        <li><strong>Contract Access</strong> → Freelancers can now access their contracts</li>
+                        <li><strong>Add/Edit Freelancers</strong> → Contract URL auto-generates as contracts/name.html</li>
+                        <li><strong>Generate Contracts</strong> → Select and download HTML contract files</li>
+                        <li><strong>Upload Files</strong> → Upload HTML files to your contracts/ folder</li>
+                        <li><strong>Export JSON</strong> → Download and upload freelancers.json to your server</li>
+                        <li><strong>Contract Access</strong> → Freelancers can now access their HTML contracts</li>
                     </ol>
-                    <p><strong>Note:</strong> Each freelancer needs a unique name and email combination for secure access.</p>
+                    <p><strong>Note:</strong> Contract URLs automatically point to HTML files in contracts/ folder for proper web access.</p>
                 </div>
                 
                 <h2>Add/Edit Freelancer</h2>
@@ -748,7 +749,10 @@
                     </div>
                     <div class="form-group">
                         <label for="contractUrl">Contract URL *</label>
-                        <input type="url" id="contractUrl" name="contractUrl" placeholder="https://yourdomain.com/contracts/freelancer-name.html" required>
+                        <input type="text" id="contractUrl" name="contractUrl" placeholder="contracts/freelancer-name.html" required>
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            📝 Auto-generated from name. Upload HTML file to contracts/ folder.
+                        </small>
                     </div>
                     <div class="form-group">
                         <label for="freelancerRole">Role *</label>
@@ -790,8 +794,11 @@
 
             <div class="export-section">
                 <h2>Generate Contract Files</h2>
-                <p>Generate individual contract HTML files for new freelancers only:</p>
-                <button class="btn" onclick="generateAndDownloadContracts()">📦 Generate New Contracts</button>
+                <p>Select freelancers to generate contract HTML files for:</p>
+                <div id="freelancerSelectionList" style="margin-bottom: 1rem;"></div>
+                <button class="btn" onclick="generateSelectedContracts()">📦 Generate Selected Contracts</button>
+                <button class="btn btn-secondary" onclick="selectAllFreelancers()">✅ Select All</button>
+                <button class="btn btn-secondary" onclick="clearAllSelections()">❌ Clear All</button>
                 <div id="contractGenerationStatus" style="margin-top: 1rem;"></div>
             </div>
         </div>
@@ -1044,6 +1051,9 @@
                 `;
                 contractsList.appendChild(contractDiv);
             });
+            
+            // Also update the freelancer selection list for contract generation
+            displayFreelancerSelection();
         }
 
         // Add/Edit freelancer
@@ -1088,6 +1098,9 @@
             document.getElementById('freelancerRate').value = freelancer.rate || '';
             document.getElementById('approvedDate').value = freelancer.approvedDate || '';
             
+            // Mark contract URL as manually edited since we're loading existing data
+            document.getElementById('contractUrl').dataset.manuallyEdited = 'true';
+            
             document.getElementById('contractForm').dataset.editName = name;
         }
 
@@ -1106,6 +1119,8 @@
             document.getElementById('freelancerLocation').value = 'Atlanta Area';
             document.getElementById('projectStart').value = 'TBD';
             delete document.getElementById('contractForm').dataset.editName;
+            // Reset manual edit flag
+            resetManualEditFlag();
         }
 
         // Export contract data
@@ -1471,7 +1486,101 @@
             return { fileName, contractHTML };
         }
 
-        // Generate and download contract files for all freelancers
+        // Display freelancer selection checkboxes
+        function displayFreelancerSelection() {
+            const selectionList = document.getElementById('freelancerSelectionList');
+            selectionList.innerHTML = '';
+
+            if (Object.keys(approvedFreelancers).length === 0) {
+                selectionList.innerHTML = '<p style="color: rgba(255,255,255,0.7);">No freelancers available for contract generation.</p>';
+                return;
+            }
+
+            Object.keys(approvedFreelancers).forEach(freelancerName => {
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.style.cssText = 'margin-bottom: 0.5rem; padding: 0.5rem; background: rgba(255,178,0,0.1); border-radius: 6px; border: 1px solid rgba(255,178,0,0.2);';
+                checkboxDiv.innerHTML = `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: #fff;">
+                        <input type="checkbox" value="${freelancerName}" class="freelancer-checkbox" style="margin: 0;">
+                        <span>${freelancerName}</span>
+                    </label>
+                `;
+                selectionList.appendChild(checkboxDiv);
+            });
+        }
+
+        // Select all freelancers
+        function selectAllFreelancers() {
+            document.querySelectorAll('.freelancer-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+
+        // Clear all selections
+        function clearAllSelections() {
+            document.querySelectorAll('.freelancer-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+
+        // Generate contracts for selected freelancers only
+        function generateSelectedContracts() {
+            const selectedCheckboxes = document.querySelectorAll('.freelancer-checkbox:checked');
+            const selectedFreelancers = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            const statusDiv = document.getElementById('contractGenerationStatus');
+            
+            if (selectedFreelancers.length === 0) {
+                statusDiv.innerHTML = '<p style="color: #ffc107;">⚠️ Please select at least one freelancer to generate contracts for.</p>';
+                return;
+            }
+            
+            statusDiv.innerHTML = '<p style="color: #FFB200;">🔄 Generating contract files for selected freelancers...</p>';
+            
+            const contracts = {};
+            const generatedList = [];
+            
+            // Generate contracts for selected freelancers only
+            selectedFreelancers.forEach(freelancerName => {
+                const freelancerData = approvedFreelancers[freelancerName];
+                const { fileName, contractHTML } = generateContractHTML(freelancerName, freelancerData);
+                contracts[fileName] = contractHTML;
+                generatedList.push(fileName);
+            });
+            
+            // Download each contract file immediately
+            let downloadCount = 0;
+            generatedList.forEach((fileName, index) => {
+                setTimeout(() => {
+                    const contractHTML = contracts[fileName];
+                    const blob = new Blob([contractHTML], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    downloadCount++;
+                    
+                    // Update status after all downloads complete
+                    if (downloadCount === generatedList.length) {
+                        statusDiv.innerHTML = 
+                            '<p style="color: #22c55e;">✅ Generated and downloaded ' + downloadCount + ' contract files:</p>' +
+                            '<ul style="color: #FFB200; margin-left: 20px;">' +
+                                generatedList.map(fileName => '<li>' + fileName + '</li>').join('') +
+                            '</ul>' +
+                            '<p style="color: rgba(255,255,255,0.8); margin-top: 1rem;">' +
+                                '📋 Upload files to your contracts/ folder<br>' +
+                                '🔗 Make sure the contractUrl in freelancer data points to contracts/' + fileName +
+                            '</p>';
+                    }
+                }, index * 200); // 200ms delay between downloads
+            });
+        }
+
+        // Generate and download contract files for all freelancers (legacy function)
         function generateAndDownloadContracts() {
             const statusDiv = document.getElementById('contractGenerationStatus');
             statusDiv.innerHTML = '<p style="color: #FFB200;">🔄 Generating contract files...</p>';
@@ -1522,6 +1631,28 @@
                     }
                 }, index * 200); // 200ms delay between downloads
             });
+        }
+
+        // Auto-generate contract URL from freelancer name
+        document.getElementById('freelancerName').addEventListener('input', function() {
+            const name = this.value.trim();
+            const contractUrlField = document.getElementById('contractUrl');
+            
+            if (name && !contractUrlField.dataset.manuallyEdited) {
+                // Generate filename: lowercase, replace spaces with dashes, add .html
+                const fileName = name.toLowerCase().replace(/\s+/g, '-') + '.html';
+                contractUrlField.value = 'contracts/' + fileName;
+            }
+        });
+
+        // Track if user manually edits the contract URL
+        document.getElementById('contractUrl').addEventListener('input', function() {
+            this.dataset.manuallyEdited = 'true';
+        });
+
+        // Reset manual edit flag when form is cleared
+        function resetManualEditFlag() {
+            delete document.getElementById('contractUrl').dataset.manuallyEdited;
         }
 
         // Initialize on page load
