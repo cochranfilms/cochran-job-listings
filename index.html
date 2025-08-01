@@ -252,6 +252,40 @@
       overflow: hidden;
     }
     
+    /* Inactive job styling */
+    .job-card.inactive {
+      opacity: 0.7;
+      background: #f8f9fa;
+    }
+    
+    .job-card.inactive .job-title,
+    .job-card.inactive .job-meta {
+      opacity: 0.6;
+    }
+    
+    /* Status overlay for inactive jobs */
+    .job-status-overlay {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #dc3545, #c82333);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    
+    .job-status-overlay.filled {
+      background: linear-gradient(135deg, #fd7e14, #e55a0a);
+      box-shadow: 0 2px 8px rgba(253, 126, 20, 0.3);
+    }
+    
     .job-card::before {
       content: '';
       position: absolute;
@@ -578,6 +612,13 @@
         flex-direction: column;
         gap: 0.5rem;
       }
+      
+      .job-status-overlay {
+        top: 15px;
+        right: 15px;
+        font-size: 0.7rem;
+        padding: 0.4rem 0.8rem;
+      }
     }
   </style>
 </head>
@@ -827,17 +868,34 @@
         .replace(/['"]/g, '') // Remove quotes
         .replace(/\s+/g, ' '); // Normalize spaces
       
-      // Only show jobs with "Active" status
-      if (jobStatus !== 'active') {
-        return '';
-      }
+      // Determine if job is active
+      const isActive = jobStatus === 'active';
       
       // Generate the apply link with all pre-filled data
       const applyLink = generateApplyLink(jobTitle, eventDate, jobLocation, jobPay, jobDescription);
       const cardId = jobTitle.replace(/\s+/g, '-').toLowerCase();
       
+      // Determine status overlay text and styling
+      let statusOverlay = '';
+      if (!isActive) {
+        const overlayText = jobStatus === 'filled' ? 'Position Filled' : 'Not Open';
+        const overlayIcon = jobStatus === 'filled' ? '✓' : '✕';
+        const overlayClass = jobStatus === 'filled' ? 'filled' : '';
+        statusOverlay = `<div class="job-status-overlay ${overlayClass}">${overlayIcon} ${overlayText}</div>`;
+      }
+      
+      // Build apply button - disable for inactive jobs
+      const applyButton = isActive 
+        ? `<a href="${applyLink}" target="_blank" class="btn btn-primary apply-btn">
+             <span>📝</span> Apply Now
+           </a>`
+        : `<button class="btn btn-primary apply-btn" disabled style="opacity: 0.5; cursor: not-allowed;">
+             <span>📝</span> Position ${jobStatus === 'filled' ? 'Filled' : 'Closed'}
+           </button>`;
+
       return `
-        <div class="job-card" data-job-title="${jobTitle}" data-event-date="${eventDate}" data-location="${jobLocation}" data-pay="${jobPay}">
+        <div class="job-card ${!isActive ? 'inactive' : ''}" data-job-title="${jobTitle}" data-event-date="${eventDate}" data-location="${jobLocation}" data-pay="${jobPay}">
+          ${statusOverlay}
           <div class="job-header">
             <h3 class="job-title">${jobTitle}</h3>
             <div class="job-meta">
@@ -861,9 +919,7 @@
             <button class="btn btn-secondary details-btn" onclick="toggleDescription('desc-${cardId}', this, '${jobTitle}', '${eventDate}')">
               <span>📋</span> More Details
             </button>
-            <a href="${applyLink}" target="_blank" class="btn btn-primary apply-btn">
-              <span>📝</span> Apply Now
-            </a>
+            ${applyButton}
           </div>
         </div>
       `;
@@ -963,7 +1019,7 @@
         const data = await response.json();
         console.log('JSON data loaded:', data);
         
-        // Filter for active jobs and exclude applicant submissions
+        // Filter jobs and exclude applicant submissions (now includes both active and inactive jobs)
         const jobs = data.jobs.filter(job => {
           const cleanStatus = String(job.status || '')
             .toLowerCase()
@@ -995,23 +1051,22 @@
               status: cleanStatus,
               hasApplicantInfo: !!hasApplicantInfo,
               titleLooksLikeApplicantName: !!titleLooksLikeApplicantName,
-              willInclude: job.title && cleanStatus === 'active' && !hasApplicantInfo && !titleLooksLikeApplicantName
+              willInclude: job.title && !hasApplicantInfo && !titleLooksLikeApplicantName
             });
           }
           
           // Only include rows that:
           // 1. Have a job title
-          // 2. Have "Active" status
-          // 3. DON'T contain applicant information (email, phone, etc.)
-          // 4. DON'T have a title that looks like an applicant name
+          // 2. DON'T contain applicant information (email, phone, etc.)
+          // 3. DON'T have a title that looks like an applicant name
+          // Note: Status no longer matters - we show both active and inactive jobs
           return job.title && 
-                 cleanStatus === 'active' && 
                  !hasApplicantInfo &&
                  !titleLooksLikeApplicantName;
         });
         
         if (jobs.length === 0) {
-          throw new Error('NO_ACTIVE_JOBS');
+          throw new Error('NO_JOBS_AVAILABLE');
         }
         
         // Cache the jobs for faster future loads
@@ -1028,7 +1083,7 @@
         errorElement.style.display = 'block';
         
         // Check if this is a "no jobs" error vs a real error
-        if (error.message === 'NO_ACTIVE_JOBS' || error.message.includes('NO_ACTIVE_JOBS')) {
+        if (error.message === 'NO_JOBS_AVAILABLE' || error.message.includes('NO_JOBS_AVAILABLE')) {
           // Show friendly "no jobs available" message
           const errorDiv = document.querySelector('.error-message h3');
           const errorText = document.querySelector('.error-message p');
@@ -1036,7 +1091,7 @@
             errorDiv.textContent = "💡 We're not hiring at the moment — but we're always growing.";
           }
           if (errorText) {
-            errorText.innerHTML = "No open roles are available right now. Please check back soon or reach out to us at <a href='mailto:info@cochranfilms.com' style='color: var(--primary);'>info@cochranfilms.com</a> if you'd like to stay in the loop.";
+            errorText.innerHTML = "No job listings are available right now. Please check back soon or reach out to us at <a href='mailto:info@cochranfilms.com' style='color: var(--primary);'>info@cochranfilms.com</a> if you'd like to stay in the loop.";
           }
         } else {
           // Show user-friendly error message
