@@ -2,26 +2,35 @@
   "approvedFreelancers": {
     "Francisco Flores": {
       "email": "ciscocinema@gmail.com",
-      "contractUrl": "contracts/francisco-flores.html",
+      "contractUrl": "contract.html",
       "role": "Backdrop Photographer",
+      "location": "6695 Church Street, Douglasville, GA 30134",
+      "projectStart": "November 8, 2025 at 3:15 PM",
+      "rate": "$400.00 USD (Flat)",
       "approvedDate": "2024-11-08"
+    },
+    "Demita Fields": {
+      "email": "demita.fields@example.com",
+      "contractUrl": "https://yourdomain.com/contracts/demita-fields.pdf",
+      "role": "Photographer",
+      "approvedDate": "2024-01-20"
+    },
+    "Sarah Johnson": {
+      "email": "sarah.johnson@example.com",
+      "contractUrl": "https://yourdomain.com/contracts/sarah-johnson.pdf",
+      "role": "Graphic Designer",
+      "approvedDate": "2024-02-01"
     },
     "Cody Cochran": {
       "email": "info@cochranfilms.com",
       "contractUrl": "https://yourdomain.com/contracts/michael-chen.pdf",
       "role": "Video Editor",
       "approvedDate": "2024-02-10"
-    },
-    "Sam Sam": {
-      "email": "sam@gmail.com",
-      "contractUrl": "contracts/sam-sam.html",
-      "role": "Editor",
-      "location": "Atlanta Area",
-      "projectStart": "August 19th, 2025 at 2:00pm",
-      "rate": "$900.00 USD (Flat)",
-      "approvedDate": "2023-02-01"
     }
   },
-  "lastUpdated": "2025-08-01",
-  "totalFreelancers": 3
-}
+  "systemInfo": {
+    "lastUpdated": "2024-01-01",
+    "version": "1.0",
+    "description": "Approved freelancer database for Cochran Films contract access system"
+  }
+} 
