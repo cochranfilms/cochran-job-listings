@@ -749,7 +749,23 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadFreelancerData();
             
-            // Aggressively disable any browser loading overlays
+            // Ensure main containers are visible on page load
+            const loginScreen = document.getElementById('loginScreen');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            if (loginScreen) {
+                loginScreen.style.display = 'flex';
+                loginScreen.style.visibility = 'visible';
+                console.log('✅ Login screen initialized as visible');
+            }
+            
+            if (mainContainer) {
+                mainContainer.style.display = 'block';
+                mainContainer.style.visibility = 'visible';
+                console.log('✅ Main container initialized as visible');
+            }
+            
+            // Aggressively disable any browser loading overlays (but not main containers)
             forceClearLoadingStates();
             
             // Prevent ANY form submission or navigation
@@ -783,25 +799,34 @@
             document.body.classList.remove('loading', 'spinner', 'overlay');
             document.documentElement.classList.remove('loading', 'spinner', 'overlay');
             
-            // Hide any potential loading overlays
+            // Hide any potential loading overlays (but NEVER main containers)
             const potentialOverlays = document.querySelectorAll('.loading, .spinner, .overlay, .modal, [class*="loading"], [class*="spinner"]');
             potentialOverlays.forEach(el => {
-                if (el && !el.classList.contains('login-screen')) {
+                // Never hide main containers or login screen
+                if (el && 
+                    !el.classList.contains('login-screen') && 
+                    el.id !== 'loginScreen' && 
+                    el.id !== 'mainContainer' &&
+                    !el.closest('#loginScreen') &&
+                    !el.closest('#mainContainer')) {
                     el.style.display = 'none';
                     el.style.visibility = 'hidden';
                     el.style.opacity = '0';
                 }
             });
             
-            // ALSO check for any duplicate/stuck login elements
-            const stuckLoginElements = document.querySelectorAll('.login-elements:not(.hidden)');
+            // ALSO check for any duplicate/stuck login form elements (not main container)
+            const stuckLoginElements = document.querySelectorAll('.login-elements:not(.hidden), .login-form:not([style*="display: none"])');
             if (stuckLoginElements.length > 1) {
-                console.log('🚨 Found multiple visible login elements, hiding extras:', stuckLoginElements.length);
+                console.log('🚨 Found multiple visible login form elements, hiding extras:', stuckLoginElements.length);
                 stuckLoginElements.forEach((el, index) => {
-                    if (index > 0) { // Keep only the first one
-                        el.style.display = 'none';
-                        el.style.visibility = 'hidden';
-                        console.log('🔨 Hidden duplicate login element:', index);
+                    // Never hide the main login-screen or main-container
+                    if (!el.classList.contains('login-screen') && el.id !== 'loginScreen' && el.id !== 'mainContainer') {
+                        if (index > 0) { // Keep only the first one
+                            el.style.display = 'none';
+                            el.style.visibility = 'hidden';
+                            console.log('🔨 Hidden duplicate login form element:', index);
+                        }
                     }
                 });
             }
@@ -890,29 +915,45 @@
                 
                 // Show success message after a brief delay for smooth transition
                 setTimeout(() => {
-                    // Debug: Check for any remaining visible login elements
-                    const allLoginElements = document.querySelectorAll('[id*="login"], [class*="login"], .login-elements');
-                    allLoginElements.forEach((el, index) => {
-                        console.log(`Login element ${index}:`, {
+                    // Debug: Check ONLY the login form elements (not the main container)
+                    const loginFormElements = document.querySelectorAll('#loginElements, .login-form, #contractForm');
+                    loginFormElements.forEach((el, index) => {
+                        console.log(`Login form element ${index}:`, {
                             id: el.id,
                             className: el.className,
                             display: window.getComputedStyle(el).display,
                             visibility: window.getComputedStyle(el).visibility,
                             opacity: window.getComputedStyle(el).opacity
                         });
-                        // Force hide any visible login elements
-                        if (window.getComputedStyle(el).display !== 'none') {
-                            console.log('🚨 Found visible login element, force hiding:', el);
-                            el.style.display = 'none';
-                            el.style.visibility = 'hidden';
+                        // Only hide form elements, NOT the main login screen container
+                        if (el.id !== 'loginScreen' && el.id !== 'mainContainer' && !el.classList.contains('login-screen')) {
+                            if (window.getComputedStyle(el).display !== 'none') {
+                                console.log('🔨 Hiding login form element:', el.id);
+                                el.style.display = 'none';
+                                el.style.visibility = 'hidden';
+                            }
                         }
                     });
                     
                     successDiv.classList.remove("hidden");
                     
-                    // Expand to show more content comfortably
-                    document.getElementById('loginScreen').classList.add('expanded');
-                    document.getElementById('mainContainer').classList.add('expanded');
+                    // Expand to show more content comfortably and ensure main containers are visible
+                    const loginScreen = document.getElementById('loginScreen');
+                    const mainContainer = document.getElementById('mainContainer');
+                    
+                    if (loginScreen) {
+                        loginScreen.classList.add('expanded');
+                        loginScreen.style.display = 'flex'; // Ensure it's visible
+                        loginScreen.style.visibility = 'visible';
+                        console.log('✅ Login screen expanded and visible');
+                    }
+                    
+                    if (mainContainer) {
+                        mainContainer.classList.add('expanded');
+                        mainContainer.style.display = 'block'; // Ensure it's visible
+                        mainContainer.style.visibility = 'visible';
+                        console.log('✅ Main container expanded and visible');
+                    }
                     
                     // Scroll to the very top of the page to show the logo
                     // Users will start at the top and can scroll down manually
