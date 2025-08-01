@@ -1464,7 +1464,213 @@
                 'alert("Please sign the contract first before downloading.");' +
                 'return;' +
             '}' +
-            'window.print();' +
+            'const pdfContent = `' +
+                '<!DOCTYPE html>' +
+                '<html>' +
+                '<head>' +
+                    '<meta charset="UTF-8">' +
+                    '<title>Freelance Agreement - ' + freelancerName + '</title>' +
+                    '<style>' +
+                        '@media print {' +
+                            'body { margin: 0; padding: 20px; }' +
+                            '.no-print { display: none !important; }' +
+                            '.container { max-width: none; box-shadow: none; }' +
+                            '.action-buttons { display: none !important; }' +
+                        '}' +
+                        'body {' +
+                            'font-family: Arial, Helvetica, sans-serif;' +
+                            'background: #ffffff;' +
+                            'min-height: 100vh;' +
+                            'padding: 20px;' +
+                            'color: #000000;' +
+                            'margin: 0;' +
+                        '}' +
+                        '.container {' +
+                            'max-width: 800px;' +
+                            'margin: auto;' +
+                            'background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);' +
+                            'border-radius: 12px;' +
+                            'box-shadow: 0 8px 32px rgba(0,0,0,0.3);' +
+                            'padding: 40px;' +
+                            'line-height: 1.6;' +
+                            'border: 1px solid rgba(255, 178, 0, 0.2);' +
+                        '}' +
+                        '.header {' +
+                            'text-align: center;' +
+                            'margin-bottom: 30px;' +
+                            'padding-bottom: 20px;' +
+                            'border-bottom: 2px solid #FFB200;' +
+                        '}' +
+                        '.logo {' +
+                            'margin-bottom: 20px;' +
+                        '}' +
+                        '.logo img {' +
+                            'width: 200px;' +
+                            'height: auto;' +
+                        '}' +
+                        'h1 {' +
+                            'font-family: Georgia, serif;' +
+                            'font-size: 28px;' +
+                            'font-weight: 700;' +
+                            'color: #FFB200;' +
+                            'margin-bottom: 10px;' +
+                        '}' +
+                        'h2 {' +
+                            'font-family: Georgia, serif;' +
+                            'font-size: 24px;' +
+                            'font-weight: 600;' +
+                            'color: #ffffff;' +
+                            'margin: 25px 0 15px 0;' +
+                            'border-left: 4px solid #FFB200;' +
+                            'padding-left: 15px;' +
+                        '}' +
+                        'h3 {' +
+                            'font-family: Georgia, serif;' +
+                            'font-size: 20px;' +
+                            'font-weight: 600;' +
+                            'color: #ffffff;' +
+                            'margin: 20px 0 10px 0;' +
+                        '}' +
+                        'p {' +
+                            'margin-bottom: 15px;' +
+                            'color: #ffffff;' +
+                        '}' +
+                        'ul {' +
+                            'margin: 15px 0;' +
+                            'padding-left: 20px;' +
+                        '}' +
+                        'li {' +
+                            'margin-bottom: 8px;' +
+                            'color: #ffffff;' +
+                        '}' +
+                        '.project-info {' +
+                            'background: rgba(255, 178, 0, 0.1);' +
+                            'padding: 20px;' +
+                            'border-radius: 8px;' +
+                            'margin: 20px 0;' +
+                            'border-left: 4px solid #FFB200;' +
+                            'border: 1px solid rgba(255, 178, 0, 0.3);' +
+                        '}' +
+                        '.project-info ul {' +
+                            'list-style: none;' +
+                            'padding-left: 0;' +
+                        '}' +
+                        '.project-info li {' +
+                            'margin-bottom: 10px;' +
+                            'padding: 8px 0;' +
+                            'border-bottom: 1px solid #e9ecef;' +
+                        '}' +
+                        '.project-info li:last-child {' +
+                            'border-bottom: none;' +
+                        '}' +
+                        '.signature-section {' +
+                            'margin-top: 40px;' +
+                            'padding-top: 30px;' +
+                            'border-top: 2px solid rgba(255, 178, 0, 0.3);' +
+                        '}' +
+                        '.signature-box {' +
+                            'display: flex;' +
+                            'justify-content: space-between;' +
+                            'margin-top: 20px;' +
+                            'gap: 30px;' +
+                        '}' +
+                        '.signature-party {' +
+                            'flex: 1;' +
+                            'padding: 20px;' +
+                            'background: rgba(255, 178, 0, 0.1);' +
+                            'border-radius: 8px;' +
+                            'border: 2px solid rgba(255, 178, 0, 0.3);' +
+                            'color: #ffffff;' +
+                        '}' +
+                        '.signature-line {' +
+                            'border-bottom: 2px solid #FFB200;' +
+                            'height: 30px;' +
+                            'margin-top: 10px;' +
+                        '}' +
+                        '.signature-text {' +
+                            'font-family: \"Brush Script MT\", cursive, \"Lucida Handwriting\", serif;' +
+                            'font-size: 18px;' +
+                            'font-weight: normal;' +
+                            'color: #FFB200;' +
+                            'margin-top: 5px;' +
+                        '}' +
+                    '</style>' +
+                '</head>' +
+                '<body>' +
+                    '<div class=\"container\">' +
+                        '<div class=\"header\">' +
+                            '<div class=\"logo\">' +
+                                '<img src=\"https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png\" alt=\"Cochran Films Logo\">' +
+                            '</div>' +
+                            '<h1>Freelance Agreement</h1>' +
+                            '<p><strong>Issued By:</strong> Cochran Films<br>' +
+                            '<strong>Effective Date:</strong> ' + effectiveDate + '</p>' +
+                        '</div>' +
+                        '<h2>Project Overview</h2>' +
+                        '<p>' +
+                            'This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>' + freelancerName + '</strong>, hereinafter referred to as the \"Contractor.\"' +
+                        '</p>' +
+                        '<div class=\"project-info\">' +
+                            '<ul>' +
+                                '<li><strong>Role:</strong> ' + role + '</li>' +
+                                '<li><strong>Location:</strong> ' + location + '</li>' +
+                                '<li><strong>Project Start:</strong> ' + projectStart + '</li>' +
+                                '<li><strong>Rate:</strong> ' + rate + '</li>' +
+                            '</ul>' +
+                        '</div>' +
+                        '<h2>Contractor Responsibilities</h2>' +
+                        '<ul>' +
+                            '<li>Arrive at the project location on time.</li>' +
+                            '<li>Professionally manage their assigned role and responsibilities.</li>' +
+                            '<li>Complete the job to professional standards.</li>' +
+                            '<li>Use personal equipment unless otherwise arranged.</li>' +
+                            '<li>Maintain a respectful demeanor with staff and clients.</li>' +
+                        '</ul>' +
+                        '<h2>BTS Content & Ownership</h2>' +
+                        '<p>' +
+                            'The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.' +
+                        '</p>' +
+                        '<h2>Payment Terms</h2>' +
+                        '<p>' +
+                            'Payment of ' + rate + ' will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).' +
+                        '</p>' +
+                        '<h2>Independent Contractor</h2>' +
+                        '<p>' +
+                            'The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.' +
+                        '</p>' +
+                        '<h2>Agreement</h2>' +
+                        '<p>By continuing, the Contractor agrees to the above terms. A physical or digital signature may be collected separately.</p>' +
+                        '<div class=\"signature-section\">' +
+                            '<h3>Signatures</h3>' +
+                            '<div class=\"signature-box\">' +
+                                '<div class=\"signature-party\">' +
+                                    '<strong>Cochran Films Representative:</strong><br>' +
+                                    'Name: Cody Cochran<br>' +
+                                    'Title: Founder, Cochran Films<br>' +
+                                    '<div class=\"signature-text\">Signature: Cody Cochran</div>' +
+                                    '<div class=\"signature-text\">Date: November 8, 2025</div>' +
+                                '</div>' +
+                                '<div class=\"signature-party\">' +
+                                    '<strong>Contractor:</strong><br>' +
+                                    'Name: ' + freelancerName + '<br>' +
+                                    '<div class=\"signature-text\">Signature: ${contractorSignature}</div>' +
+                                    '<div class=\"signature-text\">Date: ${contractorDate}</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</body>' +
+                '</html>' +
+            '`;' +
+            'const pdfWindow = window.open(\"\", \"_blank\");' +
+            'pdfWindow.document.write(pdfContent);' +
+            'pdfWindow.document.close();' +
+            'pdfWindow.onload = function() {' +
+                'pdfWindow.print();' +
+                'setTimeout(() => {' +
+                    'pdfWindow.close();' +
+                '}, 1000);' +
+            '};' +
         '}' +
         'document.addEventListener("DOMContentLoaded", function() {' +
             'const today = new Date().toISOString().split("T")[0];' +
