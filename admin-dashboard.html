@@ -15,104 +15,135 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Drive API - Proper Initialization -->
+    <!-- Google Drive API - Following Official Pattern -->
     <script>
-        // Google API initialization functions
-        function loadGapiClient() {
-            console.log('📡 Loading GAPI client:auth2...');
-            gapi.load('client:auth2', initClient);
+        // Global state variables (following Google's pattern)
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        /**
+         * Callback after api.js is loaded (following Google's official pattern)
+         */
+        function gapiLoaded() {
+            console.log('📡 GAPI loaded, initializing client...');
+            gapi.load('client', initializeGapiClient);
         }
 
-        function initClient() {
+        /**
+         * Callback after the API client is loaded (following Google's pattern)
+         */
+        async function initializeGapiClient() {
             console.log('🔧 Initializing GAPI client...');
             
-            // Use configuration from the main script (will be available after page loads)
+            // Use configuration from the main script
             const config = window.GOOGLE_DRIVE_CONFIG || {
                 apiKey: 'AIzaSyAqU6JXq7u2dKix2AfMk7yxvP8-PQVFxmE',
+                discoveryDoc: 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+            };
+            
+            try {
+                await gapi.client.init({
+                    apiKey: config.apiKey,
+                    discoveryDocs: [config.discoveryDoc],
+                });
+                gapiInited = true;
+                console.log('✅ GAPI client initialized successfully');
+                maybeEnableGoogleDrive();
+            } catch (error) {
+                console.error('❌ Error initializing GAPI client:', error);
+                window.isGoogleDriveInitialized = false;
+                
+                // Show retry button on error
+                const retryBtn = document.getElementById('retryAPIBtn');
+                if (retryBtn) {
+                    retryBtn.style.display = 'inline-block';
+                }
+            }
+        }
+
+        /**
+         * Callback after Google Identity Services are loaded
+         */
+        function gisLoaded() {
+            console.log('🔑 Google Identity Services loaded, initializing token client...');
+            
+            const config = window.GOOGLE_DRIVE_CONFIG || {
                 clientId: '1067833350488-oht35egae1r6lpb642fl5rkjnus0rlqv.apps.googleusercontent.com',
-                discoveryDoc: 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
                 scopes: 'https://www.googleapis.com/auth/drive.file'
             };
             
-            gapi.client.init({
-                apiKey: config.apiKey,
-                clientId: config.clientId,
-                discoveryDocs: [config.discoveryDoc],
-                scope: config.scopes
-            }).then(function () {
-                console.log("✅ Google API Initialized successfully");
-                // Set global flags
-                window.isGoogleDriveInitialized = true;
-                const authInstance = gapi.auth2.getAuthInstance();
-                if (authInstance) {
-                    window.isGoogleDriveSignedIn = authInstance.isSignedIn.get();
-                    console.log('👤 Sign-in status:', window.isGoogleDriveSignedIn);
-                }
-            }).catch(function (error) {
-                console.error("❌ Error initializing Google API:", error);
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: config.clientId,
+                    scope: config.scopes,
+                    callback: '', // Will be defined when we need to sign in
+                });
+                gisInited = true;
+                console.log('✅ Google Identity Services initialized successfully');
+                maybeEnableGoogleDrive();
+            } catch (error) {
+                console.error('❌ Error initializing Google Identity Services:', error);
                 window.isGoogleDriveInitialized = false;
-                
-                // Provide specific error guidance
-                const errorMsg = error.details || error.message || error;
-                if (errorMsg.includes('origin')) {
-                    console.error('🔧 Fix: Add your domain to "Authorized JavaScript origins" in Google Cloud Console');
-                }
-                if (errorMsg.includes('API key') || errorMsg.includes('Invalid API key')) {
-                    console.error('🔧 Fix: Check your API key configuration');
-                }
-                if (errorMsg.includes('client_id')) {
-                    console.error('🔧 Fix: Check your Client ID configuration');
-                }
-            });
+            }
         }
 
-        function handleClientLoad() {
-            console.log('📡 handleClientLoad called, checking for gapi...');
-            
-            // Sometimes gapi takes a moment to become available after script load
-            let attempts = 0;
-            const maxAttempts = 50; // 5 seconds total
-            
-            function checkGapiAvailable() {
-                attempts++;
+        /**
+         * Enables Google Drive functionality after all libraries are loaded
+         */
+        function maybeEnableGoogleDrive() {
+            if (gapiInited && gisInited) {
+                console.log('✅ Both GAPI and GIS initialized - Google Drive ready!');
+                window.isGoogleDriveInitialized = true;
+                window.gapiInited = gapiInited;
+                window.gisInited = gisInited;
+                window.tokenClient = tokenClient;
                 
-                if (typeof gapi !== 'undefined') {
-                    console.log('✅ gapi loaded after', attempts, 'attempts, initializing client...');
-                    loadGapiClient();
-                } else if (attempts < maxAttempts) {
-                    // Wait 100ms and try again
-                    setTimeout(checkGapiAvailable, 100);
-                } else {
-                    console.error("❌ gapi failed to load after", maxAttempts, "attempts (5 seconds)");
-                    console.error("🔧 This might indicate a network issue or the Google API script failed to load");
-                    console.error("🔧 Try opening browser dev tools and checking the Network tab for failed requests");
-                    console.error("🔧 You can try the manual retry button in the admin dashboard");
-                    window.isGoogleDriveInitialized = false;
-                    
-                    // Show retry button if we're on the admin page and the retry button exists
-                    const retryBtn = document.getElementById('retryAPIBtn');
-                    if (retryBtn) {
-                        retryBtn.style.display = 'inline-block';
-                        console.log('🔧 Retry button is now visible - you can click it to try loading the API again');
-                    }
+                // Check if already signed in
+                const token = gapi.client.getToken();
+                window.isGoogleDriveSignedIn = (token !== null);
+                console.log('👤 Current sign-in status:', window.isGoogleDriveSignedIn);
+                
+                // Hide retry button if it was shown
+                const retryBtn = document.getElementById('retryAPIBtn');
+                if (retryBtn) {
+                    retryBtn.style.display = 'none';
                 }
+            } else {
+                console.log('⏳ Waiting for all libraries... GAPI:', gapiInited, 'GIS:', gisInited);
             }
-            
-            checkGapiAvailable();
+        }
+
+        // Fallback handler for manual script loading
+        function handleClientLoad() {
+            console.log('📡 Manual client load triggered');
+            if (typeof gapi !== 'undefined') {
+                gapiLoaded();
+            } else {
+                console.error('❌ gapi still not available');
+            }
         }
         
         // Debug function - call this from console if needed
         window.debugGoogleAPI = function() {
             console.log('🔍 Google API Debug Info:');
             console.log('typeof gapi:', typeof gapi);
+            console.log('typeof google:', typeof google);
+            console.log('gapiInited:', gapiInited);
+            console.log('gisInited:', gisInited);
             console.log('window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
+            console.log('tokenClient available:', typeof tokenClient !== 'undefined');
+            console.log('Current token:', gapi?.client?.getToken ? gapi.client.getToken() : 'gapi.client not available');
             console.log('GOOGLE_DRIVE_CONFIG:', window.GOOGLE_DRIVE_CONFIG);
             
-            if (typeof gapi !== 'undefined') {
-                console.log('gapi object exists, trying manual initialization...');
-                handleClientLoad();
+            if (typeof gapi !== 'undefined' && typeof google !== 'undefined') {
+                console.log('✅ Both libraries available, trying manual initialization...');
+                if (!gapiInited) gapiLoaded();
+                if (!gisInited) gisLoaded();
             } else {
-                console.log('❌ gapi object not found - script may not have loaded');
+                console.log('❌ One or both libraries not loaded:');
+                console.log('  - gapi available:', typeof gapi !== 'undefined');
+                console.log('  - google available:', typeof google !== 'undefined');
                 console.log('🔧 Check Network tab in dev tools for failed script requests');
             }
         };
@@ -120,27 +151,46 @@
         // Alternative script loading if the primary method fails
         window.loadGoogleAPIFallback = function() {
             console.log('🔄 Loading Google API as fallback...');
+            
+            // Reset flags
+            gapiInited = false;
+            gisInited = false;
+            window.isGoogleDriveInitialized = false;
+            
+            // Load Google API script if not available
             if (typeof gapi === 'undefined') {
-                const script = document.createElement('script');
-                script.src = 'https://apis.google.com/js/api.js';
-                script.onload = function() {
-                    console.log('📡 Fallback script loaded, waiting for gapi...');
-                    setTimeout(() => {
-                        if (typeof gapi !== 'undefined') {
-                            console.log('✅ Fallback successful, initializing...');
-                            handleClientLoad();
-                        } else {
-                            console.error('❌ Fallback failed - gapi still not available');
-                        }
-                    }, 1000);
+                console.log('📡 Loading gapi script...');
+                const gapiScript = document.createElement('script');
+                gapiScript.src = 'https://apis.google.com/js/api.js';
+                gapiScript.onload = function() {
+                    console.log('✅ GAPI script loaded via fallback');
+                    gapiLoaded();
                 };
-                script.onerror = function() {
-                    console.error('❌ Fallback script failed to load');
+                gapiScript.onerror = function() {
+                    console.error('❌ GAPI script failed to load');
                 };
-                document.head.appendChild(script);
+                document.head.appendChild(gapiScript);
             } else {
-                console.log('✅ gapi already available');
-                handleClientLoad();
+                console.log('✅ gapi already available, initializing...');
+                gapiLoaded();
+            }
+            
+            // Load Google Identity Services if not available
+            if (typeof google === 'undefined' || !google.accounts) {
+                console.log('🔑 Loading Google Identity Services script...');
+                const gisScript = document.createElement('script');
+                gisScript.src = 'https://accounts.google.com/gsi/client';
+                gisScript.onload = function() {
+                    console.log('✅ GIS script loaded via fallback');
+                    gisLoaded();
+                };
+                gisScript.onerror = function() {
+                    console.error('❌ GIS script failed to load');
+                };
+                document.head.appendChild(gisScript);
+            } else {
+                console.log('✅ Google Identity Services already available, initializing...');
+                gisLoaded();
             }
         };
         
@@ -154,6 +204,8 @@
             }
             
             // Reset flags
+            gapiInited = false;
+            gisInited = false;
             window.isGoogleDriveInitialized = false;
             
             // Try fallback loading
@@ -171,15 +223,17 @@
                         alert('✅ Google API retry successful! You can now try setting up Google Drive sync.');
                     } else {
                         console.log('❌ Retry failed. Google API still not available.');
+                        console.log('Debug info - gapiInited:', gapiInited, 'gisInited:', gisInited);
                         alert('❌ Retry failed. Please check your internet connection and browser console for errors.');
                     }
                 }
-            }, 3000);
+            }, 5000); // Give more time for both libraries to load
         };
     </script>
     
-    <!-- Google API Script with proper onload handling -->
-    <script src="https://apis.google.com/js/api.js" onload="handleClientLoad()"></script>
+    <!-- Google API Scripts - Following Official Pattern -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
     
     <style>
         :root {
@@ -1667,21 +1721,46 @@
             }
         }
         
-        // Sign in to Google Drive
+        // Sign in to Google Drive using modern Google Identity Services
         async function signInToGoogleDrive() {
             try {
                 if (!isGoogleDriveInitialized) {
                     throw new Error('Google Drive API not initialized');
                 }
                 
-                const authInstance = gapi.auth2.getAuthInstance();
-                if (!authInstance.isSignedIn.get()) {
-                    await authInstance.signIn();
-                }
+                console.log('🔑 Starting Google Drive sign-in...');
                 
-                isGoogleDriveSignedIn = true;
-                console.log('✅ Signed in to Google Drive');
-                return true;
+                // Check if already signed in
+                if (gapi.client.getToken() === null) {
+                    console.log('👤 Not signed in, requesting access token...');
+                    
+                    // Request access token using the modern token client
+                    return new Promise((resolve, reject) => {
+                        tokenClient.callback = async (resp) => {
+                            if (resp.error !== undefined) {
+                                console.error('❌ OAuth error:', resp);
+                                reject(new Error(`OAuth error: ${resp.error}`));
+                            } else {
+                                console.log('✅ Access token received');
+                                isGoogleDriveSignedIn = true;
+                                window.isGoogleDriveSignedIn = true;
+                                resolve(true);
+                            }
+                        };
+                        
+                        // Check if we already have a token that's not expired
+                        if (gapi.client.getToken() === null) {
+                            tokenClient.requestAccessToken({prompt: 'consent'});
+                        } else {
+                            console.log('✅ Already have valid token');
+                            resolve(true);
+                        }
+                    });
+                } else {
+                    console.log('✅ Already signed in to Google Drive');
+                    isGoogleDriveSignedIn = true;
+                    return true;
+                }
                 
             } catch (error) {
                 console.error('❌ Google Drive sign-in failed:', error);
@@ -2306,23 +2385,35 @@ Status: ${contract.status}
                 // Check if Google Drive API is initialized
                 console.log('🔍 Checking Google Drive initialization status...');
                 console.log('window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
+                console.log('gapiInited:', window.gapiInited);
+                console.log('gisInited:', window.gisInited);
                 console.log('typeof gapi:', typeof gapi);
+                console.log('typeof google:', typeof google);
                 
                 if (!window.isGoogleDriveInitialized) {
+                    const retryBtn = document.getElementById('retryAPIBtn');
+                    
                     if (typeof gapi === 'undefined') {
-                        // Show retry button
-                        const retryBtn = document.getElementById('retryAPIBtn');
-                        if (retryBtn) {
-                            retryBtn.style.display = 'inline-block';
-                        }
+                        if (retryBtn) retryBtn.style.display = 'inline-block';
                         throw new Error('Google API (gapi) not loaded. The Google API script may have failed to load or is being blocked. Try clicking the "Retry API" button.');
+                    }
+                    
+                    if (typeof google === 'undefined' || !google.accounts) {
+                        if (retryBtn) retryBtn.style.display = 'inline-block';
+                        throw new Error('Google Identity Services not loaded. This is required for modern OAuth2 authentication. Try clicking the "Retry API" button.');
+                    }
+                    
+                    if (!window.gapiInited || !window.gisInited) {
+                        if (retryBtn) retryBtn.style.display = 'inline-block';
+                        throw new Error(`Google libraries not fully initialized. GAPI: ${window.gapiInited}, GIS: ${window.gisInited}. Try clicking the "Retry API" button.`);
                     }
                     
                     // Try initializing once more in case it's still loading
                     console.log('🔄 Attempting to initialize Google Drive API...');
                     await initializeGoogleDrive();
                     if (!isGoogleDriveInitialized) {
-                        throw new Error('Google Drive API initialization failed. Check console for detailed error messages.');
+                        if (retryBtn) retryBtn.style.display = 'inline-block';
+                        throw new Error('Google Drive API initialization failed after retry. Check console for detailed error messages.');
                     }
                 }
                 
@@ -2365,10 +2456,14 @@ Status: ${contract.status}
                 
                 if (error.message.includes('origin')) {
                     errorMessage += `🔧 Fix: Add "${window.location.origin}" to your OAuth 2.0 Client ID's "Authorized JavaScript origins" in Google Cloud Console.`;
-                } else if (error.message.includes('API')) {
-                    errorMessage += `🔧 Fix: Make sure the Google Drive API is enabled in your Google Cloud Console project.`;
+                } else if (error.message.includes('Identity Services')) {
+                    errorMessage += `🔧 Debug: Google Identity Services failed to load. This could be due to:\n• Network connectivity issues\n• Content Security Policy blocking\n• Ad blockers interfering\n• Firewall restrictions`;
+                } else if (error.message.includes('API key')) {
+                    errorMessage += `🔧 Fix: Check your Google Drive API key configuration in Google Cloud Console.`;
+                } else if (error.message.includes('not fully initialized')) {
+                    errorMessage += `🔧 Debug: Libraries are loading but not completing initialization. Try:\n• Refreshing the page\n• Checking browser console for errors\n• Using the "Retry API" button`;
                 } else if (!window.isGoogleDriveInitialized) {
-                    errorMessage += `🔧 Debug: Google API failed to initialize. Check that your API key and Client ID are correct in the configuration.`;
+                    errorMessage += `🔧 Debug: Check browser console for detailed initialization errors and try the "Retry API" button.`;
                 } else {
                     errorMessage += `🔧 Debug: Check browser console for more details.`;
                 }
