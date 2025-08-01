@@ -1301,12 +1301,11 @@
             // Store contracts for download
             window.generatedContracts = contracts;
             
-            statusDiv.innerHTML = `
-                <p style="color: #22c55e;">✅ Generated ${Object.keys(contracts).length} contract files:</p>
-                <ul style="color: #FFB200; margin-left: 20px;">
-                    ${Object.keys(contracts).map(fileName => `<li>${fileName}</li>`).join('')}
-                </ul>
-            `;
+            statusDiv.innerHTML = 
+                '<p style="color: #22c55e;">✅ Generated ' + Object.keys(contracts).length + ' contract files:</p>' +
+                '<ul style="color: #FFB200; margin-left: 20px;">' +
+                Object.keys(contracts).map(fileName => '<li>' + fileName + '</li>').join('') +
+                '</ul>';
             
             document.getElementById('downloadContractsBtn').style.display = 'block';
         }
