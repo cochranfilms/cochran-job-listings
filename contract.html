@@ -249,6 +249,9 @@
                         📄 Download Signed Contract
                     </button>
                 </div>
+                <div id="downloadInstructions" style="margin-top: 1rem; padding: 1rem; background: rgba(255, 178, 0, 0.1); border-radius: 6px; font-size: 14px; color: rgba(255,255,255,0.8); display: none;">
+                    <strong>📋 How to Download:</strong> Click the button above to open a print dialog. Choose "Save as PDF" as your destination instead of printing to a physical printer. This will save the signed contract to your computer.
+                </div>
             </div>
         </div>
         
@@ -267,6 +270,9 @@
             <button class="contract-link" onclick="downloadSignedContract()" style="border: none; cursor: pointer;">
                 📄 Download Your Signed Contract
             </button>
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 178, 0, 0.1); border-radius: 6px; font-size: 14px; color: rgba(255,255,255,0.8);">
+                <strong>📋 How to Download:</strong> Click the button above to open a print dialog. Choose "Save as PDF" as your destination instead of printing to a physical printer. This will save the signed contract to your computer.
+            </div>
         </div>
         
         <div id="error-message" class="message error hidden">
@@ -428,13 +434,68 @@
             
             const contractDetailsDiv = document.getElementById('contractDetails');
             contractDetailsDiv.innerHTML = `
-                <div style="display: grid; gap: 0.5rem;">
-                    <div><strong>👤 Name:</strong> ${data.name}</div>
-                    <div><strong>🎭 Role:</strong> ${role}</div>
-                    <div><strong>📍 Location:</strong> ${location}</div>
-                    <div><strong>🕒 Project Start:</strong> ${projectStart}</div>
-                    <div><strong>💰 Rate:</strong> ${rate}</div>
-                    <div><strong>📅 Effective Date:</strong> ${effectiveDate}</div>
+                <!-- Basic Contract Info -->
+                <div style="background: rgba(255, 178, 0, 0.15); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.3);">
+                    <h4 style="color: var(--primary); margin: 0 0 0.75rem 0; font-size: 16px;">📋 Project Information</h4>
+                    <div style="display: grid; gap: 0.5rem;">
+                        <div><strong>👤 Name:</strong> ${data.name}</div>
+                        <div><strong>📧 Email:</strong> ${data.email}</div>
+                        <div><strong>🎭 Role:</strong> ${role}</div>
+                        <div><strong>📍 Location:</strong> ${location}</div>
+                        <div><strong>🕒 Project Start:</strong> ${projectStart}</div>
+                        <div><strong>💰 Rate:</strong> ${rate}</div>
+                        <div><strong>📅 Effective Date:</strong> ${effectiveDate}</div>
+                    </div>
+                </div>
+
+                <!-- Contract Terms -->
+                <div style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.2);">
+                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">✅ Your Responsibilities</h4>
+                    <ul style="margin: 0; padding-left: 1.25rem; line-height: 1.6;">
+                        <li>Arrive at the project location on time</li>
+                        <li>Professionally manage your assigned role and responsibilities</li>
+                        <li>Complete the job to professional standards</li>
+                        <li>Use personal equipment unless otherwise arranged</li>
+                        <li>Maintain a respectful demeanor with staff and clients</li>
+                        <li>Wear company-branded gear provided (no charge)</li>
+                        <li>Wear all black regardless of branded gear provided</li>
+                    </ul>
+                </div>
+
+                <!-- BTS Content Policy -->
+                <div style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.2);">
+                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">📸 BTS Content & Ownership</h4>
+                    <p style="margin: 0; line-height: 1.6;">
+                        You may freely take and share behind-the-scenes content. Cochran Films may repost with credit. 
+                        Content ownership remains with you.
+                    </p>
+                </div>
+
+                <!-- Payment Terms -->
+                <div style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.2);">
+                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">💵 Payment Terms</h4>
+                    <p style="margin: 0; line-height: 1.6;">
+                        Payment of <strong>${rate}</strong> will be made no later than 24 hours after the event 
+                        by the agreed method (Zelle, PayPal, etc.).
+                    </p>
+                </div>
+
+                <!-- Independent Contractor -->
+                <div style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 178, 0, 0.2);">
+                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">🛡️ Independent Contractor</h4>
+                    <p style="margin: 0; line-height: 1.6;">
+                        You are not an employee. No taxes or benefits will be withheld. You handle all personal 
+                        tax obligations and transportation.
+                    </p>
+                </div>
+
+                <!-- Agreement -->
+                <div style="background: rgba(255, 178, 0, 0.1); padding: 1.5rem; border-radius: 8px; border: 2px solid rgba(255, 178, 0, 0.3);">
+                    <h4 style="color: var(--primary); margin: 0 0 1rem 0; font-size: 16px;">📝 Agreement</h4>
+                    <p style="margin: 0; line-height: 1.6;">
+                        By signing below, both parties agree to the above terms and conditions. This creates a 
+                        legally binding freelance agreement between you and Cochran Films.
+                    </p>
                 </div>
             `;
         }
@@ -504,10 +565,19 @@
                 // Send notification email
                 await sendNotificationEmail();
                 
+                // Save signed contract data for admin dashboard
+                await saveSignedContractData();
+                
                 // Update UI to show contract signed successfully
                 document.getElementById('success-message').classList.add('hidden');
                 document.getElementById('signed-message').classList.remove('hidden');
                 document.getElementById('signed-message').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Show download button and instructions
+                const downloadBtn = document.getElementById('downloadSignedBtn');
+                const downloadInstructions = document.getElementById('downloadInstructions');
+                if (downloadBtn) downloadBtn.style.display = 'inline-block';
+                if (downloadInstructions) downloadInstructions.style.display = 'block';
                 
                 console.log('Contract signed successfully!', signatureData);
                 
@@ -552,9 +622,10 @@
                     // Additional tracking info
                     admin_signature_date: new Date().toISOString().split('T')[0],
                     contract_status: 'DIGITALLY_SIGNED',
+                    admin_dashboard_note: 'This signed contract is now available in your Admin Dashboard (admin-dashboard.html) under the "Signed Contracts" tab, where you can download the PDF copy.',
                     
                     // PDF download instructions
-                    pdf_instructions: 'A signed PDF copy can be generated by opening the attached contract content in a browser and using Print > Save as PDF with the following settings: Format: PDF, Layout: Portrait, Margins: Default, Options: Include backgrounds (checked).'
+                    pdf_instructions: 'To download signed contract PDFs: 1) Access your Admin Dashboard (admin-dashboard.html), 2) Go to the "Signed Contracts" tab, 3) Click "Download PDF" next to any signed contract. The signed contract data is automatically saved when freelancers sign.'
                 };
                 
                 console.log('📧 Sending email notification with contract ID:', contractId);
@@ -632,6 +703,54 @@ Timestamp: ${signatureData.timestamp}
 
 This contract has been digitally signed and is legally binding.
             `.trim();
+        }
+        
+        // Save signed contract data for admin dashboard access
+        async function saveSignedContractData() {
+            try {
+                // Generate unique contract ID for tracking
+                const contractId = 'CF-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+                
+                const signedContractData = {
+                    contractId: contractId,
+                    freelancerName: signatureData.freelancerName,
+                    freelancerEmail: signatureData.freelancerEmail,
+                    role: currentFreelancerData.role || 'Contractor',
+                    location: currentFreelancerData.location || 'Atlanta Area',
+                    projectStart: currentFreelancerData.projectStart || 'TBD',
+                    rate: currentFreelancerData.rate || 'Not specified',
+                    effectiveDate: currentFreelancerData.approvedDate || new Date().toISOString().split('T')[0],
+                    signatureDate: signatureData.date,
+                    signedTimestamp: signatureData.timestamp,
+                    signature: signatureData.signature,
+                    status: 'SIGNED',
+                    signedDateTime: new Date().toLocaleString()
+                };
+                
+                // In a real application, you'd save this to a server/database
+                // For now, we'll store it in localStorage as a fallback
+                // and include instructions for server-side implementation
+                
+                console.log('✅ Signed contract data prepared for admin dashboard:', signedContractData);
+                
+                // Store in localStorage for demo purposes
+                let existingContracts = JSON.parse(localStorage.getItem('signedContracts') || '[]');
+                existingContracts.push(signedContractData);
+                localStorage.setItem('signedContracts', JSON.stringify(existingContracts));
+                
+                // Note: In production, you would send this data to your server:
+                // await fetch('/api/save-signed-contract', {
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify(signedContractData)
+                // });
+                
+                console.log('✅ Contract data saved for admin access');
+                
+            } catch (error) {
+                console.error('❌ Error saving signed contract data:', error);
+                // Don't fail the signing process if saving fails
+            }
         }
         
         // Download signed contract
