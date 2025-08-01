@@ -139,6 +139,16 @@
             margin-top: 2rem;
         }
         
+        /* Ensure login elements are COMPLETELY hidden when expanded */
+        .container.expanded .login-elements,
+        .login-screen.expanded .login-elements {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+        
         .logo {
             margin-bottom: 2rem;
         }
@@ -419,13 +429,15 @@
         
         /* Hide login elements when contract is accessed */
         .login-elements.hidden {
-            opacity: 0;
-            transform: translateY(-20px);
-            pointer-events: none;
-            height: 0;
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
+            display: none !important;
+            opacity: 0 !important;
+            transform: translateY(-20px) !important;
+            pointer-events: none !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            visibility: hidden !important;
         }
         
         /* Success message starts hidden and fades in */
@@ -744,7 +756,7 @@
             preventAllNavigation();
         });
         
-        // Completely prevent any navigation or form submission
+        // Prevent form submission but allow normal page navigation
         function preventAllNavigation() {
             // Catch any form submission attempts
             document.addEventListener('submit', function(e) {
@@ -754,19 +766,15 @@
                 return false;
             }, true);
             
-            // Catch any beforeunload attempts
-            window.addEventListener('beforeunload', function(e) {
-                e.preventDefault();
-                console.log('🚫 Blocked page navigation attempt');
-                return false;
-            });
-            
             // Override form submission methods globally
             const originalSubmit = HTMLFormElement.prototype.submit;
             HTMLFormElement.prototype.submit = function() {
                 console.log('🚫 Blocked programmatic form submission');
                 return false;
             };
+            
+            // Note: Removed beforeunload prevention to allow normal page refresh
+            console.log('✅ Form submission blocked, but page navigation allowed');
         }
         
         // Force clear any loading states or overlays
@@ -784,6 +792,19 @@
                     el.style.opacity = '0';
                 }
             });
+            
+            // ALSO check for any duplicate/stuck login elements
+            const stuckLoginElements = document.querySelectorAll('.login-elements:not(.hidden)');
+            if (stuckLoginElements.length > 1) {
+                console.log('🚨 Found multiple visible login elements, hiding extras:', stuckLoginElements.length);
+                stuckLoginElements.forEach((el, index) => {
+                    if (index > 0) { // Keep only the first one
+                        el.style.display = 'none';
+                        el.style.visibility = 'hidden';
+                        console.log('🔨 Hidden duplicate login element:', index);
+                    }
+                });
+            }
             
             // Clear any loading states on form container
             const formContainer = document.getElementById('contractForm');
@@ -854,14 +875,39 @@
                 // Set up signature validation now that elements exist
                 setupSignatureValidation();
                 
-                // Hide login elements with smooth transition
+                // AGGRESSIVELY hide login elements to prevent duplication
                 const loginElements = document.getElementById('loginElements');
                 if (loginElements) {
+                    console.log('🔨 Hiding login elements to prevent duplication');
                     loginElements.classList.add('hidden');
+                    loginElements.style.display = 'none';
+                    loginElements.style.visibility = 'hidden';
+                    loginElements.style.opacity = '0';
+                    loginElements.style.height = '0';
+                    loginElements.style.overflow = 'hidden';
+                    console.log('✅ Login elements hidden successfully');
                 }
                 
                 // Show success message after a brief delay for smooth transition
                 setTimeout(() => {
+                    // Debug: Check for any remaining visible login elements
+                    const allLoginElements = document.querySelectorAll('[id*="login"], [class*="login"], .login-elements');
+                    allLoginElements.forEach((el, index) => {
+                        console.log(`Login element ${index}:`, {
+                            id: el.id,
+                            className: el.className,
+                            display: window.getComputedStyle(el).display,
+                            visibility: window.getComputedStyle(el).visibility,
+                            opacity: window.getComputedStyle(el).opacity
+                        });
+                        // Force hide any visible login elements
+                        if (window.getComputedStyle(el).display !== 'none') {
+                            console.log('🚨 Found visible login element, force hiding:', el);
+                            el.style.display = 'none';
+                            el.style.visibility = 'hidden';
+                        }
+                    });
+                    
                     successDiv.classList.remove("hidden");
                     
                     // Expand to show more content comfortably
