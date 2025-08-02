@@ -20,15 +20,54 @@
         let freelancers = [];
         let uploadedContracts = [];
 
-        // Load freelancer data
-        function loadFreelancerData() {
+        // Load freelancer data from JSON file
+        async function loadFreelancerData() {
             try {
-                // Try to load from localStorage first (admin dashboard format)
+                // First, try to load directly from freelancers.json file
+                try {
+                    const response = await fetch('freelancers.json');
+                    if (response.ok) {
+                        const jsonData = await response.json();
+                        if (jsonData.approvedFreelancers) {
+                            // Convert the JSON structure to array format with job support
+                            freelancers = Object.entries(jsonData.approvedFreelancers).map(([name, freelancer]) => ({
+                                name: name,
+                                email: freelancer.email,
+                                password: freelancer.password,
+                                approvedDate: freelancer.approvedDate,
+                                contractUrl: freelancer.contractUrl || 'contract.html',
+                                // Handle both old single job format and new multiple jobs format
+                                jobs: freelancer.jobs || [{
+                                    id: 'legacy-job',
+                                    role: freelancer.role,
+                                    location: freelancer.location,
+                                    projectStart: freelancer.projectStart,
+                                    rate: freelancer.rate,
+                                    status: 'upcoming',
+                                    projectType: 'Legacy Job',
+                                    description: `${freelancer.role} position`
+                                }],
+                                primaryJob: freelancer.primaryJob || 'legacy-job'
+                            }));
+                            
+                            console.log('✅ Freelancer data loaded from JSON file:', freelancers.length, 'freelancers');
+                            console.log('🔍 Available freelancers with jobs:', freelancers.map(f => ({ 
+                                name: f.name, 
+                                email: f.email, 
+                                jobCount: f.jobs.length 
+                            })));
+                            return;
+                        }
+                    }
+                } catch (fetchError) {
+                    console.warn('⚠️ Could not fetch freelancers.json, trying localStorage...', fetchError);
+                }
+                
+                // Fallback: Try to load from localStorage (admin dashboard format)
                 let data = JSON.parse(localStorage.getItem('freelancers') || '[]');
                 
-                // If localStorage is empty or not an array, try to load from JSON file structure
+                // If localStorage is empty or not an array, try to load from JSON file structure in localStorage
                 if (!Array.isArray(data) || data.length === 0) {
-                    // Check if we have the JSON file structure in localStorage
                     const jsonData = localStorage.getItem('approvedFreelancers');
                     if (jsonData) {
                         const parsedJsonData = JSON.parse(jsonData);
@@ -38,57 +77,97 @@
                                 name: name,
                                 email: freelancer.email,
                                 password: freelancer.password,
-                                role: freelancer.role,
-                                location: freelancer.location,
-                                projectStart: freelancer.projectStart,
-                                rate: freelancer.rate,
                                 approvedDate: freelancer.approvedDate,
-                                contractUrl: freelancer.contractUrl
+                                contractUrl: freelancer.contractUrl || 'contract.html',
+                                jobs: freelancer.jobs || [{
+                                    id: 'legacy-job',
+                                    role: freelancer.role,
+                                    location: freelancer.location,
+                                    projectStart: freelancer.projectStart,
+                                    rate: freelancer.rate,
+                                    status: 'upcoming',
+                                    projectType: 'Legacy Job',
+                                    description: `${freelancer.role} position`
+                                }],
+                                primaryJob: freelancer.primaryJob || 'legacy-job'
                             }));
                         }
                     } else {
-                        // Fallback: manually load the known freelancers for testing
+                        // Final fallback: hardcoded data with job structure
                         data = [
                             {
                                 name: "Francisco Flores",
                                 email: "ciscocinema@gmail.com",
                                 password: "Cinema2025",
-                                role: "Backdrop Photographer",
-                                location: "6695 Church Street, Douglasville, GA 30134",
-                                projectStart: "November 8, 2025 at 3:15 PM",
-                                rate: "$400.00 USD (Flat)",
                                 approvedDate: "2024-01-08",
-                                contractUrl: "contract.html"
+                                contractUrl: "contract.html",
+                                jobs: [{
+                                    id: 'job-francisco-001',
+                                    role: "Backdrop Photographer",
+                                    location: "6695 Church Street, Douglasville, GA 30134",
+                                    projectStart: "November 8, 2025 at 3:15 PM",
+                                    rate: "$400.00 USD (Flat)",
+                                    status: 'upcoming',
+                                    projectType: 'Photography',
+                                    description: 'Backdrop photography for corporate event'
+                                }],
+                                primaryJob: 'job-francisco-001'
                             },
                             {
                                 name: "Test User",
                                 email: "codylcochran87@gmail.com",
                                 password: "Test12345",
-                                role: "Video Editor",
-                                location: "Alanta, GA",
-                                projectStart: "August 19th, 2025 at 2:00pm",
-                                rate: "$450.00 USD (Flat)",
                                 approvedDate: "2025-04-13",
-                                contractUrl: "contract.html"
+                                contractUrl: "contract.html",
+                                jobs: [
+                                    {
+                                        id: "job-001",
+                                        role: "Video Editor",
+                                        location: "Atlanta, GA",
+                                        projectStart: "August 19th, 2025 at 2:00pm",
+                                        rate: "$450.00 USD (Flat)",
+                                        status: "upcoming",
+                                        projectType: "Corporate Video",
+                                        description: "Edit promotional video for tech startup"
+                                    },
+                                    {
+                                        id: "job-002", 
+                                        role: "Drone Operator",
+                                        location: "Savannah, GA",
+                                        projectStart: "September 15th, 2025 at 10:00am",
+                                        rate: "$600.00 USD (Flat)",
+                                        status: "upcoming",
+                                        projectType: "Real Estate",
+                                        description: "Aerial shots for luxury property showcase"
+                                    }
+                                ],
+                                primaryJob: "job-001"
                             },
                             {
                                 name: "Hannah Aryee",
                                 email: "hannah@luciacreates.co",
                                 password: "Collaboration2025",
-                                role: "Backdrop Photographer",
-                                location: "6700 Church Street, Douglasville, GA,  30134",
-                                projectStart: "October 24, 2025 at 3:15 PM",
-                                rate: "$300 + Tip",
                                 approvedDate: "2025-08-01",
-                                contractUrl: "contract.html"
+                                contractUrl: "contract.html",
+                                jobs: [{
+                                    id: 'job-hannah-001',
+                                    role: "Backdrop Photographer",
+                                    location: "6700 Church Street, Douglasville, GA,  30134",
+                                    projectStart: "October 24, 2025 at 3:15 PM",
+                                    rate: "$300 + Tip",
+                                    status: 'upcoming',
+                                    projectType: 'Photography',
+                                    description: 'Backdrop photography session'
+                                }],
+                                primaryJob: 'job-hannah-001'
                             }
                         ];
                     }
                 }
                 
                 freelancers = data;
-                console.log('✅ Freelancer data loaded:', freelancers.length, 'freelancers');
-                console.log('🔍 Available freelancers:', freelancers.map(f => ({ name: f.name, email: f.email })));
+                console.log('✅ Freelancer data loaded from localStorage/fallback:', freelancers.length, 'freelancers');
+                console.log('🔍 Available freelancers:', freelancers.map(f => ({ name: f.name, email: f.email, jobCount: f.jobs?.length || 0 })));
             } catch (error) {
                 console.error('❌ Error loading freelancer data:', error);
                 freelancers = [];
@@ -157,8 +236,9 @@
         function displayUserInfo() {
             const container = document.getElementById('userInfo');
             
-            // Get all jobs for this user (in the future, this could support multiple jobs)
-            const userJobs = [currentUser]; // For now, just one job
+            // Get all jobs for this user from the jobs array
+            const userJobs = currentUser.jobs || [];
+            const primaryJobId = currentUser.primaryJob;
             
             container.innerHTML = `
                 <div class="profile-grid">
@@ -190,20 +270,28 @@
                         </div>
                     </div>
                     
-                    <!-- Current Job Card -->
+                    <!-- Current Jobs Card -->
                     <div class="current-job-card">
                         <div class="job-header-section">
-                            <h3><i class="fas fa-briefcase"></i> Current Assignment</h3>
+                            <h3><i class="fas fa-briefcase"></i> Your Assignments</h3>
                             <span class="job-count">${userJobs.length} Active Job${userJobs.length !== 1 ? 's' : ''}</span>
                         </div>
                         
                         <div class="job-selector">
                             ${userJobs.map((job, index) => `
-                                <div class="job-option ${index === 0 ? 'active' : ''}" onclick="selectJob(${index})">
+                                <div class="job-option ${job.id === primaryJobId ? 'active' : ''}" onclick="selectJob(${index}, '${job.id}')">
                                     <div class="job-info">
                                         <div class="job-title">
-                                            <i class="fas fa-video"></i>
+                                            <i class="fas fa-${getJobIcon(job.projectType)}"></i>
                                             <strong>${job.role}</strong>
+                                            ${job.id === primaryJobId ? '<span class="primary-badge">Primary</span>' : ''}
+                                        </div>
+                                        <div class="job-type">
+                                            <i class="fas fa-tag"></i>
+                                            <span>${job.projectType}</span>
+                                        </div>
+                                        <div class="job-description">
+                                            <p>${job.description}</p>
                                         </div>
                                         <div class="job-details-grid">
                                             <div class="job-detail">
@@ -240,8 +328,25 @@
             `;
         }
         
-        // Select a job (for future multiple job support)
-        function selectJob(jobIndex) {
+        // Get appropriate icon for job type
+        function getJobIcon(projectType) {
+            const iconMap = {
+                'Corporate Video': 'video',
+                'Real Estate': 'home',
+                'Photography': 'camera',
+                'Legacy Job': 'briefcase',
+                'Drone': 'helicopter'
+            };
+            return iconMap[projectType] || 'briefcase';
+        }
+        
+        // Track selected job
+        let selectedJobIndex = 0;
+        
+        // Select a job and update context
+        function selectJob(jobIndex, jobId) {
+            selectedJobIndex = jobIndex;
+            
             const jobOptions = document.querySelectorAll('.job-option');
             jobOptions.forEach((option, index) => {
                 if (index === jobIndex) {
@@ -251,8 +356,18 @@
                 }
             });
             
-            console.log('Selected job:', jobIndex);
-            // In the future, this could update the current job context
+            console.log('Selected job:', jobIndex, jobId);
+            
+            // Update the jobs tab to show the selected job's timeline
+            displayUserJobs();
+        }
+        
+        // Get the currently selected job
+        function getSelectedJob() {
+            if (!currentUser || !currentUser.jobs) {
+                return null;
+            }
+            return currentUser.jobs[selectedJobIndex] || currentUser.jobs[0];
         }
 
         // Display user contracts
@@ -315,22 +430,54 @@
                 return;
             }
 
-            // For now, display the user's current job info from their profile
-            // In the future, this could be expanded to multiple jobs
+            // Get the selected job or fall back to primary job
+            const selectedJob = getSelectedJob();
+            if (!selectedJob) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📋 No Jobs Available</h3>
+                        <p>No job assignments found for your account.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Display the selected job's information
             const jobInfo = {
-                role: currentUser.role,
-                location: currentUser.location,
-                projectStart: currentUser.projectStart,
-                rate: currentUser.rate,
-                status: getJobStatus(currentUser.projectStart)
+                role: selectedJob.role,
+                location: selectedJob.location,
+                projectStart: selectedJob.projectStart,
+                rate: selectedJob.rate,
+                status: getJobStatus(selectedJob.projectStart),
+                projectType: selectedJob.projectType,
+                description: selectedJob.description
             };
 
+            // Add job selector if user has multiple jobs
+            const jobSelectorHTML = currentUser.jobs && currentUser.jobs.length > 1 ? `
+                <div class="job-selector-header">
+                    <h3>Select Job to View Timeline:</h3>
+                    <div class="job-tabs">
+                        ${currentUser.jobs.map((job, index) => `
+                            <button class="job-tab ${index === selectedJobIndex ? 'active' : ''}" 
+                                    onclick="selectJob(${index}, '${job.id}')">
+                                <i class="fas fa-${getJobIcon(job.projectType)}"></i>
+                                ${job.role}
+                                ${job.id === currentUser.primaryJob ? '<span class="primary-dot"></span>' : ''}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : '';
+
             container.innerHTML = `
+                ${jobSelectorHTML}
                 <div class="job-card">
                     <div class="job-header">
                         <div>
                             <h3>${jobInfo.role}</h3>
                             <p class="job-location"><i class="fas fa-map-marker-alt"></i> ${jobInfo.location}</p>
+                            <p class="job-type-info"><i class="fas fa-tag"></i> ${jobInfo.projectType}</p>
                         </div>
                         <span class="job-status ${jobInfo.status.toLowerCase()}">${jobInfo.status}</span>
                     </div>
@@ -664,13 +811,17 @@
         function viewJobDetails() {
             if (!currentUser) return;
             
+            const selectedJob = getSelectedJob();
+            if (!selectedJob) return;
+            
             const currentStep = getCurrentTimelineStep();
             const progress = getProjectProgress();
             
             showJobDetailsModal({
                 progress: progress,
                 currentStep: currentStep,
-                user: currentUser
+                user: currentUser,
+                job: selectedJob
             });
         }
 
@@ -706,19 +857,27 @@
                                 <div class="info-list">
                                     <div class="info-item">
                                         <span class="label">Position:</span>
-                                        <span class="value">${data.user.role}</span>
+                                        <span class="value">${data.job.role}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Project Type:</span>
+                                        <span class="value">${data.job.projectType}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Location:</span>
-                                        <span class="value">${data.user.location}</span>
+                                        <span class="value">${data.job.location}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Start Date:</span>
-                                        <span class="value">${data.user.projectStart}</span>
+                                        <span class="value">${data.job.projectStart}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Rate:</span>
-                                        <span class="value highlight">${data.user.rate}</span>
+                                        <span class="value highlight">${data.job.rate}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Description:</span>
+                                        <span class="value">${data.job.description}</span>
                                     </div>
                                 </div>
                             </div>
@@ -864,8 +1023,8 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
         }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            loadFreelancerData();
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadFreelancerData();
             loadUploadedContracts();
             checkAuth();
             
@@ -2275,6 +2434,118 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             background: rgba(255, 178, 0, 0.2);
             border-color: rgba(255, 178, 0, 0.5);
         }
+
+        /* Multiple Jobs UI */
+        .primary-badge {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .job-type {
+            margin-bottom: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .job-type i {
+            color: #FFB200;
+        }
+
+        .job-description {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: rgba(255, 178, 0, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #FFB200;
+        }
+
+        .job-description p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        .job-selector-header {
+            margin-bottom: 2rem;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .job-selector-header h3 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .job-tabs {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .job-tab {
+            background: rgba(255, 178, 0, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .job-tab:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: rgba(255, 178, 0, 0.5);
+        }
+
+        .job-tab.active {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border-color: #FFB200;
+        }
+
+        .primary-dot {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            border: 2px solid #000;
+        }
+
+        .job-type-info {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .job-type-info i {
+            color: #FFB200;
+        }
         
         @media (max-width: 768px) {
             .portal-content {
@@ -2400,6 +2671,16 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             
             .job-status-indicator {
                 align-self: flex-start;
+            }
+            
+            .job-tabs {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .job-tab {
+                justify-content: center;
+                text-align: center;
             }
         }
     </style>
