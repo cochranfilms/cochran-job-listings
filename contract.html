@@ -684,244 +684,6 @@
     <!-- EmailJS for sending notifications -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
-    <!-- Google Drive API for Centralized Contract Storage -->
-    <script>
-        // Google Drive API Configuration (matches admin dashboard)
-        const CLIENT_ID = '1067833350488-oht35egae1r6lpb642fl5rkjnus0rlqv.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyAqU6JXq7u2dKix2AfMk7yxvP8-PQVFxmE';
-        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-        const SCOPES = 'https://www.googleapis.com/auth/drive';
-        const CONTRACTS_FILE_NAME = 'cochran-films-signed-contracts.json';
-
-        let tokenClient;
-        let gapiInited = false;
-        let gisInited = false;
-        let contractsFileId = null;
-        let gapiRetryCount = 0;
-        let gisRetryCount = 0;
-        const MAX_API_RETRIES = 5; // Reduced retries for contract signing page
-
-        // Initialize Google Drive API
-        function gapiLoaded() {
-            if (typeof gapi !== 'undefined') {
-                gapi.load('client', initializeGapiClient);
-            } else {
-                gapiRetryCount++;
-                if (gapiRetryCount < MAX_API_RETRIES) {
-                    console.log(`Google API not ready, retrying... (${gapiRetryCount}/${MAX_API_RETRIES})`);
-                    setTimeout(gapiLoaded, 1000);
-                } else {
-                    console.log('Google Drive sync unavailable - contracts will be saved locally only');
-                }
-            }
-        }
-
-        async function initializeGapiClient() {
-            try {
-                await gapi.client.init({
-                    apiKey: API_KEY,
-                    discoveryDocs: [DISCOVERY_DOC],
-                });
-                gapiInited = true;
-                console.log('✅ Google API initialized for contract signing');
-                maybeEnableGoogleDrive();
-            } catch (error) {
-                console.log('Google API initialization failed - using local storage only');
-                gapiInited = false;
-            }
-        }
-
-        function gisLoaded() {
-            if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-                try {
-                    tokenClient = google.accounts.oauth2.initTokenClient({
-                        client_id: CLIENT_ID,
-                        scope: SCOPES,
-                        callback: '', // Will be set later
-                    });
-                    gisInited = true;
-                    console.log('✅ Google Identity Services initialized for contract signing');
-                    maybeEnableGoogleDrive();
-                } catch (error) {
-                    console.log('Google Identity Services initialization failed - using local storage only');
-                    gisInited = false;
-                }
-            } else {
-                gisRetryCount++;
-                if (gisRetryCount < MAX_API_RETRIES) {
-                    console.log(`Google Identity Services not ready, retrying... (${gisRetryCount}/${MAX_API_RETRIES})`);
-                    setTimeout(gisLoaded, 1000);
-                } else {
-                    console.log('Google Identity Services unavailable - contracts will be saved locally only');
-                }
-            }
-        }
-
-        function maybeEnableGoogleDrive() {
-            if (gapiInited && gisInited) {
-                console.log('✅ Google Drive ready for contract sync');
-                window.isGoogleDriveInitialized = true;
-            }
-        }
-
-        // Handle script loading errors
-        function handleScriptError(scriptType) {
-            console.log(`Google ${scriptType} script failed to load - contracts will be saved locally only`);
-        }
-
-        // Find or create the contracts file in Google Drive
-        async function findOrCreateContractsFile() {
-            try {
-                // Search for existing file
-                const response = await gapi.client.drive.files.list({
-                    q: `name='${CONTRACTS_FILE_NAME}' and trashed=false`,
-                    spaces: 'drive'
-                });
-
-                if (response.result.files.length > 0) {
-                    contractsFileId = response.result.files[0].id;
-                    console.log('✅ Found existing contracts file');
-                    return contractsFileId;
-                } else {
-                    // Create new file
-                    const createResponse = await gapi.client.drive.files.create({
-                        resource: {
-                            name: CONTRACTS_FILE_NAME,
-                            parents: ['root']
-                        }
-                    });
-                    contractsFileId = createResponse.result.id;
-                    
-                    // Initialize with empty data
-                    await gapi.client.request({
-                        path: `https://www.googleapis.com/upload/drive/v3/files/${contractsFileId}`,
-                        method: 'PATCH',
-                        params: { uploadType: 'media' },
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            signedContracts: [],
-                            lastUpdated: new Date().toISOString(),
-                            totalContracts: 0,
-                            savedFrom: 'Contract Signing Page'
-                        })
-                    });
-                    
-                    console.log('✅ Created new contracts file');
-                    return contractsFileId;
-                }
-            } catch (error) {
-                console.error('Error with contracts file:', error);
-                return null;
-            }
-        }
-
-        // Push signed contract to Google Drive
-        async function pushContractToGoogleDrive(contractData) {
-            try {
-                console.log('🚀 Starting Google Drive push process...');
-                console.log('📝 Contract data to push:', contractData);
-                
-                if (!gapiInited || !gisInited) {
-                    console.error('❌ Google APIs not initialized:', { gapiInited, gisInited });
-                    return false;
-                }
-
-                console.log('🔐 Starting Google Drive sign-in...');
-                // Sign in first
-                await new Promise((resolve, reject) => {
-                    tokenClient.callback = (response) => {
-                        if (response.error) {
-                            console.error('❌ Google Drive sign-in failed:', response.error);
-                            reject(response);
-                        } else {
-                            console.log('✅ Google Drive sign-in successful');
-                            resolve(response);
-                        }
-                    };
-                    tokenClient.requestAccessToken();
-                });
-
-                console.log('📁 Finding or creating contracts file...');
-                // Find or create contracts file
-                if (!contractsFileId) {
-                    contractsFileId = await findOrCreateContractsFile();
-                    if (!contractsFileId) {
-                        throw new Error('Could not access contracts file');
-                    }
-                }
-                console.log('📁 Using contracts file ID:', contractsFileId);
-
-                console.log('📥 Loading existing contracts from Google Drive...');
-                // Get existing contracts
-                const fileResponse = await gapi.client.drive.files.get({
-                    fileId: contractsFileId,
-                    alt: 'media'
-                });
-
-                let existingData;
-                try {
-                    existingData = JSON.parse(fileResponse.body);
-                    console.log('📊 Existing contracts data:', existingData);
-                } catch (e) {
-                    console.log('📝 No existing data, creating new structure');
-                    existingData = { signedContracts: [] };
-                }
-
-                // Add new contract
-                existingData.signedContracts = existingData.signedContracts || [];
-                existingData.signedContracts.push(contractData);
-                existingData.lastUpdated = new Date().toISOString();
-                existingData.totalContracts = existingData.signedContracts.length;
-                existingData.savedFrom = 'Contract Signing Page';
-
-                console.log('💾 Saving updated contracts to Google Drive...');
-                console.log('📊 New contracts data:', existingData);
-
-                // Save back to Google Drive
-                await gapi.client.request({
-                    path: `https://www.googleapis.com/upload/drive/v3/files/${contractsFileId}`,
-                    method: 'PATCH',
-                    params: { uploadType: 'media' },
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(existingData, null, 2)
-                });
-
-                console.log('✅ Contract pushed to Google Drive successfully!');
-                console.log(`📊 Total contracts now: ${existingData.totalContracts}`);
-                console.log(`📁 File ID: ${contractsFileId}`);
-                console.log(`📁 File name: ${CONTRACTS_FILE_NAME}`);
-                
-                // Add debug function for contract signing page
-                window.debugContractGoogleDrive = function() {
-                    console.log('🔍 Contract Signing Google Drive Debug:');
-                    console.log('  - gapiInited:', gapiInited);
-                    console.log('  - gisInited:', gisInited);
-                    console.log('  - contractsFileId:', contractsFileId);
-                    console.log('  - CONTRACTS_FILE_NAME:', CONTRACTS_FILE_NAME);
-                    console.log('  - window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
-                };
-                
-                return true;
-
-            } catch (error) {
-                console.error('❌ Failed to push contract to Google Drive:', error);
-                console.error('❌ Full error details:', {
-                    message: error.message,
-                    stack: error.stack,
-                    gapiInited,
-                    gisInited,
-                    contractsFileId,
-                    error
-                });
-                return false;
-            }
-        }
-    </script>
-
-    <!-- Google API Scripts -->
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()" onerror="handleScriptError('API')"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()" onerror="handleScriptError('Identity')"></script>
-    
     <script>
         // Approved freelancers database - loaded from JSON file
         let approvedFreelancers = {};
@@ -1549,7 +1311,7 @@ This contract has been digitally signed and is legally binding.
             `.trim();
         }
         
-        // Save signed contract data for admin dashboard access with Google Drive sync
+        // Save signed contract data - EmailJS only
         async function saveSignedContractData() {
             try {
                 // Generate unique contract ID for tracking
@@ -1582,70 +1344,128 @@ This contract has been digitally signed and is legally binding.
                 let existingContracts = JSON.parse(localStorage.getItem('signedContracts') || '[]');
                 existingContracts.push(signedContractData);
                 localStorage.setItem('signedContracts', JSON.stringify(existingContracts));
-                console.log('📱 Contract saved to local storage as backup');
+                console.log('📱 Contract saved to local storage');
                 
-                // MAIN FEATURE: Push to Google Drive for central collection
-                if (window.isGoogleDriveInitialized) {
-                    console.log('☁️ Pushing contract to Google Drive for admin dashboard...');
-                    const success = await pushContractToGoogleDrive(signedContractData);
+                // Send contract via EmailJS
+                console.log('📧 Sending contract via email...');
+                try {
+                    await sendContractViaEmail(signedContractData);
+                    console.log('✅ Contract emailed successfully');
                     
-                    if (success) {
-                        console.log('✅ Contract successfully pushed to Google Drive!');
-                        console.log('📊 Admin dashboard will now show this signed contract');
-                        
-                        // Add success indicator to UI
-                        setTimeout(() => {
-                            const signedMessage = document.getElementById('signed-message');
-                            if (signedMessage) {
-                                const syncStatus = document.createElement('div');
-                                syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #e8f5e8; border: 1px solid #4caf50; border-radius: 5px; color: #2e7d32;';
-                                syncStatus.innerHTML = '✅ <strong>Contract synced to admin dashboard</strong><br>Your signed contract has been automatically uploaded to the centralized system.';
-                                signedMessage.appendChild(syncStatus);
-                            }
-                        }, 1000);
-                        
-                    } else {
-                        console.log('⚠️ Google Drive upload failed - contract saved locally only');
-                        // Show partial success message
-                        setTimeout(() => {
-                            const signedMessage = document.getElementById('signed-message');
-                            if (signedMessage) {
-                                const syncStatus = document.createElement('div');
-                                syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; color: #856404;';
-                                syncStatus.innerHTML = '⚠️ <strong>Contract signed but sync pending</strong><br>Your contract is saved locally. Admin will need to manually sync the system.';
-                                signedMessage.appendChild(syncStatus);
-                            }
-                        }, 1000);
-                    }
-                } else {
-                    console.log('📱 Google Drive not available - contract saved locally only');
-                    console.log('ℹ️ Admin will need to check localStorage or manually sync');
-                    
-                    // Show offline message
+                    // Show success message
                     setTimeout(() => {
                         const signedMessage = document.getElementById('signed-message');
                         if (signedMessage) {
                             const syncStatus = document.createElement('div');
-                            syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #e3f2fd; border: 1px solid #2196f3; border-radius: 5px; color: #1565c0;';
-                            syncStatus.innerHTML = '📱 <strong>Contract signed and saved locally</strong><br>Your contract will be synced to the admin system when connectivity allows.';
+                            syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #e8f5e8; border: 1px solid #4caf50; border-radius: 5px; color: #2e7d32;';
+                            syncStatus.innerHTML = '✅ <strong>Contract sent successfully</strong><br>Your signed contract has been emailed to admin and saved locally.';
+                            signedMessage.appendChild(syncStatus);
+                        }
+                    }, 1000);
+                    
+                } catch (emailError) {
+                    console.warn('⚠️ Email sending failed:', emailError);
+                    
+                    // Show partial success message
+                    setTimeout(() => {
+                        const signedMessage = document.getElementById('signed-message');
+                        if (signedMessage) {
+                            const syncStatus = document.createElement('div');
+                            syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; color: #856404;';
+                            syncStatus.innerHTML = '⚠️ <strong>Contract signed and saved locally</strong><br>Email notification failed, but your contract is saved. Please contact admin.';
                             signedMessage.appendChild(syncStatus);
                         }
                     }, 1000);
                 }
                 
-                // Legacy notification for old system compatibility
+                // Legacy notification for compatibility
                 localStorage.setItem('contractSignedNotification', JSON.stringify({
                     timestamp: new Date().toISOString(),
                     contractId: contractId,
                     action: 'NEW_CONTRACT_SIGNED',
-                    googleDriveSync: window.isGoogleDriveInitialized || false
+                    emailSent: true
                 }));
                 
             } catch (error) {
                 console.error('❌ Error saving signed contract data:', error);
-                // Don't fail the signing process if saving fails
                 alert('⚠️ Contract was signed but there was an issue saving the data. Please contact support with your contract ID and timestamp.');
             }
+        }
+        
+        // Send contract via EmailJS
+        async function sendContractViaEmail(contractData) {
+            if (typeof emailjs === 'undefined') {
+                throw new Error('EmailJS not available');
+            }
+            
+            // Create detailed contract content for email
+            const contractContent = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 COCHRAN FILMS - NEW CONTRACT SIGNED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 CONTRACT DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Contract ID: ${contractData.contractId}
+Freelancer: ${contractData.freelancerName}
+Email: ${contractData.freelancerEmail}
+Role: ${contractData.role}
+Location: ${contractData.location}
+Project Start: ${contractData.projectStart}
+Rate: ${contractData.rate}
+Effective Date: ${contractData.effectiveDate}
+
+✍️ SIGNATURE DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Digital Signature: ${contractData.signature}
+Signed Date: ${contractData.signatureDate}
+Signed Timestamp: ${new Date(contractData.signedTimestamp).toLocaleString()}
+Status: ${contractData.status}
+
+📄 FULL CONTRACT DATA (JSON):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${JSON.stringify(contractData, null, 2)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📥 NEXT STEPS: 
+1. The freelancer will download their signed PDF from the contract page
+2. You can ask them to email you the PDF or use the new manual upload feature
+3. Access your admin dashboard: https://collaborate.cochranfilms.com/admin-dashboard.html
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            `.trim();
+            
+            const emailParams = {
+                // Email destination
+                to_email: 'info@cochranfilms.com',
+                
+                // Contract basic info
+                freelancer_name: contractData.freelancerName,
+                freelancer_email: contractData.freelancerEmail,
+                contract_id: contractData.contractId,
+                role: contractData.role,
+                location: contractData.location,
+                project_start: contractData.projectStart,
+                rate: contractData.rate,
+                effective_date: contractData.effectiveDate,
+                
+                // Signature info
+                signature: contractData.signature,
+                signature_date: contractData.signatureDate,
+                signed_timestamp: new Date(contractData.signedTimestamp).toLocaleString(),
+                contract_status: contractData.status,
+                
+                // Full content
+                signed_contract_content: contractContent,
+                
+                // Additional info
+                admin_dashboard_url: 'https://collaborate.cochranfilms.com/admin-dashboard.html',
+                contract_download_note: 'The freelancer can download their signed PDF from the contract page. You can also manually upload PDFs in your admin dashboard for organized storage.'
+            };
+            
+            return emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, emailParams);
         }
         
         // Download signed contract
@@ -1951,7 +1771,7 @@ This contract has been digitally signed and is legally binding.
                         The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.
                     </p>
 
-                    <h2>💵 Payment Terms</h2>
+                    <h2>�� Payment Terms</h2>
                     <p>
                         Payment of ${rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).
                     </p>
