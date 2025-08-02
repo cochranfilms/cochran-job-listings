@@ -48,7 +48,7 @@
             document.getElementById('adminInterface').style.display = 'block';
             
             loadJobs();
-            loadFreelancers();
+            await loadFreelancers();
             loadUploadedContracts();
         }
 
@@ -631,12 +631,47 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         let freelancers = [];
         let editingFreelancerIndex = -1;
 
-        // Load freelancers from localStorage
-        function loadFreelancers() {
+        // Load freelancers from localStorage and freelancers.json
+        async function loadFreelancers() {
             console.log('🔄 Loading freelancers...');
-            freelancers = JSON.parse(localStorage.getItem('freelancers') || '[]');
+            
+            // First, try to load from freelancers.json
+            try {
+                const response = await fetch('freelancers.json');
+                if (response.ok) {
+                    const jsonData = await response.json();
+                    const approvedFreelancers = jsonData.approvedFreelancers || {};
+                    
+                    // Convert the object format to array format for the admin dashboard
+                    freelancers = Object.entries(approvedFreelancers).map(([name, data]) => ({
+                        name: name,
+                        email: data.email,
+                        password: data.password,
+                        role: data.role,
+                        location: data.location,
+                        projectStart: data.projectStart,
+                        rate: data.rate,
+                        approvedDate: data.approvedDate,
+                        contractStatus: data.contractStatus || 'pending',
+                        contractSignedDate: data.contractSignedDate || null,
+                        contractUploadedDate: data.contractUploadedDate || null,
+                        contractId: data.contractId || null,
+                        jobs: data.jobs || [],
+                        primaryJob: data.primaryJob || null
+                    }));
+                    
+                    console.log('✅ Loaded', freelancers.length, 'freelancers from freelancers.json');
+                } else {
+                    console.warn('⚠️ Could not load freelancers.json, falling back to localStorage');
+                    freelancers = JSON.parse(localStorage.getItem('freelancers') || '[]');
+                }
+            } catch (error) {
+                console.warn('⚠️ Error loading freelancers.json:', error);
+                freelancers = JSON.parse(localStorage.getItem('freelancers') || '[]');
+            }
+            
             displayFreelancers();
-            console.log('✅ Loaded', freelancers.length, 'freelancers');
+            console.log('✅ Total freelancers loaded:', freelancers.length);
         }
 
         // Display freelancers
@@ -722,16 +757,23 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             }
 
             if (editingFreelancerIndex >= 0) {
-                // Preserve existing contract status when editing
+                // Preserve existing contract status and additional data when editing
                 const existingFreelancer = freelancers[editingFreelancerIndex];
                 freelancerData.contractStatus = existingFreelancer.contractStatus || 'pending';
                 freelancerData.contractSignedDate = existingFreelancer.contractSignedDate || null;
                 freelancerData.contractUploadedDate = existingFreelancer.contractUploadedDate || null;
                 freelancerData.contractId = existingFreelancer.contractId || null;
+                freelancerData.jobs = existingFreelancer.jobs || [];
+                freelancerData.primaryJob = existingFreelancer.primaryJob || null;
+                freelancerData.contractUrl = existingFreelancer.contractUrl || "contract.html";
                 
                 freelancers[editingFreelancerIndex] = freelancerData;
                 editingFreelancerIndex = -1;
             } else {
+                // Set default values for new freelancers
+                freelancerData.jobs = [];
+                freelancerData.primaryJob = null;
+                freelancerData.contractUrl = "contract.html";
                 freelancers.push(freelancerData);
             }
 
@@ -779,10 +821,26 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function exportContractData() {
             const exportData = {
                 approvedFreelancers: freelancers.reduce((acc, freelancer) => {
-                    acc[freelancer.email] = freelancer;
+                    acc[freelancer.name] = {
+                        email: freelancer.email,
+                        password: freelancer.password,
+                        contractUrl: freelancer.contractUrl || "contract.html",
+                        role: freelancer.role,
+                        location: freelancer.location,
+                        projectStart: freelancer.projectStart,
+                        rate: freelancer.rate,
+                        approvedDate: freelancer.approvedDate,
+                        contractStatus: freelancer.contractStatus || 'pending',
+                        contractSignedDate: freelancer.contractSignedDate,
+                        contractUploadedDate: freelancer.contractUploadedDate,
+                        contractId: freelancer.contractId,
+                        jobs: freelancer.jobs || [],
+                        primaryJob: freelancer.primaryJob
+                    };
                     return acc;
                 }, {}),
-                exportDate: new Date().toISOString()
+                lastUpdated: new Date().toISOString().split('T')[0],
+                totalFreelancers: freelancers.length
             };
             document.getElementById('exportContractData').textContent = JSON.stringify(exportData, null, 2);
             document.getElementById('downloadContractBtn').style.display = 'inline-block';
@@ -792,10 +850,26 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function downloadContractJSON() {
             const exportData = {
                 approvedFreelancers: freelancers.reduce((acc, freelancer) => {
-                    acc[freelancer.email] = freelancer;
+                    acc[freelancer.name] = {
+                        email: freelancer.email,
+                        password: freelancer.password,
+                        contractUrl: freelancer.contractUrl || "contract.html",
+                        role: freelancer.role,
+                        location: freelancer.location,
+                        projectStart: freelancer.projectStart,
+                        rate: freelancer.rate,
+                        approvedDate: freelancer.approvedDate,
+                        contractStatus: freelancer.contractStatus || 'pending',
+                        contractSignedDate: freelancer.contractSignedDate,
+                        contractUploadedDate: freelancer.contractUploadedDate,
+                        contractId: freelancer.contractId,
+                        jobs: freelancer.jobs || [],
+                        primaryJob: freelancer.primaryJob
+                    };
                     return acc;
                 }, {}),
-                exportDate: new Date().toISOString()
+                lastUpdated: new Date().toISOString().split('T')[0],
+                totalFreelancers: freelancers.length
             };
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
