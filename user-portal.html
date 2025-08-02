@@ -199,15 +199,31 @@
             }
         }
 
-        // Load uploaded contracts
-        function loadUploadedContracts() {
+        // Load uploaded contracts from JSON file
+        async function loadUploadedContracts() {
             try {
-                const data = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
-                uploadedContracts = data;
-                console.log('✅ Uploaded contracts loaded:', uploadedContracts.length, 'contracts');
+                // Try to load from uploaded-contracts.json file
+                const response = await fetch('uploaded-contracts.json');
+                if (response.ok) {
+                    const jsonData = await response.json();
+                    uploadedContracts = jsonData.uploadedContracts || [];
+                    console.log('✅ Uploaded contracts loaded from JSON file:', uploadedContracts.length, 'contracts');
+                } else {
+                    console.warn('⚠️ Could not load uploaded-contracts.json, falling back to localStorage');
+                    const data = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+                    uploadedContracts = data;
+                    console.log('✅ Uploaded contracts loaded from localStorage:', uploadedContracts.length, 'contracts');
+                }
             } catch (error) {
-                console.error('❌ Error loading uploaded contracts:', error);
-                uploadedContracts = [];
+                console.warn('⚠️ Error loading uploaded-contracts.json:', error);
+                try {
+                    const data = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+                    uploadedContracts = data;
+                    console.log('✅ Uploaded contracts loaded from localStorage fallback:', uploadedContracts.length, 'contracts');
+                } catch (localStorageError) {
+                    console.error('❌ Error loading uploaded contracts:', localStorageError);
+                    uploadedContracts = [];
+                }
             }
         }
 
@@ -420,7 +436,7 @@
                         </div>
                         <h3>📋 Contract Ready for Signature</h3>
                         <p>Your contract is ready for digital signature. Please sign to proceed with your project.</p>
-                        <a href="https://collaborate.cochranfilms.com/contract.html" class="btn" style="margin-top: 1rem;">
+                        <a href="https://collaboration.cochranfilms.com/contract" class="btn" style="margin-top: 1rem;">
                             <i class="fas fa-signature"></i> Sign Contract Now
                         </a>
                     </div>
@@ -1120,7 +1136,7 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
             await loadFreelancerData();
-            loadUploadedContracts();
+            await loadUploadedContracts();
             checkAuth();
             
             // Add login form handler

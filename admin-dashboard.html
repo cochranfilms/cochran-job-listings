@@ -389,6 +389,33 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             console.log('📦 Contract list exported');
         }
 
+        // Export uploaded contracts for user portal access
+        function exportUploadedContractsForPortal() {
+            if (uploadedContracts.length === 0) {
+                alert('No uploaded contracts to export.');
+                return;
+            }
+            
+            const exportData = {
+                lastUpdated: new Date().toISOString(),
+                totalContracts: uploadedContracts.length,
+                uploadedContracts: uploadedContracts
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `uploaded-contracts.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log('📦 Uploaded contracts exported for user portal');
+            alert('✅ Uploaded contracts exported as uploaded-contracts.json\n\nUpload this file to your server so users can access their signed contracts!');
+        }
+
         // Update contract analytics
         function updateContractAnalytics() {
             const analytics = {
@@ -2172,6 +2199,9 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
                     <button class="btn" onclick="loadUploadedContracts()">🔄 Refresh</button>
                     <button class="btn" onclick="exportContractList()">📦 Export List</button>
+                    <button class="btn" onclick="exportUploadedContractsForPortal()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
+                        📄 Export for User Portal
+                    </button>
                     <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
                     </div>
 

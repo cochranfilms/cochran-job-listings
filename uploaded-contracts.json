@@ -1,0 +1,36 @@
+{
+  "exportDate": "2025-08-02T06:29:44.214Z",
+  "totalContracts": 2,
+  "contracts": [
+    {
+      "contractId": "CF-UPLOAD-1754113188766-TH5PK",
+      "freelancerName": "Test User",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Contractor",
+      "rate": "Not specified",
+      "location": "Atlanta Area",
+      "contractDate": "2025-08-02",
+      "notes": "Contract ID: CF-1754113072303-RCZ63",
+      "fileName": "Cody-Cochran-Contract.pdf",
+      "fileSize": 35380,
+      "uploadDate": "2025-08-02T05:39:48.766Z",
+      "uploadTimestamp": "8/2/2025, 1:39:48 AM",
+      "status": "UPLOADED"
+    },
+    {
+      "contractId": "CF-UPLOAD-1754116147296-B2CXO",
+      "freelancerName": "Bob Ross",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Editor",
+      "rate": "$750.00 USD (Flat)",
+      "location": "Atlanta Area",
+      "contractDate": "2025-08-02",
+      "notes": "Contract ID: CF-1754116060500-RWT3Z",
+      "fileName": "Contract_ Bob Ross.pdf",
+      "fileSize": 35382,
+      "uploadDate": "2025-08-02T06:29:07.296Z",
+      "uploadTimestamp": "8/2/2025, 2:29:07 AM",
+      "status": "UPLOADED"
+    }
+  ]
+}
