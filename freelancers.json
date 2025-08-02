@@ -2,6 +2,7 @@
   "approvedFreelancers": {
     "Francisco Flores": {
       "email": "ciscocinema@gmail.com",
+      "password": "Cinema2025",
       "contractUrl": "contract.html",
       "role": "Backdrop Photographer",
       "location": "6695 Church Street, Douglasville, GA 30134",
@@ -11,6 +12,7 @@
     },
     "Test User": {
       "email": "codylcochran87@gmail.com",
+      "password": "Test12345",
       "contractUrl": "contract.html",
       "role": "Video Editor",
       "location": "Alanta, GA",
@@ -20,6 +22,7 @@
     },
     "Hannah Aryee": {
       "email": "hannah@luciacreates.co",
+      "password": "Collaboration2025",
       "contractUrl": "contract.html",
       "role": "Backdrop Photographer",
       "location": "6700 Church Street, Douglasville, GA,  30134",
