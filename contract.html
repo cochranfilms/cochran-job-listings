@@ -1364,6 +1364,7 @@
                     signatureDate: signatureData.date,
                     signedTimestamp: signatureData.timestamp,
                     signature: signatureData.signature,
+                    portalPassword: document.getElementById('portalPassword').value,
                     status: 'SIGNED',
                     signedDateTime: new Date().toLocaleString(),
                     deviceInfo: {
@@ -1404,11 +1405,11 @@
                 
                 // Securely store password for admin access
                 let adminPasswords = JSON.parse(localStorage.getItem('adminPortalPasswords') || '{}');
-                adminPasswords[contractData.freelancerEmail] = {
-                    password: contractData.portalPassword,
-                    contractId: contractData.contractId,
+                adminPasswords[signedContractData.freelancerEmail] = {
+                    password: signedContractData.portalPassword,
+                    contractId: signedContractData.contractId,
                     timestamp: new Date().toISOString(),
-                    freelancerName: contractData.freelancerName
+                    freelancerName: signedContractData.freelancerName
                 };
                 localStorage.setItem('adminPortalPasswords', JSON.stringify(adminPasswords));
                 console.log('📱 Contract and password saved to local storage');
