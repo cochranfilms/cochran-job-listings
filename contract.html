@@ -818,22 +818,30 @@
         // Push signed contract to Google Drive
         async function pushContractToGoogleDrive(contractData) {
             try {
+                console.log('🚀 Starting Google Drive push process...');
+                console.log('📝 Contract data to push:', contractData);
+                
                 if (!gapiInited || !gisInited) {
+                    console.error('❌ Google APIs not initialized:', { gapiInited, gisInited });
                     return false;
                 }
 
+                console.log('🔐 Starting Google Drive sign-in...');
                 // Sign in first
                 await new Promise((resolve, reject) => {
                     tokenClient.callback = (response) => {
                         if (response.error) {
+                            console.error('❌ Google Drive sign-in failed:', response.error);
                             reject(response);
                         } else {
+                            console.log('✅ Google Drive sign-in successful');
                             resolve(response);
                         }
                     };
                     tokenClient.requestAccessToken();
                 });
 
+                console.log('📁 Finding or creating contracts file...');
                 // Find or create contracts file
                 if (!contractsFileId) {
                     contractsFileId = await findOrCreateContractsFile();
@@ -841,7 +849,9 @@
                         throw new Error('Could not access contracts file');
                     }
                 }
+                console.log('📁 Using contracts file ID:', contractsFileId);
 
+                console.log('📥 Loading existing contracts from Google Drive...');
                 // Get existing contracts
                 const fileResponse = await gapi.client.drive.files.get({
                     fileId: contractsFileId,
@@ -851,7 +861,9 @@
                 let existingData;
                 try {
                     existingData = JSON.parse(fileResponse.body);
+                    console.log('📊 Existing contracts data:', existingData);
                 } catch (e) {
+                    console.log('📝 No existing data, creating new structure');
                     existingData = { signedContracts: [] };
                 }
 
@@ -862,6 +874,9 @@
                 existingData.totalContracts = existingData.signedContracts.length;
                 existingData.savedFrom = 'Contract Signing Page';
 
+                console.log('💾 Saving updated contracts to Google Drive...');
+                console.log('📊 New contracts data:', existingData);
+
                 // Save back to Google Drive
                 await gapi.client.request({
                     path: `https://www.googleapis.com/upload/drive/v3/files/${contractsFileId}`,
@@ -871,11 +886,33 @@
                     body: JSON.stringify(existingData, null, 2)
                 });
 
-                console.log('✅ Contract pushed to Google Drive successfully');
+                console.log('✅ Contract pushed to Google Drive successfully!');
+                console.log(`📊 Total contracts now: ${existingData.totalContracts}`);
+                console.log(`📁 File ID: ${contractsFileId}`);
+                console.log(`📁 File name: ${CONTRACTS_FILE_NAME}`);
+                
+                // Add debug function for contract signing page
+                window.debugContractGoogleDrive = function() {
+                    console.log('🔍 Contract Signing Google Drive Debug:');
+                    console.log('  - gapiInited:', gapiInited);
+                    console.log('  - gisInited:', gisInited);
+                    console.log('  - contractsFileId:', contractsFileId);
+                    console.log('  - CONTRACTS_FILE_NAME:', CONTRACTS_FILE_NAME);
+                    console.log('  - window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
+                };
+                
                 return true;
 
             } catch (error) {
-                console.error('Failed to push contract to Google Drive:', error);
+                console.error('❌ Failed to push contract to Google Drive:', error);
+                console.error('❌ Full error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    gapiInited,
+                    gisInited,
+                    contractsFileId,
+                    error
+                });
                 return false;
             }
         }
