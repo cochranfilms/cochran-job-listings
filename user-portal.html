@@ -370,50 +370,95 @@
             return currentUser.jobs[selectedJobIndex] || currentUser.jobs[0];
         }
 
-        // Display user contracts
+        // Display user contracts (centralized from freelancers.json)
         function displayUserContracts() {
             const container = document.getElementById('userContracts');
             
-            // Find contracts for this user
-            const userContracts = uploadedContracts.filter(contract => 
-                contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
-            );
-
-            if (userContracts.length === 0) {
+            if (!currentUser) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <h3>📋 No Signed Contracts Yet</h3>
-                        <p>Your signed contracts will appear here once they've been processed.</p>
-                        <a href="contract.html" class="btn">Sign Contract</a>
+                        <h3>❌ User Data Missing</h3>
+                        <p>Unable to load contract information.</p>
                     </div>
                 `;
                 return;
             }
 
-            const contractsHTML = userContracts.map((contract, index) => `
-                <div class="contract-card">
-                    <div class="contract-header">
-                        <h4>${contract.role}</h4>
-                        <span class="status-badge">✅ SIGNED</span>
+            const contractStatus = currentUser.contractStatus || 'pending';
+            
+            // Contract status based UI
+            if (contractStatus === 'pending') {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="status-icon" style="font-size: 3rem; color: #FFB200; margin-bottom: 1rem;">
+                            <i class="fas fa-pen-fancy"></i>
+                        </div>
+                        <h3>📋 Contract Ready for Signature</h3>
+                        <p>Your contract is ready for digital signature. Please sign to proceed with your project.</p>
+                        <a href="https://collaborate.cochranfilms.com/contract.html" class="btn" style="margin-top: 1rem;">
+                            <i class="fas fa-signature"></i> Sign Contract Now
+                        </a>
                     </div>
-                    <div class="contract-details">
-                        <div><strong>Contract ID:</strong> ${contract.contractId}</div>
-                        <div><strong>Date:</strong> ${new Date(contract.uploadDate).toLocaleDateString()}</div>
-                        <div><strong>Rate:</strong> ${contract.rate}</div>
-                        <div><strong>Location:</strong> ${contract.location}</div>
+                `;
+                return;
+            }
+            
+            if (contractStatus === 'signed') {
+                container.innerHTML = `
+                    <div class="pending-state">
+                        <div class="status-icon" style="font-size: 3rem; color: #FFB200; margin-bottom: 1rem;">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h3>⏳ Contract Processing</h3>
+                        <p>Thank you! Your contract has been digitally signed and is being processed by our admin team.</p>
+                        <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                            <h4 style="color: #FFB200; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Status Details</h4>
+                            <div style="color: rgba(255,255,255,0.9);">
+                                <div><strong>Signed Date:</strong> ${currentUser.contractSignedDate || 'Processing...'}</div>
+                                <div><strong>Contract ID:</strong> ${currentUser.contractId || 'Generating...'}</div>
+                                <div><strong>Status:</strong> Awaiting admin processing</div>
+                            </div>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">
+                            <i class="fas fa-clock"></i> You'll be able to download your contract once it's been uploaded by our admin team.
+                        </p>
                     </div>
-                    <div class="contract-actions">
-                        <button class="btn btn-small" onclick="downloadUserContract(${index})">
-                            <i class="fas fa-download"></i> Download PDF
-                        </button>
-                        <button class="btn btn-small" onclick="viewContractDetails(${index})">
-                            <i class="fas fa-eye"></i> View Details
-                        </button>
+                `;
+                return;
+            }
+            
+            if (contractStatus === 'uploaded') {
+                container.innerHTML = `
+                    <div class="contract-card">
+                        <div class="contract-header">
+                            <h4><i class="fas fa-file-contract"></i> ${currentUser.jobs ? currentUser.jobs[0]?.role : currentUser.role}</h4>
+                            <span class="status-badge signed">✅ SIGNED & PROCESSED</span>
+                        </div>
+                        <div class="contract-details">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                <div><strong>Contract ID:</strong> ${currentUser.contractId || 'N/A'}</div>
+                                <div><strong>Signed Date:</strong> ${currentUser.contractSignedDate || 'N/A'}</div>
+                                <div><strong>Processed Date:</strong> ${currentUser.contractUploadedDate || 'N/A'}</div>
+                                <div><strong>Rate:</strong> ${currentUser.jobs ? currentUser.jobs[0]?.rate : currentUser.rate}</div>
+                            </div>
+                            <div style="background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
+                                <p style="color: #22c55e; margin: 0; font-weight: 600;">
+                                    <i class="fas fa-check-circle"></i> Your contract is fully executed and all terms are in effect.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="contract-actions" style="margin-top: 1rem;">
+                            <button class="btn btn-small btn-success" onclick="downloadUserContract()">
+                                <i class="fas fa-download"></i> Download Contract PDF
+                            </button>
+                            <button class="btn btn-small" onclick="viewContractDetails()">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
-
-            container.innerHTML = contractsHTML;
+                `;
+                return;
+            }
         }
 
         // Display user jobs
@@ -509,9 +554,9 @@
                     </div>
                     
                     <div class="job-actions">
-                        <a href="contract.html" class="btn job-action-btn">
-                            <i class="fas fa-file-contract"></i> View Contract
-                        </a>
+                        <button class="btn job-action-btn" onclick="switchPortalTab('contracts')">
+                            <i class="fas fa-file-contract"></i> View Contract Status
+                        </button>
                         <button class="btn job-action-btn secondary" onclick="viewJobDetails()">
                             <i class="fas fa-info-circle"></i> Job Details
                         </button>
@@ -558,9 +603,14 @@
                                         <div class="timeline-details">
                                             <p>${step.details}</p>
                                             ${step.action ? `
-                                                <a href="${step.action.url}" class="timeline-action">
-                                                    <i class="${step.action.icon}"></i> ${step.action.text}
-                                                </a>
+                                                ${step.action.url ? 
+                                                    `<a href="${step.action.url}" class="timeline-action">
+                                                        <i class="${step.action.icon}"></i> ${step.action.text}
+                                                    </a>` :
+                                                    `<button onclick="${step.action.onclick}" class="timeline-action" style="border: none; background: linear-gradient(135deg, #FFB200, #FFD700); color: #000; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">
+                                                        <i class="${step.action.icon}"></i> ${step.action.text}
+                                                    </button>`
+                                                }
                                             ` : ''}
                                             ${step.checklist ? `
                                                 <div class="timeline-checklist">
@@ -604,30 +654,23 @@
             return 'COMPLETED';
         }
 
-        // Helper function to check if contract is signed
+        // Helper function to check if contract is signed (single source of truth from freelancers.json)
         function getContractSignedStatus() {
-            // Check if user has signed contracts in uploaded contracts (from admin)
-            const adminUploadedContracts = uploadedContracts.filter(contract => 
-                contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
-            );
+            if (!currentUser) return 'current';
             
-            // Check if user has signed contracts locally (from contract.html)
-            let localSignedContracts = [];
-            try {
-                localSignedContracts = JSON.parse(localStorage.getItem('signedContracts') || '[]');
-                localSignedContracts = localSignedContracts.filter(contract => 
-                    contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
-                );
-            } catch (e) {
-                console.warn('Could not load local signed contracts:', e);
-            }
+            // Use the contract status from the user's data (from freelancers.json)
+            const contractStatus = currentUser.contractStatus || 'pending';
             
-            // Contract is signed if it exists in either location
-            const hasSignedContract = adminUploadedContracts.length > 0 || localSignedContracts.length > 0;
+            console.log('📋 Contract status for', currentUser.name, ':', contractStatus);
+            
+            // Only return 'completed' if admin has uploaded the contract (status = 'uploaded')
+            // 'pending' = not signed yet  
+            // 'signed' = digitally signed but not yet uploaded by admin
+            // 'uploaded' = admin has uploaded the signed PDF (fully processed)
+            const hasSignedContract = contractStatus === 'uploaded';
             
             console.log('📋 Contract status check:', {
-                adminUploaded: adminUploadedContracts.length,
-                localSigned: localSignedContracts.length,
+                contractStatus: contractStatus,
                 hasSignedContract: hasSignedContract
             });
             
@@ -670,14 +713,14 @@
                     description: contractSigned ? 'Contract successfully signed ✅' : 'Sign your freelance agreement',
                     icon: 'fas fa-signature',
                     status: contractSigned ? 'completed' : 'current',
-                    date: contractSigned ? new Date() : null, // We could store actual signing date
+                    date: contractSigned && currentUser.contractSignedDate ? new Date(currentUser.contractSignedDate) : null,
                     details: contractSigned ? 
                         '✅ Your contract has been digitally signed and processed. All terms are now in effect. Thank you for completing this step!' : 
                         'Please review and sign your freelance contract to proceed with the project. This is a required step before project preparation can begin.',
                     action: contractSigned ? null : {
-                        text: 'Sign Contract Now',
-                        url: 'contract.html',
-                        icon: 'fas fa-pen-fancy'
+                        text: 'View Contract Status',
+                        onclick: 'switchPortalTab("contracts")',
+                        icon: 'fas fa-file-contract'
                     }
                 },
                 {
@@ -1540,6 +1583,24 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
         .contract-status.pending {
             color: #FFB200 !important;
             font-weight: 600;
+        }
+
+        /* Contract status display styles */
+        .pending-state {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
         }
 
         .job-actions {

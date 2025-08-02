@@ -8,13 +8,21 @@
       "location": "6695 Church Street, Douglasville, GA 30134",
       "projectStart": "November 8, 2025 at 3:15 PM",
       "rate": "$400.00 USD (Flat)",
-      "approvedDate": "2024-01-08"
+      "approvedDate": "2024-01-08",
+      "contractStatus": "pending",
+      "contractSignedDate": null,
+      "contractUploadedDate": null,
+      "contractId": null
     },
     "Test User": {
       "email": "codylcochran87@gmail.com",
       "password": "Test12345",
       "contractUrl": "contract.html",
       "approvedDate": "2025-04-13",
+      "contractStatus": "pending",
+      "contractSignedDate": null,
+      "contractUploadedDate": null,
+      "contractId": null,
       "jobs": [
         {
           "id": "job-001",
@@ -47,7 +55,11 @@
       "location": "6700 Church Street, Douglasville, GA,  30134",
       "projectStart": "October 24, 2025 at 3:15 PM",
       "rate": "$300 + Tip",
-      "approvedDate": "2025-08-01"
+      "approvedDate": "2025-08-01",
+      "contractStatus": "pending",
+      "contractSignedDate": null,
+      "contractUploadedDate": null,
+      "contractId": null
     }
   },
   "lastUpdated": "2025-08-01",

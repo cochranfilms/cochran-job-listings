@@ -905,11 +905,26 @@
             performAccessCheck();
         }
         
-        function performAccessCheck() {
+        async function performAccessCheck() {
             const name = document.getElementById("freelancerName").value.trim();
             const email = document.getElementById("freelancerEmail").value.trim().toLowerCase();
             
             console.log('📝 Input data:', { name, email });
+            
+            // First, load the latest freelancer data from JSON file
+            try {
+                const response = await fetch('freelancers.json');
+                if (response.ok) {
+                    const jsonData = await response.json();
+                    if (jsonData.approvedFreelancers) {
+                        approvedFreelancers = jsonData.approvedFreelancers;
+                        console.log('✅ Loaded latest freelancer data from JSON file');
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Could not load latest freelancer data, using fallback:', error);
+            }
+            
             console.log('👥 Available freelancers:', Object.keys(approvedFreelancers));
             
             const successDiv = document.getElementById("success-message");
@@ -938,11 +953,20 @@
             });
             
             if (matchingFreelancer && approvedFreelancers[matchingFreelancer].email.toLowerCase() === email) {
+                const freelancerData = approvedFreelancers[matchingFreelancer];
+                
+                // Check if contract is already signed/uploaded
+                if (freelancerData.contractStatus === 'signed' || freelancerData.contractStatus === 'uploaded') {
+                    console.log('📋 Contract already signed for:', matchingFreelancer);
+                    showAlreadySignedMessage(freelancerData);
+                    return;
+                }
+                
                 console.log('✅ Access granted for:', matchingFreelancer);
                 // Access granted - store freelancer data for PDF generation
                 currentFreelancerData = {
                     name: matchingFreelancer,
-                    ...approvedFreelancers[matchingFreelancer]
+                    ...freelancerData
                 };
                 
                 // Populate contract details
@@ -1136,6 +1160,53 @@
             }
         }
 
+        // Show message when contract is already signed
+        function showAlreadySignedMessage(freelancerData) {
+            const loginElements = document.getElementById('loginElements');
+            if (loginElements) {
+                loginElements.classList.add('hidden');
+                loginElements.style.display = 'none';
+            }
+            
+            const container = document.getElementById('mainContainer');
+            container.innerHTML = `
+                <div class="logo">
+                    <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo">
+                </div>
+                
+                <div class="message success">
+                    <div class="message-header">
+                        <h2><i class="fas fa-check-circle"></i> Contract Already Signed</h2>
+                    </div>
+                    
+                    <div class="message-content">
+                        <p><strong>Hi ${freelancerData.name || currentFreelancerData.name},</strong></p>
+                        <p>Your contract has already been signed and processed!</p>
+                        
+                        <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                            <h4 style="color: #FFB200; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Contract Status</h4>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; color: rgba(255,255,255,0.9);">
+                                <div><strong>Status:</strong> ${freelancerData.contractStatus === 'uploaded' ? 'Signed & Uploaded' : 'Digitally Signed'}</div>
+                                ${freelancerData.contractSignedDate ? `<div><strong>Signed Date:</strong> ${freelancerData.contractSignedDate}</div>` : ''}
+                                ${freelancerData.contractUploadedDate ? `<div><strong>Processed Date:</strong> ${freelancerData.contractUploadedDate}</div>` : ''}
+                                ${freelancerData.contractId ? `<div><strong>Contract ID:</strong> ${freelancerData.contractId}</div>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(34, 197, 94, 0.3);">
+                            <h4 style="color: #22c55e; margin-bottom: 1rem;"><i class="fas fa-user-circle"></i> Access Your Portal</h4>
+                            <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.9);">
+                                View your contracts, job details, and project timeline in your personal freelancer portal.
+                            </p>
+                            <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin-right: 0;">
+                                <i class="fas fa-external-link-alt"></i> Open Freelancer Portal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         // Sign contract function
         async function signContract() {
             const signature = document.getElementById('digitalSignature').value.trim();
@@ -1218,6 +1289,28 @@
                         url: window.location.href
                     }
                 };
+
+                // Update freelancer data status to "signed" (not fully processed until admin uploads)
+                // Note: This will be temporary until admin uploads the signed PDF
+                try {
+                    // Mark as signed in local tracking
+                    const signedTrackingData = {
+                        [signatureData.freelancerEmail]: {
+                            contractId: contractId,
+                            signedDate: signatureData.date,
+                            signedTimestamp: signatureData.timestamp,
+                            status: 'signed'
+                        }
+                    };
+                    
+                    const existingTracking = JSON.parse(localStorage.getItem('contractSigningTracking') || '{}');
+                    Object.assign(existingTracking, signedTrackingData);
+                    localStorage.setItem('contractSigningTracking', JSON.stringify(existingTracking));
+                    
+                    console.log('📋 Contract signing tracked for admin upload workflow');
+                } catch (trackingError) {
+                    console.warn('⚠️ Could not update signing tracking:', trackingError);
+                }
                 
                 console.log('✅ Signed contract data prepared:', signedContractData);
                 

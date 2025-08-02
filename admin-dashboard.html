@@ -190,6 +190,9 @@
             uploadedContracts.push(contractData);
             localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
             
+            // Update freelancer status in freelancers array
+            updateFreelancerContractStatus(email, contractId, date);
+            
             // Save file data (base64) for later download
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -205,7 +208,7 @@
                 // Refresh list
                 loadUploadedContracts();
                 
-                alert(`✅ Contract uploaded successfully!\n\nContract ID: ${contractId}\nFreelancer: ${name}`);
+                alert(`✅ Contract uploaded successfully!\n\nContract ID: ${contractId}\nFreelancer: ${name}\n\n📋 Freelancer status updated to "uploaded" - they can now see their signed contract in the user portal!`);
             };
             reader.readAsDataURL(currentUploadFile);
         }
@@ -432,6 +435,40 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     </div>
                 </div>
             `;
+        }
+
+        // Update freelancer contract status when contract is uploaded
+        function updateFreelancerContractStatus(email, contractId, contractDate) {
+            try {
+                // Find and update the freelancer in the local array
+                const freelancerIndex = freelancers.findIndex(f => f.email.toLowerCase() === email.toLowerCase());
+                if (freelancerIndex >= 0) {
+                    freelancers[freelancerIndex].contractStatus = 'uploaded';
+                    freelancers[freelancerIndex].contractId = contractId;
+                    freelancers[freelancerIndex].contractUploadedDate = contractDate;
+                    freelancers[freelancerIndex].contractSignedDate = contractDate; // Assume signed same day for now
+                    
+                    // Save updated freelancers array
+                    localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                    
+                    console.log('✅ Updated freelancer contract status:', freelancers[freelancerIndex]);
+                    
+                    // Refresh freelancer list display
+                    displayFreelancers();
+                    
+                    // Show notification to export updated data
+                    setTimeout(() => {
+                        if (confirm('📋 Freelancer contract status updated!\n\nWould you like to export the updated freelancers.json file now?\n\nThis will ensure the user portal reflects the signed contract status.')) {
+                            exportContractData();
+                        }
+                    }, 1000);
+                } else {
+                    console.warn('⚠️ Freelancer not found in local array for email:', email);
+                    alert(`⚠️ Note: Freelancer ${email} not found in local database.\n\nConsider adding them to the freelancer list first, then re-uploading the contract.`);
+                }
+            } catch (error) {
+                console.error('❌ Error updating freelancer contract status:', error);
+            }
         }
 
         // ==================== JOBS MANAGEMENT FUNCTIONALITY ====================
@@ -667,19 +704,31 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             const freelancerData = {
                 name: document.getElementById('freelancerName').value,
                 email: document.getElementById('freelancerEmail').value,
+                password: document.getElementById('freelancerPassword').value,
                 role: document.getElementById('freelancerRole').value,
                 location: document.getElementById('freelancerLocation').value,
                 projectStart: document.getElementById('projectStart').value,
                 rate: document.getElementById('freelancerRate').value,
-                approvedDate: document.getElementById('approvedDate').value
+                approvedDate: document.getElementById('approvedDate').value,
+                contractStatus: 'pending',
+                contractSignedDate: null,
+                contractUploadedDate: null,
+                contractId: null
             };
 
-            if (!freelancerData.name.trim() || !freelancerData.email.trim() || !freelancerData.role.trim()) {
-                alert('Name, email, and role are required');
+            if (!freelancerData.name.trim() || !freelancerData.email.trim() || !freelancerData.role.trim() || !freelancerData.password.trim()) {
+                alert('Name, email, password, and role are required');
                 return;
             }
 
             if (editingFreelancerIndex >= 0) {
+                // Preserve existing contract status when editing
+                const existingFreelancer = freelancers[editingFreelancerIndex];
+                freelancerData.contractStatus = existingFreelancer.contractStatus || 'pending';
+                freelancerData.contractSignedDate = existingFreelancer.contractSignedDate || null;
+                freelancerData.contractUploadedDate = existingFreelancer.contractUploadedDate || null;
+                freelancerData.contractId = existingFreelancer.contractId || null;
+                
                 freelancers[editingFreelancerIndex] = freelancerData;
                 editingFreelancerIndex = -1;
             } else {
@@ -697,6 +746,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             const freelancer = freelancers[index];
             document.getElementById('freelancerName').value = freelancer.name;
             document.getElementById('freelancerEmail').value = freelancer.email;
+            document.getElementById('freelancerPassword').value = freelancer.password;
             document.getElementById('freelancerRole').value = freelancer.role;
             document.getElementById('freelancerLocation').value = freelancer.location;
             document.getElementById('projectStart').value = freelancer.projectStart;
@@ -721,6 +771,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             document.getElementById('freelancerLocation').value = 'Atlanta Area';
             document.getElementById('projectStart').value = 'TBD';
             document.getElementById('contractUrl').value = 'contract.html';
+            document.getElementById('freelancerPassword').value = '';
             editingFreelancerIndex = -1;
         }
 
@@ -755,6 +806,91 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+        }
+
+        // ==================== QUICK IMPORT FROM EMAIL ====================
+
+        // Parse email data and auto-fill form
+        function parseEmailData() {
+            const emailText = document.getElementById('quickImportData').value;
+            if (!emailText.trim()) {
+                alert('Please paste the contract data from your email first.');
+                return;
+            }
+
+            // Try to extract contract information using regex patterns
+            const extractData = (text) => {
+                const patterns = {
+                    freelancer_name: /(?:Freelancer|Name):\s*([^\n\r]+)/i,
+                    freelancer_email: /(?:Email):\s*([^\n\r\s]+)/i,
+                    role: /(?:Role):\s*([^\n\r]+)/i,
+                    location: /(?:Location):\s*([^\n\r]+)/i,
+                    rate: /(?:Rate):\s*([^\n\r]+)/i,
+                    contract_id: /(?:Contract ID):\s*([^\n\r]+)/i,
+                    signed_date: /(?:Signed):\s*([^\n\r]+)/i
+                };
+
+                const extracted = {};
+                for (const [key, pattern] of Object.entries(patterns)) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        extracted[key] = match[1].trim();
+                    }
+                }
+                return extracted;
+            };
+
+            const data = extractData(emailText);
+            
+            // Auto-fill the upload form fields
+            if (data.freelancer_name) {
+                document.getElementById('uploadFreelancerName').value = data.freelancer_name;
+            }
+            if (data.freelancer_email) {
+                document.getElementById('uploadFreelancerEmail').value = data.freelancer_email;
+            }
+            if (data.role) {
+                document.getElementById('uploadRole').value = data.role;
+            }
+            if (data.location) {
+                document.getElementById('uploadLocation').value = data.location;
+            }
+            if (data.rate) {
+                document.getElementById('uploadRate').value = data.rate;
+            }
+            if (data.signed_date) {
+                // Try to parse and format the date
+                try {
+                    const date = new Date(data.signed_date);
+                    if (!isNaN(date.getTime())) {
+                        document.getElementById('uploadDate').value = date.toISOString().split('T')[0];
+                    }
+                } catch (e) {
+                    // If date parsing fails, just use today's date
+                    document.getElementById('uploadDate').value = new Date().toISOString().split('T')[0];
+                }
+            }
+            
+            // Add contract ID to notes if available
+            if (data.contract_id) {
+                const notesField = document.getElementById('uploadNotes');
+                notesField.value = `Contract ID: ${data.contract_id}\n${notesField.value}`.trim();
+            }
+
+            // Clear the import text area
+            document.getElementById('quickImportData').value = '';
+            
+            // Show success message
+            const filledFields = Object.values(data).filter(v => v).length;
+            if (filledFields > 0) {
+                alert(`✅ Auto-filled ${filledFields} fields! Now upload your PDF file.`);
+                
+                // Scroll to the form
+                document.getElementById('contractDetailsForm').style.display = 'block';
+                document.getElementById('contractDetailsForm').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert('❌ Could not extract contract data. Please check the format and try again.');
+            }
         }
     </script>
     
@@ -1423,7 +1559,8 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             <p>Cochran Films - Central Management System</p>
             <div style="margin-top: 1rem;">
                 <a href="https://collaborate.cochranfilms.com" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">📋 Job Listings</a>
-                <a href="contract.html" style="color: #FFB200; text-decoration: none; font-weight: 600;">🔐 Contract Access</a>
+                <a href="contract.html" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">🔐 Contract Access</a>
+                <a href="user-portal.html" style="color: #FFB200; text-decoration: none; font-weight: 600;">👤 User Portal</a>
             </div>
         </div>
 
@@ -1534,6 +1671,13 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                         <input type="email" id="freelancerEmail" name="email" placeholder="Enter freelancer's email address" required>
                     </div>
                     <div class="form-group">
+                        <label for="freelancerPassword">Portal Password *</label>
+                        <input type="text" id="freelancerPassword" name="password" placeholder="Create password for freelancer portal access" required>
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            💡 This password allows the freelancer to access their personal portal to view contracts and jobs
+                        </small>
+                    </div>
+                    <div class="form-group">
                         <label for="contractUrl">Contract URL *</label>
                         <input type="text" id="contractUrl" name="contractUrl" placeholder="contract.html" value="contract.html" readonly style="background: rgba(255,255,255,0.1);">
                         <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
@@ -1631,16 +1775,28 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             <div class="form-section">
                 <h2>📤 Upload Signed Contract PDF</h2>
                 
+                <!-- Quick Import Section -->
+                <div style="background: rgba(34, 197, 94, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3); margin-bottom: 2rem;">
+                    <h3 style="color: #22c55e; margin-bottom: 1rem;">⚡ Quick Import from Email</h3>
+                    <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem; font-size: 0.9rem;">
+                        Copy contract data from your admin notification email and paste it here to auto-fill the form:
+                    </p>
+                    <textarea id="quickImportData" placeholder="Paste contract data from admin email here (e.g., Freelancer: John Doe, Email: john@example.com, Role: Videographer...)" style="width: 100%; height: 80px; margin-bottom: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(34, 197, 94, 0.5); color: #fff; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem;"></textarea>
+                    <button class="btn" onclick="parseEmailData()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
+                        <i class="fas fa-magic"></i> Auto-Fill from Email Data
+                    </button>
+                </div>
+                
                 <div class="upload-section" id="pdfUploadZone">
                     <div class="upload-icon">
                         <i class="fas fa-cloud-upload-alt"></i>
                     </div>
                     <div class="upload-text">
                         Drag & Drop PDF files here or click to browse
-                </div>
+                    </div>
                     <div class="upload-instructions">
                         Upload signed contract PDFs received from freelancers (PDF files only)
-            </div>
+                    </div>
                     <input type="file" id="contractFileInput" accept=".pdf" multiple>
                     <button class="btn upload-btn" onclick="document.getElementById('contractFileInput').click()">
                         <i class="fas fa-plus"></i> Choose PDF Files
