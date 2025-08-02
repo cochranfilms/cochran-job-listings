@@ -12,7 +12,9 @@
       "contractStatus": "pending",
       "contractSignedDate": null,
       "contractUploadedDate": null,
-      "contractId": null
+      "contractId": null,
+      "jobs": [],
+      "primaryJob": null
     },
     "Test User": {
       "email": "codylcochran87@gmail.com",
@@ -35,7 +37,7 @@
           "description": "Edit promotional video for tech startup"
         },
         {
-          "id": "job-002", 
+          "id": "job-002",
           "role": "Drone Operator",
           "location": "Savannah, GA",
           "projectStart": "September 15th, 2025 at 10:00am",
@@ -59,9 +61,27 @@
       "contractStatus": "pending",
       "contractSignedDate": null,
       "contractUploadedDate": null,
-      "contractId": null
+      "contractId": null,
+      "jobs": [],
+      "primaryJob": null
+    },
+    "Bob Ross": {
+      "email": "codylcochran89@gmail.com",
+      "password": "Test54321",
+      "contractUrl": "contract.html",
+      "role": "Editor",
+      "location": "Atlanta Area",
+      "projectStart": "August 16th, 2025 at 2:00pm",
+      "rate": "$750.00 USD (Flat)",
+      "approvedDate": "2025-08-02",
+      "contractStatus": "pending",
+      "contractSignedDate": null,
+      "contractUploadedDate": null,
+      "contractId": null,
+      "jobs": [],
+      "primaryJob": null
     }
   },
-  "lastUpdated": "2025-08-01",
-  "totalFreelancers": 3
+  "lastUpdated": "2025-08-02",
+  "totalFreelancers": 4
 }
