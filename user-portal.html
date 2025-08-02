@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelancer Portal | Cochran Films</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="Favicon.png" type="image/png">
+    
+    <!-- Fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        let currentUser = null;
+        let freelancers = [];
+        let uploadedContracts = [];
+
+        // Load freelancer data
+        function loadFreelancerData() {
+            try {
+                const data = JSON.parse(localStorage.getItem('freelancers') || '[]');
+                freelancers = data;
+                console.log('✅ Freelancer data loaded:', freelancers.length, 'freelancers');
+            } catch (error) {
+                console.error('❌ Error loading freelancer data:', error);
+                freelancers = [];
+            }
+        }
+
+        // Load uploaded contracts
+        function loadUploadedContracts() {
+            try {
+                const data = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+                uploadedContracts = data;
+                console.log('✅ Uploaded contracts loaded:', uploadedContracts.length, 'contracts');
+            } catch (error) {
+                console.error('❌ Error loading uploaded contracts:', error);
+                uploadedContracts = [];
+            }
+        }
+
+        // Handle login
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            // Find user in freelancers data
+            const user = freelancers.find(f => f.email.toLowerCase() === email.toLowerCase() && f.password === password);
+            
+            if (user) {
+                currentUser = user;
+                sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
+                showUserPortal();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        // Show user portal
+        function showUserPortal() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('userPortal').style.display = 'block';
+            loadUserData();
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('userPortal').style.display = 'none';
+            currentUser = null;
+        }
+
+        // Load user-specific data
+        function loadUserData() {
+            if (!currentUser) return;
+
+            // Update welcome message
+            document.getElementById('userName').textContent = currentUser.name;
+            
+            // Display user info
+            displayUserInfo();
+            displayUserContracts();
+        }
+
+        // Display user information
+        function displayUserInfo() {
+            const container = document.getElementById('userInfo');
+            container.innerHTML = `
+                <div class="info-card">
+                    <h3>👤 Your Profile</h3>
+                    <div class="info-grid">
+                        <div><strong>Name:</strong> ${currentUser.name}</div>
+                        <div><strong>Email:</strong> ${currentUser.email}</div>
+                        <div><strong>Role:</strong> ${currentUser.role}</div>
+                        <div><strong>Location:</strong> ${currentUser.location}</div>
+                        <div><strong>Rate:</strong> ${currentUser.rate}</div>
+                        <div><strong>Project Start:</strong> ${currentUser.projectStart}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Display user contracts
+        function displayUserContracts() {
+            const container = document.getElementById('userContracts');
+            
+            // Find contracts for this user
+            const userContracts = uploadedContracts.filter(contract => 
+                contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
+            );
+
+            if (userContracts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📋 No Signed Contracts Yet</h3>
+                        <p>Your signed contracts will appear here once they've been processed.</p>
+                        <a href="contract.html" class="btn">Sign Contract</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const contractsHTML = userContracts.map((contract, index) => `
+                <div class="contract-card">
+                    <div class="contract-header">
+                        <h4>${contract.role}</h4>
+                        <span class="status-badge">✅ SIGNED</span>
+                    </div>
+                    <div class="contract-details">
+                        <div><strong>Contract ID:</strong> ${contract.contractId}</div>
+                        <div><strong>Date:</strong> ${new Date(contract.uploadDate).toLocaleDateString()}</div>
+                        <div><strong>Rate:</strong> ${contract.rate}</div>
+                        <div><strong>Location:</strong> ${contract.location}</div>
+                    </div>
+                    <div class="contract-actions">
+                        <button class="btn btn-small" onclick="downloadUserContract(${index})">
+                            <i class="fas fa-download"></i> Download PDF
+                        </button>
+                        <button class="btn btn-small" onclick="viewContractDetails(${index})">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = contractsHTML;
+        }
+
+        // Download contract for user
+        function downloadUserContract(index) {
+            const userContracts = uploadedContracts.filter(contract => 
+                contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
+            );
+            const contract = userContracts[index];
+            
+            if (!contract || !contract.fileData) {
+                alert('❌ Contract file not available.');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.href = contract.fileData;
+            link.download = contract.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // View contract details
+        function viewContractDetails(index) {
+            const userContracts = uploadedContracts.filter(contract => 
+                contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
+            );
+            const contract = userContracts[index];
+            
+            const details = `
+Contract Details:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Contract ID: ${contract.contractId}
+Freelancer: ${contract.freelancerName}
+Email: ${contract.freelancerEmail}
+Role: ${contract.role}
+Rate: ${contract.rate}
+Location: ${contract.location}
+Contract Date: ${contract.contractDate || 'Not specified'}
+Upload Date: ${new Date(contract.uploadDate).toLocaleString()}
+Status: ${contract.status}
+
+${contract.notes ? `Notes: ${contract.notes}` : ''}
+            `.trim();
+            
+            alert(details);
+        }
+
+        // Logout
+        function logout() {
+            sessionStorage.removeItem('userPortalAuthenticated');
+            showLoginScreen();
+        }
+
+        // Check authentication on page load
+        function checkAuth() {
+            const savedUser = sessionStorage.getItem('userPortalAuthenticated');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    showUserPortal();
+                } catch (error) {
+                    showLoginScreen();
+                }
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFreelancerData();
+            loadUploadedContracts();
+            checkAuth();
+            
+            // Add login form handler
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+        });
+    </script>
+
+    <style>
+        :root {
+            --primary: #FFB200;
+            --primary-dark: #FF9000;
+            --gold: #FFD700;
+            --black: #000000;
+            --white: #ffffff;
+            --gray-light: #f8f9fa;
+            --gray-medium: #6c757d;
+            --gray-dark: #343a40;
+            --border-radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,178,0,0.2);
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.3);
+        }
+        
+        .login-logo {
+            width: 140px;
+            height: auto;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 0 3px #FFB200) drop-shadow(0 0 6px #FFB200) drop-shadow(2px 2px 0px #000000);
+        }
+        
+        .login-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #FFB200;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .login-subtitle {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #FFB200;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #fff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.6);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,178,0,0.4);
+        }
+        
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        /* User Portal */
+        .user-portal {
+            display: none;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            padding: 2rem;
+        }
+        
+        .portal-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+        }
+        
+        .portal-header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            color: #FFB200;
+            margin-bottom: 0.5rem;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .portal-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .info-card, .contract-card {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            margin-bottom: 1rem;
+        }
+        
+        .info-card h3, .contract-card h4 {
+            color: #FFB200;
+            margin-bottom: 1rem;
+            font-family: 'Cinzel', serif;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .contract-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .status-badge {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        
+        .contract-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .contract-actions {
+            margin-top: 1rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .empty-state h3 {
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .portal-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-grid, .contract-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <img src="Logo.png" alt="Cochran Films" class="login-logo">
+            <h1 class="login-title">👤 Freelancer Portal</h1>
+            <p class="login-subtitle">Access your contracts and project information</p>
+            
+            <div id="loginError" class="error-message">
+                Invalid email or password. Please try again.
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn">🔐 Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Portal -->
+    <div id="userPortal" class="user-portal">
+        <div class="portal-header">
+            <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+            <h1>Welcome, <span id="userName">User</span>!</h1>
+            <p>Your personal freelancer portal</p>
+        </div>
+
+        <div class="portal-content">
+            <div>
+                <div id="userInfo">
+                    <!-- User info will be populated here -->
+                </div>
+            </div>
+            
+            <div>
+                <h2 style="color: #FFB200; margin-bottom: 1rem; font-family: 'Cinzel', serif;">📋 Your Contracts</h2>
+                <div id="userContracts">
+                    <!-- Contracts will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
