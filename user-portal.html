@@ -23,9 +23,72 @@
         // Load freelancer data
         function loadFreelancerData() {
             try {
-                const data = JSON.parse(localStorage.getItem('freelancers') || '[]');
+                // Try to load from localStorage first (admin dashboard format)
+                let data = JSON.parse(localStorage.getItem('freelancers') || '[]');
+                
+                // If localStorage is empty or not an array, try to load from JSON file structure
+                if (!Array.isArray(data) || data.length === 0) {
+                    // Check if we have the JSON file structure in localStorage
+                    const jsonData = localStorage.getItem('approvedFreelancers');
+                    if (jsonData) {
+                        const parsedJsonData = JSON.parse(jsonData);
+                        if (parsedJsonData.approvedFreelancers) {
+                            // Convert the JSON structure to array format
+                            data = Object.entries(parsedJsonData.approvedFreelancers).map(([name, freelancer]) => ({
+                                name: name,
+                                email: freelancer.email,
+                                password: freelancer.password,
+                                role: freelancer.role,
+                                location: freelancer.location,
+                                projectStart: freelancer.projectStart,
+                                rate: freelancer.rate,
+                                approvedDate: freelancer.approvedDate,
+                                contractUrl: freelancer.contractUrl
+                            }));
+                        }
+                    } else {
+                        // Fallback: manually load the known freelancers for testing
+                        data = [
+                            {
+                                name: "Francisco Flores",
+                                email: "ciscocinema@gmail.com",
+                                password: "Cinema2025",
+                                role: "Backdrop Photographer",
+                                location: "6695 Church Street, Douglasville, GA 30134",
+                                projectStart: "November 8, 2025 at 3:15 PM",
+                                rate: "$400.00 USD (Flat)",
+                                approvedDate: "2024-01-08",
+                                contractUrl: "contract.html"
+                            },
+                            {
+                                name: "Test User",
+                                email: "codylcochran87@gmail.com",
+                                password: "Test12345",
+                                role: "Video Editor",
+                                location: "Alanta, GA",
+                                projectStart: "August 19th, 2025 at 2:00pm",
+                                rate: "$450.00 USD (Flat)",
+                                approvedDate: "2025-04-13",
+                                contractUrl: "contract.html"
+                            },
+                            {
+                                name: "Hannah Aryee",
+                                email: "hannah@luciacreates.co",
+                                password: "Collaboration2025",
+                                role: "Backdrop Photographer",
+                                location: "6700 Church Street, Douglasville, GA,  30134",
+                                projectStart: "October 24, 2025 at 3:15 PM",
+                                rate: "$300 + Tip",
+                                approvedDate: "2025-08-01",
+                                contractUrl: "contract.html"
+                            }
+                        ];
+                    }
+                }
+                
                 freelancers = data;
                 console.log('✅ Freelancer data loaded:', freelancers.length, 'freelancers');
+                console.log('🔍 Available freelancers:', freelancers.map(f => ({ name: f.name, email: f.email })));
             } catch (error) {
                 console.error('❌ Error loading freelancer data:', error);
                 freelancers = [];
