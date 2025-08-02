@@ -286,36 +286,74 @@
                 </div>
                 
                 <div class="job-timeline">
-                    <h4><i class="fas fa-history"></i> Job Timeline</h4>
+                    <div class="timeline-header">
+                        <h4><i class="fas fa-history"></i> Project Timeline</h4>
+                        <div class="progress-indicator">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${getProjectProgress()}%"></div>
+                            </div>
+                            <span class="progress-text">${getProjectProgress()}% Complete</span>
+                        </div>
+                    </div>
+                    
+                    <div class="current-status">
+                        <div class="status-card">
+                            <div class="status-icon">
+                                <i class="${getCurrentTimelineStep().icon}"></i>
+                            </div>
+                            <div class="status-content">
+                                <h5>Current Step: ${getCurrentTimelineStep().title}</h5>
+                                <p>${getCurrentTimelineStep().description}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="timeline">
-                        <div class="timeline-item completed">
-                            <div class="timeline-icon"><i class="fas fa-check"></i></div>
-                            <div class="timeline-content">
-                                <strong>Application Approved</strong>
-                                <span>You've been accepted for this role</span>
+                        ${getProjectTimeline().map(step => `
+                            <div class="timeline-item ${step.status}" data-step="${step.id}">
+                                <div class="timeline-icon">
+                                    <i class="${step.icon}"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="timeline-main">
+                                        <strong>${step.title}</strong>
+                                        <span>${step.description}</span>
+                                        ${step.date ? `<small class="timeline-date">${step.date.toLocaleDateString()}</small>` : ''}
+                                    </div>
+                                    
+                                    ${step.status === 'current' ? `
+                                        <div class="timeline-details">
+                                            <p>${step.details}</p>
+                                            ${step.action ? `
+                                                <a href="${step.action.url}" class="timeline-action">
+                                                    <i class="${step.action.icon}"></i> ${step.action.text}
+                                                </a>
+                                            ` : ''}
+                                            ${step.checklist ? `
+                                                <div class="timeline-checklist">
+                                                    <h6>📋 Preparation Checklist:</h6>
+                                                    <ul>
+                                                        ${step.checklist.map(item => `<li>${item}</li>`).join('')}
+                                                    </ul>
+                                                </div>
+                                            ` : ''}
+                                            ${step.requirements ? `
+                                                <div class="timeline-requirements">
+                                                    <h6>📝 Requirements:</h6>
+                                                    <ul>
+                                                        ${step.requirements.map(item => `<li>${item}</li>`).join('')}
+                                                    </ul>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <button class="timeline-expand" onclick="toggleTimelineDetails('${step.id}')">
+                                        <i class="fas fa-chevron-down"></i> ${step.status === 'current' ? 'Hide' : 'Show'} Details
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="timeline-item ${getContractSignedStatus()}">
-                            <div class="timeline-icon"><i class="fas fa-signature"></i></div>
-                            <div class="timeline-content">
-                                <strong>Contract Signing</strong>
-                                <span>Sign your freelance agreement</span>
-                            </div>
-                        </div>
-                        <div class="timeline-item pending">
-                            <div class="timeline-icon"><i class="fas fa-play"></i></div>
-                            <div class="timeline-content">
-                                <strong>Project Start</strong>
-                                <span>${jobInfo.projectStart}</span>
-                            </div>
-                        </div>
-                        <div class="timeline-item pending">
-                            <div class="timeline-icon"><i class="fas fa-money-bill-wave"></i></div>
-                            <div class="timeline-content">
-                                <strong>Payment</strong>
-                                <span>Within 24 hours of completion</span>
-                            </div>
-                        </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
@@ -342,13 +380,184 @@
             return userContracts.length > 0 ? 'completed' : 'current';
         }
 
+        // Get detailed project timeline with current status
+        function getProjectTimeline() {
+            if (!currentUser) return [];
+            
+            const contractSigned = getContractSignedStatus() === 'completed';
+            const jobStatus = getJobStatus(currentUser.projectStart);
+            const now = new Date();
+            let projectStartDate = null;
+            
+            // Parse project start date
+            try {
+                if (currentUser.projectStart && currentUser.projectStart !== 'TBD') {
+                    // Handle various date formats
+                    const dateStr = currentUser.projectStart.replace(/(\d+)(st|nd|rd|th)/, '$1');
+                    projectStartDate = new Date(dateStr);
+                }
+            } catch (e) {
+                console.warn('Could not parse project start date:', currentUser.projectStart);
+            }
+            
+            const timeline = [
+                {
+                    id: 'application',
+                    title: 'Application Approved',
+                    description: 'You\'ve been accepted for this role',
+                    icon: 'fas fa-check',
+                    status: 'completed',
+                    date: currentUser.approvedDate ? new Date(currentUser.approvedDate) : null,
+                    details: `Congratulations! You were selected for the ${currentUser.role} position.`
+                },
+                {
+                    id: 'contract',
+                    title: 'Contract Signing',
+                    description: contractSigned ? 'Contract successfully signed' : 'Sign your freelance agreement',
+                    icon: 'fas fa-signature',
+                    status: contractSigned ? 'completed' : 'current',
+                    date: contractSigned ? new Date() : null, // We could store actual signing date
+                    details: contractSigned ? 
+                        'Your contract has been signed and processed. All terms are now in effect.' : 
+                        'Please review and sign your freelance contract to proceed with the project.',
+                    action: contractSigned ? null : {
+                        text: 'Sign Contract Now',
+                        url: 'contract.html',
+                        icon: 'fas fa-pen-fancy'
+                    }
+                },
+                {
+                    id: 'preparation',
+                    title: 'Project Preparation',
+                    description: contractSigned ? 'Prepare for your project' : 'Awaiting contract signature',
+                    icon: 'fas fa-clipboard-list',
+                    status: contractSigned ? (jobStatus === 'UPCOMING' || jobStatus === 'ACTIVE' ? 'current' : 'pending') : 'pending',
+                    date: null,
+                    details: contractSigned ? 
+                        'Review project requirements, prepare equipment, and confirm your availability.' : 
+                        'This phase will begin once your contract is signed.',
+                    checklist: contractSigned ? [
+                        'Review project requirements and location details',
+                        'Prepare and check all necessary equipment',
+                        'Confirm transportation and arrival plans',
+                        'Review Cochran Films brand guidelines',
+                        'Prepare professional attire (all black required)'
+                    ] : null
+                },
+                {
+                    id: 'project',
+                    title: 'Project Execution',
+                    description: projectStartDate ? `Starts ${currentUser.projectStart}` : 'Project start date TBD',
+                    icon: 'fas fa-play-circle',
+                    status: jobStatus === 'ACTIVE' ? 'current' : (jobStatus === 'COMPLETED' ? 'completed' : 'pending'),
+                    date: projectStartDate,
+                    details: jobStatus === 'ACTIVE' ? 
+                        'Your project is currently in progress. Follow all guidelines and maintain professional standards.' :
+                        jobStatus === 'COMPLETED' ? 
+                        'Project completed successfully! Thank you for your excellent work.' :
+                        `Your project is scheduled to begin on ${currentUser.projectStart}.`,
+                    requirements: jobStatus !== 'COMPLETED' ? [
+                        'Arrive 15 minutes before start time',
+                        'Bring valid ID and signed contract',
+                        'Wear all black professional attire',
+                        'Use provided Cochran Films branded gear',
+                        'Maintain professional demeanor at all times'
+                    ] : null
+                },
+                {
+                    id: 'completion',
+                    title: 'Project Completion & Payment',
+                    description: jobStatus === 'COMPLETED' ? 'Project completed - payment processed' : 'Payment within 24 hours of completion',
+                    icon: 'fas fa-money-bill-wave',
+                    status: jobStatus === 'COMPLETED' ? 'completed' : 'pending',
+                    date: jobStatus === 'COMPLETED' ? new Date() : null, // Could track actual completion date
+                    details: jobStatus === 'COMPLETED' ? 
+                        `Payment of ${currentUser.rate} has been processed. Thank you for your outstanding work!` :
+                        `You will receive payment of ${currentUser.rate} within 24 hours of project completion.`
+                }
+            ];
+            
+            return timeline;
+        }
+
+        // Get current step in timeline
+        function getCurrentTimelineStep() {
+            const timeline = getProjectTimeline();
+            const currentStep = timeline.find(step => step.status === 'current');
+            return currentStep || timeline[timeline.length - 1];
+        }
+
+        // Calculate overall progress percentage
+        function getProjectProgress() {
+            const timeline = getProjectTimeline();
+            const completedSteps = timeline.filter(step => step.status === 'completed').length;
+            return Math.round((completedSteps / timeline.length) * 100);
+        }
+
+        // Toggle timeline details
+        function toggleTimelineDetails(stepId) {
+            const timelineItem = document.querySelector(`[data-step="${stepId}"]`);
+            const detailsSection = timelineItem.querySelector('.timeline-details');
+            const expandButton = timelineItem.querySelector('.timeline-expand');
+            const icon = expandButton.querySelector('i');
+            
+            if (detailsSection) {
+                // Toggle existing details
+                if (detailsSection.style.display === 'none' || !detailsSection.style.display) {
+                    detailsSection.style.display = 'block';
+                    expandButton.innerHTML = '<i class="fas fa-chevron-up"></i> Hide Details';
+                } else {
+                    detailsSection.style.display = 'none';
+                    expandButton.innerHTML = '<i class="fas fa-chevron-down"></i> Show Details';
+                }
+            } else {
+                // Create and show details for non-current steps
+                const timeline = getProjectTimeline();
+                const step = timeline.find(s => s.id === stepId);
+                
+                if (step) {
+                    const timelineContent = timelineItem.querySelector('.timeline-content');
+                    const newDetails = document.createElement('div');
+                    newDetails.className = 'timeline-details';
+                    newDetails.innerHTML = `
+                        <p>${step.details}</p>
+                        ${step.checklist ? `
+                            <div class="timeline-checklist">
+                                <h6>📋 Preparation Checklist:</h6>
+                                <ul>
+                                    ${step.checklist.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        ${step.requirements ? `
+                            <div class="timeline-requirements">
+                                <h6>📝 Requirements:</h6>
+                                <ul>
+                                    ${step.requirements.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    `;
+                    
+                    timelineContent.insertBefore(newDetails, expandButton);
+                    expandButton.innerHTML = '<i class="fas fa-chevron-up"></i> Hide Details';
+                }
+            }
+        }
+
         // View job details function
         function viewJobDetails() {
             if (!currentUser) return;
             
+            const currentStep = getCurrentTimelineStep();
+            const progress = getProjectProgress();
+            
             const details = `
 🎬 COCHRAN FILMS - JOB DETAILS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 PROJECT PROGRESS: ${progress}% Complete
+🎯 CURRENT PHASE: ${currentStep.title}
 
 📋 ROLE INFORMATION:
 Position: ${currentUser.role}
@@ -368,11 +577,10 @@ Rate: ${currentUser.rate}
 For questions about this job, contact:
 Email: info@cochranfilms.com
 
-🔗 NEXT STEPS:
-1. Sign your contract (if not already done)
-2. Prepare your equipment
-3. Arrive at location on scheduled date
-4. Complete the project professionally
+🔗 CURRENT STEP:
+${currentStep.details}
+
+${currentStep.action ? `⚡ ACTION REQUIRED: ${currentStep.action.text}` : ''}
             `.trim();
             
             alert(details);
@@ -1003,13 +1211,114 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             margin-top: 1.5rem;
         }
 
-        .job-timeline h4 {
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .timeline-header h4 {
             color: #FFB200;
             font-family: 'Cinzel', serif;
-            margin-bottom: 1rem;
+            margin: 0;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+        }
+
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 200px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 178, 0, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFB200, #FFD700);
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: progressShimmer 2s infinite;
+        }
+
+        @keyframes progressShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            color: #FFB200;
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .current-status {
+            margin-bottom: 2rem;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, rgba(255, 178, 0, 0.1), rgba(255, 178, 0, 0.05));
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: statusPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 178, 0, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 178, 0, 0); }
+        }
+
+        .status-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #000;
+            flex-shrink: 0;
+        }
+
+        .status-content h5 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .status-content p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
         }
 
         .timeline {
@@ -1082,19 +1391,135 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
 
         .timeline-content {
             background: rgba(0, 0, 0, 0.6);
-            padding: 0.75rem 1rem;
+            padding: 1rem;
             border-radius: 8px;
             font-size: 0.9rem;
             color: rgba(255,255,255,0.7);
+            border: 1px solid rgba(255, 178, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item.current .timeline-content {
+            background: rgba(255, 178, 0, 0.05);
+            border-color: rgba(255, 178, 0, 0.3);
+        }
+
+        .timeline-main {
+            margin-bottom: 1rem;
         }
 
         .timeline-content strong {
             color: #FFB200;
             font-family: 'Cinzel', serif;
+            display: block;
+            margin-bottom: 0.25rem;
         }
 
         .timeline-content span {
             color: rgba(255,255,255,0.7);
+            display: block;
+        }
+
+        .timeline-date {
+            color: rgba(255, 178, 0, 0.8);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .timeline-details {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .timeline-details p {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .timeline-action {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 178, 0, 0.4);
+        }
+
+        .timeline-checklist, .timeline-requirements {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 3px solid #FFB200;
+        }
+
+        .timeline-checklist h6, .timeline-requirements h6 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin: 0 0 0.75rem 0;
+            font-size: 0.9rem;
+        }
+
+        .timeline-checklist ul, .timeline-requirements ul {
+            margin: 0;
+            padding-left: 1.25rem;
+            list-style: none;
+        }
+
+        .timeline-checklist li, .timeline-requirements li {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 0.5rem;
+            position: relative;
+            line-height: 1.4;
+        }
+
+        .timeline-checklist li::before {
+            content: '✓';
+            color: #22c55e;
+            font-weight: bold;
+            position: absolute;
+            left: -1.25rem;
+        }
+
+        .timeline-requirements li::before {
+            content: '•';
+            color: #FFB200;
+            font-weight: bold;
+            position: absolute;
+            left: -1.25rem;
+        }
+
+        .timeline-expand {
+            background: rgba(255, 178, 0, 0.1);
+            color: #FFB200;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .timeline-expand:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: rgba(255, 178, 0, 0.5);
         }
         
         @media (max-width: 768px) {
@@ -1105,9 +1530,57 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             .info-grid, .contract-details, .job-details {
                 grid-template-columns: 1fr;
             }
+            
             .job-actions {
                 flex-direction: column;
                 gap: 0.5rem;
+            }
+            
+            .timeline-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+            
+            .progress-indicator {
+                min-width: auto;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .status-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .timeline {
+                padding-left: 1.5rem;
+            }
+            
+            .timeline-icon {
+                left: -1.25rem;
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+            
+            .timeline-icon i {
+                font-size: 0.8rem;
+            }
+            
+            .timeline-checklist, .timeline-requirements {
+                padding: 0.75rem;
+                margin: 0.75rem 0;
+            }
+            
+            .tab-navigation {
+                justify-content: stretch;
+            }
+            
+            .tab-btn {
+                flex: 1;
+                text-align: center;
+                justify-content: center;
             }
         }
     </style>
