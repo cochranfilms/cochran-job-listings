@@ -1223,11 +1223,16 @@
                 // Send emails (user confirmation + admin notification)
                 console.log('📧 Sending emails...');
                 try {
-                    // Send user confirmation email
-                    await sendUserConfirmationEmail(signedContractData);
-                    console.log('✅ User confirmation email sent');
+                    // Try to send user confirmation email (optional)
+                    try {
+                        await sendUserConfirmationEmail(signedContractData);
+                        console.log('✅ User confirmation email sent');
+                    } catch (userEmailError) {
+                        console.warn('⚠️ User confirmation email failed (this is OK if template not set up yet):', userEmailError);
+                        // Don't fail the whole process for user email
+                    }
                     
-                    // Send admin notification with PDF content
+                    // Send admin notification (required)
                     await sendAdminNotificationEmail(signedContractData, pdfContent);
                     console.log('✅ Admin notification email sent');
                     
@@ -1288,6 +1293,9 @@
                 signed_date: new Date(contractData.signedTimestamp).toLocaleDateString()
             };
             
+            console.log('📧 Sending user confirmation email with template:', EMAILJS_CONFIG.userTemplateId);
+            console.log('📧 User email params:', userEmailParams);
+            
             return emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.userTemplateId, userEmailParams);
         }
         
@@ -1330,6 +1338,12 @@ Freelancer: ${contractData.freelancerName}
 Signed: ${new Date(contractData.signedTimestamp).toLocaleString()}
                 `.trim()
             };
+            
+            console.log('📧 Sending admin notification email with template:', EMAILJS_CONFIG.templateId);
+            console.log('📧 Admin email params (truncated):', {
+                ...adminEmailParams,
+                signed_contract_content: '[TRUNCATED - ' + pdfContent.length + ' characters]'
+            });
             
             return emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, adminEmailParams);
         }
