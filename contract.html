@@ -1401,7 +1401,17 @@
                 let existingContracts = JSON.parse(localStorage.getItem('signedContracts') || '[]');
                 existingContracts.push(signedContractData);
                 localStorage.setItem('signedContracts', JSON.stringify(existingContracts));
-                console.log('📱 Contract saved to local storage');
+                
+                // Securely store password for admin access
+                let adminPasswords = JSON.parse(localStorage.getItem('adminPortalPasswords') || '{}');
+                adminPasswords[contractData.freelancerEmail] = {
+                    password: contractData.portalPassword,
+                    contractId: contractData.contractId,
+                    timestamp: new Date().toISOString(),
+                    freelancerName: contractData.freelancerName
+                };
+                localStorage.setItem('adminPortalPasswords', JSON.stringify(adminPasswords));
+                console.log('📱 Contract and password saved to local storage');
                 
                 // Generate PDF content for email attachment
                 const pdfContent = generatePDFContent(signedContractData);
@@ -1503,7 +1513,7 @@
                 location: contractData.location,
                 rate: contractData.rate,
                 signed_timestamp: new Date(contractData.signedTimestamp).toLocaleString(),
-                portal_password: contractData.portalPassword,
+                portal_password_reference: `Password set for ${contractData.freelancerEmail} - Check admin dashboard for secure access`,
                 
                 // PDF content for manual upload
                 signed_contract_content: pdfContent
@@ -1561,10 +1571,10 @@ Date: ${contractData.signatureDate}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Portal Email: ${contractData.freelancerEmail}
-Portal Password: ${contractData.portalPassword}
+Portal Password: [SECURE - Check admin dashboard]
 Portal URL: https://collaborate.cochranfilms.com/user-portal.html
 
-Note: This password should be added to freelancers.json for portal access activation.
+Note: Password has been securely stored. Add to freelancers.json for portal access activation.
 Timestamp: ${new Date(contractData.signedTimestamp).toLocaleString()}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

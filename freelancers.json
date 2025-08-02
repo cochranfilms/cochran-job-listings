@@ -12,9 +12,30 @@
       "contractStatus": "pending",
       "contractSignedDate": null,
       "contractUploadedDate": null,
+      "contractId": null
+    },
+    "Big Pharma": {
+      "email": "bigpharma@example.com",
+      "password": "Pharma2025",
+      "contractUrl": "contract.html",
+      "approvedDate": "2025-08-01",
+      "contractStatus": "pending",
+      "contractSignedDate": null,
+      "contractUploadedDate": null,
       "contractId": null,
-      "jobs": [],
-      "primaryJob": null
+      "jobs": [
+        {
+          "id": "job-bigpharma-001",
+          "role": "Corporate Videographer",
+          "location": "Atlanta, GA",
+          "projectStart": "December 15th, 2025 at 9:00am",
+          "rate": "$500.00 USD (Flat)",
+          "status": "upcoming",
+          "projectType": "Corporate Video",
+          "description": "Professional corporate video production for pharmaceutical company"
+        }
+      ],
+      "primaryJob": "job-bigpharma-001"
     },
     "Test User": {
       "email": "codylcochran87@gmail.com",
@@ -37,7 +58,7 @@
           "description": "Edit promotional video for tech startup"
         },
         {
-          "id": "job-002",
+          "id": "job-002", 
           "role": "Drone Operator",
           "location": "Savannah, GA",
           "projectStart": "September 15th, 2025 at 10:00am",
@@ -61,27 +82,9 @@
       "contractStatus": "pending",
       "contractSignedDate": null,
       "contractUploadedDate": null,
-      "contractId": null,
-      "jobs": [],
-      "primaryJob": null
-    },
-    "big pharma": {
-      "email": "coursecreatoracademy24@gmail.com",
-      "password": "Placeholder",
-      "contractUrl": "contract.html",
-      "role": "Video Editor",
-      "location": "Douglasville, GA",
-      "projectStart": "September 11th, 2025 at 5:00pm",
-      "rate": "$400 Flat Rate",
-      "approvedDate": "2025-08-02",
-      "contractStatus": "pending",
-      "contractSignedDate": null,
-      "contractUploadedDate": null,
-      "contractId": null,
-      "jobs": [],
-      "primaryJob": null
+      "contractId": null
     }
   },
-  "lastUpdated": "2025-08-02",
+  "lastUpdated": "2025-08-01",
   "totalFreelancers": 4
 }

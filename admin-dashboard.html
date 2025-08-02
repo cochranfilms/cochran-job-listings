@@ -1082,6 +1082,88 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             }
         });
 
+        // View stored portal passwords
+        function viewStoredPasswords() {
+            const adminPasswords = JSON.parse(localStorage.getItem('adminPortalPasswords') || '{}');
+            
+            if (Object.keys(adminPasswords).length === 0) {
+                alert('No stored passwords found. Passwords are stored when contracts are signed.');
+                return;
+            }
+            
+            let passwordList = '🔐 STORED PORTAL PASSWORDS\n\n';
+            
+            Object.entries(adminPasswords).forEach(([email, data]) => {
+                passwordList += `📧 Email: ${email}\n`;
+                passwordList += `🔑 Password: ${data.password}\n`;
+                passwordList += `👤 Name: ${data.freelancerName}\n`;
+                passwordList += `📄 Contract ID: ${data.contractId}\n`;
+                passwordList += `⏰ Timestamp: ${new Date(data.timestamp).toLocaleString()}\n`;
+                passwordList += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+            });
+            
+            // Create a modal to display passwords
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                ">
+                    <button onclick="this.closest('div[style*=\'position: fixed\']').remove()" 
+                            style="
+                                position: absolute;
+                                top: 1rem;
+                                right: 1rem;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 30px;
+                                height: 30px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            ">×</button>
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">🔐 Stored Portal Passwords</h3>
+                    <pre style="
+                        background: #f8f9fa;
+                        padding: 1rem;
+                        border-radius: 8px;
+                        white-space: pre-wrap;
+                        font-family: monospace;
+                        font-size: 0.9rem;
+                        max-height: 400px;
+                        overflow-y: auto;
+                    ">${passwordList}</pre>
+                    <p style="color: #666; font-size: 0.9rem; margin-top: 1rem;">
+                        💡 These passwords are stored securely and should be added to freelancers.json for portal access.
+                    </p>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
         // ==================== QUICK IMPORT FROM EMAIL ====================
 
         // Parse email data and auto-fill form
@@ -2066,6 +2148,9 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 <p>Export your freelancer data to update <code>freelancers.json</code>:</p>
                 <button class="btn" onclick="exportContractData()">Generate JSON</button>
                 <button class="btn" onclick="downloadContractJSON()" id="downloadContractBtn" style="display: none;">Download freelancers.json</button>
+                <button class="btn" onclick="viewStoredPasswords()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                    <i class="fas fa-key"></i> View Stored Passwords
+                </button>
                 <pre id="exportContractData"></pre>
             </div>
 
