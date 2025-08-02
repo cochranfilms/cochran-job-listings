@@ -23,9 +23,10 @@
         // Load freelancer data from JSON file
         async function loadFreelancerData() {
             try {
-                // First, try to load directly from freelancers.json file
+                // First, try to load directly from freelancers.json file (prevent caching)
                 try {
-                    const response = await fetch('freelancers.json');
+                    const timestamp = new Date().getTime();
+                    const response = await fetch(`freelancers.json?t=${timestamp}`);
                     if (response.ok) {
                         const jsonData = await response.json();
                         if (jsonData.approvedFreelancers) {
@@ -36,6 +37,11 @@
                                 password: freelancer.password,
                                 approvedDate: freelancer.approvedDate,
                                 contractUrl: freelancer.contractUrl || 'contract.html',
+                                // CONTRACT STATUS FIELDS - CRITICAL!
+                                contractStatus: freelancer.contractStatus || 'pending',
+                                contractSignedDate: freelancer.contractSignedDate,
+                                contractUploadedDate: freelancer.contractUploadedDate,
+                                contractId: freelancer.contractId,
                                 // Handle both old single job format and new multiple jobs format
                                 jobs: freelancer.jobs || [{
                                     id: 'legacy-job',
@@ -51,10 +57,12 @@
                             }));
                             
                             console.log('✅ Freelancer data loaded from JSON file:', freelancers.length, 'freelancers');
-                            console.log('🔍 Available freelancers with jobs:', freelancers.map(f => ({ 
+                            console.log('🔍 Available freelancers with jobs and contract status:', freelancers.map(f => ({ 
                                 name: f.name, 
                                 email: f.email, 
-                                jobCount: f.jobs.length 
+                                jobCount: f.jobs.length,
+                                contractStatus: f.contractStatus,
+                                contractId: f.contractId
                             })));
                             return;
                         }
@@ -79,6 +87,11 @@
                                 password: freelancer.password,
                                 approvedDate: freelancer.approvedDate,
                                 contractUrl: freelancer.contractUrl || 'contract.html',
+                                // CONTRACT STATUS FIELDS - CRITICAL!
+                                contractStatus: freelancer.contractStatus || 'pending',
+                                contractSignedDate: freelancer.contractSignedDate,
+                                contractUploadedDate: freelancer.contractUploadedDate,
+                                contractId: freelancer.contractId,
                                 jobs: freelancer.jobs || [{
                                     id: 'legacy-job',
                                     role: freelancer.role,
@@ -101,6 +114,10 @@
                                 password: "Cinema2025",
                                 approvedDate: "2024-01-08",
                                 contractUrl: "contract.html",
+                                contractStatus: "pending",
+                                contractSignedDate: null,
+                                contractUploadedDate: null,
+                                contractId: null,
                                 jobs: [{
                                     id: 'job-francisco-001',
                                     role: "Backdrop Photographer",
@@ -119,6 +136,10 @@
                                 password: "Test12345",
                                 approvedDate: "2025-04-13",
                                 contractUrl: "contract.html",
+                                contractStatus: "pending",
+                                contractSignedDate: null,
+                                contractUploadedDate: null,
+                                contractId: null,
                                 jobs: [
                                     {
                                         id: "job-001",
@@ -149,6 +170,10 @@
                                 password: "Collaboration2025",
                                 approvedDate: "2025-08-01",
                                 contractUrl: "contract.html",
+                                contractStatus: "pending",
+                                contractSignedDate: null,
+                                contractUploadedDate: null,
+                                contractId: null,
                                 jobs: [{
                                     id: 'job-hannah-001',
                                     role: "Backdrop Photographer",
@@ -656,12 +681,21 @@
 
         // Helper function to check if contract is signed (single source of truth from freelancers.json)
         function getContractSignedStatus() {
-            if (!currentUser) return 'current';
+            if (!currentUser) {
+                console.log('📋 No current user for contract status check');
+                return 'current';
+            }
             
             // Use the contract status from the user's data (from freelancers.json)
             const contractStatus = currentUser.contractStatus || 'pending';
             
-            console.log('📋 Contract status for', currentUser.name, ':', contractStatus);
+            console.log('📋 Contract status check for', currentUser.name, ':', {
+                contractStatus: contractStatus,
+                contractId: currentUser.contractId,
+                signedDate: currentUser.contractSignedDate,
+                uploadedDate: currentUser.contractUploadedDate,
+                userObject: currentUser
+            });
             
             // Only return 'completed' if admin has uploaded the contract (status = 'uploaded')
             // 'pending' = not signed yet  
@@ -669,9 +703,9 @@
             // 'uploaded' = admin has uploaded the signed PDF (fully processed)
             const hasSignedContract = contractStatus === 'uploaded';
             
-            console.log('📋 Contract status check:', {
-                contractStatus: contractStatus,
-                hasSignedContract: hasSignedContract
+            console.log('📋 Final contract status result:', {
+                hasSignedContract: hasSignedContract,
+                returning: hasSignedContract ? 'completed' : 'current'
             });
             
             return hasSignedContract ? 'completed' : 'current';
@@ -1065,6 +1099,24 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             }
         }
 
+        // Refresh user data (reload from JSON file)
+        async function refreshUserData() {
+            console.log('🔄 Refreshing user data...');
+            await loadFreelancerData();
+            
+            if (currentUser) {
+                // Find updated user data
+                const updatedUser = freelancers.find(f => f.email.toLowerCase() === currentUser.email.toLowerCase());
+                if (updatedUser) {
+                    currentUser = updatedUser;
+                    console.log('✅ User data refreshed:', currentUser);
+                    loadUserData(); // Refresh displays
+                } else {
+                    console.warn('⚠️ User not found after refresh');
+                }
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
             await loadFreelancerData();
@@ -1076,6 +1128,9 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             if (loginForm) {
                 loginForm.addEventListener('submit', handleLogin);
             }
+            
+            // Add refresh button functionality
+            window.refreshUserData = refreshUserData;
         });
     </script>
 
@@ -1292,6 +1347,29 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             background: rgba(255,255,255,0.2);
             border-color: #FFB200;
             transform: translateY(-1px);
+        }
+
+        .refresh-btn {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+            transform: rotate(180deg);
         }
         
         .portal-content {
@@ -2775,7 +2853,12 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
     <!-- User Portal -->
     <div id="userPortal" class="user-portal">
         <div class="portal-header">
-            <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+            <div style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem;">
+                <button class="refresh-btn" onclick="refreshUserData()" title="Refresh data from server">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+            </div>
             <h1>Welcome, <span id="userName">User</span>!</h1>
             <p>Your personal freelancer portal</p>
         </div>

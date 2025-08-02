@@ -911,14 +911,20 @@
             
             console.log('📝 Input data:', { name, email });
             
-            // First, load the latest freelancer data from JSON file
+            // First, load the latest freelancer data from JSON file (prevent caching)
             try {
-                const response = await fetch('freelancers.json');
+                const timestamp = new Date().getTime();
+                const response = await fetch(`freelancers.json?t=${timestamp}`);
                 if (response.ok) {
                     const jsonData = await response.json();
                     if (jsonData.approvedFreelancers) {
                         approvedFreelancers = jsonData.approvedFreelancers;
-                        console.log('✅ Loaded latest freelancer data from JSON file');
+                        console.log('✅ Loaded latest freelancer data from JSON file:', Object.keys(jsonData.approvedFreelancers));
+                        console.log('🔍 Contract statuses:', Object.entries(jsonData.approvedFreelancers).map(([name, data]) => ({
+                            name,
+                            email: data.email,
+                            contractStatus: data.contractStatus
+                        })));
                     }
                 }
             } catch (error) {

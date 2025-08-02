@@ -19,10 +19,10 @@
       "password": "Test12345",
       "contractUrl": "contract.html",
       "approvedDate": "2025-04-13",
-      "contractStatus": "pending",
-      "contractSignedDate": null,
-      "contractUploadedDate": null,
-      "contractId": null,
+      "contractStatus": "uploaded",
+      "contractSignedDate": "2025-08-01",
+      "contractUploadedDate": "2025-08-01",
+      "contractId": "CF-UPLOAD-TEST-12345",
       "jobs": [
         {
           "id": "job-001",
