@@ -1035,47 +1035,66 @@
         }
 
         // Download contract for user
-        function downloadUserContract(index) {
-            const userContracts = uploadedContracts.filter(contract => 
+        function downloadUserContract() {
+            // Find the user's uploaded contract
+            const userContract = uploadedContracts.find(contract => 
                 contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
             );
-            const contract = userContracts[index];
             
-            if (!contract || !contract.fileData) {
-                alert('❌ Contract file not available.');
+            if (!userContract) {
+                alert('❌ No uploaded contract found for your account.');
                 return;
             }
             
+            if (!userContract.fileData) {
+                alert('❌ Contract file data not available. Please contact admin.');
+                return;
+            }
+            
+            // Create download link
             const link = document.createElement('a');
-            link.href = contract.fileData;
-            link.download = contract.fileName;
+            link.href = userContract.fileData;
+            link.download = userContract.fileName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            
+            console.log('📄 Downloaded contract:', userContract.fileName);
         }
 
         // View contract details
-        function viewContractDetails(index) {
-            const userContracts = uploadedContracts.filter(contract => 
+        function viewContractDetails() {
+            // Find the user's uploaded contract
+            const userContract = uploadedContracts.find(contract => 
                 contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
             );
-            const contract = userContracts[index];
+            
+            if (!userContract) {
+                alert('❌ No uploaded contract found for your account.');
+                return;
+            }
             
             const details = `
-Contract Details:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 COCHRAN FILMS - CONTRACT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Contract ID: ${contract.contractId}
-Freelancer: ${contract.freelancerName}
-Email: ${contract.freelancerEmail}
-Role: ${contract.role}
-Rate: ${contract.rate}
-Location: ${contract.location}
-Contract Date: ${contract.contractDate || 'Not specified'}
-Upload Date: ${new Date(contract.uploadDate).toLocaleString()}
-Status: ${contract.status}
+📋 BASIC INFO:
+Contract ID: ${userContract.contractId}
+Freelancer: ${userContract.freelancerName}
+Email: ${userContract.freelancerEmail}
+Role: ${userContract.role}
+Rate: ${userContract.rate}
+Location: ${userContract.location}
+Contract Date: ${userContract.contractDate || 'Not specified'}
 
-${contract.notes ? `Notes: ${contract.notes}` : ''}
+📁 FILE INFO:
+File Name: ${userContract.fileName}
+File Size: ${(userContract.fileSize / 1024).toFixed(1)} KB
+Upload Date: ${new Date(userContract.uploadDate).toLocaleString()}
+Status: ${userContract.status}
+
+${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             `.trim();
             
             alert(details);
@@ -1119,6 +1138,7 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
         async function refreshUserData() {
             console.log('🔄 Refreshing user data...');
             await loadFreelancerData();
+            await loadUploadedContracts();
             
             if (currentUser) {
                 // Find updated user data
