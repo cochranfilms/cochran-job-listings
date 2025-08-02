@@ -644,16 +644,26 @@
                 <p>Your contract has been digitally signed and is now legally binding.</p>
                 
                 <div style="text-align: left; margin: 2rem 0;">
-                    <div class="contract-section" style="background: rgba(34, 197, 94, 0.1); border-color: #22c55e;">
-                        <h4 style="color: #22c55e;"><i class="fas fa-clipboard-check"></i> Next Steps</h4>
+                <div class="contract-section" style="background: rgba(34, 197, 94, 0.1); border-color: #22c55e;">
+                    <h4 style="color: #22c55e;"><i class="fas fa-clipboard-check"></i> Next Steps</h4>
                         <ul style="list-style: none; padding: 0; color: rgba(255,255,255,0.9);">
                             <li style="margin-bottom: 0.5rem;">✅ Your digital signature has been recorded</li>
                             <li style="margin-bottom: 0.5rem;">✅ Contract data has been saved securely</li>
                             <li style="margin-bottom: 0.5rem;">✅ You will receive a confirmation email shortly</li>
                             <li style="margin-bottom: 0.5rem;">✅ Admin has been notified with your signed contract</li>
                             <li>📋 We have you scheduled for the job - thank you!</li>
-                        </ul>
+                    </ul>
+                    
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(34, 197, 94, 0.3);">
+                        <h4 style="color: #22c55e; margin-bottom: 1rem;"><i class="fas fa-user-circle"></i> Access Your Portal</h4>
+                        <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.9);">
+                            View your contracts, job details, and project timeline in your personal freelancer portal.
+                        </p>
+                        <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin-right: 0;">
+                            <i class="fas fa-external-link-alt"></i> Open Freelancer Portal
+                        </a>
                     </div>
+                </div>
                 </div>
             </div>
             
@@ -1237,30 +1247,30 @@
                     console.log('✅ Admin notification email sent');
                     
                     // Show success message
-                    setTimeout(() => {
-                        const signedMessage = document.getElementById('signed-message');
-                        if (signedMessage) {
-                            const syncStatus = document.createElement('div');
-                            syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #e8f5e8; border: 1px solid #4caf50; border-radius: 5px; color: #2e7d32;';
+                        setTimeout(() => {
+                            const signedMessage = document.getElementById('signed-message');
+                            if (signedMessage) {
+                                const syncStatus = document.createElement('div');
+                                syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #e8f5e8; border: 1px solid #4caf50; border-radius: 5px; color: #2e7d32;';
                             syncStatus.innerHTML = '✅ <strong>Contract signed successfully!</strong><br>You will receive a confirmation email shortly. Your signed contract has been sent to admin.';
-                            signedMessage.appendChild(syncStatus);
-                        }
-                    }, 1000);
-                    
+                                signedMessage.appendChild(syncStatus);
+                            }
+                        }, 1000);
+                        
                 } catch (emailError) {
                     console.warn('⚠️ Email sending failed:', emailError);
                     
-                    // Show partial success message
-                    setTimeout(() => {
-                        const signedMessage = document.getElementById('signed-message');
-                        if (signedMessage) {
-                            const syncStatus = document.createElement('div');
-                            syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; color: #856404;';
+                        // Show partial success message
+                        setTimeout(() => {
+                            const signedMessage = document.getElementById('signed-message');
+                            if (signedMessage) {
+                                const syncStatus = document.createElement('div');
+                                syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; color: #856404;';
                             syncStatus.innerHTML = '⚠️ <strong>Contract signed and saved locally</strong><br>Email notification failed, but your contract is saved. Please contact admin.';
-                            signedMessage.appendChild(syncStatus);
-                        }
-                    }, 1000);
-                }
+                                signedMessage.appendChild(syncStatus);
+                            }
+                        }, 1000);
+                    }
                 
                 // Legacy notification for compatibility
                 localStorage.setItem('contractSignedNotification', JSON.stringify({
@@ -1283,7 +1293,7 @@
             }
             
             const userEmailParams = {
-                to_email: contractData.freelancerEmail,
+                email: contractData.freelancerEmail,  // Changed from 'to_email' to 'email'
                 freelancer_name: contractData.freelancerName,
                 contract_id: contractData.contractId,
                 role: contractData.role,
@@ -1319,24 +1329,7 @@
                 signed_timestamp: new Date(contractData.signedTimestamp).toLocaleString(),
                 
                 // PDF content for manual upload
-                signed_contract_content: pdfContent,
-                
-                // Updated workflow instructions
-                contract_download_note: `
-📄 SIGNED CONTRACT PDF READY FOR UPLOAD
-
-The signed contract is included in this email as formatted text below. 
-To add it to your admin dashboard:
-
-1. Copy the contract content below
-2. Create a PDF from the content (print to PDF or copy to document)
-3. Upload the PDF via Admin Dashboard > Signed Contracts tab
-4. Use the manual upload feature to organize your contract files
-
-Contract ID: ${contractData.contractId}
-Freelancer: ${contractData.freelancerName}
-Signed: ${new Date(contractData.signedTimestamp).toLocaleString()}
-                `.trim()
+                signed_contract_content: pdfContent
             };
             
             console.log('📧 Sending admin notification email with template:', EMAILJS_CONFIG.templateId);
@@ -1422,7 +1415,7 @@ legally binding and fully executed as of ${new Date(contractData.signedTimestamp
 Digital verification hash: ${contractData.contractId}
             `.trim();
         }
-        
+
         // Add enter key support for input fields only
         document.addEventListener('DOMContentLoaded', function() {
             const nameInput = document.getElementById('freelancerName');
