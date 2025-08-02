@@ -156,19 +156,103 @@
         // Display user information
         function displayUserInfo() {
             const container = document.getElementById('userInfo');
+            
+            // Get all jobs for this user (in the future, this could support multiple jobs)
+            const userJobs = [currentUser]; // For now, just one job
+            
             container.innerHTML = `
-                <div class="info-card">
-                    <h3>👤 Your Profile</h3>
-                    <div class="info-grid">
-                        <div><strong>Name:</strong> ${currentUser.name}</div>
-                        <div><strong>Email:</strong> ${currentUser.email}</div>
-                        <div><strong>Role:</strong> ${currentUser.role}</div>
-                        <div><strong>Location:</strong> ${currentUser.location}</div>
-                        <div><strong>Rate:</strong> ${currentUser.rate}</div>
-                        <div><strong>Project Start:</strong> ${currentUser.projectStart}</div>
+                <div class="profile-grid">
+                    <!-- Contact Information Card -->
+                    <div class="contact-info-card">
+                        <h3><i class="fas fa-user-circle"></i> Contact Information</h3>
+                        <div class="contact-details">
+                            <div class="contact-item">
+                                <i class="fas fa-user"></i>
+                                <div>
+                                    <strong>Full Name</strong>
+                                    <span>${currentUser.name}</span>
+                                </div>
+                            </div>
+                            <div class="contact-item">
+                                <i class="fas fa-envelope"></i>
+                                <div>
+                                    <strong>Email Address</strong>
+                                    <span>${currentUser.email}</span>
+                                </div>
+                            </div>
+                            <div class="contact-item">
+                                <i class="fas fa-calendar-check"></i>
+                                <div>
+                                    <strong>Approved Date</strong>
+                                    <span>${new Date(currentUser.approvedDate || Date.now()).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Job Card -->
+                    <div class="current-job-card">
+                        <div class="job-header-section">
+                            <h3><i class="fas fa-briefcase"></i> Current Assignment</h3>
+                            <span class="job-count">${userJobs.length} Active Job${userJobs.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        
+                        <div class="job-selector">
+                            ${userJobs.map((job, index) => `
+                                <div class="job-option ${index === 0 ? 'active' : ''}" onclick="selectJob(${index})">
+                                    <div class="job-info">
+                                        <div class="job-title">
+                                            <i class="fas fa-video"></i>
+                                            <strong>${job.role}</strong>
+                                        </div>
+                                        <div class="job-details-grid">
+                                            <div class="job-detail">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <span>${job.location}</span>
+                                            </div>
+                                            <div class="job-detail">
+                                                <i class="fas fa-dollar-sign"></i>
+                                                <span>${job.rate}</span>
+                                            </div>
+                                            <div class="job-detail">
+                                                <i class="fas fa-clock"></i>
+                                                <span>${job.projectStart}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="job-status-indicator ${getJobStatus(job.projectStart).toLowerCase()}">
+                                        ${getJobStatus(job.projectStart)}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="job-actions-section">
+                            <button class="btn btn-primary" onclick="switchPortalTab('jobs')">
+                                <i class="fas fa-tasks"></i> View Project Timeline
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewJobDetails()">
+                                <i class="fas fa-info-circle"></i> Job Details
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
+        }
+        
+        // Select a job (for future multiple job support)
+        function selectJob(jobIndex) {
+            const jobOptions = document.querySelectorAll('.job-option');
+            jobOptions.forEach((option, index) => {
+                if (index === jobIndex) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+            
+            console.log('Selected job:', jobIndex);
+            // In the future, this could update the current job context
         }
 
         // Display user contracts
@@ -270,7 +354,9 @@
                             <i class="fas fa-handshake"></i>
                             <div>
                                 <strong>Contract Status</strong>
-                                <span class="contract-status">Ready to Sign</span>
+                                <span class="contract-status ${getContractSignedStatus() === 'completed' ? 'signed' : 'pending'}">
+                                    ${getContractSignedStatus() === 'completed' ? '✅ Signed' : '⏳ Ready to Sign'}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -373,11 +459,32 @@
 
         // Helper function to check if contract is signed
         function getContractSignedStatus() {
-            // Check if user has signed contracts
-            const userContracts = uploadedContracts.filter(contract => 
+            // Check if user has signed contracts in uploaded contracts (from admin)
+            const adminUploadedContracts = uploadedContracts.filter(contract => 
                 contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
             );
-            return userContracts.length > 0 ? 'completed' : 'current';
+            
+            // Check if user has signed contracts locally (from contract.html)
+            let localSignedContracts = [];
+            try {
+                localSignedContracts = JSON.parse(localStorage.getItem('signedContracts') || '[]');
+                localSignedContracts = localSignedContracts.filter(contract => 
+                    contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
+                );
+            } catch (e) {
+                console.warn('Could not load local signed contracts:', e);
+            }
+            
+            // Contract is signed if it exists in either location
+            const hasSignedContract = adminUploadedContracts.length > 0 || localSignedContracts.length > 0;
+            
+            console.log('📋 Contract status check:', {
+                adminUploaded: adminUploadedContracts.length,
+                localSigned: localSignedContracts.length,
+                hasSignedContract: hasSignedContract
+            });
+            
+            return hasSignedContract ? 'completed' : 'current';
         }
 
         // Get detailed project timeline with current status
@@ -413,13 +520,13 @@
                 {
                     id: 'contract',
                     title: 'Contract Signing',
-                    description: contractSigned ? 'Contract successfully signed' : 'Sign your freelance agreement',
+                    description: contractSigned ? 'Contract successfully signed ✅' : 'Sign your freelance agreement',
                     icon: 'fas fa-signature',
                     status: contractSigned ? 'completed' : 'current',
                     date: contractSigned ? new Date() : null, // We could store actual signing date
                     details: contractSigned ? 
-                        'Your contract has been signed and processed. All terms are now in effect.' : 
-                        'Please review and sign your freelance contract to proceed with the project.',
+                        '✅ Your contract has been digitally signed and processed. All terms are now in effect. Thank you for completing this step!' : 
+                        'Please review and sign your freelance contract to proceed with the project. This is a required step before project preparation can begin.',
                     action: contractSigned ? null : {
                         text: 'Sign Contract Now',
                         url: 'contract.html',
@@ -487,11 +594,19 @@
             return currentStep || timeline[timeline.length - 1];
         }
 
-        // Calculate overall progress percentage
+        // Calculate overall progress percentage (0%, 20%, 40%, 60%, 80%, 100%)
         function getProjectProgress() {
             const timeline = getProjectTimeline();
             const completedSteps = timeline.filter(step => step.status === 'completed').length;
-            return Math.round((completedSteps / timeline.length) * 100);
+            const currentSteps = timeline.filter(step => step.status === 'current').length;
+            
+            // Each step is worth 20% (5 total steps)
+            const baseProgress = completedSteps * 20;
+            
+            // If there's a current step, add 50% of its value (10% for partial progress)
+            const partialProgress = currentSteps > 0 ? 10 : 0;
+            
+            return Math.min(100, baseProgress + partialProgress);
         }
 
         // Toggle timeline details
@@ -545,45 +660,126 @@
             }
         }
 
-        // View job details function
+        // View job details function with beautiful modal
         function viewJobDetails() {
             if (!currentUser) return;
             
             const currentStep = getCurrentTimelineStep();
             const progress = getProjectProgress();
             
-            const details = `
-🎬 COCHRAN FILMS - JOB DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            showJobDetailsModal({
+                progress: progress,
+                currentStep: currentStep,
+                user: currentUser
+            });
+        }
 
-📊 PROJECT PROGRESS: ${progress}% Complete
-🎯 CURRENT PHASE: ${currentStep.title}
-
-📋 ROLE INFORMATION:
-Position: ${currentUser.role}
-Location: ${currentUser.location}
-Start Date: ${currentUser.projectStart}
-Rate: ${currentUser.rate}
-
-💼 PROJECT REQUIREMENTS:
-• Arrive on time and professionally dressed
-• Bring your own equipment (unless arranged)
-• Maintain professional demeanor
-• Complete assigned tasks to high standards
-• Wear company-branded gear (provided free)
-• All black attire required
-
-📧 CONTACT:
-For questions about this job, contact:
-Email: info@cochranfilms.com
-
-🔗 CURRENT STEP:
-${currentStep.details}
-
-${currentStep.action ? `⚡ ACTION REQUIRED: ${currentStep.action.text}` : ''}
-            `.trim();
+        // Show job details modal
+        function showJobDetailsModal(data) {
+            const modal = document.createElement('div');
+            modal.className = 'job-details-modal';
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="closeJobDetailsModal()"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-briefcase"></i> Job Details</h2>
+                        <button class="modal-close" onclick="closeJobDetailsModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <div class="job-progress-section">
+                            <div class="progress-header">
+                                <h3><i class="fas fa-chart-line"></i> Project Progress</h3>
+                                <span class="progress-percentage">${data.progress}% Complete</span>
+                            </div>
+                            <div class="modal-progress-bar">
+                                <div class="modal-progress-fill" style="width: ${data.progress}%"></div>
+                            </div>
+                            <p class="current-phase">Current Phase: <strong>${data.currentStep.title}</strong></p>
+                        </div>
+                        
+                        <div class="job-info-grid">
+                            <div class="job-info-card">
+                                <h4><i class="fas fa-user"></i> Role Information</h4>
+                                <div class="info-list">
+                                    <div class="info-item">
+                                        <span class="label">Position:</span>
+                                        <span class="value">${data.user.role}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Location:</span>
+                                        <span class="value">${data.user.location}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Start Date:</span>
+                                        <span class="value">${data.user.projectStart}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Rate:</span>
+                                        <span class="value highlight">${data.user.rate}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="job-info-card">
+                                <h4><i class="fas fa-clipboard-list"></i> Requirements</h4>
+                                <ul class="requirements-list">
+                                    <li><i class="fas fa-clock"></i> Arrive on time and professionally dressed</li>
+                                    <li><i class="fas fa-tools"></i> Bring your own equipment (unless arranged)</li>
+                                    <li><i class="fas fa-handshake"></i> Maintain professional demeanor</li>
+                                    <li><i class="fas fa-star"></i> Complete assigned tasks to high standards</li>
+                                    <li><i class="fas fa-tshirt"></i> Wear company-branded gear (provided free)</li>
+                                    <li><i class="fas fa-palette"></i> All black attire required</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="current-step-section">
+                            <h4><i class="fas fa-bullseye"></i> Current Step Details</h4>
+                            <div class="step-details">
+                                <p>${data.currentStep.details}</p>
+                                ${data.currentStep.action ? `
+                                    <div class="action-required">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <strong>Action Required:</strong> ${data.currentStep.action.text}
+                                        <a href="${data.currentStep.action.url}" class="modal-action-btn">
+                                            <i class="${data.currentStep.action.icon}"></i> Take Action
+                                        </a>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="contact-section">
+                            <h4><i class="fas fa-phone"></i> Need Help?</h4>
+                            <p>For questions about this job, contact:</p>
+                            <a href="mailto:info@cochranfilms.com" class="contact-link">
+                                <i class="fas fa-envelope"></i> info@cochranfilms.com
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
             
-            alert(details);
+            document.body.appendChild(modal);
+            
+            // Animate in
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+        }
+
+        // Close job details modal
+        function closeJobDetailsModal() {
+            const modal = document.querySelector('.job-details-modal');
+            if (modal) {
+                modal.classList.add('hide');
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
         }
 
         // Download contract for user
@@ -1177,6 +1373,16 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             color: rgba(255,255,255,0.7);
         }
 
+        .contract-status.signed {
+            color: #22c55e !important;
+            font-weight: 600;
+        }
+
+        .contract-status.pending {
+            color: #FFB200 !important;
+            font-weight: 600;
+        }
+
         .job-actions {
             display: flex;
             gap: 1rem;
@@ -1343,36 +1549,9 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             padding-left: 1.5rem;
         }
 
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -0.75rem;
-            top: 0.5rem;
-            width: 1.5rem;
-            height: 1.5rem;
-            background: rgba(255, 178, 0, 0.1);
-            border-radius: 50%;
-            border: 2px solid #FFB200;
-        }
-
-        .timeline-item.completed::before {
-            background: rgba(34, 197, 94, 0.2);
-            border-color: #22c55e;
-        }
-
-        .timeline-item.current::before {
-            background: rgba(255, 178, 0, 0.2);
-            border-color: #FFB200;
-        }
-
-        .timeline-item.pending::before {
-            background: rgba(255, 178, 0, 0.1);
-            border-color: #FFB200;
-        }
-
         .timeline-icon {
             position: absolute;
-            left: -1.5rem;
+            left: -1rem;
             top: 0.5rem;
             width: 2rem;
             height: 2rem;
@@ -1382,11 +1561,40 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             justify-content: center;
             align-items: center;
             border: 2px solid #FFB200;
+            z-index: 2;
+        }
+
+        .timeline-item.completed .timeline-icon {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+        }
+
+        .timeline-item.current .timeline-icon {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 4px rgba(255, 178, 0, 0.2);
+        }
+
+        .timeline-item.pending .timeline-icon {
+            background: rgba(255, 178, 0, 0.05);
+            border-color: rgba(255, 178, 0, 0.5);
         }
 
         .timeline-icon i {
             font-size: 1rem;
             color: #FFB200;
+        }
+
+        .timeline-item.completed .timeline-icon i {
+            color: #22c55e;
+        }
+
+        .timeline-item.current .timeline-icon i {
+            color: #FFB200;
+        }
+
+        .timeline-item.pending .timeline-icon i {
+            color: rgba(255, 178, 0, 0.6);
         }
 
         .timeline-content {
@@ -1521,6 +1729,552 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
             background: rgba(255, 178, 0, 0.2);
             border-color: rgba(255, 178, 0, 0.5);
         }
+
+        /* Job Details Modal */
+        .job-details-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .job-details-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .job-details-modal.hide {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(26, 26, 26, 0.95));
+            border-radius: 20px;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 900px;
+            width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+        }
+
+        .modal-header {
+            padding: 2rem 2rem 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 178, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: #FFB200;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .job-progress-section {
+            background: rgba(255, 178, 0, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .progress-header h3 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .progress-percentage {
+            color: #FFB200;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .modal-progress-bar {
+            height: 12px;
+            background: rgba(255, 178, 0, 0.2);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .modal-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFB200, #FFD700);
+            border-radius: 6px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .current-phase {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+        }
+
+        .job-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .job-info-card {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 178, 0, 0.1);
+        }
+
+        .job-info-card h4 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+        }
+
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-item .label {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        .info-item .value {
+            color: white;
+            font-weight: 600;
+        }
+
+        .info-item .value.highlight {
+            color: #FFB200;
+        }
+
+        .requirements-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .requirements-list li {
+            color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .requirements-list li i {
+            color: #FFB200;
+            width: 16px;
+            flex-shrink: 0;
+        }
+
+        .current-step-section {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 178, 0, 0.1);
+        }
+
+        .current-step-section h4 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+        }
+
+        .step-details p {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .action-required {
+            background: rgba(255, 178, 0, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .action-required i {
+            color: #FFB200;
+        }
+
+        .modal-action-btn {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-left: auto;
+            transition: all 0.3s ease;
+        }
+
+        .modal-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 178, 0, 0.4);
+        }
+
+        .contact-section {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 178, 0, 0.1);
+            text-align: center;
+        }
+
+        .contact-section h4 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+        }
+
+        .contact-section p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 1rem;
+        }
+
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 178, 0, 0.1);
+            color: #FFB200;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .contact-link:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: rgba(255, 178, 0, 0.5);
+        }
+
+        /* Profile Tab Styles */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        .contact-info-card, .current-job-card {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-info-card::before, .current-job-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,178,0,0.05) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .contact-info-card:hover, .current-job-card:hover {
+            border-color: #FFB200;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(255,178,0,0.15);
+        }
+
+        .contact-info-card:hover::before, .current-job-card:hover::before {
+            opacity: 1;
+        }
+
+        .contact-info-card h3, .current-job-card h3 {
+            color: #FFB200;
+            margin-bottom: 1.5rem;
+            font-family: 'Cinzel', serif;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .contact-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255,178,0,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255,178,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .contact-item:hover {
+            background: rgba(255,178,0,0.1);
+            border-color: rgba(255,178,0,0.2);
+            transform: scale(1.02);
+        }
+
+        .contact-item i {
+            color: #FFB200;
+            font-size: 1.2rem;
+            width: 24px;
+            flex-shrink: 0;
+        }
+
+        .contact-item div {
+            flex: 1;
+        }
+
+        .contact-item strong {
+            display: block;
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .contact-item span {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.95rem;
+        }
+
+        .job-header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .job-count {
+            background: rgba(255, 178, 0, 0.2);
+            color: #FFB200;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+        }
+
+        .job-selector {
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .job-option {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 178, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .job-option:hover {
+            border-color: rgba(255, 178, 0, 0.5);
+            background: rgba(255, 178, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .job-option.active {
+            border-color: #FFB200;
+            background: rgba(255, 178, 0, 0.1);
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+
+        .job-info {
+            flex: 1;
+        }
+
+        .job-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .job-title i {
+            color: #FFB200;
+            font-size: 1.2rem;
+        }
+
+        .job-title strong {
+            color: white;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+        }
+
+        .job-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .job-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .job-detail i {
+            color: #FFB200;
+            width: 16px;
+            flex-shrink: 0;
+        }
+
+        .job-detail span {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .job-status-indicator {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .job-status-indicator.upcoming {
+            background: rgba(255, 178, 0, 0.2);
+            color: #FFB200;
+            border: 1px solid rgba(255, 178, 0, 0.4);
+        }
+
+        .job-status-indicator.active {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .job-status-indicator.completed {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .job-status-indicator.pending {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.4);
+        }
+
+        .job-actions-section {
+            display: flex;
+            gap: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 178, 0, 0.1);
+            color: #FFB200;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: rgba(255, 178, 0, 0.5);
+        }
         
         @media (max-width: 768px) {
             .portal-content {
@@ -1581,6 +2335,71 @@ ${contract.notes ? `Notes: ${contract.notes}` : ''}
                 flex: 1;
                 text-align: center;
                 justify-content: center;
+            }
+            
+            /* Modal responsive */
+            .modal-content {
+                width: 95vw;
+                max-height: 90vh;
+            }
+            
+            .modal-header {
+                padding: 1.5rem 1.5rem 1rem 1.5rem;
+            }
+            
+            .modal-header h2 {
+                font-size: 1.5rem;
+            }
+            
+            .modal-body {
+                padding: 1.5rem;
+            }
+            
+            .job-info-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .action-required {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+            
+            .modal-action-btn {
+                margin-left: 0;
+                text-align: center;
+            }
+            
+            /* Profile responsive */
+            .profile-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .contact-info-card, .current-job-card {
+                padding: 1.5rem;
+            }
+            
+            .job-details-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .job-actions-section {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .job-option {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+                padding: 1.25rem;
+            }
+            
+            .job-status-indicator {
+                align-self: flex-start;
             }
         }
     </style>
