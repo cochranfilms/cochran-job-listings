@@ -182,8 +182,7 @@
                 
                 // Check if already signed in
                 const token = gapi.client.getToken();
-                window.isGoogleDriveSignedIn = (token !== null);
-                console.log('👤 Current sign-in status:', window.isGoogleDriveSignedIn);
+                            console.log('👤 Google Drive sign-in status updated');
                 
                 // Hide retry button if it was shown
                 const retryBtn = document.getElementById('retryAPIBtn');
@@ -195,315 +194,42 @@
             }
         }
         
-        // Comprehensive diagnostic function
-        window.diagnoseGoogleAPI = function() {
-            console.log('🔍 COMPREHENSIVE GOOGLE API DIAGNOSIS');
-            console.log('=====================================');
-            
-            // 1. Basic availability
-            console.log('1. BASIC AVAILABILITY:');
-            console.log('  typeof gapi:', typeof gapi);
-            console.log('  typeof google:', typeof google);
-            console.log('  window.gapi:', window.gapi);
-            console.log('  window.google:', window.google);
-            
-            // 2. Script tag analysis
-            console.log('\n2. SCRIPT TAG ANALYSIS:');
-            const scripts = document.querySelectorAll('script[src*="googleapis.com"], script[src*="google.com"]');
-            scripts.forEach((script, index) => {
-                console.log(`  Script ${index + 1}:`, script.src);
-                console.log(`    loaded: ${script.readyState || 'unknown'}`);
-                console.log(`    error: ${script.onerror ? 'has error handler' : 'no error handler'}`);
-            });
-            
-            // 3. Network check
-            console.log('\n3. NETWORK CONNECTIVITY TEST:');
-            fetch('https://apis.google.com/js/api.js', { method: 'HEAD' })
-                .then(response => {
-                    console.log('  ✅ Can reach Google APIs:', response.status);
-                })
-                .catch(error => {
-                    console.log('  ❌ Cannot reach Google APIs:', error.message);
-                    console.log('  💡 This indicates network/firewall blocking');
-                });
-            
-            // 4. HTTPS check
-            console.log('\n4. PROTOCOL CHECK:');
-            console.log('  Current protocol:', window.location.protocol);
-            if (window.location.protocol === 'http:') {
-                console.log('  ⚠️ WARNING: Using HTTP - Google APIs may require HTTPS');
-                console.log('  💡 Try: https://localhost:8000 or deploy to HTTPS server');
-            }
-            
-            // 5. Content Security Policy check
-            console.log('\n5. CSP CHECK:');
-            const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-            if (cspMeta) {
-                console.log('  CSP found:', cspMeta.content);
-                if (!cspMeta.content.includes('googleapis.com')) {
-                    console.log('  ⚠️ WARNING: CSP may not allow Google APIs');
-                }
-            } else {
-                console.log('  No CSP meta tag found');
-            }
-            
-            // 6. Ad blocker detection
-            console.log('\n6. AD BLOCKER DETECTION:');
-            const testDiv = document.createElement('div');
-            testDiv.className = 'adsbox';
-            testDiv.style.position = 'absolute';
-            testDiv.style.left = '-9999px';
-            document.body.appendChild(testDiv);
-            setTimeout(() => {
-                if (testDiv.offsetHeight === 0) {
-                    console.log('  ⚠️ LIKELY AD BLOCKER DETECTED');
-                    console.log('  💡 Try disabling ad blocker temporarily');
-                } else {
-                    console.log('  ✅ No ad blocker detected');
-                }
-                document.body.removeChild(testDiv);
-            }, 100);
-            
-            // 7. Manual loading test
-            console.log('\n7. MANUAL LOADING TEST:');
-            const testScript = document.createElement('script');
-            testScript.src = 'https://apis.google.com/js/api.js';
-            testScript.onload = () => {
-                setTimeout(() => {
-                    console.log('  Manual load result - typeof gapi:', typeof gapi);
-                    if (typeof gapi !== 'undefined') {
-                        console.log('  ✅ Manual loading successful!');
-                    } else {
-                        console.log('  ❌ Manual loading failed - API object not available');
-                        console.log('  💡 This suggests browser/security restrictions');
-                    }
-                }, 1000);
-            };
-            testScript.onerror = (error) => {
-                console.log('  ❌ Manual script loading failed:', error);
-            };
-            document.head.appendChild(testScript);
-            
-            console.log('\n=====================================');
-            console.log('🎯 WAITING FOR RESULTS... (check logs above in 2-3 seconds)');
+        // Simple debug function for Google Drive
+        window.debugGoogleDrive = function() {
+            console.log('🔍 Google Drive Debug Info:');
+            console.log('  - gapiInited:', gapiInited);
+            console.log('  - gisInited:', gisInited);
+            console.log('  - contractsFileId:', contractsFileId);
+            console.log('  - CONTRACTS_FILE_NAME:', CONTRACTS_FILE_NAME);
+            console.log('  - window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
         };
 
-        // Debug function - call this from console if needed
-        window.debugGoogleAPI = function() {
-            console.log('🔍 Google API Debug Info (Official Pattern):');
-            console.log('typeof gapi:', typeof gapi);
-            console.log('gapi.load available:', typeof gapi !== 'undefined' && typeof gapi.load === 'function');
-            console.log('typeof google:', typeof google);
-            console.log('google.accounts available:', typeof google !== 'undefined' && google.accounts && google.accounts.oauth2);
-            console.log('gapiInited:', gapiInited);
-            console.log('gisInited:', gisInited);
-            console.log('window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
-            console.log('tokenClient available:', typeof tokenClient !== 'undefined');
-            console.log('Current token:', gapi?.client?.getToken ? gapi.client.getToken() : 'gapi.client not available');
-            console.log('Configuration:');
-            console.log('  - CLIENT_ID:', CLIENT_ID.substring(0, 20) + '...');
-            console.log('  - API_KEY:', API_KEY.substring(0, 20) + '...');
-            console.log('  - SCOPES:', SCOPES);
-            
-            // Test gapi client
-            if (typeof gapi !== 'undefined' && gapi.client) {
-                console.log('gapi.client available:', !!gapi.client);
-                console.log('gapi.client.drive available:', !!gapi.client.drive);
-            }
-            
-            // Check for partial loading issues
-            if (typeof gapi !== 'undefined' && typeof gapi.load !== 'function') {
-                console.warn('⚠️ gapi object exists but gapi.load is not available - partial loading issue');
-            }
-            if (typeof google !== 'undefined' && (!google.accounts || !google.accounts.oauth2)) {
-                console.warn('⚠️ google object exists but google.accounts.oauth2 is not available - partial loading issue');
-            }
-            
-            if (typeof gapi !== 'undefined' && gapi.load && typeof google !== 'undefined' && google.accounts) {
-                console.log('✅ Both libraries fully available, trying manual initialization...');
-                if (!gapiInited) {
-                    console.log('🔄 Re-running gapiLoaded()...');
-                    gapiLoaded();
-                }
-                if (!gisInited) {
-                    console.log('🔄 Re-running gisLoaded()...');
-                    gisLoaded();
-                }
-            } else {
-                console.log('❌ One or both libraries not fully loaded:');
-                console.log('  - gapi.load available:', typeof gapi !== 'undefined' && typeof gapi.load === 'function');
-                console.log('  - google.accounts available:', typeof google !== 'undefined' && google.accounts && google.accounts.oauth2);
-                console.log('🔧 Check Network tab in dev tools for failed script requests');
-                console.log('🔧 Try refreshing the page or using the "Retry API" button');
-            }
-        };
-
-        // NEW: Debug Google Drive files - helps find missing contracts
+        // Simple debug function for Google Drive
         window.debugGoogleDriveFiles = async function() {
             console.log('🔍 Google Drive Files Debug:');
             
-            if (!isGoogleDriveSignedIn) {
-                console.log('❌ Not signed into Google Drive yet');
+            if (!window.isGoogleDriveInitialized) {
+                console.log('❌ Google Drive not initialized yet');
                 return;
             }
             
             try {
-                // List all files in root
-                console.log('📁 Searching for all files in Google Drive root...');
-                const allFiles = await gapi.client.drive.files.list({
-                    q: "trashed=false",
-                    pageSize: 50,
-                    fields: "files(id,name,createdTime,modifiedTime,size)"
-                });
-                
-                console.log('📁 All files found:', allFiles.result.files.length);
-                allFiles.result.files.forEach(file => {
-                    console.log(`  - ${file.name} (ID: ${file.id}, Created: ${file.createdTime})`);
-                });
-                
-                // Specifically search for contracts file
-                console.log(`🔍 Searching specifically for: "${CONTRACTS_FILE_NAME}"`);
+                console.log('📁 Searching for contracts file...');
                 const contractFiles = await gapi.client.drive.files.list({
                     q: `name='${CONTRACTS_FILE_NAME}' and trashed=false`,
                     fields: "files(id,name,createdTime,modifiedTime,size)"
                 });
                 
                 if (contractFiles.result.files.length > 0) {
-                    console.log('✅ Found contracts file(s):');
-                    contractFiles.result.files.forEach(file => {
-                        console.log(`  - ${file.name} (ID: ${file.id})`);
-                        console.log(`    Created: ${file.createdTime}`);
-                        console.log(`    Modified: ${file.modifiedTime}`);
-                        console.log(`    Size: ${file.size} bytes`);
-                    });
-                    
-                    // Try to read the first file
-                    const fileId = contractFiles.result.files[0].id;
-                    console.log(`📖 Reading contents of file: ${fileId}`);
-                    const content = await gapi.client.drive.files.get({
-                        fileId: fileId,
-                        alt: 'media'
-                    });
-                    
-                    try {
-                        const data = JSON.parse(content.body);
-                        console.log('📄 Contracts file contents:');
-                        console.log(`  - Total contracts: ${data.totalContracts || 0}`);
-                        console.log(`  - Last updated: ${data.lastUpdated}`);
-                        console.log(`  - Saved from: ${data.savedFrom}`);
-                        console.log(`  - Contracts:`, data.signedContracts || []);
-                    } catch (e) {
-                        console.log('❌ File content is not valid JSON:', content.body);
-                    }
+                    console.log('✅ Found contracts file:', contractFiles.result.files[0].name);
+                    console.log('📁 File ID:', contractFiles.result.files[0].id);
                 } else {
-                    console.log('❌ No contracts file found!');
-                    console.log('💡 This means contracts are not being saved to Google Drive');
-                    console.log('💡 Check the contract signing process on contract.html');
+                    console.log('❌ No contracts file found');
                 }
                 
             } catch (error) {
                 console.error('❌ Error debugging Google Drive:', error);
             }
-        };
-        
-        // Alternative script loading if the primary method fails
-        window.loadGoogleAPIFallback = function() {
-            console.log('🔄 Loading Google API as fallback (Official Pattern)...');
-            
-            // Reset flags
-            gapiInited = false;
-            gisInited = false;
-            window.isGoogleDriveInitialized = false;
-            
-            // Load Google API script if not available
-            if (typeof gapi === 'undefined') {
-                console.log('📡 Loading gapi script...');
-                const gapiScript = document.createElement('script');
-                gapiScript.async = true;
-                gapiScript.defer = true;
-                gapiScript.src = 'https://apis.google.com/js/api.js';
-                gapiScript.onload = function() {
-                    console.log('✅ GAPI script loaded via fallback');
-                    // Give it a moment to be available
-                    setTimeout(() => {
-                        if (typeof gapi !== 'undefined') {
-                            gapiLoaded();
-                        } else {
-                            console.error('❌ gapi still not available after fallback load');
-                        }
-                    }, 100);
-                };
-                gapiScript.onerror = function() {
-                    console.error('❌ GAPI script failed to load via fallback');
-                };
-                document.head.appendChild(gapiScript);
-            } else {
-                console.log('✅ gapi already available, re-initializing...');
-                gapiLoaded();
-            }
-            
-            // Load Google Identity Services if not available
-            if (typeof google === 'undefined' || !google.accounts) {
-                console.log('🔑 Loading Google Identity Services script...');
-                const gisScript = document.createElement('script');
-                gisScript.async = true;
-                gisScript.defer = true;
-                gisScript.src = 'https://accounts.google.com/gsi/client';
-                gisScript.onload = function() {
-                    console.log('✅ GIS script loaded via fallback');
-                    // Give it a moment to be available
-                    setTimeout(() => {
-                        if (typeof google !== 'undefined' && google.accounts) {
-                            gisLoaded();
-                        } else {
-                            console.error('❌ google.accounts still not available after fallback load');
-                        }
-                    }, 100);
-                };
-                gisScript.onerror = function() {
-                    console.error('❌ GIS script failed to load via fallback');
-                };
-                document.head.appendChild(gisScript);
-            } else {
-                console.log('✅ Google Identity Services already available, re-initializing...');
-                gisLoaded();
-            }
-        };
-        
-        // Manual retry function for users
-        window.retryGoogleAPI = function() {
-            console.log('🔧 Manual retry initiated...');
-            const retryBtn = document.getElementById('retryAPIBtn');
-            if (retryBtn) {
-                retryBtn.textContent = '🔄 Retrying...';
-                retryBtn.disabled = true;
-            }
-            
-            // Reset flags
-            gapiInited = false;
-            gisInited = false;
-            window.isGoogleDriveInitialized = false;
-            
-            // Try fallback loading
-            loadGoogleAPIFallback();
-            
-            // Re-enable button after attempt
-            setTimeout(() => {
-                if (retryBtn) {
-                    retryBtn.textContent = '🔧 Retry API';
-                    retryBtn.disabled = false;
-                    
-                    if (window.isGoogleDriveInitialized) {
-                        retryBtn.style.display = 'none';
-                        console.log('✅ Retry successful! Google Drive API is now initialized.');
-                        alert('✅ Google API retry successful! You can now try setting up Google Drive sync.');
-                    } else {
-                        console.log('❌ Retry failed. Google API still not available.');
-                        console.log('Debug info - gapiInited:', gapiInited, 'gisInited:', gisInited);
-                        alert('❌ Retry failed. Please check your internet connection and browser console for errors.');
-                    }
-                }
-            }, 5000); // Give more time for both libraries to load
         };
     </script>
     
@@ -1575,14 +1301,129 @@
         // Password Configuration - CHANGE THIS PASSWORD!
         const ADMIN_PASSWORD = 'Deannajack3#';
         
-        // Google Drive API Configuration (using constants from header)
+        // GLOBAL DIAGNOSTIC FUNCTION - Always available
+        window.diagnoseGoogleAPI = function() {
+            console.log('🔍 COMPREHENSIVE GOOGLE API DIAGNOSIS');
+            console.log('=====================================');
+            
+            // 1. Basic availability
+            console.log('1. BASIC AVAILABILITY:');
+            console.log('  typeof gapi:', typeof gapi);
+            console.log('  typeof google:', typeof google);
+            console.log('  window.gapi:', window.gapi);
+            console.log('  window.google:', window.google);
+            
+            // 2. Script tag analysis
+            console.log('\n2. SCRIPT TAG ANALYSIS:');
+            const scripts = document.querySelectorAll('script[src*="googleapis.com"], script[src*="google.com"]');
+            console.log(`  Found ${scripts.length} Google script tags:`);
+            scripts.forEach((script, index) => {
+                console.log(`  Script ${index + 1}:`, script.src);
+                console.log(`    loaded: ${script.readyState || 'unknown'}`);
+                console.log(`    error: ${script.onerror ? 'has error handler' : 'no error handler'}`);
+            });
+            
+            // 3. Network check
+            console.log('\n3. NETWORK CONNECTIVITY TEST:');
+            fetch('https://apis.google.com/js/api.js', { method: 'HEAD' })
+                .then(response => {
+                    console.log('  ✅ Can reach Google APIs:', response.status);
+                })
+                .catch(error => {
+                    console.log('  ❌ Cannot reach Google APIs:', error.message);
+                    console.log('  💡 This indicates network/firewall blocking');
+                });
+            
+            // 4. HTTPS check
+            console.log('\n4. PROTOCOL CHECK:');
+            console.log('  Current protocol:', window.location.protocol);
+            console.log('  Current host:', window.location.host);
+            if (window.location.protocol === 'http:') {
+                console.log('  ⚠️ WARNING: Using HTTP - Google APIs may require HTTPS');
+                console.log('  💡 Try: https://localhost:8443 or deploy to HTTPS server');
+            } else {
+                console.log('  ✅ Using HTTPS - Good for Google APIs');
+            }
+            
+            // 5. Content Security Policy check
+            console.log('\n5. CSP CHECK:');
+            const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            if (cspMeta) {
+                console.log('  CSP found:', cspMeta.content);
+                if (!cspMeta.content.includes('googleapis.com')) {
+                    console.log('  ⚠️ WARNING: CSP may not allow Google APIs');
+                }
+            } else {
+                console.log('  No CSP meta tag found');
+            }
+            
+            // 6. Ad blocker detection
+            console.log('\n6. AD BLOCKER DETECTION:');
+            const testDiv = document.createElement('div');
+            testDiv.className = 'adsbox';
+            testDiv.style.position = 'absolute';
+            testDiv.style.left = '-9999px';
+            document.body.appendChild(testDiv);
+            setTimeout(() => {
+                if (testDiv.offsetHeight === 0) {
+                    console.log('  ⚠️ LIKELY AD BLOCKER DETECTED');
+                    console.log('  💡 Try disabling ad blocker temporarily');
+                } else {
+                    console.log('  ✅ No ad blocker detected');
+                }
+                document.body.removeChild(testDiv);
+            }, 100);
+            
+            // 7. Browser info
+            console.log('\n7. BROWSER INFO:');
+            console.log('  User Agent:', navigator.userAgent);
+            console.log('  Browser language:', navigator.language);
+            console.log('  Cookies enabled:', navigator.cookieEnabled);
+            
+            // 8. Manual loading test
+            console.log('\n8. MANUAL LOADING TEST:');
+            const testScript = document.createElement('script');
+            testScript.src = 'https://apis.google.com/js/api.js';
+            testScript.onload = () => {
+                setTimeout(() => {
+                    console.log('  Manual load result - typeof gapi:', typeof gapi);
+                    if (typeof gapi !== 'undefined') {
+                        console.log('  ✅ Manual loading successful!');
+                    } else {
+                        console.log('  ❌ Manual loading failed - API object not available');
+                        console.log('  💡 This suggests browser/security restrictions');
+                    }
+                }, 1000);
+            };
+            testScript.onerror = (error) => {
+                console.log('  ❌ Manual script loading failed:', error);
+            };
+            document.head.appendChild(testScript);
+            
+            console.log('\n=====================================');
+            console.log('🎯 WAITING FOR RESULTS... (check logs above in 2-3 seconds)');
+        };
+        
+        // Quick test function - also always available
+        window.quickTest = function() {
+            console.log('🚀 QUICK GOOGLE API TEST:');
+            console.log('Current URL:', window.location.href);
+            console.log('typeof gapi:', typeof gapi);
+            console.log('typeof google:', typeof google);
+            
+            if (typeof gapi === 'undefined') {
+                console.log('❌ GAPI NOT AVAILABLE');
+                console.log('💡 Run diagnoseGoogleAPI() for full analysis');
+            } else {
+                console.log('✅ GAPI IS AVAILABLE!');
+            }
+        };
+        
+        // Google Drive API Configuration (matches contract signing page)
         const CONTRACTS_FILE_NAME = 'cochran-films-signed-contracts.json';
         
         // Google Drive API state
-        let gapi;
-        let isGoogleDriveInitialized = false;
-        let isGoogleDriveSignedIn = false;
-        let contractsFileId = null; // Will store the Google Drive file ID
+        let contractsFileId = null;
         
         // Session management
         let isAuthenticated = false;
@@ -1611,9 +1452,6 @@
         async function showAdminInterface() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminInterface').style.display = 'block';
-            
-            // Initialize Google Drive API
-            await initializeGoogleDrive();
             
             loadJobs();
             loadFreelancers();
@@ -1951,91 +1789,75 @@
 
         // ==================== GOOGLE DRIVE API INTEGRATION ====================
         
-        // Initialize Google Drive API - now simplified since proper initialization is handled in head
-        async function initializeGoogleDrive() {
-            try {
-                console.log('🔄 Checking Google Drive API status...');
-                
-                if (API_KEY === 'YOUR_API_KEY_HERE') {
-                    console.log('📝 Google Drive API not configured - using localStorage only');
-                    return false;
-                }
-                
-                // Check if already initialized from the head script
-                if (window.isGoogleDriveInitialized) {
-                    console.log('✅ Google Drive API already initialized');
-                    isGoogleDriveInitialized = true;
-                    isGoogleDriveSignedIn = window.isGoogleDriveSignedIn || false;
-                    return true;
-                }
-                
-                // If not initialized yet, wait a bit and check again (onload might still be processing)
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                if (window.isGoogleDriveInitialized) {
-                    console.log('✅ Google Drive API initialized after waiting');
-                    isGoogleDriveInitialized = true;
-                    isGoogleDriveSignedIn = window.isGoogleDriveSignedIn || false;
-                    return true;
-                }
-                
-                console.log('⚠️ Google Drive API not initialized - check console for errors');
-                return false;
-                
-            } catch (error) {
-                console.error('❌ Google Drive initialization check failed:', error);
-                return false;
-            }
-        }
-        
-        // Sign in to Google Drive using modern Google Identity Services
-        async function signInToGoogleDrive() {
-            try {
-                if (!isGoogleDriveInitialized) {
-                    throw new Error('Google Drive API not initialized');
-                }
-                
-                console.log('🔑 Starting Google Drive sign-in...');
-                
-                // Check if already signed in
-                if (gapi.client.getToken() === null) {
-                    console.log('👤 Not signed in, requesting access token...');
-                    
-                    // Request access token using the modern token client
-                    return new Promise((resolve, reject) => {
-                        tokenClient.callback = async (resp) => {
-                            if (resp.error !== undefined) {
-                                console.error('❌ OAuth error:', resp);
-                                reject(new Error(`OAuth error: ${resp.error}`));
-                            } else {
-                                console.log('✅ Access token received');
-                                isGoogleDriveSignedIn = true;
-                                window.isGoogleDriveSignedIn = true;
-                                resolve(true);
-                            }
-                        };
-                        
-                        // Check if we already have a token that's not expired
-                        if (gapi.client.getToken() === null) {
-                            tokenClient.requestAccessToken({prompt: 'consent'});
-                        } else {
-                            console.log('✅ Already have valid token');
-                            resolve(true);
-                        }
-                    });
+        // Initialize Google Drive API (matches contract signing page)
+        function gapiLoaded() {
+            if (typeof gapi !== 'undefined') {
+                gapi.load('client', initializeGapiClient);
+            } else {
+                gapiRetryCount++;
+                if (gapiRetryCount < MAX_API_RETRIES) {
+                    console.log(`Google API not ready, retrying... (${gapiRetryCount}/${MAX_API_RETRIES})`);
+                    setTimeout(gapiLoaded, 1000);
                 } else {
-                    console.log('✅ Already signed in to Google Drive');
-                    isGoogleDriveSignedIn = true;
-                    return true;
+                    console.log('Google Drive sync unavailable - contracts will be loaded from localStorage only');
                 }
-                
-            } catch (error) {
-                console.error('❌ Google Drive sign-in failed:', error);
-                return false;
             }
         }
+
+        async function initializeGapiClient() {
+            try {
+                await gapi.client.init({
+                    apiKey: API_KEY,
+                    discoveryDocs: [DISCOVERY_DOC],
+                });
+                gapiInited = true;
+                console.log('✅ Google API initialized for admin dashboard');
+                maybeEnableGoogleDrive();
+            } catch (error) {
+                console.log('Google API initialization failed - using localStorage only');
+                gapiInited = false;
+            }
+        }
+
+        function gisLoaded() {
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+                try {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CLIENT_ID,
+                        scope: SCOPES,
+                        callback: '', // Will be set later
+                    });
+                    gisInited = true;
+                    console.log('✅ Google Identity Services initialized for admin dashboard');
+                    maybeEnableGoogleDrive();
+                } catch (error) {
+                    console.log('Google Identity Services initialization failed - using localStorage only');
+                    gisInited = false;
+                }
+            } else {
+                gisRetryCount++;
+                if (gisRetryCount < MAX_API_RETRIES) {
+                    console.log(`Google Identity Services not ready, retrying... (${gisRetryCount}/${MAX_API_RETRIES})`);
+                    setTimeout(gisLoaded, 1000);
+                } else {
+                    console.log('Google Identity Services unavailable - contracts will be loaded from localStorage only');
+                }
+            }
+        }
+
+        function maybeEnableGoogleDrive() {
+            if (gapiInited && gisInited) {
+                console.log('✅ Google Drive ready for admin dashboard');
+                window.isGoogleDriveInitialized = true;
+            }
+        }
+
+        // Handle script loading errors
+        function handleScriptError(scriptType) {
+            console.log(`Google ${scriptType} script failed to load - contracts will be loaded from localStorage only`);
+        }
         
-        // Find or create contracts file in Google Drive
+        // Find or create the contracts file in Google Drive
         async function findOrCreateContractsFile() {
             try {
                 // Search for existing file
@@ -2043,74 +1865,73 @@
                     q: `name='${CONTRACTS_FILE_NAME}' and trashed=false`,
                     spaces: 'drive'
                 });
-                
+
                 if (response.result.files.length > 0) {
                     contractsFileId = response.result.files[0].id;
-                    console.log('📁 Found existing contracts file:', contractsFileId);
+                    console.log('✅ Found existing contracts file');
+                    return contractsFileId;
+                } else {
+                    // Create new file
+                    const createResponse = await gapi.client.drive.files.create({
+                        resource: {
+                            name: CONTRACTS_FILE_NAME,
+                            parents: ['root']
+                        }
+                    });
+                    contractsFileId = createResponse.result.id;
+                    
+                    // Initialize with empty data
+                    await gapi.client.request({
+                        path: `https://www.googleapis.com/upload/drive/v3/files/${contractsFileId}`,
+                        method: 'PATCH',
+                        params: { uploadType: 'media' },
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            signedContracts: [],
+                            lastUpdated: new Date().toISOString(),
+                            totalContracts: 0,
+                            savedFrom: 'Admin Dashboard'
+                        })
+                    });
+                    
+                    console.log('✅ Created new contracts file');
                     return contractsFileId;
                 }
-                
-                // Create new file if it doesn't exist
-                const fileMetadata = {
-                    name: CONTRACTS_FILE_NAME,
-                    mimeType: 'application/json'
-                };
-                
-                const media = {
-                    mimeType: 'application/json',
-                    body: JSON.stringify({
-                        signedContracts: [],
-                        lastUpdated: new Date().toISOString(),
-                        totalContracts: 0
-                    }, null, 2)
-                };
-                
-                const createResponse = await gapi.client.request({
-                    path: 'https://www.googleapis.com/upload/drive/v3/files',
-                    method: 'POST',
-                    params: { uploadType: 'multipart' },
-                    headers: { 'Content-Type': 'multipart/related; boundary="boundary"' },
-                    body: [
-                        '--boundary',
-                        'Content-Type: application/json; charset=UTF-8',
-                        '',
-                        JSON.stringify(fileMetadata),
-                        '--boundary',
-                        'Content-Type: application/json',
-                        '',
-                        media.body,
-                        '--boundary--'
-                    ].join('\r\n')
-                });
-                
-                contractsFileId = createResponse.result.id;
-                console.log('✅ Created new contracts file:', contractsFileId);
-                return contractsFileId;
-                
             } catch (error) {
-                console.error('❌ Error managing contracts file:', error);
+                console.error('Error with contracts file:', error);
                 return null;
             }
-        }
+
         
         // Load contracts from Google Drive
         async function loadContractsFromGoogleDrive() {
             try {
-                if (!isGoogleDriveSignedIn || !contractsFileId) {
-                    return null;
+                if (!contractsFileId) {
+                    contractsFileId = await findOrCreateContractsFile();
+                    if (!contractsFileId) {
+                        throw new Error('Could not access contracts file');
+                    }
                 }
                 
-                const response = await gapi.client.drive.files.get({
+                const fileResponse = await gapi.client.drive.files.get({
                     fileId: contractsFileId,
                     alt: 'media'
                 });
                 
-                const data = JSON.parse(response.body);
-                console.log('📥 Loaded contracts from Google Drive:', data.signedContracts?.length || 0);
-                return data.signedContracts || [];
+                let existingData;
+                try {
+                    existingData = JSON.parse(fileResponse.body);
+                    console.log('📊 Existing contracts data:', existingData);
+                } catch (e) {
+                    console.log('📝 No existing data, creating new structure');
+                    existingData = { signedContracts: [] };
+                }
+                
+                console.log('📥 Loaded contracts from Google Drive:', existingData.signedContracts?.length || 0);
+                return existingData.signedContracts || [];
                 
             } catch (error) {
-                console.error('❌ Error loading contracts from Google Drive:', error);
+                console.error('Error loading contracts from Google Drive:', error);
                 return null;
             }
         }
@@ -2118,8 +1939,11 @@
         // Save contracts to Google Drive
         async function saveContractsToGoogleDrive(contracts) {
             try {
-                if (!isGoogleDriveSignedIn || !contractsFileId) {
-                    return false;
+                if (!contractsFileId) {
+                    contractsFileId = await findOrCreateContractsFile();
+                    if (!contractsFileId) {
+                        throw new Error('Could not access contracts file');
+                    }
                 }
                 
                 const fileData = {
@@ -2141,7 +1965,7 @@
                 return true;
                 
             } catch (error) {
-                console.error('❌ Error saving contracts to Google Drive:', error);
+                console.error('Error saving contracts to Google Drive:', error);
                 return false;
             }
         }
@@ -2154,11 +1978,22 @@
                 console.log('🔄 Loading signed contracts...');
                 
                 // Try Google Drive first
-                if (isGoogleDriveInitialized && isGoogleDriveSignedIn) {
+                if (window.isGoogleDriveInitialized) {
                     console.log('☁️ Attempting to load from Google Drive...');
                     
-                    // Force refresh the contracts file ID to make sure we find it
-                    contractsFileId = await findOrCreateContractsFile();
+                    // Sign in first
+                    await new Promise((resolve, reject) => {
+                        tokenClient.callback = (response) => {
+                            if (response.error) {
+                                console.error('❌ Google Drive sign-in failed:', response.error);
+                                reject(response);
+                            } else {
+                                console.log('✅ Google Drive sign-in successful');
+                                resolve(response);
+                            }
+                        };
+                        tokenClient.requestAccessToken();
+                    });
                     
                     const driveContracts = await loadContractsFromGoogleDrive();
                     if (driveContracts && driveContracts.length > 0) {
@@ -2190,7 +2025,7 @@
                 displaySignedContracts();
                 updateContractAnalytics();
                 
-                if (isGoogleDriveInitialized && isGoogleDriveSignedIn) {
+                if (window.isGoogleDriveInitialized) {
                     updateSyncStatus('⚠️ Using local storage (Google Drive file not found)');
                 } else {
                     updateSyncStatus('⚠️ Using local storage only');
@@ -2208,7 +2043,7 @@
         window.searchAllContractFiles = async function() {
             console.log('🔍 Comprehensive Contract File Search...');
             
-            if (!isGoogleDriveSignedIn) {
+            if (!window.isGoogleDriveInitialized) {
                 console.log('❌ Not signed into Google Drive');
                 return;
             }
@@ -2289,7 +2124,7 @@
                 localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
                 
                 // Try to save to Google Drive
-                if (isGoogleDriveInitialized && isGoogleDriveSignedIn) {
+                if (window.isGoogleDriveInitialized) {
                     const success = await saveContractsToGoogleDrive(signedContracts);
                     if (success) {
                         updateSyncStatus('✅ Synced to Google Drive');
@@ -2759,10 +2594,10 @@ Status: ${contract.status}
                 if (!window.isGoogleDriveInitialized) {
                     const retryBtn = document.getElementById('retryAPIBtn');
                     
-                                    if (typeof gapi === 'undefined') {
-                    if (retryBtn) retryBtn.style.display = 'inline-block';
-                    throw new Error('Google API not available. This could be caused by:\n• Ad blockers (try disabling temporarily)\n• Network connectivity issues\n• Corporate firewall blocking Google APIs\n• Browser security settings\n\nTry clicking "Retry API" or refresh the page.');
-                }
+                    if (typeof gapi === 'undefined') {
+                        if (retryBtn) retryBtn.style.display = 'inline-block';
+                        throw new Error('Google API not available. This could be caused by:\n• Ad blockers (try disabling temporarily)\n• Network connectivity issues\n• Corporate firewall blocking Google APIs\n• Browser security settings\n\nTry clicking "Retry API" or refresh the page.');
+                    }
                     
                     if (typeof google === 'undefined' || !google.accounts) {
                         if (retryBtn) retryBtn.style.display = 'inline-block';
@@ -2777,7 +2612,7 @@ Status: ${contract.status}
                     // Try initializing once more in case it's still loading
                     console.log('🔄 Attempting to initialize Google Drive API...');
                     await initializeGoogleDrive();
-                    if (!isGoogleDriveInitialized) {
+                    if (!window.isGoogleDriveInitialized) {
                         if (retryBtn) retryBtn.style.display = 'inline-block';
                         throw new Error('Google Drive API initialization failed after retry. Check console for detailed error messages.');
                     }
@@ -2866,7 +2701,7 @@ Status: ${contract.status}
             }
         }
 
-                // ==================== FILE IMPORT FUNCTIONALITY ====================
+        // ==================== FILE IMPORT FUNCTIONALITY ====================
         
         // Show file import interface
         function showFileImport() {
@@ -2943,8 +2778,14 @@ Status: ${contract.status}
             reader.readAsText(file);
         }
         
+        }
+        
         // Initialize on page load
         checkAuth();
     </script>
+
+    <!-- Google API Scripts -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()" onerror="handleScriptError('API')"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()" onerror="handleScriptError('Identity')"></script>
 </body>
 </html>
