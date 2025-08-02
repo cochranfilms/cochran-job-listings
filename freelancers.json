@@ -65,32 +65,21 @@
       "jobs": [],
       "primaryJob": null
     },
-    "Bob Ross": {
-      "email": "codylcochran89@gmail.com",
-      "password": "Test54321",
+    "big pharma": {
+      "email": "coursecreatoracademy24@gmail.com",
+      "password": "Placeholder",
       "contractUrl": "contract.html",
-      "role": "Editor",
-      "location": "Atlanta Area",
-      "projectStart": "August 16th, 2025 at 2:00pm",
-      "rate": "$750.00 USD (Flat)",
+      "role": "Video Editor",
+      "location": "Douglasville, GA",
+      "projectStart": "September 11th, 2025 at 5:00pm",
+      "rate": "$400 Flat Rate",
       "approvedDate": "2025-08-02",
-      "contractStatus": "signed",
+      "contractStatus": "pending",
       "contractSignedDate": null,
       "contractUploadedDate": null,
       "contractId": null,
-      "jobs": [
-        {
-          "id": "job-001",
-          "role": "Editor",
-          "location": "Atlanta Area",
-          "projectStart": "August 22, 2025 at 3:15 PM",
-          "rate": "$750.00 USD (Flat Rate)",
-          "status": "Active",
-          "projectType": "Wedding Video",
-          "description": ""
-        }
-      ],
-      "primaryJob": "job-001"
+      "jobs": [],
+      "primaryJob": null
     }
   },
   "lastUpdated": "2025-08-02",
