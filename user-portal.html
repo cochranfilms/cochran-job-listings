@@ -1035,14 +1035,19 @@
         }
 
         // Download contract for user
-        window.downloadUserContract = function() {
-            // Find the user's uploaded contract
+        function downloadUserContract() {
+            // Check if user has uploaded contract
             const userContract = uploadedContracts.find(contract => 
                 contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
             );
             
             if (!userContract) {
-                alert('❌ No uploaded contract found for your account.');
+                // If no uploaded contract, check if contract is signed but not uploaded
+                if (currentUser.contractStatus === 'signed') {
+                    alert('✅ Your contract has been signed and is being processed by admin. You will be able to download it once it\'s uploaded.');
+                } else {
+                    alert('❌ No contract found for your account. Please sign your contract first.');
+                }
                 return;
             }
             
@@ -1063,14 +1068,19 @@
         }
 
         // View contract details
-        window.viewContractDetails = function() {
-            // Find the user's uploaded contract
+        function viewContractDetails() {
+            // Check if user has uploaded contract
             const userContract = uploadedContracts.find(contract => 
                 contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
             );
             
             if (!userContract) {
-                alert('❌ No uploaded contract found for your account.');
+                // If no uploaded contract, check if contract is signed but not uploaded
+                if (currentUser.contractStatus === 'signed') {
+                    alert('✅ Your contract has been signed and is being processed by admin. You will be able to view details once it\'s uploaded.');
+                } else {
+                    alert('❌ No contract found for your account. Please sign your contract first.');
+                }
                 return;
             }
             
@@ -1081,7 +1091,7 @@
 
 📋 BASIC INFO:
 Contract ID: ${userContract.contractId}
-Freelancer: ${userContract.freelancerName}
+Freelancer: ${userContract.freelancerEmail}
 Email: ${userContract.freelancerEmail}
 Role: ${userContract.role}
 Rate: ${userContract.rate}
@@ -1099,6 +1109,10 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             
             alert(details);
         }
+
+        // Make functions globally accessible
+        window.downloadUserContract = downloadUserContract;
+        window.viewContractDetails = viewContractDetails;
 
         // Logout
         function logout() {

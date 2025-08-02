@@ -722,7 +722,7 @@
             publicKey: 'p4pF3OWvh-DXtae4c',
             serviceId: 'service_t11yvru',
             templateId: 'template_6izinct', // Admin notification template
-            userTemplateId: 'template_user_confirm' // User confirmation template
+            userTemplateId: 'template_user_confirm' // User confirmation template - UPDATE THIS IN EMAILJS
         };
         
         // Initialize EmailJS
@@ -1469,7 +1469,7 @@
             }
             
             const userEmailParams = {
-                email: contractData.freelancerEmail,  // Changed from 'to_email' to 'email'
+                to_email: contractData.freelancerEmail,  // Match the template variable name
                 freelancer_name: contractData.freelancerName,
                 contract_id: contractData.contractId,
                 role: contractData.role,
