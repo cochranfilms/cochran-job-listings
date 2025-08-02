@@ -14,11 +14,30 @@
       "email": "codylcochran87@gmail.com",
       "password": "Test12345",
       "contractUrl": "contract.html",
-      "role": "Video Editor",
-      "location": "Alanta, GA",
-      "projectStart": "August 19th, 2025 at 2:00pm",
-      "rate": "$450.00 USD (Flat)",
-      "approvedDate": "2025-04-13"
+      "approvedDate": "2025-04-13",
+      "jobs": [
+        {
+          "id": "job-001",
+          "role": "Video Editor",
+          "location": "Atlanta, GA",
+          "projectStart": "August 19th, 2025 at 2:00pm",
+          "rate": "$450.00 USD (Flat)",
+          "status": "upcoming",
+          "projectType": "Corporate Video",
+          "description": "Edit promotional video for tech startup"
+        },
+        {
+          "id": "job-002", 
+          "role": "Drone Operator",
+          "location": "Savannah, GA",
+          "projectStart": "September 15th, 2025 at 10:00am",
+          "rate": "$600.00 USD (Flat)",
+          "status": "upcoming",
+          "projectType": "Real Estate",
+          "description": "Aerial shots for luxury property showcase"
+        }
+      ],
+      "primaryJob": "job-001"
     },
     "Hannah Aryee": {
       "email": "hannah@luciacreates.co",
