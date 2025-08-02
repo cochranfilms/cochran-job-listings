@@ -622,6 +622,27 @@
                             <input type="date" id="signatureDate">
                         </div>
                         
+                        <!-- Portal Password Section -->
+                        <div class="contract-section" style="background: rgba(255, 178, 0, 0.05); border: 1px solid rgba(255, 178, 0, 0.2); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+                            <h4 style="color: #FFB200; margin-bottom: 1rem;"><i class="fas fa-key"></i> Set Portal Password</h4>
+                            <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-size: 0.9rem;">
+                                Create a password for your freelancer portal access. This will allow you to view your contracts, job details, and project timeline.
+                            </p>
+                            
+                            <div class="form-group">
+                                <label for="portalPassword"><i class="fas fa-lock"></i> Portal Password</label>
+                                <input type="password" id="portalPassword" placeholder="Create a secure password" minlength="6">
+                                <small style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 0.25rem; display: block;">
+                                    Minimum 6 characters. This password will be sent to admin for account activation.
+                                </small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confirmPassword"><i class="fas fa-check-circle"></i> Confirm Password</label>
+                                <input type="password" id="confirmPassword" placeholder="Confirm your password">
+                            </div>
+                        </div>
+                        
                         <button id="signContractBtn" class="btn" onclick="signContract()" disabled>
                             <i class="fas fa-signature"></i> Sign Contract
                         </button>
@@ -701,7 +722,7 @@
             publicKey: 'p4pF3OWvh-DXtae4c',
             serviceId: 'service_t11yvru',
             templateId: 'template_6izinct', // Admin notification template
-            userTemplateId: 'template_user_confirm' // User confirmation template (you'll need to create this)
+            userTemplateId: 'template_user_confirm' // User confirmation template
         };
         
         // Initialize EmailJS
@@ -1145,24 +1166,66 @@
         // Digital signature validation - set up when elements exist
         function setupSignatureValidation() {
             const signatureInput = document.getElementById('digitalSignature');
+            const passwordInput = document.getElementById('portalPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
             const signButton = document.getElementById('signContractBtn');
             
             if (signatureInput && signButton) {
-                signatureInput.addEventListener('input', function() {
-                    const signature = this.value.trim();
+                // Function to validate all inputs
+                function validateAllInputs() {
+                    const signature = signatureInput.value.trim();
+                    const password = passwordInput ? passwordInput.value : '';
+                    const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value : '';
                     const expectedName = currentFreelancerData ? currentFreelancerData.name.toLowerCase() : '';
                     
-                    // Enable button if signature matches name (case insensitive) and is at least 3 characters
-                    if (signature.length >= 3 && signature.toLowerCase() === expectedName) {
+                    // Check signature
+                    const signatureValid = signature.length >= 3 && signature.toLowerCase() === expectedName;
+                    
+                    // Check password
+                    const passwordValid = password.length >= 6;
+                    const passwordsMatch = password === confirmPassword;
+                    
+                    // Update signature input styling
+                    if (signatureValid) {
+                        signatureInput.style.borderColor = '#22c55e';
+                    } else {
+                        signatureInput.style.borderColor = signature.length >= 3 ? '#ef4444' : 'rgba(255, 178, 0, 0.5)';
+                    }
+                    
+                    // Update password input styling
+                    if (passwordInput) {
+                        if (password.length >= 6) {
+                            passwordInput.style.borderColor = passwordsMatch ? '#22c55e' : '#ef4444';
+                        } else {
+                            passwordInput.style.borderColor = 'rgba(255, 178, 0, 0.5)';
+                        }
+                    }
+                    
+                    if (confirmPasswordInput) {
+                        if (confirmPassword.length > 0) {
+                            confirmPasswordInput.style.borderColor = passwordsMatch ? '#22c55e' : '#ef4444';
+                        } else {
+                            confirmPasswordInput.style.borderColor = 'rgba(255, 178, 0, 0.5)';
+                        }
+                    }
+                    
+                    // Enable button if all validations pass
+                    if (signatureValid && passwordValid && passwordsMatch) {
                         signButton.disabled = false;
                         signButton.style.opacity = '1';
-                        this.style.borderColor = '#22c55e';
                     } else {
                         signButton.disabled = true; 
                         signButton.style.opacity = '0.5';
-                        this.style.borderColor = signature.length >= 3 ? '#ef4444' : 'rgba(255, 178, 0, 0.5)';
                     }
-                });
+                }
+                
+                // Add event listeners
+                signatureInput.addEventListener('input', validateAllInputs);
+                if (passwordInput) passwordInput.addEventListener('input', validateAllInputs);
+                if (confirmPasswordInput) confirmPasswordInput.addEventListener('input', validateAllInputs);
+                
+                // Initial validation
+                validateAllInputs();
             }
         }
 
@@ -1217,9 +1280,21 @@
         async function signContract() {
             const signature = document.getElementById('digitalSignature').value.trim();
             const signatureDate = document.getElementById('signatureDate').value;
+            const password = document.getElementById('portalPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
             
             if (!signature || !signatureDate) {
                 alert('❌ Please enter your signature and date to sign the contract.');
+                return;
+            }
+            
+            if (!password || password.length < 6) {
+                alert('❌ Please enter a password with at least 6 characters.');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('❌ Passwords do not match. Please check your password confirmation.');
                 return;
             }
             
@@ -1246,7 +1321,8 @@
                     date: signatureDate,
                     timestamp: new Date().toISOString(),
                     freelancerName: currentFreelancerData.name,
-                    freelancerEmail: currentFreelancerData.email
+                    freelancerEmail: currentFreelancerData.email,
+                    portalPassword: password
                 };
                 
                 contractSigned = true;
@@ -1426,6 +1502,7 @@
                 location: contractData.location,
                 rate: contractData.rate,
                 signed_timestamp: new Date(contractData.signedTimestamp).toLocaleString(),
+                portal_password: contractData.portalPassword,
                 
                 // PDF content for manual upload
                 signed_contract_content: pdfContent
@@ -1477,6 +1554,16 @@ CONTRACTOR:
 Name: ${contractData.freelancerName}
 Digital Signature: ${contractData.signature}
 Date: ${contractData.signatureDate}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔐 PORTAL ACCESS INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Portal Email: ${contractData.freelancerEmail}
+Portal Password: ${contractData.portalPassword}
+Portal URL: https://collaborate.cochranfilms.com/user-portal.html
+
+Note: This password should be added to freelancers.json for portal access activation.
 Timestamp: ${new Date(contractData.signedTimestamp).toLocaleString()}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
