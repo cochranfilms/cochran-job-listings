@@ -78,8 +78,19 @@
       "contractSignedDate": null,
       "contractUploadedDate": null,
       "contractId": null,
-      "jobs": [],
-      "primaryJob": null
+      "jobs": [
+        {
+          "id": "job-001",
+          "role": "Editor",
+          "location": "Atlanta Area",
+          "projectStart": "August 22, 2025 at 3:15 PM",
+          "rate": "$750.00 USD (Flat Rate)",
+          "status": "Active",
+          "projectType": "Wedding Video",
+          "description": ""
+        }
+      ],
+      "primaryJob": "job-001"
     }
   },
   "lastUpdated": "2025-08-02",
