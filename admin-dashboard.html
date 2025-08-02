@@ -707,6 +707,20 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                             <div><strong>Project Start:</strong><br>${freelancer.projectStart}</div>
                             <div><strong>Approved Date:</strong><br>${freelancer.approvedDate || 'Not set'}</div>
                         </div>
+                        ${freelancer.jobs && freelancer.jobs.length > 0 ? `
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,178,0,0.3);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <strong style="color: #22c55e;">🎯 Assigned Jobs (${freelancer.jobs.length})</strong>
+                                    ${freelancer.primaryJob ? `<span style="background: #22c55e; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Primary: ${freelancer.primaryJob}</span>` : ''}
+                                </div>
+                                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8);">
+                                    ${freelancer.jobs.slice(0, 2).map(job => `
+                                        <div style="margin-bottom: 0.25rem;">• ${job.id}: ${job.role || 'No role'} - ${job.status || 'No status'}</div>
+                                    `).join('')}
+                                    ${freelancer.jobs.length > 2 ? `<div style="font-style: italic; color: rgba(255,255,255,0.6);">... and ${freelancer.jobs.length - 2} more</div>` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                     
                     <div class="actions">
@@ -721,6 +735,9 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             `).join('');
             
             container.innerHTML = freelancersHTML;
+            
+            // Update job assignment dropdown
+            populateJobAssignmentDropdown();
         }
 
         // Contract form submission
@@ -881,6 +898,162 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }
+
+        // ==================== JOB ASSIGNMENT FUNCTIONALITY ====================
+
+        // Populate freelancer dropdown for job assignment
+        function populateJobAssignmentDropdown() {
+            const select = document.getElementById('jobAssignmentFreelancer');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">Choose a freelancer...</option>';
+            freelancers.forEach((freelancer, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = freelancer.name;
+                select.appendChild(option);
+            });
+        }
+
+        // Handle freelancer selection for job assignment
+        function handleFreelancerSelection() {
+            const select = document.getElementById('jobAssignmentFreelancer');
+            const jobInfo = document.getElementById('freelancerJobInfo');
+            const currentJobsList = document.getElementById('currentJobsList');
+            
+            if (!select || !jobInfo || !currentJobsList) return;
+            
+            const selectedIndex = select.value;
+            if (selectedIndex === '') {
+                jobInfo.style.display = 'none';
+                return;
+            }
+            
+            const freelancer = freelancers[selectedIndex];
+            jobInfo.style.display = 'block';
+            
+            if (freelancer.jobs && freelancer.jobs.length > 0) {
+                const jobsHTML = freelancer.jobs.map((job, jobIndex) => `
+                    <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid rgba(255,178,0,0.2);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="color: #FFB200;">${job.id}</strong>
+                            ${job.id === freelancer.primaryJob ? '<span style="background: #22c55e; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Primary</span>' : ''}
+                        </div>
+                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8);">
+                            <div>🎯 ${job.role || 'No role'}</div>
+                            <div>📍 ${job.location || 'No location'}</div>
+                            <div>💰 ${job.rate || 'No rate'}</div>
+                            <div>📅 ${job.projectStart || 'No date'}</div>
+                            <div>📊 ${job.status || 'No status'}</div>
+                        </div>
+                        <button onclick="removeJobFromFreelancer(${selectedIndex}, ${jobIndex})" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; margin-top: 0.5rem;">Remove</button>
+                    </div>
+                `).join('');
+                currentJobsList.innerHTML = jobsHTML;
+            } else {
+                currentJobsList.innerHTML = '<p style="color: rgba(255,255,255,0.6); font-style: italic;">No jobs assigned yet</p>';
+            }
+        }
+
+        // Add job to freelancer
+        function addJobToFreelancer() {
+            const freelancerIndex = document.getElementById('jobAssignmentFreelancer').value;
+            if (freelancerIndex === '') {
+                alert('Please select a freelancer first.');
+                return;
+            }
+            
+            const jobData = {
+                id: document.getElementById('jobId').value,
+                role: document.getElementById('jobRole').value,
+                location: document.getElementById('jobLocation').value,
+                projectStart: document.getElementById('jobProjectStart').value,
+                rate: document.getElementById('jobRate').value,
+                status: document.getElementById('jobStatus').value,
+                projectType: document.getElementById('jobProjectType').value,
+                description: document.getElementById('jobDescription').value
+            };
+            
+            if (!jobData.id.trim()) {
+                alert('Job ID is required.');
+                return;
+            }
+            
+            const freelancer = freelancers[freelancerIndex];
+            if (!freelancer.jobs) {
+                freelancer.jobs = [];
+            }
+            
+            // Check if job ID already exists
+            const existingJobIndex = freelancer.jobs.findIndex(job => job.id === jobData.id);
+            if (existingJobIndex >= 0) {
+                if (confirm('A job with this ID already exists. Do you want to replace it?')) {
+                    freelancer.jobs[existingJobIndex] = jobData;
+                } else {
+                    return;
+                }
+            } else {
+                freelancer.jobs.push(jobData);
+            }
+            
+            // Set as primary job if checkbox is checked
+            if (document.getElementById('primaryJobCheckbox').checked) {
+                freelancer.primaryJob = jobData.id;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('freelancers', JSON.stringify(freelancers));
+            
+            // Refresh displays
+            displayFreelancers();
+            handleFreelancerSelection();
+            
+            // Clear form
+            document.getElementById('jobAssignmentForm').reset();
+            
+            alert(`✅ Job "${jobData.id}" added to ${freelancer.name}!`);
+        }
+
+        // Remove job from freelancer
+        function removeJobFromFreelancer(freelancerIndex, jobIndex) {
+            const freelancer = freelancers[freelancerIndex];
+            const job = freelancer.jobs[jobIndex];
+            
+            if (confirm(`Are you sure you want to remove job "${job.id}" from ${freelancer.name}?`)) {
+                freelancer.jobs.splice(jobIndex, 1);
+                
+                // If this was the primary job, clear it
+                if (freelancer.primaryJob === job.id) {
+                    freelancer.primaryJob = null;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                
+                // Refresh displays
+                displayFreelancers();
+                handleFreelancerSelection();
+                
+                alert(`✅ Job "${job.id}" removed from ${freelancer.name}!`);
+            }
+        }
+
+        // Initialize job assignment functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const jobAssignmentForm = document.getElementById('jobAssignmentForm');
+            const freelancerSelect = document.getElementById('jobAssignmentFreelancer');
+            
+            if (jobAssignmentForm) {
+                jobAssignmentForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    addJobToFreelancer();
+                });
+            }
+            
+            if (freelancerSelect) {
+                freelancerSelect.addEventListener('change', handleFreelancerSelection);
+            }
+        });
 
         // ==================== QUICK IMPORT FROM EMAIL ====================
 
@@ -1724,6 +1897,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     <p><strong>✨ New Digital Signing Workflow:</strong></p>
                     <ol>
                         <li><strong>Add/Edit Freelancers</strong> → Add freelancer details to your database</li>
+                        <li><strong>Assign Jobs</strong> → Assign specific jobs to each freelancer (optional)</li>
                         <li><strong>Export JSON</strong> → Download and upload freelancers.json to your server</li>
                         <li><strong>Share Contract Link</strong> → Send freelancers to contract.html for verification</li>
                         <li><strong>Digital Signing</strong> → Freelancers sign contracts directly on contract.html</li>
@@ -1786,6 +1960,78 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             <div class="list-section">
                 <h2>Current Freelancers</h2>
                 <div id="contractsList"></div>
+            </div>
+
+            <!-- Job Assignment Section -->
+            <div class="form-section">
+                <h2>🎯 Assign Jobs to Freelancers</h2>
+                <div class="workflow-info">
+                    <p><strong>Job Assignment:</strong> Assign specific jobs to freelancers. This will create the jobs array and primaryJob field in the exported JSON.</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">Select Freelancer</h3>
+                        <select id="jobAssignmentFreelancer" style="margin-bottom: 1rem;">
+                            <option value="">Choose a freelancer...</option>
+                        </select>
+                        
+                        <div id="freelancerJobInfo" style="display: none; background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,178,0,0.3); margin-bottom: 1rem;">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Current Jobs:</h4>
+                            <div id="currentJobsList"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 style="color: #22c55e; margin-bottom: 1rem;">Add New Job</h3>
+                        <form id="jobAssignmentForm">
+                            <div class="form-group">
+                                <label for="jobId">Job ID *</label>
+                                <input type="text" id="jobId" placeholder="e.g., job-001" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="jobRole">Role</label>
+                                <input type="text" id="jobRole" placeholder="e.g., Video Editor">
+                            </div>
+                            <div class="form-group">
+                                <label for="jobLocation">Location</label>
+                                <input type="text" id="jobLocation" placeholder="e.g., Atlanta, GA">
+                            </div>
+                            <div class="form-group">
+                                <label for="jobProjectStart">Project Start</label>
+                                <input type="text" id="jobProjectStart" placeholder="e.g., August 19th, 2025 at 2:00pm">
+                            </div>
+                            <div class="form-group">
+                                <label for="jobRate">Rate</label>
+                                <input type="text" id="jobRate" placeholder="e.g., $450.00 USD (Flat)">
+                            </div>
+                            <div class="form-group">
+                                <label for="jobStatus">Status</label>
+                                <select id="jobStatus">
+                                    <option value="upcoming">Upcoming</option>
+                                    <option value="active">Active</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="jobProjectType">Project Type</label>
+                                <input type="text" id="jobProjectType" placeholder="e.g., Corporate Video">
+                            </div>
+                            <div class="form-group">
+                                <label for="jobDescription">Description</label>
+                                <textarea id="jobDescription" placeholder="Describe the job requirements..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="primaryJobCheckbox">
+                                    <input type="checkbox" id="primaryJobCheckbox" style="width: auto; margin-right: 0.5rem;">
+                                    Set as Primary Job
+                                </label>
+                            </div>
+                            <button type="submit" class="btn">Add Job</button>
+                        </form>
+                    </div>
+                </div>
             </div>
 
             <div class="export-section">
