@@ -85,7 +85,7 @@
         }
 
         // Tab switching
-        function showTab(tabName) {
+        function switchTab(tabName) {
             const tabs = document.querySelectorAll('.tab-content');
             const btns = document.querySelectorAll('.tab-btn');
             
@@ -433,8 +433,331 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 </div>
             `;
         }
-    </script>
 
+        // ==================== JOBS MANAGEMENT FUNCTIONALITY ====================
+        
+        let jobs = [];
+        let editingJobIndex = -1;
+
+        // Load jobs from localStorage
+        function loadJobs() {
+            console.log('🔄 Loading jobs...');
+            jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
+            displayJobs();
+            console.log('✅ Loaded', jobs.length, 'jobs');
+        }
+
+        // Display jobs
+        function displayJobs() {
+            const container = document.getElementById('jobsList');
+            
+            if (jobs.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">📋 No Jobs Created Yet</h3>
+                        <p>Create your first job listing using the form above</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const jobsHTML = jobs.map((job, index) => `
+                <div class="item-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>${job.title}</h3>
+                        <span style="background: ${job.status === 'Active' ? '#22c55e' : '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">${job.status}</span>
+                    </div>
+                    
+                    <div class="item-meta">
+                        <span>📅 ${job.date || 'No date set'}</span>
+                        <span>📍 ${job.location || 'No location'}</span>
+                        <span>💰 ${job.pay || 'No pay listed'}</span>
+                    </div>
+                    
+                    <div class="item-description">
+                        ${job.description || 'No description provided'}
+                    </div>
+                    
+                    <div class="actions">
+                        <button class="btn btn-small" onclick="editJob(${index})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = jobsHTML;
+        }
+
+        // Job form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const jobForm = document.getElementById('jobForm');
+            if (jobForm) {
+                jobForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveJob();
+                });
+            }
+        });
+
+        // Save job
+        function saveJob() {
+            const formData = new FormData(document.getElementById('jobForm'));
+            const jobData = {
+                title: formData.get('title'),
+                date: formData.get('date'),
+                location: formData.get('location'),
+                pay: formData.get('pay'),
+                description: formData.get('description'),
+                status: formData.get('status')
+            };
+
+            if (!jobData.title.trim()) {
+                alert('Job title is required');
+                return;
+            }
+
+            if (editingJobIndex >= 0) {
+                jobs[editingJobIndex] = jobData;
+                editingJobIndex = -1;
+            } else {
+                jobs.push(jobData);
+            }
+
+            localStorage.setItem('jobs', JSON.stringify(jobs));
+            displayJobs();
+            clearJobForm();
+            alert('Job saved successfully!');
+        }
+
+        // Edit job
+        function editJob(index) {
+            const job = jobs[index];
+            document.getElementById('jobTitle').value = job.title;
+            document.getElementById('jobDate').value = job.date;
+            document.getElementById('jobLocation').value = job.location;
+            document.getElementById('jobPay').value = job.pay;
+            document.getElementById('jobDescription').value = job.description;
+            document.getElementById('jobStatus').value = job.status;
+            editingJobIndex = index;
+        }
+
+        // Delete job
+        function deleteJob(index) {
+            const job = jobs[index];
+            if (confirm(`Are you sure you want to delete "${job.title}"?`)) {
+                jobs.splice(index, 1);
+                localStorage.setItem('jobs', JSON.stringify(jobs));
+                displayJobs();
+            }
+        }
+
+        // Clear job form
+        function clearJobForm() {
+            document.getElementById('jobForm').reset();
+            document.getElementById('jobLocation').value = 'Atlanta Area';
+            editingJobIndex = -1;
+        }
+
+        // Export job data
+        function exportJobData() {
+            const exportData = {
+                jobs: jobs,
+                exportDate: new Date().toISOString()
+            };
+            document.getElementById('exportJobData').textContent = JSON.stringify(exportData, null, 2);
+            document.getElementById('downloadJobBtn').style.display = 'inline-block';
+        }
+
+        // Download job JSON
+        function downloadJobJSON() {
+            const exportData = {
+                jobs: jobs,
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `jobs-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== FREELANCER MANAGEMENT FUNCTIONALITY ====================
+        
+        let freelancers = [];
+        let editingFreelancerIndex = -1;
+
+        // Load freelancers from localStorage
+        function loadFreelancers() {
+            console.log('🔄 Loading freelancers...');
+            freelancers = JSON.parse(localStorage.getItem('freelancers') || '[]');
+            displayFreelancers();
+            console.log('✅ Loaded', freelancers.length, 'freelancers');
+        }
+
+        // Display freelancers
+        function displayFreelancers() {
+            const container = document.getElementById('contractsList');
+            
+            if (freelancers.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">👥 No Freelancers Added Yet</h3>
+                        <p>Add freelancers using the form above to manage contracts</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const freelancersHTML = freelancers.map((freelancer, index) => `
+                <div class="item-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>${freelancer.name}</h3>
+                        <span style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Active</span>
+                    </div>
+                    
+                    <div class="item-meta">
+                        <span>📧 ${freelancer.email}</span>
+                        <span>🎯 ${freelancer.role}</span>
+                        <span>💰 ${freelancer.rate}</span>
+                        <span>📍 ${freelancer.location}</span>
+                    </div>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                            <div><strong>Project Start:</strong><br>${freelancer.projectStart}</div>
+                            <div><strong>Approved Date:</strong><br>${freelancer.approvedDate || 'Not set'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="actions">
+                        <button class="btn btn-small" onclick="editFreelancer(${index})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteFreelancer(${index})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = freelancersHTML;
+        }
+
+        // Contract form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const contractForm = document.getElementById('contractForm');
+            if (contractForm) {
+                contractForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveFreelancer();
+                });
+            }
+        });
+
+        // Save freelancer
+        function saveFreelancer() {
+            const freelancerData = {
+                name: document.getElementById('freelancerName').value,
+                email: document.getElementById('freelancerEmail').value,
+                role: document.getElementById('freelancerRole').value,
+                location: document.getElementById('freelancerLocation').value,
+                projectStart: document.getElementById('projectStart').value,
+                rate: document.getElementById('freelancerRate').value,
+                approvedDate: document.getElementById('approvedDate').value
+            };
+
+            if (!freelancerData.name.trim() || !freelancerData.email.trim() || !freelancerData.role.trim()) {
+                alert('Name, email, and role are required');
+                return;
+            }
+
+            if (editingFreelancerIndex >= 0) {
+                freelancers[editingFreelancerIndex] = freelancerData;
+                editingFreelancerIndex = -1;
+            } else {
+                freelancers.push(freelancerData);
+            }
+
+            localStorage.setItem('freelancers', JSON.stringify(freelancers));
+            displayFreelancers();
+            clearContractForm();
+            alert('Freelancer saved successfully!');
+        }
+
+        // Edit freelancer
+        function editFreelancer(index) {
+            const freelancer = freelancers[index];
+            document.getElementById('freelancerName').value = freelancer.name;
+            document.getElementById('freelancerEmail').value = freelancer.email;
+            document.getElementById('freelancerRole').value = freelancer.role;
+            document.getElementById('freelancerLocation').value = freelancer.location;
+            document.getElementById('projectStart').value = freelancer.projectStart;
+            document.getElementById('freelancerRate').value = freelancer.rate;
+            document.getElementById('approvedDate').value = freelancer.approvedDate;
+            editingFreelancerIndex = index;
+        }
+
+        // Delete freelancer
+        function deleteFreelancer(index) {
+            const freelancer = freelancers[index];
+            if (confirm(`Are you sure you want to delete "${freelancer.name}"?`)) {
+                freelancers.splice(index, 1);
+                localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                displayFreelancers();
+            }
+        }
+
+        // Clear contract form
+        function clearContractForm() {
+            document.getElementById('contractForm').reset();
+            document.getElementById('freelancerLocation').value = 'Atlanta Area';
+            document.getElementById('projectStart').value = 'TBD';
+            document.getElementById('contractUrl').value = 'contract.html';
+            editingFreelancerIndex = -1;
+        }
+
+        // Export contract data
+        function exportContractData() {
+            const exportData = {
+                approvedFreelancers: freelancers.reduce((acc, freelancer) => {
+                    acc[freelancer.email] = freelancer;
+                    return acc;
+                }, {}),
+                exportDate: new Date().toISOString()
+            };
+            document.getElementById('exportContractData').textContent = JSON.stringify(exportData, null, 2);
+            document.getElementById('downloadContractBtn').style.display = 'inline-block';
+        }
+
+        // Download contract JSON
+        function downloadContractJSON() {
+            const exportData = {
+                approvedFreelancers: freelancers.reduce((acc, freelancer) => {
+                    acc[freelancer.email] = freelancer;
+                    return acc;
+                }, {}),
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `freelancers-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+    
     <style>
         :root {
             --primary: #FFB200;
@@ -1030,6 +1353,40 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 width: 100%;
             }
         }
+
+        /* Export Section Styles */
+        .export-section {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .export-section h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #FFB200;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+
+        .export-section pre {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #fff;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
@@ -1268,8 +1625,8 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     </ol>
                     <p><strong>💡 Benefits:</strong> Simple, reliable workflow with email notifications and organized PDF storage.</p>
                 </div>
-            </div>
-
+                </div>
+                
             <!-- PDF Upload Section -->
             <div class="form-section">
                 <h2>📤 Upload Signed Contract PDF</h2>
@@ -1280,10 +1637,10 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     </div>
                     <div class="upload-text">
                         Drag & Drop PDF files here or click to browse
-                    </div>
+                </div>
                     <div class="upload-instructions">
                         Upload signed contract PDFs received from freelancers (PDF files only)
-                    </div>
+            </div>
                     <input type="file" id="contractFileInput" accept=".pdf" multiple>
                     <button class="btn upload-btn" onclick="document.getElementById('contractFileInput').click()">
                         <i class="fas fa-plus"></i> Choose PDF Files
@@ -1297,28 +1654,28 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                         <div class="form-group">
                             <label for="uploadFreelancerName">Freelancer Name</label>
                             <input type="text" id="uploadFreelancerName" placeholder="Enter freelancer's full name">
-                        </div>
+                    </div>
                         <div class="form-group">
                             <label for="uploadFreelancerEmail">Email</label>
                             <input type="email" id="uploadFreelancerEmail" placeholder="Enter freelancer's email">
-                        </div>
+                    </div>
                         <div class="form-group">
                             <label for="uploadRole">Role</label>
                             <input type="text" id="uploadRole" placeholder="e.g., Videographer, Photographer">
-                        </div>
+                </div>
                         <div class="form-group">
                             <label for="uploadRate">Rate</label>
                             <input type="text" id="uploadRate" placeholder="e.g., $400 flat, $150/day">
-                        </div>
+                </div>
                         <div class="form-group">
                             <label for="uploadLocation">Location</label>
                             <input type="text" id="uploadLocation" placeholder="Project location">
-                        </div>
+            </div>
                         <div class="form-group">
                             <label for="uploadDate">Contract Date</label>
                             <input type="date" id="uploadDate">
-                        </div>
-                    </div>
+        </div>
+    </div>
                     <div class="form-group">
                         <label for="uploadNotes">Notes (Optional)</label>
                         <textarea id="uploadNotes" placeholder="Any additional notes about this contract"></textarea>
@@ -1332,7 +1689,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                         </button>
                     </div>
                 </div>
-            </div>
+                </div>
 
             <div class="list-section">
                 <h2>📁 Uploaded Contracts</h2>
@@ -1340,27 +1697,25 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     <button class="btn" onclick="loadUploadedContracts()">🔄 Refresh</button>
                     <button class="btn" onclick="exportContractList()">📦 Export List</button>
                     <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
-                </div>
-                
+                    </div>
+
                 <div id="uploadedContractsList">
                     <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
                         <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">📋 No Contracts Uploaded Yet</h3>
                         <p>Upload signed contract PDFs using the form above</p>
                     </div>
-                </div>
-            </div>
-
+                    </div>
+                            </div>
+                            
             <div class="export-section">
                 <h2>📊 Contract Analytics</h2>
                 <div id="contractAnalytics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                     <!-- Analytics will be populated here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Google API Scripts -->
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()" onerror="handleScriptError('API')"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()" onerror="handleScriptError('Identity')"></script>
+
 </body>
 </html>
