@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Cochran Films</title>
+    <title>Admin Dashboard | Cochran Films</title>
     
     <!-- Favicon to prevent 404 error -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⚙️</text></svg>">
@@ -18,225 +18,415 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Drive API - Exact Copy of Official Quickstart -->
     <script>
-        // Configuration - matches official Drive API quickstart pattern
-        const CLIENT_ID = '1067833350488-oht35egae1r6lpb642fl5rkjnus0rlqv.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyAqU6JXq7u2dKix2AfMk7yxvP8-PQVFxmE';
-        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-        const SCOPES = 'https://www.googleapis.com/auth/drive';
+        // Simple admin dashboard configuration
+        let signedContracts = [];
+        let uploadedContracts = [];
+        let contractsAnalytics = {};
+        let currentUploadFile = null;
 
-        let tokenClient;
-        let gapiInited = false;
-        let gisInited = false;
-        let gapiRetryCount = 0;
-        let gisRetryCount = 0;
-        const MAX_API_RETRIES = 10; // 5 seconds total
-
-        /**
-         * Callback after api.js is loaded.
-         */
-        function gapiLoaded() {
-            console.log('📡 GAPI loaded, initializing client...');
-            if (typeof gapi !== 'undefined') {
-                gapi.load('client', initializeGapiClient);
+        // Check if already authenticated
+        function checkAuth() {
+            const session = sessionStorage.getItem('adminDashboardAuthenticated');
+            if (session === 'true') {
+                isAuthenticated = true;
+                showAdminInterface();
             } else {
-                gapiRetryCount++;
-                if (gapiRetryCount < MAX_API_RETRIES) {
-                    console.error(`❌ GAPI not available - retrying in 500ms (${gapiRetryCount}/${MAX_API_RETRIES})`);
-                    setTimeout(gapiLoaded, 500);
-                } else {
-                    console.error('❌ GAPI failed to load after maximum retries. Falling back to localStorage-only mode.');
-                    handleGoogleAPIFailure('gapi');
-                }
+                showLoginScreen();
             }
         }
 
-        /**
-         * Callback after the API client is loaded. Loads the
-         * discovery doc to initialize the API.
-         */
-        async function initializeGapiClient() {
-            console.log('🔧 Initializing GAPI client...');
-            try {
-                await gapi.client.init({
-                    apiKey: API_KEY,
-                    discoveryDocs: [DISCOVERY_DOC],
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('adminInterface').style.display = 'none';
+        }
+
+        // Show admin interface
+        async function showAdminInterface() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminInterface').style.display = 'block';
+            
+            loadJobs();
+            loadFreelancers();
+            loadUploadedContracts();
+        }
+
+        // Handle login
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple authentication
+            if (username === 'admin' && password === 'Deannajack3#') {
+                sessionStorage.setItem('adminDashboardAuthenticated', 'true');
+                isAuthenticated = true;
+                showAdminInterface();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        // Logout
+        function logout() {
+            sessionStorage.removeItem('adminDashboardAuthenticated');
+            isAuthenticated = false;
+            showLoginScreen();
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const btns = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            btns.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // ==================== CONTRACTS UPLOAD FUNCTIONALITY ====================
+
+        // Initialize drag and drop for PDF upload
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadZone = document.getElementById('pdfUploadZone');
+            const fileInput = document.getElementById('contractFileInput');
+            
+            if (uploadZone && fileInput) {
+                uploadZone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    uploadZone.classList.add('dragover');
                 });
-                gapiInited = true;
-                console.log('✅ GAPI client initialized successfully');
-                maybeEnableGoogleDrive();
-            } catch (error) {
-                console.error('❌ Error initializing GAPI client:', error);
-                gapiInited = false;
-                window.isGoogleDriveInitialized = false;
                 
-                // Show retry button on error
-                const retryBtn = document.getElementById('retryAPIBtn');
-                if (retryBtn) {
-                    retryBtn.style.display = 'inline-block';
-                }
+                uploadZone.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    uploadZone.classList.remove('dragover');
+                });
+                
+                uploadZone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    uploadZone.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    handleFileSelection(files);
+                });
+                
+                fileInput.addEventListener('change', function(e) {
+                    handleFileSelection(e.target.files);
+                });
             }
-        }
+        });
 
-        /**
-         * Callback after Google Identity Services are loaded.
-         */
-        function gisLoaded() {
-            console.log('🔑 Google Identity Services loaded, initializing token client...');
-            if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-                try {
-                    tokenClient = google.accounts.oauth2.initTokenClient({
-                        client_id: CLIENT_ID,
-                        scope: SCOPES,
-                        callback: '', // defined later
-                    });
-                    gisInited = true;
-                    console.log('✅ Google Identity Services initialized successfully');
-                    maybeEnableGoogleDrive();
-                } catch (error) {
-                    console.error('❌ Error initializing Google Identity Services:', error);
-                    gisInited = false;
-                    window.isGoogleDriveInitialized = false;
-                    handleGoogleAPIFailure('gis');
-                }
-            } else {
-                gisRetryCount++;
-                if (gisRetryCount < MAX_API_RETRIES) {
-                    console.error(`❌ Google Identity Services not available - retrying in 500ms (${gisRetryCount}/${MAX_API_RETRIES})`);
-                    setTimeout(gisLoaded, 500);
-                } else {
-                    console.error('❌ Google Identity Services failed to load after maximum retries. Falling back to localStorage-only mode.');
-                    handleGoogleAPIFailure('gis');
-                }
-            }
-        }
-
-        /**
-         * Handle script loading errors
-         */
-        function handleScriptError(scriptType) {
-            console.error(`❌ Failed to load ${scriptType} script from Google servers`);
+        // Handle file selection
+        function handleFileSelection(files) {
+            if (files.length === 0) return;
             
-            if (scriptType === 'gapi') {
-                console.error('❌ Google API script could not be loaded. This may be due to:');
-                console.error('  • Network connectivity issues');
-                console.error('  • Ad blockers blocking Google APIs');
-                console.error('  • Corporate firewall restrictions');
-                console.error('  • DNS resolution problems');
-            } else if (scriptType === 'gis') {
-                console.error('❌ Google Identity Services script could not be loaded');
-            }
-            
-            handleGoogleAPIFailure(scriptType);
-        }
-
-        /**
-         * Handle Google API failure and fallback to localStorage-only mode
-         */
-        function handleGoogleAPIFailure(apiType) {
-            console.log(`🔄 ${apiType} failed - falling back to localStorage-only mode`);
-            
-            // Set global flags
-            window.isGoogleDriveInitialized = false;
-            gapiInited = false;
-            gisInited = false;
-            
-            // Update UI to show fallback mode
-            setTimeout(() => {
-                const driveSetupBtn = document.getElementById('driveSetupBtn');
-                const forceSyncBtn = document.getElementById('forceSyncBtn');
-                const retryBtn = document.getElementById('retryAPIBtn');
-                const syncStatus = document.querySelector('.sync-status');
-                
-                if (driveSetupBtn) {
-                    driveSetupBtn.style.display = 'none';
-                }
-                if (forceSyncBtn) {
-                    forceSyncBtn.style.display = 'none';
-                }
-                if (retryBtn) {
-                    retryBtn.style.display = 'inline-block';
-                    retryBtn.textContent = '🔄 Retry Google API';
-                }
-                if (syncStatus) {
-                    syncStatus.textContent = '📱 Using local storage only (Google API unavailable)';
-                    syncStatus.style.color = '#ff9500';
-                }
-                
-                // Show a user-friendly notification
-                console.log('ℹ️ Google Drive sync is unavailable. Your data will be saved locally in your browser.');
-            }, 100);
-        }
-
-        /**
-         * Enables Google Drive functionality after all libraries are loaded.
-         */
-        function maybeEnableGoogleDrive() {
-            if (gapiInited && gisInited) {
-                console.log('✅ Both GAPI and GIS initialized - Google Drive ready!');
-                window.isGoogleDriveInitialized = true;
-                window.gapiInited = gapiInited;
-                window.gisInited = gisInited;
-                window.tokenClient = tokenClient;
-                
-                // Check if already signed in
-                const token = gapi.client.getToken();
-                            console.log('👤 Google Drive sign-in status updated');
-                
-                // Hide retry button if it was shown
-                const retryBtn = document.getElementById('retryAPIBtn');
-                if (retryBtn) {
-                    retryBtn.style.display = 'none';
-                }
-            } else {
-                console.log('⏳ Waiting for all libraries... GAPI:', gapiInited, 'GIS:', gisInited);
-            }
-        }
-        
-        // Simple debug function for Google Drive
-        window.debugGoogleDrive = function() {
-            console.log('🔍 Google Drive Debug Info:');
-            console.log('  - gapiInited:', gapiInited);
-            console.log('  - gisInited:', gisInited);
-            console.log('  - contractsFileId:', contractsFileId);
-            console.log('  - CONTRACTS_FILE_NAME:', CONTRACTS_FILE_NAME);
-            console.log('  - window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
-        };
-
-        // Simple debug function for Google Drive
-        window.debugGoogleDriveFiles = async function() {
-            console.log('🔍 Google Drive Files Debug:');
-            
-            if (!window.isGoogleDriveInitialized) {
-                console.log('❌ Google Drive not initialized yet');
+            const file = files[0];
+            if (file.type !== 'application/pdf') {
+                alert('Please select a PDF file only.');
                 return;
             }
             
-            try {
-                console.log('📁 Searching for contracts file...');
-                const contractFiles = await gapi.client.drive.files.list({
-                    q: `name='${CONTRACTS_FILE_NAME}' and trashed=false`,
-                    fields: "files(id,name,createdTime,modifiedTime,size)"
-                });
-                
-                if (contractFiles.result.files.length > 0) {
-                    console.log('✅ Found contracts file:', contractFiles.result.files[0].name);
-                    console.log('📁 File ID:', contractFiles.result.files[0].id);
-                } else {
-                    console.log('❌ No contracts file found');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error debugging Google Drive:', error);
+            currentUploadFile = file;
+            document.getElementById('contractDetailsForm').style.display = 'block';
+            document.getElementById('uploadDate').value = new Date().toISOString().split('T')[0];
+            
+            // Scroll to form
+            document.getElementById('contractDetailsForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Save uploaded contract
+        function saveUploadedContract() {
+            if (!currentUploadFile) {
+                alert('No file selected.');
+                return;
             }
-        };
+            
+            const name = document.getElementById('uploadFreelancerName').value.trim();
+            const email = document.getElementById('uploadFreelancerEmail').value.trim();
+            const role = document.getElementById('uploadRole').value.trim();
+            const rate = document.getElementById('uploadRate').value.trim();
+            const location = document.getElementById('uploadLocation').value.trim();
+            const date = document.getElementById('uploadDate').value;
+            const notes = document.getElementById('uploadNotes').value.trim();
+            
+            if (!name || !email || !role) {
+                alert('Please fill in at least the name, email, and role fields.');
+                return;
+            }
+            
+            // Generate unique contract ID
+            const contractId = 'CF-UPLOAD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+            
+            // Create contract data
+            const contractData = {
+                contractId: contractId,
+                freelancerName: name,
+                freelancerEmail: email,
+                role: role,
+                rate: rate,
+                location: location,
+                contractDate: date,
+                notes: notes,
+                fileName: currentUploadFile.name,
+                fileSize: currentUploadFile.size,
+                uploadDate: new Date().toISOString(),
+                uploadTimestamp: new Date().toLocaleString(),
+                status: 'UPLOADED'
+            };
+            
+            // Save to localStorage
+            uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+            uploadedContracts.push(contractData);
+            localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
+            
+            // Save file data (base64) for later download
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                contractData.fileData = e.target.result;
+                uploadedContracts[uploadedContracts.length - 1] = contractData;
+                localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
+                
+                console.log('✅ Contract uploaded and saved:', contractData);
+                
+                // Reset form
+                cancelContractUpload();
+                
+                // Refresh list
+                loadUploadedContracts();
+                
+                alert(`✅ Contract uploaded successfully!\n\nContract ID: ${contractId}\nFreelancer: ${name}`);
+            };
+            reader.readAsDataURL(currentUploadFile);
+        }
+
+        // Cancel contract upload
+        function cancelContractUpload() {
+            currentUploadFile = null;
+            document.getElementById('contractDetailsForm').style.display = 'none';
+            document.getElementById('contractFileInput').value = '';
+            
+            // Clear form
+            document.getElementById('uploadFreelancerName').value = '';
+            document.getElementById('uploadFreelancerEmail').value = '';
+            document.getElementById('uploadRole').value = '';
+            document.getElementById('uploadRate').value = '';
+            document.getElementById('uploadLocation').value = '';
+            document.getElementById('uploadDate').value = '';
+            document.getElementById('uploadNotes').value = '';
+        }
+
+        // Load uploaded contracts
+        function loadUploadedContracts() {
+            console.log('🔄 Loading uploaded contracts...');
+            
+            uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+            displayUploadedContracts();
+            updateContractAnalytics();
+            
+            console.log('✅ Loaded', uploadedContracts.length, 'uploaded contracts');
+        }
+
+        // Display uploaded contracts
+        function displayUploadedContracts() {
+            const container = document.getElementById('uploadedContractsList');
+            const countElement = document.getElementById('contractCount');
+            
+            if (uploadedContracts.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">📋 No Contracts Uploaded Yet</h3>
+                        <p>Upload signed contract PDFs using the form above</p>
+                    </div>
+                `;
+                countElement.textContent = '';
+                return;
+            }
+            
+            countElement.textContent = `(${uploadedContracts.length} contract${uploadedContracts.length !== 1 ? 's' : ''})`;
+            
+            const contractsHTML = uploadedContracts.map((contract, index) => `
+                <div class="item-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>${contract.freelancerName}</h3>
+                        <div style="text-align: right; font-size: 0.8rem; color: rgba(255,255,255,0.6);">
+                            <div>📁 ${contract.fileName}</div>
+                            <div>📤 ${new Date(contract.uploadDate).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="item-meta">
+                        <span>📧 ${contract.freelancerEmail}</span>
+                        <span>🎯 ${contract.role}</span>
+                        <span>💰 ${contract.rate}</span>
+                        <span>📍 ${contract.location}</span>
+                        ${contract.contractDate ? `<span>📅 ${contract.contractDate}</span>` : ''}
+                    </div>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                            <div><strong>Contract ID:</strong><br>${contract.contractId}</div>
+                            <div><strong>File Size:</strong><br>${(contract.fileSize / 1024).toFixed(1)} KB</div>
+                        </div>
+                        ${contract.notes ? `<div style="margin-top: 0.5rem;"><strong>Notes:</strong><br>${contract.notes}</div>` : ''}
+                    </div>
+                    
+                    <div class="actions">
+                        <button class="btn btn-small" onclick="downloadUploadedContract(${index})">
+                            <i class="fas fa-download"></i> Download PDF
+                        </button>
+                        <button class="btn btn-small" onclick="viewUploadedContractDetails(${index})">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteUploadedContract(${index})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = contractsHTML;
+        }
+
+        // Download uploaded contract
+        function downloadUploadedContract(index) {
+            const contract = uploadedContracts[index];
+            if (!contract || !contract.fileData) {
+                alert('❌ Contract file not found.');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.href = contract.fileData;
+            link.download = contract.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('📄 Downloaded contract:', contract.fileName);
+        }
+
+        // View uploaded contract details
+        function viewUploadedContractDetails(index) {
+            const contract = uploadedContracts[index];
+            
+            const details = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 COCHRAN FILMS - CONTRACT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 BASIC INFO:
+Contract ID: ${contract.contractId}
+Freelancer: ${contract.freelancerName}
+Email: ${contract.freelancerEmail}
+Role: ${contract.role}
+Rate: ${contract.rate}
+Location: ${contract.location}
+Contract Date: ${contract.contractDate || 'Not specified'}
+
+📁 FILE INFO:
+File Name: ${contract.fileName}
+File Size: ${(contract.fileSize / 1024).toFixed(1)} KB
+Upload Date: ${new Date(contract.uploadDate).toLocaleString()}
+Status: ${contract.status}
+
+${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            `.trim();
+            
+            alert(details);
+        }
+
+        // Delete uploaded contract
+        function deleteUploadedContract(index) {
+            const contract = uploadedContracts[index];
+            if (confirm(`Are you sure you want to delete the contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis action cannot be undone.`)) {
+                uploadedContracts.splice(index, 1);
+                localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
+                displayUploadedContracts();
+                updateContractAnalytics();
+            }
+        }
+
+        // Export contract list
+        function exportContractList() {
+            if (uploadedContracts.length === 0) {
+                alert('No contracts to export.');
+                return;
+            }
+            
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                totalContracts: uploadedContracts.length,
+                contracts: uploadedContracts.map(contract => ({
+                    ...contract,
+                    fileData: undefined // Remove file data from export
+                }))
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `cochran-films-contracts-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log('📦 Contract list exported');
+        }
+
+        // Update contract analytics
+        function updateContractAnalytics() {
+            const analytics = {
+                total: uploadedContracts.length,
+                thisMonth: uploadedContracts.filter(c => {
+                    const uploadDate = new Date(c.uploadDate);
+                    const now = new Date();
+                    return uploadDate.getMonth() === now.getMonth() && uploadDate.getFullYear() === now.getFullYear();
+                }).length,
+                roles: {},
+                totalFileSize: uploadedContracts.reduce((sum, c) => sum + (c.fileSize || 0), 0)
+            };
+            
+            // Count roles
+            uploadedContracts.forEach(contract => {
+                const role = contract.role || 'Unknown';
+                analytics.roles[role] = (analytics.roles[role] || 0) + 1;
+            });
+            
+            const container = document.getElementById('contractAnalytics');
+            container.innerHTML = `
+                <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.3);">
+                    <h4 style="color: #FFB200; margin-bottom: 0.5rem;">📊 Total Contracts</h4>
+                    <div style="font-size: 2rem; font-weight: bold; color: #FFB200;">${analytics.total}</div>
+                </div>
+                
+                <div style="background: rgba(34,197,94,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(34,197,94,0.3);">
+                    <h4 style="color: #22c55e; margin-bottom: 0.5rem;">📅 This Month</h4>
+                    <div style="font-size: 2rem; font-weight: bold; color: #22c55e;">${analytics.thisMonth}</div>
+                </div>
+                
+                <div style="background: rgba(59,130,246,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59,130,246,0.3);">
+                    <h4 style="color: #3b82f6; margin-bottom: 0.5rem;">💾 Total Size</h4>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #3b82f6;">${(analytics.totalFileSize / 1024 / 1024).toFixed(1)} MB</div>
+                </div>
+                
+                <div style="background: rgba(168,85,247,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(168,85,247,0.3);">
+                    <h4 style="color: #a855f7; margin-bottom: 0.5rem;">🎯 Top Role</h4>
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #a855f7;">
+                        ${Object.keys(analytics.roles).length > 0 ? 
+                            Object.entries(analytics.roles).sort((a, b) => b[1] - a[1])[0][0] : 
+                            'No roles yet'
+                        }
+                    </div>
+                </div>
+            `;
+        }
     </script>
-    
-    <!-- Google API Scripts - Following Official Pattern -->
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()" onerror="handleScriptError('gapi')"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()" onerror="handleScriptError('gis')"></script>
-    
+
     <style>
         :root {
             --primary: #FFB200;
@@ -603,10 +793,6 @@
             margin-bottom: 0.5rem;
         }
         
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
@@ -745,17 +931,6 @@
             color: rgba(255,255,255,0.9);
         }
         
-        .item-url {
-            word-break: break-all;
-            color: #FFB200;
-            font-family: monospace;
-            font-size: 0.8rem;
-            background: rgba(255,178,0,0.1);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            margin: 0.5rem 0;
-        }
-        
         .actions {
             margin-top: 1rem;
         }
@@ -770,40 +945,52 @@
             color: white;
         }
         
-        /* Export Section */
-        .export-section {
-            background: rgba(0, 0, 0, 0.8);
+        /* PDF Upload Styles */
+        .upload-section {
+            background: rgba(34, 197, 94, 0.1);
+            border: 2px dashed rgba(34, 197, 94, 0.3);
             padding: 2rem;
-            border-radius: 16px;
+            border-radius: 12px;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,178,0,0.2);
-            position: relative;
-            z-index: 2;
+            text-align: center;
+            transition: all 0.3s ease;
         }
         
-        .export-section h2 {
-            font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
-            color: #FFB200;
+        .upload-section:hover {
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.15);
+        }
+        
+        .upload-section.dragover {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.2);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: #22c55e;
             margin-bottom: 1rem;
-            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
         }
         
-        .export-section p {
-            color: rgba(255,255,255,0.8);
+        .upload-text {
+            color: #22c55e;
+            font-size: 1.1rem;
             margin-bottom: 1rem;
         }
         
-        pre {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 1rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            color: #FFB200;
-            border: 1px solid rgba(255,178,0,0.3);
+        .upload-instructions {
+            color: rgba(255,255,255,0.7);
             font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        #contractFileInput {
+            display: none;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
         }
         
         /* Mobile Responsive */
@@ -834,143 +1021,6 @@
                 margin-bottom: 0.5rem;
                 width: 100%;
             }
-            
-            /* Signed Contracts Mobile Styles */
-            .item-card {
-                padding: 1rem;
-                margin-bottom: 1rem;
-            }
-            
-            .item-card h3 {
-                font-size: 1.1rem;
-                line-height: 1.3;
-            }
-            
-            /* Make contract analytics single column on mobile */
-            #contractAnalytics {
-                grid-template-columns: 1fr !important;
-                gap: 0.75rem !important;
-            }
-            
-            /* Make signature details single column on mobile */
-            .item-card div[style*="grid-template-columns: 1fr 1fr"] {
-                display: block !important;
-            }
-            
-            .item-card div[style*="grid-template-columns: 1fr 1fr"] > div {
-                margin-bottom: 0.75rem;
-            }
-            
-            .item-card div[style*="grid-template-columns: 1fr 1fr"] > div:last-child {
-                margin-bottom: 0;
-            }
-            
-            /* Better spacing for contract details on mobile */
-            .item-card div[style*="background: rgba(255,178,0,0.1)"] {
-                padding: 0.75rem !important;
-                margin: 0.75rem 0 !important;
-            }
-            
-            /* Actions buttons stack better on mobile */
-            .actions {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            
-            .actions .btn-small {
-                width: 100%;
-                margin-right: 0;
-                padding: 0.75rem 1rem;
-                font-size: 0.85rem;
-            }
-            
-            /* Better handling of long contract IDs and emails on mobile */
-            .item-meta span {
-                word-break: break-word;
-                font-size: 0.85rem;
-            }
-            
-            /* Improve header layout on mobile for signed contracts */
-            .item-card div[style*="display: flex; justify-content: between"] {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 0.5rem;
-            }
-            
-            .item-card div[style*="text-align: right"] {
-                text-align: left !important;
-                font-size: 0.8rem !important;
-            }
-            
-            /* Better status badge on mobile */
-            .item-card div[style*="background: rgba(34, 197, 94, 0.2)"] {
-                font-size: 0.75rem !important;
-                padding: 0.2rem 0.6rem !important;
-            }
-            
-            /* Specific signed contract mobile improvements */
-            .signed-contract-card .contract-header {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 0.5rem;
-            }
-            
-            .signed-contract-card .contract-id {
-                text-align: left !important;
-                font-size: 0.8rem !important;
-            }
-            
-            .signed-contract-card .signed-badge {
-                font-size: 0.75rem !important;
-                padding: 0.2rem 0.6rem !important;
-            }
-            
-            .signed-contract-card .signature-details {
-                padding: 0.75rem !important;
-                margin: 0.75rem 0 !important;
-            }
-            
-            .signed-contract-card .signature-grid {
-                display: block !important;
-                gap: 0 !important;
-            }
-            
-            .signed-contract-card .signature-date-info,
-            .signed-contract-card .signature-time-info {
-                margin-bottom: 0.75rem;
-                font-size: 0.85rem;
-            }
-            
-            .signed-contract-card .signature-text {
-                margin-top: 0.5rem !important;
-                font-size: 0.85rem;
-            }
-            
-            .signed-contract-card .signature-text span {
-                font-size: 1rem !important;
-                line-height: 1.4;
-            }
-            
-            /* Ensure buttons are properly stacked */
-            .signed-contract-card .actions {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 0.5rem;
-                margin-top: 1rem;
-            }
-            
-            .signed-contract-card .download-pdf-btn,
-            .signed-contract-card .view-details-btn,
-            .signed-contract-card .delete-contract-btn {
-                width: 100% !important;
-                margin-right: 0 !important;
-                margin-bottom: 0 !important;
-                padding: 0.75rem 1rem !important;
-                font-size: 0.85rem !important;
-            }
-            
-
         }
     </style>
 </head>
@@ -1195,46 +1245,95 @@
         <!-- Signed Contracts Tab -->
         <div id="signed-tab" class="tab-content">
             <div class="form-section">
-                <h2>✍️ Signed Contracts Dashboard</h2>
+                <h2>✍️ Signed Contracts Management</h2>
                 <div class="workflow-info">
-                    <p><strong>📋 How This Works:</strong></p>
+                    <p><strong>📋 Simple Workflow:</strong></p>
                     <ol>
-                        <li><strong>Automatic Collection:</strong> When freelancers sign contracts via contract.html, their data is automatically saved here</li>
-                        <li><strong>Legal Compliance:</strong> Freelancers sign their own names - no manual intervention needed</li>
-                        <li><strong>Instant Access:</strong> View all signed contracts with full details and download PDFs</li>
-                        <li><strong>Email Notifications:</strong> You still get email alerts when contracts are signed</li>
+                        <li><strong>Freelancers Sign:</strong> They sign contracts via contract.html and receive email confirmations</li>
+                        <li><strong>You Receive Email:</strong> Get detailed email notifications with all contract info</li>
+                        <li><strong>Manual Upload:</strong> Upload the signed PDFs here for organized storage</li>
+                        <li><strong>Easy Management:</strong> View, organize, and download all uploaded contracts</li>
                     </ol>
-                    <p><strong>💡 Benefits:</strong> Complete automation, legal compliance, and centralized access to all signed contracts.</p>
+                    <p><strong>💡 Benefits:</strong> Simple, reliable workflow with email notifications and organized PDF storage.</p>
+                </div>
+            </div>
+
+            <!-- PDF Upload Section -->
+            <div class="form-section">
+                <h2>📤 Upload Signed Contract PDF</h2>
+                
+                <div class="upload-section" id="pdfUploadZone">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">
+                        Drag & Drop PDF files here or click to browse
+                    </div>
+                    <div class="upload-instructions">
+                        Upload signed contract PDFs received from freelancers (PDF files only)
+                    </div>
+                    <input type="file" id="contractFileInput" accept=".pdf" multiple>
+                    <button class="btn upload-btn" onclick="document.getElementById('contractFileInput').click()">
+                        <i class="fas fa-plus"></i> Choose PDF Files
+                    </button>
                 </div>
                 
-                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
-                    <button class="btn" onclick="loadSignedContracts()">🔄 Refresh Data</button>
-                    <button class="btn" onclick="exportAllSignedContracts()">📦 Export All Contracts</button>
-                    <button class="btn" onclick="showFileImport()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">📥 Import Backup</button>
-                    <button class="btn" onclick="setupGoogleDriveSync()" id="driveSetupBtn" style="background: linear-gradient(135deg, #4285f4, #1a73e8);">☁️ Setup Google Drive</button>
-                    <button class="btn" onclick="forceSyncToGoogleDrive()" id="forceSyncBtn" style="background: linear-gradient(135deg, #34a853, #137333); display: none;">💾 Force Sync</button>
-                    <button class="btn" onclick="retryGoogleAPI()" id="retryAPIBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706); display: none;">🔧 Retry API</button>
-                    <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
-                    <span id="syncStatus" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-left: auto;"></span>
-                </div>
-                
-                <!-- Manual File Import Section -->
-                <div id="fileImportSection" style="display: none; background: rgba(139, 92, 246, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3); margin-bottom: 1rem;">
-                    <h4 style="color: #8b5cf6; margin-bottom: 1rem;">📥 Import Contracts from Backup File</h4>
-                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-size: 0.9rem;">Import a previously exported contracts JSON file to sync data between browsers/devices.</p>
-                    <input type="file" id="contractFileInput" accept=".json" style="margin-bottom: 1rem; color: white; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);">
-                    <div style="display: flex; gap: 1rem;">
-                        <button class="btn btn-small" onclick="processImportedFile()" style="background: #8b5cf6;">📥 Import</button>
-                        <button class="btn btn-small" onclick="hideFileImport()" style="background: #6b7280;">❌ Cancel</button>
+                <!-- Manual Contract Details Form -->
+                <div id="contractDetailsForm" style="display: none; margin-top: 2rem;">
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">📋 Contract Details</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label for="uploadFreelancerName">Freelancer Name</label>
+                            <input type="text" id="uploadFreelancerName" placeholder="Enter freelancer's full name">
+                        </div>
+                        <div class="form-group">
+                            <label for="uploadFreelancerEmail">Email</label>
+                            <input type="email" id="uploadFreelancerEmail" placeholder="Enter freelancer's email">
+                        </div>
+                        <div class="form-group">
+                            <label for="uploadRole">Role</label>
+                            <input type="text" id="uploadRole" placeholder="e.g., Videographer, Photographer">
+                        </div>
+                        <div class="form-group">
+                            <label for="uploadRate">Rate</label>
+                            <input type="text" id="uploadRate" placeholder="e.g., $400 flat, $150/day">
+                        </div>
+                        <div class="form-group">
+                            <label for="uploadLocation">Location</label>
+                            <input type="text" id="uploadLocation" placeholder="Project location">
+                        </div>
+                        <div class="form-group">
+                            <label for="uploadDate">Contract Date</label>
+                            <input type="date" id="uploadDate">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="uploadNotes">Notes (Optional)</label>
+                        <textarea id="uploadNotes" placeholder="Any additional notes about this contract"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button class="btn" onclick="saveUploadedContract()">
+                            <i class="fas fa-save"></i> Save Contract
+                        </button>
+                        <button class="btn" onclick="cancelContractUpload()" style="background: #6b7280;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div class="list-section">
-                <h2>Recently Signed Contracts</h2>
-                <div id="signedContractsList">
+                <h2>📁 Uploaded Contracts</h2>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <button class="btn" onclick="loadUploadedContracts()">🔄 Refresh</button>
+                    <button class="btn" onclick="exportContractList()">📦 Export List</button>
+                    <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
+                </div>
+                
+                <div id="uploadedContractsList">
                     <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
-                        Click "Refresh Data" to load signed contracts
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">📋 No Contracts Uploaded Yet</h3>
+                        <p>Upload signed contract PDFs using the form above</p>
                     </div>
                 </div>
             </div>
@@ -1244,1545 +1343,9 @@
                 <div id="contractAnalytics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                     <!-- Analytics will be populated here -->
                 </div>
-                
-                <h3>☁️ Google Drive Sync Setup</h3>
-                <div style="background: rgba(66, 133, 244, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(66, 133, 244, 0.3); margin-bottom: 2rem;">
-                    <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem;">
-                        <strong>Cross-Device Contract Sync:</strong> Your signed contracts will be stored in Google Drive for access from any browser/device.
-                    </p>
-                    
-                    <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
-                        <h4 style="color: #4285f4; margin-bottom: 1rem;">📋 Setup Instructions:</h4>
-                        <ol style="color: rgba(255,255,255,0.9); line-height: 1.8;">
-                            <li><strong>Go to Google Cloud Console:</strong> <a href="https://console.cloud.google.com/" target="_blank" style="color: #4285f4;">console.cloud.google.com</a></li>
-                            <li><strong>Create New Project:</strong> Name it "Cochran Films Contracts"</li>
-                            <li><strong>Enable Google Drive API:</strong> Search for "Google Drive API" and enable it</li>
-                            <li><strong>Create Credentials:</strong>
-                                <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
-                                    <li>Go to "Credentials" → "Create Credentials" → "API Key"</li>
-                                    <li>Copy your API Key</li>
-                                    <li>Create "OAuth 2.0 Client ID" for web application</li>
-                                    <li>Add your domain to "Authorized JavaScript origins"</li>
-                                    <li>Copy your Client ID</li>
-                                </ul>
-                            </li>
-                            <li><strong>Update Configuration:</strong> Replace the placeholder values for CLIENT_ID and API_KEY at the top of the script</li>
-                        </ol>
-                    </div>
-                    
-                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,178,0,0.3);">
-                        <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 0.9rem;">
-                            💡 <strong>Benefits:</strong> Once configured, contracts will automatically sync across all your devices. 
-                            The file "cochran-films-signed-contracts.json" will be created in your Google Drive.
-                        </p>
-                    </div>
-                </div>
-                
-                <h3>💾 Data Storage Notes</h3>
-                <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.3);">
-                    <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem;">
-                        <strong>Current Setup:</strong> Hybrid storage with Google Drive sync + localStorage backup.
-                    </p>
-                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-size: 0.9rem;">
-                        <strong>How it works:</strong>
-                    </p>
-                    <ul style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0; padding-left: 1.5rem;">
-                        <li>✅ Contracts automatically save to Google Drive (cross-device sync)</li>
-                        <li>✅ LocalStorage backup ensures offline access</li>
-                        <li>✅ No server setup required - pure client-side solution</li>
-                        <li>✅ Access contracts from any browser after Google sign-in</li>
-                    </ul>
-                </div>
             </div>
         </div>
     </div>
-
-    <script>
-        // Password Configuration - CHANGE THIS PASSWORD!
-        const ADMIN_PASSWORD = 'Deannajack3#';
-        
-        // GLOBAL DIAGNOSTIC FUNCTION - Always available
-        window.diagnoseGoogleAPI = function() {
-            console.log('🔍 COMPREHENSIVE GOOGLE API DIAGNOSIS');
-            console.log('=====================================');
-            
-            // 1. Basic availability
-            console.log('1. BASIC AVAILABILITY:');
-            console.log('  typeof gapi:', typeof gapi);
-            console.log('  typeof google:', typeof google);
-            console.log('  window.gapi:', window.gapi);
-            console.log('  window.google:', window.google);
-            
-            // 2. Script tag analysis
-            console.log('\n2. SCRIPT TAG ANALYSIS:');
-            const scripts = document.querySelectorAll('script[src*="googleapis.com"], script[src*="google.com"]');
-            console.log(`  Found ${scripts.length} Google script tags:`);
-            scripts.forEach((script, index) => {
-                console.log(`  Script ${index + 1}:`, script.src);
-                console.log(`    loaded: ${script.readyState || 'unknown'}`);
-                console.log(`    error: ${script.onerror ? 'has error handler' : 'no error handler'}`);
-            });
-            
-            // 3. Network check
-            console.log('\n3. NETWORK CONNECTIVITY TEST:');
-            fetch('https://apis.google.com/js/api.js', { method: 'HEAD' })
-                .then(response => {
-                    console.log('  ✅ Can reach Google APIs:', response.status);
-                })
-                .catch(error => {
-                    console.log('  ❌ Cannot reach Google APIs:', error.message);
-                    console.log('  💡 This indicates network/firewall blocking');
-                });
-            
-            // 4. HTTPS check
-            console.log('\n4. PROTOCOL CHECK:');
-            console.log('  Current protocol:', window.location.protocol);
-            console.log('  Current host:', window.location.host);
-            if (window.location.protocol === 'http:') {
-                console.log('  ⚠️ WARNING: Using HTTP - Google APIs may require HTTPS');
-                console.log('  💡 Try: https://localhost:8443 or deploy to HTTPS server');
-            } else {
-                console.log('  ✅ Using HTTPS - Good for Google APIs');
-            }
-            
-            // 5. Content Security Policy check
-            console.log('\n5. CSP CHECK:');
-            const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-            if (cspMeta) {
-                console.log('  CSP found:', cspMeta.content);
-                if (!cspMeta.content.includes('googleapis.com')) {
-                    console.log('  ⚠️ WARNING: CSP may not allow Google APIs');
-                }
-            } else {
-                console.log('  No CSP meta tag found');
-            }
-            
-            // 6. Ad blocker detection
-            console.log('\n6. AD BLOCKER DETECTION:');
-            const testDiv = document.createElement('div');
-            testDiv.className = 'adsbox';
-            testDiv.style.position = 'absolute';
-            testDiv.style.left = '-9999px';
-            document.body.appendChild(testDiv);
-            setTimeout(() => {
-                if (testDiv.offsetHeight === 0) {
-                    console.log('  ⚠️ LIKELY AD BLOCKER DETECTED');
-                    console.log('  💡 Try disabling ad blocker temporarily');
-                } else {
-                    console.log('  ✅ No ad blocker detected');
-                }
-                document.body.removeChild(testDiv);
-            }, 100);
-            
-            // 7. Browser info
-            console.log('\n7. BROWSER INFO:');
-            console.log('  User Agent:', navigator.userAgent);
-            console.log('  Browser language:', navigator.language);
-            console.log('  Cookies enabled:', navigator.cookieEnabled);
-            
-            // 8. Manual loading test
-            console.log('\n8. MANUAL LOADING TEST:');
-            const testScript = document.createElement('script');
-            testScript.src = 'https://apis.google.com/js/api.js';
-            testScript.onload = () => {
-                setTimeout(() => {
-                    console.log('  Manual load result - typeof gapi:', typeof gapi);
-                    if (typeof gapi !== 'undefined') {
-                        console.log('  ✅ Manual loading successful!');
-                    } else {
-                        console.log('  ❌ Manual loading failed - API object not available');
-                        console.log('  💡 This suggests browser/security restrictions');
-                    }
-                }, 1000);
-            };
-            testScript.onerror = (error) => {
-                console.log('  ❌ Manual script loading failed:', error);
-            };
-            document.head.appendChild(testScript);
-            
-            console.log('\n=====================================');
-            console.log('🎯 WAITING FOR RESULTS... (check logs above in 2-3 seconds)');
-        };
-        
-        // Quick test function - also always available
-        window.quickTest = function() {
-            console.log('🚀 QUICK GOOGLE API TEST:');
-            console.log('Current URL:', window.location.href);
-            console.log('typeof gapi:', typeof gapi);
-            console.log('typeof google:', typeof google);
-            
-            if (typeof gapi === 'undefined') {
-                console.log('❌ GAPI NOT AVAILABLE');
-                console.log('💡 Run diagnoseGoogleAPI() for full analysis');
-            } else {
-                console.log('✅ GAPI IS AVAILABLE!');
-            }
-        };
-        
-        // Google Drive API Configuration (matches contract signing page)
-        const CONTRACTS_FILE_NAME = 'cochran-films-signed-contracts.json';
-        
-        // Google Drive API state
-        let contractsFileId = null;
-        
-        // Session management
-        let isAuthenticated = false;
-        let jobs = [];
-        let approvedFreelancers = {};
-        let signedContracts = [];
-
-        // Check if already authenticated
-        function checkAuth() {
-            const session = sessionStorage.getItem('adminDashboardAuthenticated');
-            if (session === 'true') {
-                isAuthenticated = true;
-                showAdminInterface();
-            } else {
-                showLoginScreen();
-            }
-        }
-
-        // Show login screen
-        function showLoginScreen() {
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('adminInterface').style.display = 'none';
-        }
-
-        // Show admin interface
-        async function showAdminInterface() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('adminInterface').style.display = 'block';
-            
-            loadJobs();
-            loadFreelancers();
-            loadSignedContracts();
-        }
-
-        // Handle login
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const password = document.getElementById('password').value;
-            
-            if (password === ADMIN_PASSWORD) {
-                isAuthenticated = true;
-                sessionStorage.setItem('adminDashboardAuthenticated', 'true');
-                showAdminInterface();
-                document.getElementById('errorMessage').style.display = 'none';
-                document.getElementById('password').value = '';
-            } else {
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('password').value = '';
-                document.getElementById('password').focus();
-            }
-        });
-
-        // Logout function
-        function logout() {
-            isAuthenticated = false;
-            sessionStorage.removeItem('adminDashboardAuthenticated');
-            showLoginScreen();
-        }
-
-        // Tab switching
-        function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(tabName + '-tab').classList.add('active');
-            
-            // Add active class to clicked button
-            event.target.classList.add('active');
-        }
-
-        // Load existing jobs
-        async function loadJobs() {
-            try {
-                const response = await fetch('jobs-data.json');
-                if (response.ok) {
-                    const data = await response.json();
-                    jobs = data.jobs || [];
-                }
-            } catch (error) {
-                console.log('No existing jobs file found, starting fresh');
-                jobs = [];
-            }
-            displayJobs();
-        }
-
-        // Display jobs
-        function displayJobs() {
-            const jobsList = document.getElementById('jobsList');
-            jobsList.innerHTML = '';
-
-            jobs.forEach((job, index) => {
-                const jobDiv = document.createElement('div');
-                jobDiv.className = 'item-card';
-                jobDiv.innerHTML = `
-                    <h3>${job.title || 'Untitled Job'}</h3>
-                    <div class="item-meta">
-                        <span>📅 ${job.date || 'TBD'}</span>
-                        <span>📍 ${job.location || 'Location TBD'}</span>
-                        <span>💰 ${job.pay || 'Pay TBD'}</span>
-                        <span class="status-${(job.status || 'Active').toLowerCase()}">${job.status || 'Active'}</span>
-                    </div>
-                    <div class="item-description">${job.description || 'No description provided'}</div>
-                    <div class="actions">
-                        <button class="btn btn-small" onclick="editJob(${index})">Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">Delete</button>
-                    </div>
-                `;
-                jobsList.appendChild(jobDiv);
-            });
-        }
-
-        // Add/Edit job
-        document.getElementById('jobForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const job = {
-                title: formData.get('title'),
-                date: formData.get('date'),
-                location: formData.get('location'),
-                pay: formData.get('pay'),
-                description: formData.get('description'),
-                status: formData.get('status')
-            };
-
-            const editIndex = e.target.dataset.editIndex;
-            if (editIndex !== undefined) {
-                jobs[editIndex] = job;
-                delete e.target.dataset.editIndex;
-            } else {
-                jobs.push(job);
-            }
-
-            displayJobs();
-            clearJobForm();
-        });
-
-        // Edit job
-        function editJob(index) {
-            const job = jobs[index];
-            document.getElementById('jobTitle').value = job.title || '';
-            document.getElementById('jobDate').value = job.date || '';
-            document.getElementById('jobLocation').value = job.location || '';
-            document.getElementById('jobPay').value = job.pay || '';
-            document.getElementById('jobDescription').value = job.description || '';
-            document.getElementById('jobStatus').value = job.status || 'Active';
-            
-            document.getElementById('jobForm').dataset.editIndex = index;
-        }
-
-        // Delete job
-        function deleteJob(index) {
-            if (confirm('Are you sure you want to delete this job?')) {
-                jobs.splice(index, 1);
-                displayJobs();
-            }
-        }
-
-        // Clear job form
-        function clearJobForm() {
-            document.getElementById('jobForm').reset();
-            delete document.getElementById('jobForm').dataset.editIndex;
-        }
-
-        // Export job data
-        function exportJobData() {
-            const data = {
-                jobs: jobs,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalJobs: jobs.length
-            };
-            
-            document.getElementById('exportJobData').textContent = JSON.stringify(data, null, 2);
-            document.getElementById('downloadJobBtn').style.display = 'block';
-        }
-
-        // Download job JSON
-        function downloadJobJSON() {
-            const data = {
-                jobs: jobs,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalJobs: jobs.length
-            };
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'jobs-data.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        // Load existing freelancers
-        async function loadFreelancers() {
-            try {
-                const response = await fetch('freelancers.json');
-                if (response.ok) {
-                    const data = await response.json();
-                    approvedFreelancers = data.approvedFreelancers || {};
-                }
-            } catch (error) {
-                console.log('No existing freelancers file found, starting fresh');
-                approvedFreelancers = {};
-            }
-            displayFreelancers();
-        }
-
-        // Display freelancers
-        function displayFreelancers() {
-            const contractsList = document.getElementById('contractsList');
-            contractsList.innerHTML = '';
-
-            Object.keys(approvedFreelancers).forEach((name, index) => {
-                const freelancer = approvedFreelancers[name];
-                const contractDiv = document.createElement('div');
-                contractDiv.className = 'item-card';
-                contractDiv.innerHTML = `
-                    <h3>${name}</h3>
-                    <div class="item-meta">
-                        <span>📧 ${freelancer.email}</span>
-                        <span>🎭 ${freelancer.role || 'Role not specified'}</span>
-                        <span>📍 ${freelancer.location || 'Atlanta Area'}</span>
-                        <span>💰 ${freelancer.rate || 'Rate not specified'}</span>
-                        <span>📅 ${freelancer.approvedDate || 'Date not specified'}</span>
-                    </div>
-                    <div class="item-meta">
-                        <span>🕒 Start: ${freelancer.projectStart || 'TBD'}</span>
-                    </div>
-                    <div class="item-url">${freelancer.contractUrl}</div>
-                    <div class="actions">
-                        <button class="btn btn-small" onclick="editFreelancer('${name}')">Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteFreelancer('${name}')">Delete</button>
-                    </div>
-                `;
-                contractsList.appendChild(contractDiv);
-            });
-            
-            // No longer need freelancer selection for contract generation
-        }
-
-        // Add/Edit freelancer
-        document.getElementById('contractForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const freelancer = {
-                email: formData.get('email'),
-                contractUrl: formData.get('contractUrl'),
-                role: formData.get('role'),
-                location: formData.get('location'),
-                projectStart: formData.get('projectStart'),
-                rate: formData.get('rate'),
-                approvedDate: formData.get('approvedDate')
-            };
-
-            const name = formData.get('name');
-            const editName = e.target.dataset.editName;
-            
-            if (editName && editName !== name) {
-                // Name changed, delete old entry
-                delete approvedFreelancers[editName];
-            }
-            
-            approvedFreelancers[name] = freelancer;
-            delete e.target.dataset.editName;
-
-            displayFreelancers();
-            clearContractForm();
-        });
-
-        // Edit freelancer
-        function editFreelancer(name) {
-            const freelancer = approvedFreelancers[name];
-            document.getElementById('freelancerName').value = name;
-            document.getElementById('freelancerEmail').value = freelancer.email || '';
-            document.getElementById('contractUrl').value = freelancer.contractUrl || '';
-            document.getElementById('freelancerRole').value = freelancer.role || '';
-            document.getElementById('freelancerLocation').value = freelancer.location || 'Atlanta Area';
-            document.getElementById('projectStart').value = freelancer.projectStart || 'TBD';
-            document.getElementById('freelancerRate').value = freelancer.rate || '';
-            document.getElementById('approvedDate').value = freelancer.approvedDate || '';
-            
-            // Mark contract URL as manually edited since we're loading existing data
-            document.getElementById('contractUrl').dataset.manuallyEdited = 'true';
-            
-            document.getElementById('contractForm').dataset.editName = name;
-        }
-
-        // Delete freelancer
-        function deleteFreelancer(name) {
-            if (confirm(`Are you sure you want to delete ${name}?`)) {
-                delete approvedFreelancers[name];
-                displayFreelancers();
-            }
-        }
-
-        // Clear contract form
-        function clearContractForm() {
-            document.getElementById('contractForm').reset();
-            // Reset default values
-            document.getElementById('freelancerLocation').value = 'Atlanta Area';
-            document.getElementById('projectStart').value = 'TBD';
-            delete document.getElementById('contractForm').dataset.editName;
-            // Reset manual edit flag
-            resetManualEditFlag();
-        }
-
-        // Export contract data
-        function exportContractData() {
-            const data = {
-                approvedFreelancers: approvedFreelancers,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalFreelancers: Object.keys(approvedFreelancers).length
-            };
-            
-            document.getElementById('exportContractData').textContent = JSON.stringify(data, null, 2);
-            document.getElementById('downloadContractBtn').style.display = 'block';
-        }
-
-        // Download contract JSON
-        function downloadContractJSON() {
-            const data = {
-                approvedFreelancers: approvedFreelancers,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalFreelancers: Object.keys(approvedFreelancers).length
-            };
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'freelancers.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-
-
-        // Contract URL is now always contract.html (no need for individual files)
-        document.getElementById('freelancerName').addEventListener('input', function() {
-            const contractUrlField = document.getElementById('contractUrl');
-            contractUrlField.value = 'contract.html'; // Always use the same portal
-        });
-
-        // Reset manual edit flag when form is cleared  
-        function resetManualEditFlag() {
-            const contractUrlField = document.getElementById('contractUrl');
-            contractUrlField.value = 'contract.html'; // Always reset to contract.html
-        }
-
-        // ==================== GOOGLE DRIVE API INTEGRATION ====================
-        
-        // Initialize Google Drive API (matches contract signing page)
-        function gapiLoaded() {
-            if (typeof gapi !== 'undefined') {
-                gapi.load('client', initializeGapiClient);
-            } else {
-                gapiRetryCount++;
-                if (gapiRetryCount < MAX_API_RETRIES) {
-                    console.log(`Google API not ready, retrying... (${gapiRetryCount}/${MAX_API_RETRIES})`);
-                    setTimeout(gapiLoaded, 1000);
-                } else {
-                    console.log('Google Drive sync unavailable - contracts will be loaded from localStorage only');
-                }
-            }
-        }
-
-        async function initializeGapiClient() {
-            try {
-                await gapi.client.init({
-                    apiKey: API_KEY,
-                    discoveryDocs: [DISCOVERY_DOC],
-                });
-                gapiInited = true;
-                console.log('✅ Google API initialized for admin dashboard');
-                maybeEnableGoogleDrive();
-            } catch (error) {
-                console.log('Google API initialization failed - using localStorage only');
-                gapiInited = false;
-            }
-        }
-
-        function gisLoaded() {
-            if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-                try {
-                    tokenClient = google.accounts.oauth2.initTokenClient({
-                        client_id: CLIENT_ID,
-                        scope: SCOPES,
-                        callback: '', // Will be set later
-                    });
-                    gisInited = true;
-                    console.log('✅ Google Identity Services initialized for admin dashboard');
-                    maybeEnableGoogleDrive();
-                } catch (error) {
-                    console.log('Google Identity Services initialization failed - using localStorage only');
-                    gisInited = false;
-                }
-            } else {
-                gisRetryCount++;
-                if (gisRetryCount < MAX_API_RETRIES) {
-                    console.log(`Google Identity Services not ready, retrying... (${gisRetryCount}/${MAX_API_RETRIES})`);
-                    setTimeout(gisLoaded, 1000);
-                } else {
-                    console.log('Google Identity Services unavailable - contracts will be loaded from localStorage only');
-                }
-            }
-        }
-
-        function maybeEnableGoogleDrive() {
-            if (gapiInited && gisInited) {
-                console.log('✅ Google Drive ready for admin dashboard');
-                window.isGoogleDriveInitialized = true;
-            }
-        }
-
-        // Handle script loading errors
-        function handleScriptError(scriptType) {
-            console.log(`Google ${scriptType} script failed to load - contracts will be loaded from localStorage only`);
-        }
-        
-        // Find or create the contracts file in Google Drive
-        async function findOrCreateContractsFile() {
-            try {
-                // Search for existing file
-                const response = await gapi.client.drive.files.list({
-                    q: `name='${CONTRACTS_FILE_NAME}' and trashed=false`,
-                    spaces: 'drive'
-                });
-
-                if (response.result.files.length > 0) {
-                    contractsFileId = response.result.files[0].id;
-                    console.log('✅ Found existing contracts file');
-                    return contractsFileId;
-                } else {
-                    // Create new file
-                    const createResponse = await gapi.client.drive.files.create({
-                        resource: {
-                            name: CONTRACTS_FILE_NAME,
-                            parents: ['root']
-                        }
-                    });
-                    contractsFileId = createResponse.result.id;
-                    
-                    // Initialize with empty data
-                    await gapi.client.request({
-                        path: `https://www.googleapis.com/upload/drive/v3/files/${contractsFileId}`,
-                        method: 'PATCH',
-                        params: { uploadType: 'media' },
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            signedContracts: [],
-                            lastUpdated: new Date().toISOString(),
-                            totalContracts: 0,
-                            savedFrom: 'Admin Dashboard'
-                        })
-                    });
-                    
-                    console.log('✅ Created new contracts file');
-                    return contractsFileId;
-                }
-            } catch (error) {
-                console.error('Error with contracts file:', error);
-                return null;
-            }
-
-        
-        // Load contracts from Google Drive
-        async function loadContractsFromGoogleDrive() {
-            try {
-                if (!contractsFileId) {
-                    contractsFileId = await findOrCreateContractsFile();
-                    if (!contractsFileId) {
-                        throw new Error('Could not access contracts file');
-                    }
-                }
-                
-                const fileResponse = await gapi.client.drive.files.get({
-                    fileId: contractsFileId,
-                    alt: 'media'
-                });
-                
-                let existingData;
-                try {
-                    existingData = JSON.parse(fileResponse.body);
-                    console.log('📊 Existing contracts data:', existingData);
-                } catch (e) {
-                    console.log('📝 No existing data, creating new structure');
-                    existingData = { signedContracts: [] };
-                }
-                
-                console.log('📥 Loaded contracts from Google Drive:', existingData.signedContracts?.length || 0);
-                return existingData.signedContracts || [];
-                
-            } catch (error) {
-                console.error('Error loading contracts from Google Drive:', error);
-                return null;
-            }
-        }
-        
-        // Save contracts to Google Drive
-        async function saveContractsToGoogleDrive(contracts) {
-            try {
-                if (!contractsFileId) {
-                    contractsFileId = await findOrCreateContractsFile();
-                    if (!contractsFileId) {
-                        throw new Error('Could not access contracts file');
-                    }
-                }
-                
-                const fileData = {
-                    signedContracts: contracts,
-                    lastUpdated: new Date().toISOString(),
-                    totalContracts: contracts.length,
-                    savedFrom: 'Admin Dashboard'
-                };
-                
-                await gapi.client.request({
-                    path: `https://www.googleapis.com/upload/drive/v3/files/${contractsFileId}`,
-                    method: 'PATCH',
-                    params: { uploadType: 'media' },
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(fileData, null, 2)
-                });
-                
-                console.log('💾 Saved contracts to Google Drive:', contracts.length);
-                return true;
-                
-            } catch (error) {
-                console.error('Error saving contracts to Google Drive:', error);
-                return false;
-            }
-        }
-        
-        // ==================== ENHANCED SIGNED CONTRACTS FUNCTIONALITY ====================
-        
-        // Load signed contracts with Google Drive sync
-        async function loadSignedContracts() {
-            try {
-                console.log('🔄 Loading signed contracts...');
-                
-                // Try Google Drive first
-                if (window.isGoogleDriveInitialized) {
-                    console.log('☁️ Attempting to load from Google Drive...');
-                    
-                    // Sign in first
-                    await new Promise((resolve, reject) => {
-                        tokenClient.callback = (response) => {
-                            if (response.error) {
-                                console.error('❌ Google Drive sign-in failed:', response.error);
-                                reject(response);
-                            } else {
-                                console.log('✅ Google Drive sign-in successful');
-                                resolve(response);
-                            }
-                        };
-                        tokenClient.requestAccessToken();
-                    });
-                    
-                    const driveContracts = await loadContractsFromGoogleDrive();
-                    if (driveContracts && driveContracts.length > 0) {
-                        console.log(`✅ Loaded ${driveContracts.length} contracts from Google Drive`);
-                        signedContracts = driveContracts;
-                        // Also save to localStorage as backup
-                        localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
-                        displaySignedContracts();
-                        updateContractAnalytics();
-                        updateSyncStatus(`✅ Synced with Google Drive (${driveContracts.length} contracts)`);
-                        return;
-                    } else if (driveContracts && driveContracts.length === 0) {
-                        console.log('📭 Google Drive file exists but contains no contracts yet');
-                        signedContracts = [];
-                        displaySignedContracts();
-                        updateContractAnalytics();
-                        updateSyncStatus('✅ Connected to Google Drive (no contracts yet)');
-                        return;
-                    } else {
-                        console.log('⚠️ Could not load from Google Drive, falling back to localStorage');
-                    }
-                }
-                
-                // Fallback to localStorage
-                console.log('📱 Loading from localStorage...');
-                const localData = localStorage.getItem('signedContracts');
-                signedContracts = localData ? JSON.parse(localData) : [];
-                console.log(`📱 Found ${signedContracts.length} contracts in localStorage`);
-                displaySignedContracts();
-                updateContractAnalytics();
-                
-                if (window.isGoogleDriveInitialized) {
-                    updateSyncStatus('⚠️ Using local storage (Google Drive file not found)');
-                } else {
-                    updateSyncStatus('⚠️ Using local storage only');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error loading signed contracts:', error);
-                signedContracts = [];
-                displaySignedContracts();
-                updateSyncStatus('❌ Error loading contracts');
-            }
-        }
-
-        // Enhanced function to find ALL contract files and debug
-        window.searchAllContractFiles = async function() {
-            console.log('🔍 Comprehensive Contract File Search...');
-            
-            if (!window.isGoogleDriveInitialized) {
-                console.log('❌ Not signed into Google Drive');
-                return;
-            }
-            
-            try {
-                // Search for exact file name
-                console.log(`📁 Searching for exact name: "${CONTRACTS_FILE_NAME}"`);
-                const exactMatch = await gapi.client.drive.files.list({
-                    q: `name='${CONTRACTS_FILE_NAME}' and trashed=false`,
-                    fields: "files(id,name,createdTime,modifiedTime,size,parents)"
-                });
-                
-                // Search for partial matches
-                console.log('📁 Searching for partial matches...');
-                const partialMatch = await gapi.client.drive.files.list({
-                    q: `name contains 'contract' and trashed=false`,
-                    fields: "files(id,name,createdTime,modifiedTime,size,parents)"
-                });
-                
-                // Search for JSON files
-                console.log('📁 Searching for JSON files...');
-                const jsonFiles = await gapi.client.drive.files.list({
-                    q: `name contains '.json' and trashed=false`,
-                    fields: "files(id,name,createdTime,modifiedTime,size,parents)"
-                });
-                
-                console.log('📊 Search Results:');
-                console.log(`  Exact matches: ${exactMatch.result.files.length}`);
-                console.log(`  Contract-related files: ${partialMatch.result.files.length}`);
-                console.log(`  JSON files: ${jsonFiles.result.files.length}`);
-                
-                if (exactMatch.result.files.length > 0) {
-                    console.log('✅ FOUND CONTRACTS FILE(S):');
-                    exactMatch.result.files.forEach((file, index) => {
-                        console.log(`  ${index + 1}. ${file.name}`);
-                        console.log(`     ID: ${file.id}`);
-                        console.log(`     Created: ${file.createdTime}`);
-                        console.log(`     Modified: ${file.modifiedTime}`);
-                        console.log(`     Size: ${file.size} bytes`);
-                    });
-                    
-                    // Use the first exact match
-                    contractsFileId = exactMatch.result.files[0].id;
-                    console.log(`🎯 Set contractsFileId to: ${contractsFileId}`);
-                    
-                    // Reload contracts
-                    await loadSignedContracts();
-                } else {
-                    console.log('❌ No exact contract file matches found');
-                    
-                    if (partialMatch.result.files.length > 0) {
-                        console.log('🔍 Contract-related files found:');
-                        partialMatch.result.files.forEach(file => {
-                            console.log(`  - ${file.name} (ID: ${file.id})`);
-                        });
-                    }
-                    
-                    if (jsonFiles.result.files.length > 0) {
-                        console.log('🔍 JSON files found:');
-                        jsonFiles.result.files.forEach(file => {
-                            console.log(`  - ${file.name} (ID: ${file.id})`);
-                        });
-                    }
-                }
-                
-            } catch (error) {
-                console.error('❌ Error searching for contract files:', error);
-            }
-        };
-        
-        // Enhanced contract saving with Google Drive sync
-        async function saveSignedContract(contractData) {
-            try {
-                // Add to local array
-                signedContracts.push(contractData);
-                
-                // Save to localStorage as backup
-                localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
-                
-                // Try to save to Google Drive
-                if (window.isGoogleDriveInitialized) {
-                    const success = await saveContractsToGoogleDrive(signedContracts);
-                    if (success) {
-                        updateSyncStatus('✅ Synced to Google Drive');
-                        return true;
-                    }
-                }
-                
-                updateSyncStatus('⚠️ Saved locally only');
-                return true;
-                
-            } catch (error) {
-                console.error('Error saving signed contract:', error);
-                updateSyncStatus('❌ Save failed');
-                return false;
-            }
-        }
-        
-        // Update sync status indicator
-        function updateSyncStatus(message) {
-            const syncStatus = document.getElementById('syncStatus');
-            if (syncStatus) {
-                syncStatus.textContent = message;
-                syncStatus.style.color = message.includes('✅') ? '#22c55e' : 
-                                      message.includes('⚠️') ? '#f59e0b' : '#ef4444';
-            }
-        }
-
-        // Display signed contracts
-        function displaySignedContracts() {
-            const contractsList = document.getElementById('signedContractsList');
-            const contractCount = document.getElementById('contractCount');
-
-            if (signedContracts.length === 0) {
-                contractsList.innerHTML = `
-                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
-                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">📋 No Signed Contracts Yet</h3>
-                        <p>Signed contracts will appear here automatically when freelancers complete the signing process via contract.html</p>
-                    </div>
-                `;
-                contractCount.textContent = '';
-                return;
-            }
-
-            contractCount.textContent = `${signedContracts.length} signed contract${signedContracts.length === 1 ? '' : 's'}`;
-
-            // Sort by most recent first
-            const sortedContracts = [...signedContracts].sort((a, b) => 
-                new Date(b.signedTimestamp || b.signedDateTime) - new Date(a.signedTimestamp || a.signedDateTime)
-            );
-
-            contractsList.innerHTML = sortedContracts.map((contract, index) => `
-                <div class="item-card signed-contract-card" style="border-left: 4px solid #22c55e;">
-                    <div class="contract-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div style="flex: 1;">
-                            <h3 style="color: #22c55e;">${contract.freelancerName}</h3>
-                            <div class="signed-badge" style="background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-top: 0.5rem;">
-                                ✅ SIGNED
-                            </div>
-                        </div>
-                        <div class="contract-id" style="text-align: right; font-size: 0.85rem; color: rgba(255,255,255,0.7);">
-                            ID: ${contract.contractId}
-                        </div>
-                    </div>
-                    
-                    <div class="item-meta">
-                        <span>📧 ${contract.freelancerEmail}</span>
-                        <span>🎭 ${contract.role}</span>
-                        <span>💰 ${contract.rate}</span>
-                    </div>
-                    
-                    <div class="item-meta">
-                        <span>📍 ${contract.location}</span>
-                        <span>🕒 Start: ${contract.projectStart}</span>
-                        <span>📅 Effective: ${contract.effectiveDate}</span>
-                    </div>
-                    
-                    <div class="signature-details" style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
-                        <div class="signature-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
-                            <div class="signature-date-info">
-                                <strong style="color: #FFB200;">Signed Date:</strong><br>
-                                <span style="color: rgba(255,255,255,0.9);">${contract.signatureDate}</span>
-                            </div>
-                            <div class="signature-time-info">
-                                <strong style="color: #FFB200;">Signed Time:</strong><br>
-                                <span style="color: rgba(255,255,255,0.9);">${new Date(contract.signedTimestamp || contract.signedDateTime).toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <div class="signature-text" style="margin-top: 0.75rem;">
-                            <strong style="color: #FFB200;">Digital Signature:</strong><br>
-                            <span style="color: rgba(255,255,255,0.9); font-family: cursive; font-size: 1.1rem; word-break: break-word;">${contract.signature}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="actions">
-                        <button class="btn btn-small download-pdf-btn" onclick="downloadSignedContractPDF(${index})" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
-                            📄 Download PDF
-                        </button>
-                        <button class="btn btn-small view-details-btn" onclick="viewContractDetails(${index})">
-                            👁️ View Details
-                        </button>
-                        <button class="btn btn-small btn-danger delete-contract-btn" onclick="deleteSignedContract(${index})">
-                            🗑️ Delete
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Update contract analytics
-        function updateContractAnalytics() {
-            const analyticsDiv = document.getElementById('contractAnalytics');
-            
-            if (signedContracts.length === 0) {
-                analyticsDiv.innerHTML = '<p style="color: rgba(255,255,255,0.6); text-align: center;">No contracts to analyze yet</p>';
-                return;
-            }
-
-            // Calculate analytics
-            const totalContracts = signedContracts.length;
-            const uniqueRoles = [...new Set(signedContracts.map(c => c.role))].length;
-            const thisMonth = signedContracts.filter(c => {
-                const contractDate = new Date(c.signedTimestamp || c.signedDateTime);
-                const now = new Date();
-                return contractDate.getMonth() === now.getMonth() && contractDate.getFullYear() === now.getFullYear();
-            }).length;
-            const mostRecentContract = signedContracts.reduce((latest, contract) => {
-                const contractDate = new Date(contract.signedTimestamp || contract.signedDateTime);
-                const latestDate = new Date(latest.signedTimestamp || latest.signedDateTime);
-                return contractDate > latestDate ? contract : latest;
-            });
-
-            analyticsDiv.innerHTML = `
-                <div style="background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3); text-align: center;">
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #22c55e;">${totalContracts}</div>
-                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Total Contracts</div>
-                </div>
-                <div style="background: rgba(255, 178, 0, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255, 178, 0, 0.3); text-align: center;">
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #FFB200;">${thisMonth}</div>
-                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">This Month</div>
-                </div>
-                <div style="background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3); text-align: center;">
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #6366f1;">${uniqueRoles}</div>
-                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Unique Roles</div>
-                </div>
-                <div style="background: rgba(168, 85, 247, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.3); text-align: center;">
-                    <div style="font-size: 0.9rem; font-weight: 600; color: #a855f7;">Most Recent</div>
-                    <div style="color: rgba(255,255,255,0.9); font-size: 0.8rem;">${mostRecentContract.freelancerName}</div>
-                    <div style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">${new Date(mostRecentContract.signedTimestamp || mostRecentContract.signedDateTime).toLocaleDateString()}</div>
-                </div>
-            `;
-        }
-
-        // Download signed contract PDF
-        function downloadSignedContractPDF(index) {
-            const contract = signedContracts[index];
-            if (!contract) {
-                alert('❌ Contract not found');
-                return;
-            }
-
-            console.log('📄 Generating PDF for contract:', contract.contractId);
-
-            // Create signed contract HTML for PDF generation
-            const contractHTML = createAdminSignedContractHTML(contract);
-            
-            // Open print dialog
-            const printWindow = window.open('', '_blank', 'width=800,height=1000');
-            
-            if (!printWindow) {
-                alert('❌ Pop-up blocked. Please allow pop-ups for this site and try again.');
-                return;
-            }
-
-            printWindow.document.write(contractHTML);
-            printWindow.document.close();
-
-            // Wait for content to load, then trigger print
-            printWindow.onload = function() {
-                setTimeout(() => {
-                    printWindow.focus();
-                    printWindow.print();
-                    
-                    // Close window after delay
-                    setTimeout(() => {
-                        try {
-                            printWindow.close();
-                        } catch (e) {
-                            // Window might already be closed by user
-                        }
-                    }, 2000);
-                }, 500);
-            };
-        }
-
-        // Create signed contract HTML for admin download
-        function createAdminSignedContractHTML(contract) {
-            const adminDate = new Date().toISOString().split('T')[0];
-
-            return `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>SIGNED Contract - ${contract.freelancerName}</title>
-                <style>
-                    @page { margin: 0.5in; size: letter; }
-                    @media print {
-                        body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; color-adjust: exact; }
-                    }
-                    body {
-                        font-family: Arial, sans-serif;
-                        line-height: 1.6;
-                        color: #ffffff;
-                        background-color: #000000;
-                        margin: 0;
-                        padding: 20px;
-                        -webkit-print-color-adjust: exact;
-                        color-adjust: exact;
-                    }
-                    .container {
-                        max-width: 800px;
-                        margin: 0 auto;
-                        background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-                        padding: 40px;
-                        border-radius: 12px;
-                        border: 1px solid #FFB200;
-                    }
-                    .header {
-                        text-align: center;
-                        margin-bottom: 30px;
-                        padding-bottom: 20px;
-                        border-bottom: 2px solid #FFB200;
-                    }
-                    .logo { width: 200px; height: auto; margin-bottom: 20px; }
-                    h1 { font-size: 28px; color: #FFB200; margin-bottom: 10px; font-weight: 700; }
-                    h2 { font-size: 24px; color: #ffffff; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px; font-weight: 600; }
-                    h3 { font-size: 20px; color: #ffffff; margin: 20px 0 10px 0; font-weight: 600; }
-                    p { margin-bottom: 15px; color: #ffffff; }
-                    ul { margin: 15px 0; padding-left: 20px; }
-                    li { margin-bottom: 8px; color: #ffffff; }
-                    .project-info {
-                        background: rgba(255, 178, 0, 0.1);
-                        padding: 20px;
-                        border-radius: 8px;
-                        margin: 20px 0;
-                        border-left: 4px solid #FFB200;
-                        border: 1px solid rgba(255, 178, 0, 0.3);
-                    }
-                    .project-info ul { list-style: none; padding-left: 0; }
-                    .project-info li { margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255, 178, 0, 0.2); }
-                    .project-info li:last-child { border-bottom: none; }
-                    .signatures {
-                        margin-top: 40px;
-                        padding-top: 30px;
-                        border-top: 2px solid rgba(255, 178, 0, 0.3);
-                        page-break-inside: avoid;
-                    }
-                    .signature-row {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-top: 20px;
-                        gap: 30px;
-                    }
-                    .signature-box {
-                        flex: 1;
-                        padding: 20px;
-                        background: rgba(255, 178, 0, 0.1);
-                        border-radius: 8px;
-                        border: 2px solid rgba(255, 178, 0, 0.3);
-                    }
-                    .signature-text {
-                        font-family: 'Brush Script MT', cursive, 'Lucida Handwriting', serif;
-                        font-size: 18px;
-                        color: #FFB200;
-                        margin-top: 15px;
-                        padding: 10px 0;
-                        border-bottom: 2px solid #FFB200;
-                    }
-                    .signature-date {
-                        font-family: 'Brush Script MT', cursive, 'Lucida Handwriting', serif;
-                        font-size: 18px;
-                        color: #FFB200;
-                        margin-top: 5px;
-                    }
-                    .signed-status {
-                        background: rgba(0, 255, 0, 0.2);
-                        border: 2px solid #00ff00;
-                        padding: 15px;
-                        text-align: center;
-                        margin: 20px 0;
-                        border-radius: 8px;
-                    }
-                    .signed-status h2 { color: #00ff00; margin: 0; border: none; padding: 0; }
-                    @media (max-width: 600px) {
-                        .signature-row { flex-direction: column; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo" class="logo">
-                        <h1>📄 Freelance Agreement</h1>
-                        <p><strong>Issued By:</strong> Cochran Films<br>
-                        <strong>Effective Date:</strong> ${contract.effectiveDate}</p>
-                    </div>
-
-                    <div class="signed-status">
-                        <h2>✅ DIGITALLY SIGNED CONTRACT</h2>
-                        <p>This contract has been digitally signed by both parties</p>
-                        <p style="font-size: 14px; margin-top: 10px;">Signed on: ${new Date(contract.signedTimestamp || contract.signedDateTime).toLocaleString()}</p>
-                        <p style="font-size: 14px; margin: 0;"><strong>Contract ID:</strong> ${contract.contractId}</p>
-                    </div>
-
-                    <h2>📌 Project Overview</h2>
-                    <p>This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>${contract.freelancerName}</strong>, hereinafter referred to as the "Contractor."</p>
-                    
-                    <div class="project-info">
-                        <ul>
-                            <li><strong>Role:</strong> ${contract.role}</li>
-                            <li><strong>Location:</strong> ${contract.location}</li>
-                            <li><strong>Project Start:</strong> ${contract.projectStart}</li>
-                            <li><strong>Rate:</strong> ${contract.rate}</li>
-                        </ul>
-                    </div>
-
-                    <h2>✅ Contractor Responsibilities</h2>
-                    <ul>
-                        <li>Arrive at the project location on time.</li>
-                        <li>Professionally manage their assigned role and responsibilities.</li>
-                        <li>Complete the job to professional standards.</li>
-                        <li>Use personal equipment unless otherwise arranged.</li>
-                        <li>Maintain a respectful demeanor with staff and clients.</li>
-                        <li>Wear our company-branded shirt, hat, OR whatever piece of branded gear is asked of you for the duration of the project. (This will be provided to you at no charge)</li>
-                        <li>Wear all black regardless of what branded gear is given to you on the day of the shoot.</li>
-                    </ul>
-
-                    <h2>📸 BTS Content & Ownership</h2>
-                    <p>The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.</p>
-
-                    <h2>💵 Payment Terms</h2>
-                    <p>Payment of ${contract.rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).</p>
-
-                    <h2>🛡️ Independent Contractor</h2>
-                    <p>The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.</p>
-
-                    <h2>📝 Agreement</h2>
-                    <p>By signing below, both parties agree to the above terms and conditions.</p>
-
-                    <div class="signatures">
-                        <h3>✍️ Digital Signatures</h3>
-                        
-                        <div class="signature-row">
-                            <div class="signature-box">
-                                <strong>Cochran Films Representative:</strong><br>
-                                Name: Cody Cochran<br>
-                                Title: Founder, Cochran Films<br>
-                                <div class="signature-text">Signature: Cody Cochran</div>
-                                <div class="signature-date">Date: ${adminDate}</div>
-                            </div>
-                            
-                            <div class="signature-box">
-                                <strong>Contractor:</strong><br>
-                                Name: ${contract.freelancerName}<br>
-                                <div class="signature-text">Signature: ${contract.signature}</div>
-                                <div class="signature-date">Date: ${contract.signatureDate}</div>
-                            </div>
-                        </div>
-                        
-                        <p style="text-align: center; margin-top: 30px; color: rgba(255,255,255,0.8); font-size: 14px;">
-                            ✅ This is a <strong>SIGNED</strong> copy with digital signatures from both parties.<br>
-                            Contract signed on: ${new Date(contract.signedTimestamp || contract.signedDateTime).toLocaleDateString()}<br>
-                            Downloaded from Admin Dashboard on: ${new Date().toLocaleDateString()}
-                        </p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            `;
-        }
-
-        // View contract details in modal/alert
-        function viewContractDetails(index) {
-            const contract = signedContracts[index];
-            const details = `
-CONTRACT DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📋 Contract ID: ${contract.contractId}
-👤 Freelancer: ${contract.freelancerName}
-📧 Email: ${contract.freelancerEmail}
-🎭 Role: ${contract.role}
-📍 Location: ${contract.location}
-🕒 Project Start: ${contract.projectStart}
-💰 Rate: ${contract.rate}
-📅 Effective Date: ${contract.effectiveDate}
-
-✍️ SIGNATURE DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Digital Signature: ${contract.signature}
-Signed Date: ${contract.signatureDate}
-Signed Timestamp: ${new Date(contract.signedTimestamp || contract.signedDateTime).toLocaleString()}
-Status: ${contract.status}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            `.trim();
-            
-            alert(details);
-        }
-
-        // Delete signed contract
-        function deleteSignedContract(index) {
-            const contract = signedContracts[index];
-            if (confirm(`Are you sure you want to delete the signed contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis action cannot be undone.`)) {
-                signedContracts.splice(index, 1);
-                localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
-                displaySignedContracts();
-                updateContractAnalytics();
-            }
-        }
-
-        // Export all signed contracts
-        function exportAllSignedContracts() {
-            if (signedContracts.length === 0) {
-                alert('No signed contracts to export.');
-                return;
-            }
-
-            const exportData = {
-                signedContracts: signedContracts,
-                exportDate: new Date().toISOString(),
-                exportedBy: 'Admin Dashboard',
-                totalContracts: signedContracts.length
-            };
-
-            const jsonString = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `signed-contracts-export-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        // ==================== GOOGLE DRIVE SETUP FUNCTIONS ====================
-        
-        // Setup Google Drive sync from UI
-        async function setupGoogleDriveSync() {
-            const setupBtn = document.getElementById('driveSetupBtn');
-            const originalText = setupBtn.textContent;
-            setupBtn.textContent = '☁️ Setting up...';
-            setupBtn.disabled = true;
-            
-            try {
-                // Check if Google Drive API is initialized
-                console.log('🔍 Checking Google Drive initialization status...');
-                console.log('window.isGoogleDriveInitialized:', window.isGoogleDriveInitialized);
-                console.log('gapiInited:', window.gapiInited);
-                console.log('gisInited:', window.gisInited);
-                console.log('typeof gapi:', typeof gapi);
-                console.log('typeof google:', typeof google);
-                
-                if (!window.isGoogleDriveInitialized) {
-                    const retryBtn = document.getElementById('retryAPIBtn');
-                    
-                    if (typeof gapi === 'undefined') {
-                        if (retryBtn) retryBtn.style.display = 'inline-block';
-                        throw new Error('Google API not available. This could be caused by:\n• Ad blockers (try disabling temporarily)\n• Network connectivity issues\n• Corporate firewall blocking Google APIs\n• Browser security settings\n\nTry clicking "Retry API" or refresh the page.');
-                    }
-                    
-                    if (typeof google === 'undefined' || !google.accounts) {
-                        if (retryBtn) retryBtn.style.display = 'inline-block';
-                        throw new Error('Google Identity Services not available. This is required for signing into Google Drive. Same fixes as above apply - try the "Retry API" button.');
-                    }
-                    
-                    if (!window.gapiInited || !window.gisInited) {
-                        if (retryBtn) retryBtn.style.display = 'inline-block';
-                        throw new Error(`Google libraries not fully initialized. GAPI: ${window.gapiInited}, GIS: ${window.gisInited}. Try clicking the "Retry API" button.`);
-                    }
-                    
-                    // Try initializing once more in case it's still loading
-                    console.log('🔄 Attempting to initialize Google Drive API...');
-                    await initializeGoogleDrive();
-                    if (!window.isGoogleDriveInitialized) {
-                        if (retryBtn) retryBtn.style.display = 'inline-block';
-                        throw new Error('Google Drive API initialization failed after retry. Check console for detailed error messages.');
-                    }
-                }
-                
-                // Sign in to Google Drive
-                const signInSuccess = await signInToGoogleDrive();
-                if (!signInSuccess) {
-                    throw new Error('Failed to sign in to Google Drive');
-                }
-                
-                // Find or create contracts file
-                const fileId = await findOrCreateContractsFile();
-                if (!fileId) {
-                    throw new Error('Failed to create contracts file');
-                }
-                
-                // Sync existing localStorage contracts to Google Drive
-                const localContracts = JSON.parse(localStorage.getItem('signedContracts') || '[]');
-                if (localContracts.length > 0) {
-                    const syncSuccess = await saveContractsToGoogleDrive(localContracts);
-                    if (syncSuccess) {
-                        signedContracts = localContracts;
-                        displaySignedContracts();
-                        updateContractAnalytics();
-                    }
-                }
-                
-                // Update UI
-                setupBtn.style.display = 'none';
-                document.getElementById('forceSyncBtn').style.display = 'inline-block';
-                updateSyncStatus('✅ Google Drive connected');
-                
-                alert(`✅ Google Drive sync enabled!\n\nContracts will now be automatically saved to:\n"${CONTRACTS_FILE_NAME}" in your Google Drive.`);
-                
-            } catch (error) {
-                console.error('Google Drive setup failed:', error);
-                updateSyncStatus('❌ Setup failed');
-                
-                // More detailed error handling
-                let errorMessage = `❌ Google Drive setup failed: ${error.message}\n\n`;
-                
-                if (error.message.includes('origin')) {
-                    errorMessage += `🔧 Fix: Add "${window.location.origin}" to your OAuth 2.0 Client ID's "Authorized JavaScript origins" in Google Cloud Console.`;
-                } else if (error.message.includes('Identity Services')) {
-                    errorMessage += `🔧 Debug: Google Identity Services failed to load. This could be due to:\n• Network connectivity issues\n• Content Security Policy blocking\n• Ad blockers interfering\n• Firewall restrictions`;
-                } else if (error.message.includes('API key')) {
-                    errorMessage += `🔧 Fix: Check your Google Drive API key configuration in Google Cloud Console.`;
-                } else if (error.message.includes('not fully initialized')) {
-                    errorMessage += `🔧 Debug: Libraries are loading but not completing initialization. Try:\n• Refreshing the page\n• Checking browser console for errors\n• Using the "Retry API" button`;
-                } else if (!window.isGoogleDriveInitialized) {
-                    errorMessage += `🔧 Debug: Check browser console for detailed initialization errors and try the "Retry API" button.`;
-                } else {
-                    errorMessage += `🔧 Debug: Check browser console for more details.`;
-                }
-                
-                alert(errorMessage);
-            } finally {
-                setupBtn.textContent = originalText;
-                setupBtn.disabled = false;
-            }
-        }
-        
-        // Force sync all contracts to Google Drive
-        async function forceSyncToGoogleDrive() {
-            const syncBtn = document.getElementById('forceSyncBtn');
-            const originalText = syncBtn.textContent;
-            syncBtn.textContent = '💾 Syncing...';
-            syncBtn.disabled = true;
-            
-            try {
-                const success = await saveContractsToGoogleDrive(signedContracts);
-                if (success) {
-                    updateSyncStatus('✅ Force sync completed');
-                    alert(`✅ Synced ${signedContracts.length} contracts to Google Drive`);
-                } else {
-                    throw new Error('Sync failed');
-                }
-            } catch (error) {
-                console.error('Force sync failed:', error);
-                updateSyncStatus('❌ Force sync failed');
-                alert('❌ Force sync failed. Please try again.');
-            } finally {
-                syncBtn.textContent = originalText;
-                syncBtn.disabled = false;
-            }
-        }
-
-        // ==================== FILE IMPORT FUNCTIONALITY ====================
-        
-        // Show file import interface
-        function showFileImport() {
-            document.getElementById('fileImportSection').style.display = 'block';
-            document.getElementById('contractFileInput').value = '';
-        }
-        
-        // Hide file import interface
-        function hideFileImport() {
-            document.getElementById('fileImportSection').style.display = 'none';
-        }
-        
-        // Process imported file
-        function processImportedFile() {
-            const fileInput = document.getElementById('contractFileInput');
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                alert('⚠️ Please select a JSON file to import.');
-                return;
-            }
-            
-            if (!file.name.endsWith('.json')) {
-                alert('⚠️ Please select a valid JSON file.');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importData = JSON.parse(e.target.result);
-                    
-                    // Validate file structure
-                    if (!importData.signedContracts || !Array.isArray(importData.signedContracts)) {
-                        throw new Error('Invalid file format - missing signedContracts array');
-                    }
-                    
-                    // Show import preview
-                    const importCount = importData.signedContracts.length;
-                    const currentCount = signedContracts.length;
-                    
-                    const confirmMessage = `📥 Import Preview:\n\n` +
-                                         `• Current contracts: ${currentCount}\n` +
-                                         `• Import file contains: ${importCount} contracts\n` +
-                                         `• Export date: ${importData.exportDate || 'Unknown'}\n\n` +
-                                         `This will REPLACE your current contracts. Continue?`;
-                    
-                    if (confirm(confirmMessage)) {
-                        // Import the contracts
-                        signedContracts = importData.signedContracts;
-                        localStorage.setItem('signedContracts', JSON.stringify(signedContracts));
-                        
-                        // Refresh display
-                        displaySignedContracts();
-                        updateContractAnalytics();
-                        
-                        // Hide import section
-                        hideFileImport();
-                        
-                        alert(`✅ Successfully imported ${importCount} contracts!`);
-                        console.log('📥 Contracts imported successfully:', signedContracts);
-                    }
-                    
-                } catch (error) {
-                    console.error('Import error:', error);
-                    alert(`❌ Import failed: ${error.message}\n\nPlease ensure you're importing a valid contracts export file.`);
-                }
-            };
-            
-            reader.onerror = function() {
-                alert('❌ Error reading file. Please try again.');
-            };
-            
-            reader.readAsText(file);
-        }
-        
-        }
-        
-        // Initialize on page load
-        checkAuth();
-    </script>
 
     <!-- Google API Scripts -->
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()" onerror="handleScriptError('API')"></script>
