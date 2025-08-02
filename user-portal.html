@@ -1035,7 +1035,7 @@
         }
 
         // Download contract for user
-        function downloadUserContract() {
+        window.downloadUserContract = function() {
             // Find the user's uploaded contract
             const userContract = uploadedContracts.find(contract => 
                 contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
@@ -1063,7 +1063,7 @@
         }
 
         // View contract details
-        function viewContractDetails() {
+        window.viewContractDetails = function() {
             // Find the user's uploaded contract
             const userContract = uploadedContracts.find(contract => 
                 contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
