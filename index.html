@@ -697,6 +697,239 @@
       color: var(--white);
     }
     
+    /* Strategic Action Buttons */
+    .job-strategic-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 178, 0, 0.2);
+      flex-wrap: wrap;
+    }
+    
+    .btn-contract {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      flex: 1;
+      min-width: 120px;
+      justify-content: center;
+    }
+    
+    .btn-contract:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
+    }
+    
+    .btn-portal {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      flex: 1;
+      min-width: 120px;
+      justify-content: center;
+    }
+    
+    .btn-portal:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-help {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      flex: 1;
+      min-width: 120px;
+      justify-content: center;
+    }
+    
+    .btn-help:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+    }
+    
+    /* Help Modal */
+    .help-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .help-modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .help-modal.hide {
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    .help-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(20px);
+    }
+    
+    .help-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(26, 26, 26, 0.95));
+      border-radius: 20px;
+      border: 1px solid rgba(255, 178, 0, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      max-width: 800px;
+      width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      backdrop-filter: blur(20px);
+    }
+    
+    .help-header {
+      padding: 2rem 2rem 1rem 2rem;
+      border-bottom: 1px solid rgba(255, 178, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .help-header h2 {
+      color: #FFB200;
+      font-family: 'Cinzel', serif;
+      margin: 0;
+      font-size: 1.8rem;
+    }
+    
+    .help-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    
+    .help-close:hover {
+      background: rgba(255, 178, 0, 0.2);
+      border-color: #FFB200;
+    }
+    
+    .help-body {
+      padding: 2rem;
+    }
+    
+    .help-section {
+      margin-bottom: 2rem;
+    }
+    
+    .help-section h3 {
+      color: #FFB200;
+      font-family: 'Cinzel', serif;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .help-section p {
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    
+    .help-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .help-list li {
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 0.75rem;
+      padding-left: 1.5rem;
+      position: relative;
+      line-height: 1.5;
+    }
+    
+    .help-list li::before {
+      content: '•';
+      color: #FFB200;
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+    
+    .help-tip {
+      background: rgba(255, 178, 0, 0.1);
+      border: 1px solid rgba(255, 178, 0, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    
+    .help-tip h4 {
+      color: #FFB200;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+    }
+    
+    .help-tip p {
+      color: rgba(255, 255, 255, 0.8);
+      margin: 0;
+      font-size: 0.9rem;
+    }
+    
+    /* Responsive Design for Strategic Buttons */
+    @media (max-width: 768px) {
+      .job-strategic-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .btn-contract, .btn-portal, .btn-help {
+        min-width: auto;
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .help-content {
+        width: 95vw;
+        max-height: 90vh;
+      }
+      
+      .help-header {
+        padding: 1.5rem 1.5rem 1rem 1.5rem;
+      }
+      
+      .help-header h2 {
+        font-size: 1.5rem;
+      }
+      
+      .help-body {
+        padding: 1.5rem;
+      }
+      
+      .help-section h3 {
+        font-size: 1.1rem;
+      }
+    }
+    
     /* Floating Admin Button */
     .floating-admin {
       position: fixed;
@@ -1544,6 +1777,18 @@
             </button>
             ${applyButton}
           </div>
+          
+          <div class="job-strategic-actions">
+            <a href="https://collaborate.cochranfilms.com/contract" target="_blank" class="btn btn-contract">
+              <span>📄</span> Sign Contract
+            </a>
+            <a href="https://collaborate.cochranfilms.com/user-portal" target="_blank" class="btn btn-portal">
+              <span>👤</span> User Portal
+            </a>
+            <button class="btn btn-help" onclick="showHelpModal()">
+              <span>❓</span> Get Help
+            </button>
+          </div>
         </div>
       `;
     }
@@ -1827,6 +2072,115 @@
           notification.remove();
         }
       }, 4000);
+    }
+    
+    // Help Modal Functions
+    function showHelpModal() {
+      const modal = document.createElement('div');
+      modal.className = 'help-modal';
+      modal.innerHTML = `
+        <div class="help-overlay" onclick="closeHelpModal()"></div>
+        <div class="help-content">
+          <div class="help-header">
+            <h2><i class="fas fa-question-circle"></i> Help & Resources</h2>
+            <button class="help-close" onclick="closeHelpModal()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <div class="help-body">
+            <div class="help-section">
+              <h3><i class="fas fa-file-contract"></i> Contract Process</h3>
+              <p>Our contract signing process is simple and secure:</p>
+              <ul class="help-list">
+                <li>Click "Sign Contract" to access our digital contract system</li>
+                <li>Fill in your personal information and project details</li>
+                <li>Create a secure password for your freelancer portal</li>
+                <li>Digitally sign the contract using your mouse or touch screen</li>
+                <li>Submit the contract - you'll receive a confirmation email</li>
+                <li>Admin will process your contract within 24 hours</li>
+              </ul>
+              <div class="help-tip">
+                <h4>💡 Pro Tip</h4>
+                <p>Make sure to save your portal password! You'll need it to access your job details and contract status.</p>
+              </div>
+            </div>
+            
+            <div class="help-section">
+              <h3><i class="fas fa-user-circle"></i> User Portal Access</h3>
+              <p>Your personal freelancer portal provides:</p>
+              <ul class="help-list">
+                <li>View your current job assignments and project timeline</li>
+                <li>Check contract status and download signed contracts</li>
+                <li>Access project requirements and preparation checklists</li>
+                <li>Track payment status and project progress</li>
+                <li>Contact admin team for questions or support</li>
+              </ul>
+              <div class="help-tip">
+                <h4>🔐 Login Info</h4>
+                <p>Use the email you provided during contract signing and the password you created.</p>
+              </div>
+            </div>
+            
+            <div class="help-section">
+              <h3><i class="fas fa-briefcase"></i> Working with Cochran Films</h3>
+              <p>Our requirements and expectations:</p>
+              <ul class="help-list">
+                <li>Arrive 15 minutes before your scheduled start time</li>
+                <li>Bring valid ID and your signed contract (digital copy is fine)</li>
+                <li>Wear all black professional attire (required)</li>
+                <li>Use provided Cochran Films branded gear (free)</li>
+                <li>Maintain professional demeanor throughout the project</li>
+                <li>Complete assigned tasks to high professional standards</li>
+                <li>Payment is processed within 24 hours of project completion</li>
+              </ul>
+            </div>
+            
+            <div class="help-section">
+              <h3><i class="fas fa-phone"></i> Need More Help?</h3>
+              <p>If you have questions or need assistance:</p>
+              <ul class="help-list">
+                <li>Email: <a href="mailto:info@cochranfilms.com" style="color: #FFB200;">info@cochranfilms.com</a></li>
+                <li>Phone: Available through email contact</li>
+                <li>Response time: Within 24 hours during business days</li>
+                <li>Emergency: For urgent project-related issues, include "URGENT" in subject line</li>
+              </ul>
+              <div class="help-tip">
+                <h4>📧 Contact Best Practices</h4>
+                <p>Include your name, project details, and specific question when contacting us for faster assistance.</p>
+              </div>
+            </div>
+            
+            <div class="help-section">
+              <h3><i class="fas fa-lightbulb"></i> FAQ</h3>
+              <ul class="help-list">
+                <li><strong>Q: Can I change my password?</strong><br>A: Contact admin to reset your portal password.</li>
+                <li><strong>Q: What if I can't access the portal?</strong><br>A: Check your email and password, or contact admin for assistance.</li>
+                <li><strong>Q: How do I know my contract was received?</strong><br>A: You'll receive a confirmation email, and your portal status will update.</li>
+                <li><strong>Q: What equipment should I bring?</strong><br>A: Bring your own equipment unless specifically arranged otherwise.</li>
+                <li><strong>Q: What if I need to reschedule?</strong><br>A: Contact admin immediately with as much notice as possible.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Animate in
+      setTimeout(() => {
+        modal.classList.add('show');
+      }, 10);
+    }
+    
+    function closeHelpModal() {
+      const modal = document.querySelector('.help-modal');
+      if (modal) {
+        modal.classList.add('hide');
+        setTimeout(() => {
+          modal.remove();
+        }, 300);
+      }
     }
     
 
