@@ -982,6 +982,12 @@
             if (matchingFreelancer && approvedFreelancers[matchingFreelancer].email.toLowerCase() === email) {
                 const freelancerData = approvedFreelancers[matchingFreelancer];
                 
+                // Store freelancer data for both signed and unsigned contracts
+                currentFreelancerData = {
+                    name: matchingFreelancer,
+                    ...freelancerData
+                };
+                
                 // Check if contract is already signed/uploaded
                 if (freelancerData.contractStatus === 'signed' || freelancerData.contractStatus === 'uploaded') {
                     console.log('📋 Contract already signed for:', matchingFreelancer);
@@ -990,11 +996,6 @@
                 }
                 
                 console.log('✅ Access granted for:', matchingFreelancer);
-                // Access granted - store freelancer data for PDF generation
-                currentFreelancerData = {
-                    name: matchingFreelancer,
-                    ...freelancerData
-                };
                 
                 // Populate contract details
                 populateContractDetails();
@@ -1249,7 +1250,7 @@
                     </div>
                     
                     <div class="message-content">
-                        <p><strong>Hi ${freelancerData.name || currentFreelancerData.name},</strong></p>
+                        <p><strong>Hi ${freelancerData.name},</strong></p>
                         <p>Your contract has already been signed and processed!</p>
                         
                         <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 1px solid rgba(255,178,0,0.3);">
