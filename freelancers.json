@@ -11,9 +11,38 @@
       "contractStatus": "pending",
       "contractSignedDate": null,
       "contractUploadedDate": null,
-      "contractId": null
+      "contractId": null,
+      "jobs": [],
+      "primaryJob": null
+    },
+    "Cody Cochran": {
+      "email": "codylcochran87@gmail.com",
+      "password": null,
+      "contractUrl": "contract.html",
+      "role": "Video Editor",
+      "location": "Sandy Springs, GA",
+      "projectStart": "September 11th, 2025 at 5:00pm",
+      "rate": "$400.00 USD (Flat)",
+      "approvedDate": "2025-08-03",
+      "contractStatus": "pending",
+      "contractSignedDate": null,
+      "contractUploadedDate": null,
+      "contractId": null,
+      "jobs": [
+        {
+          "id": "job-cody-cochran-1754207941350",
+          "role": "Video Editor",
+          "location": "Sandy Springs, GA",
+          "projectStart": "September 11th, 2025 at 5:00pm",
+          "rate": "$400.00 USD (Flat)",
+          "status": "upcoming",
+          "projectType": "Video Editor Project",
+          "description": "Primary assignment for Cody Cochran"
+        }
+      ],
+      "primaryJob": "job-cody-cochran-1754207941350"
     }
   },
-  "lastUpdated": "2025-01-03",
-  "totalFreelancers": 1
-} 
+  "lastUpdated": "2025-08-03",
+  "totalFreelancers": 2
+}
