@@ -154,15 +154,20 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📄 Contract page: http://localhost:${PORT}/`);
-    console.log(`⚙️  Admin dashboard: http://localhost:${PORT}/admin`);
-    console.log(`🔧 API endpoints:`);
-    console.log(`   GET  /api/github/file/:filename`);
-    console.log(`   PUT  /api/github/file/:filename`);
-    console.log(`   POST /api/github/upload/:filename`);
-    console.log(`   GET  /api/github/info`);
-    console.log(`   GET  /api/health`);
-}); 
+// Start server (only for local development)
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+        console.log(`📄 Contract page: http://localhost:${PORT}/`);
+        console.log(`⚙️  Admin dashboard: http://localhost:${PORT}/admin`);
+        console.log(`🔧 API endpoints:`);
+        console.log(`   GET  /api/github/file/:filename`);
+        console.log(`   PUT  /api/github/file/:filename`);
+        console.log(`   POST /api/github/upload/:filename`);
+        console.log(`   GET  /api/github/info`);
+        console.log(`   GET  /api/health`);
+    });
+}
+
+// Export for Vercel serverless functions
+module.exports = app; 
