@@ -938,6 +938,9 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                                 <button onclick="showProjectStatusManager('${freelancer.name}')" style="background: #3b82f6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                     📊 Project Status
                                 </button>
+                                <button onclick="showJobAssignmentModal('${freelancer.name}')" style="background: #22c55e; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                                    🎯 Assign Jobs
+                                </button>
                             ${!freelancer.approvedDate ? `
                                 <button onclick="approveFreelancer(${index})" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                     ✅ Approve
@@ -1824,7 +1827,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     totalProjects: Object.keys(projectStatus).length
                 };
                 
-                await updateGitHubFile('project-status.json', exportData, `Update project-status.json - ${new Date().toLocaleString()}`);
+                await updateGitHubFile('project-status.json', JSON.stringify(exportData, null, 2), `Update project-status.json - ${new Date().toLocaleString()}`);
                 console.log('✅ project-status.json updated on GitHub');
                 
                 // Show success message
@@ -1909,6 +1912,188 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             updateProjectStatusOnGitHub();
             
             console.log(`✅ Updated project status for ${freelancerName} - ${jobId}: ${newStatus}`);
+        }
+
+        // ==================== JOB ASSIGNMENT & PAYMENT MANAGEMENT ====================
+        
+        // Show job assignment modal
+        function showJobAssignmentModal(freelancerName) {
+            const freelancer = freelancers.find(f => f.name === freelancerName);
+            if (!freelancer) {
+                alert('Freelancer not found');
+                return;
+            }
+
+            // Get available jobs from jobs-data.json
+            const availableJobs = jobs.filter(job => !freelancer.jobs.some(userJob => userJob.id === job.id));
+            
+            let jobsHTML = '';
+            if (availableJobs.length > 0) {
+                jobsHTML = availableJobs.map(job => `
+                    <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.2);">
+                        <h4 style="color: #FFB200; margin-bottom: 0.5rem;">${job.title}</h4>
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 0.5rem;">${job.location}</p>
+                        <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">${job.eventDate}</p>
+                        <button onclick="assignJobToUser('${freelancerName}', '${job.id}')" 
+                                style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">
+                            <i class="fas fa-plus"></i> Assign Job
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                jobsHTML = '<p style="color: rgba(255,255,255,0.7);">No available jobs to assign.</p>';
+            }
+
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a1a; padding: 2rem; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,178,0,0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-briefcase"></i> Assign Jobs to ${freelancerName}</h2>
+                        <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" 
+                                style="background: none; border: none; color: #FFB200; font-size: 1.5rem; cursor: pointer;">×</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">Available Jobs:</h3>
+                        ${jobsHTML}
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,178,0,0.2);">
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">Payment Method Setup:</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="color: #FFB200; font-weight: bold;">Payment Method:</label>
+                                <select id="paymentMethod_${freelancerName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
+                                    <option value="">Select payment method</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="check">Check</option>
+                                    <option value="zelle">Zelle</option>
+                                    <option value="paypal">PayPal</option>
+                                    <option value="invoice">Invoice Request</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color: #FFB200; font-weight: bold;">Payment Status:</label>
+                                <select id="paymentStatus_${freelancerName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="overdue">Overdue</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="updatePaymentSettings('${freelancerName}')" 
+                                style="background: #FFB200; color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            <i class="fas fa-save"></i> Update Payment Settings
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Assign job to user
+        function assignJobToUser(freelancerName, jobId) {
+            const freelancer = freelancers.find(f => f.name === freelancerName);
+            const job = jobs.find(j => j.id === jobId);
+            
+            if (!freelancer || !job) {
+                alert('Freelancer or job not found');
+                return;
+            }
+
+            // Add job to freelancer's jobs array
+            if (!freelancer.jobs) {
+                freelancer.jobs = [];
+            }
+            
+            const newJob = {
+                id: job.id,
+                role: job.title,
+                location: job.location,
+                projectStart: job.eventDate,
+                rate: job.rate || '$TBD',
+                projectType: job.title,
+                description: job.description || `Assigned job: ${job.title}`,
+                status: 'upcoming'
+            };
+            
+            freelancer.jobs.push(newJob);
+            
+            // Update project status
+            if (!projectStatus[freelancerName]) {
+                projectStatus[freelancerName] = { jobs: {} };
+            }
+            
+            projectStatus[freelancerName].jobs[jobId] = {
+                id: job.id,
+                role: job.title,
+                location: job.location,
+                projectStart: job.eventDate,
+                rate: job.rate || '$TBD',
+                projectStatus: 'upcoming',
+                paymentStatus: 'pending',
+                projectType: job.title,
+                description: job.description || `Assigned job: ${job.title}`
+            };
+            
+            // Update GitHub
+            updateFreelancersOnGitHub();
+            updateProjectStatusOnGitHub();
+            
+            alert(`✅ Job "${job.title}" assigned to ${freelancerName} successfully!`);
+            
+            // Close modal
+            document.querySelector('div[style*="position: fixed"]').remove();
+        }
+
+        // Update payment settings
+        function updatePaymentSettings(freelancerName) {
+            const freelancer = freelancers.find(f => f.name === freelancerName);
+            if (!freelancer) {
+                alert('Freelancer not found');
+                return;
+            }
+            
+            const paymentMethod = document.getElementById(`paymentMethod_${freelancerName}`).value;
+            const paymentStatus = document.getElementById(`paymentStatus_${freelancerName}`).value;
+            
+            if (!paymentMethod) {
+                alert('Please select a payment method');
+                return;
+            }
+            
+            // Update freelancer's payment settings
+            freelancer.paymentMethod = paymentMethod;
+            freelancer.paymentStatus = paymentStatus;
+            
+            // Update all jobs for this freelancer
+            if (projectStatus[freelancerName] && projectStatus[freelancerName].jobs) {
+                Object.values(projectStatus[freelancerName].jobs).forEach(job => {
+                    job.paymentStatus = paymentStatus;
+                    job.paymentMethod = paymentMethod;
+                });
+            }
+            
+            // Update GitHub
+            updateFreelancersOnGitHub();
+            updateProjectStatusOnGitHub();
+            
+            alert(`✅ Payment settings updated for ${freelancerName}!\nMethod: ${paymentMethod}\nStatus: ${paymentStatus}`);
         }
         
         // Show project status manager modal
