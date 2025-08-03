@@ -112,7 +112,7 @@
             
             await loadJobs();
             await loadFreelancers();
-            loadUploadedContracts();
+            await loadUploadedContracts();
             await loadProjectStatus();
         }
 
@@ -254,10 +254,8 @@
                 const pdfDownloadUrl = await uploadContractToGitHub(currentUploadFile, contractData);
                 contractData.githubUrl = pdfDownloadUrl;
                 
-                // Save to localStorage
-                uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+                // Add to current uploaded contracts array
                 uploadedContracts.push(contractData);
-                localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
                 
                 // Update uploaded-contracts.json on GitHub
                 await updateUploadedContractsOnGitHub();
@@ -280,7 +278,6 @@
             reader.onload = async function(e) {
                 contractData.fileData = e.target.result;
                 uploadedContracts[uploadedContracts.length - 1] = contractData;
-                localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
                 
                 console.log('✅ Contract uploaded and saved:', contractData);
                 
@@ -291,7 +288,7 @@
                 cancelContractUpload();
                 
                 // Refresh list
-                loadUploadedContracts();
+                await loadUploadedContracts();
                 
                 alert(`✅ Contract uploaded successfully!\n\nContract ID: ${contractId}\nFreelancer: ${name}\n\n📋 Freelancer status updated to "uploaded" - they can now see their signed contract in the user portal!`);
             };
@@ -391,10 +388,24 @@
         }
 
         // Load uploaded contracts
-        function loadUploadedContracts() {
+        async function loadUploadedContracts() {
             console.log('🔄 Loading uploaded contracts...');
             
-            uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+            try {
+                const response = await fetch('/api/uploaded-contracts');
+                if (response.ok) {
+                    const data = await response.json();
+                    uploadedContracts = data.contracts || [];
+                    console.log('✅ Loaded', uploadedContracts.length, 'uploaded contracts from API');
+                } else {
+                    console.warn('⚠️ Could not load uploaded contracts from API, using localStorage fallback');
+                    uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+                }
+            } catch (error) {
+                console.error('❌ Error loading uploaded contracts:', error);
+                uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+            }
+            
             displayUploadedContracts();
             updateContractAnalytics();
             
@@ -515,7 +526,6 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             const contract = uploadedContracts[index];
             if (confirm(`Are you sure you want to delete the contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis action cannot be undone.`)) {
                 uploadedContracts.splice(index, 1);
-                localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
                 
                 // Automatically update GitHub
                 await updateUploadedContractsOnGitHub();
@@ -954,6 +964,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                         <span>🎯 ${freelancer.role}</span>
                         <span>💰 ${freelancer.rate}</span>
                         <span>📍 ${freelancer.location}</span>
+                        ${freelancer.paymentMethod ? `<span style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">💳 ${freelancer.paymentMethod.toUpperCase()}</span>` : ''}
                     </div>
                     
                     <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
@@ -1978,11 +1989,11 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                                 <label style="color: #FFB200; font-weight: bold;">Payment Method:</label>
                                 <select id="paymentMethod_${freelancerName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
                                     <option value="">Select payment method</option>
-                                    <option value="cash">Cash</option>
-                                    <option value="check">Check</option>
-                                    <option value="zelle">Zelle</option>
-                                    <option value="paypal">PayPal</option>
-                                    <option value="invoice">Invoice Request</option>
+                                    <option value="cash" ${freelancer.paymentMethod === 'cash' ? 'selected' : ''}>Cash</option>
+                                    <option value="check" ${freelancer.paymentMethod === 'check' ? 'selected' : ''}>Check</option>
+                                    <option value="zelle" ${freelancer.paymentMethod === 'zelle' ? 'selected' : ''}>Zelle</option>
+                                    <option value="paypal" ${freelancer.paymentMethod === 'paypal' ? 'selected' : ''}>PayPal</option>
+                                    <option value="invoice" ${freelancer.paymentMethod === 'invoice' ? 'selected' : ''}>Invoice Request</option>
                                 </select>
                             </div>
                             <div>
@@ -3292,7 +3303,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             <div class="list-section">
                 <h2>📁 Uploaded Contracts</h2>
                 <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
-                    <button class="btn" onclick="loadUploadedContracts()">🔄 Refresh</button>
+                                            <button class="btn" onclick="loadUploadedContracts().then(() => console.log('✅ Contracts refreshed')).catch(err => console.error('❌ Error refreshing contracts:', err))">🔄 Refresh</button>
                     <button class="btn" onclick="exportContractList()">📦 Export List</button>
                     <button class="btn" onclick="exportUploadedContractsForPortal()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
                         📄 Export for User Portal

@@ -516,6 +516,13 @@
                                     <span>${displayApprovedDate}</span>
                                 </div>
                             </div>
+                            <div class="contact-item">
+                                <i class="fas fa-credit-card"></i>
+                                <div>
+                                    <strong>Payment Method</strong>
+                                    <span>${currentUser.paymentMethod ? currentUser.paymentMethod.toUpperCase() : 'Not Set'}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -1266,7 +1273,7 @@
         }
 
         // Update payment method
-        function updatePaymentMethod() {
+        async function updatePaymentMethod() {
             const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
             if (!selectedMethod) {
                 alert('Please select a payment method');
@@ -1282,11 +1289,67 @@
                 // Save to session storage
                 sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(currentUser));
                 
-                // Show success message
-                alert(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nThis preference has been saved and will be communicated to the admin team.`);
+                // Update freelancers.json on GitHub
+                try {
+                    await updateFreelancerPaymentMethod(currentUser.email, paymentMethod);
+                    alert(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`);
+                } catch (error) {
+                    console.error('❌ Error updating payment method:', error);
+                    alert(`⚠️ Payment method saved locally but there was an issue notifying the admin team. Please try again later.`);
+                }
                 
                 // Refresh user data display
                 displayUserInfo();
+            }
+        }
+
+        // Update freelancer payment method on GitHub
+        async function updateFreelancerPaymentMethod(email, paymentMethod) {
+            try {
+                // Get current freelancers data
+                const response = await fetch('/api/freelancers');
+                if (!response.ok) {
+                    throw new Error('Failed to load freelancers data');
+                }
+                
+                const freelancersData = await response.json();
+                const freelancers = freelancersData.approvedFreelancers || {};
+                
+                // Find and update the user's payment method
+                let userFound = false;
+                for (const [name, freelancer] of Object.entries(freelancers)) {
+                    if (freelancer.email === email) {
+                        freelancer.paymentMethod = paymentMethod;
+                        userFound = true;
+                        break;
+                    }
+                }
+                
+                if (!userFound) {
+                    throw new Error('User not found in freelancers data');
+                }
+                
+                // Update the freelancers.json file on GitHub
+                const updateResponse = await fetch('/api/github/file/freelancers.json', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: JSON.stringify(freelancersData, null, 2),
+                        message: `Update payment method for ${email} to ${paymentMethod} - ${new Date().toLocaleString()}`
+                    })
+                });
+                
+                if (!updateResponse.ok) {
+                    throw new Error('Failed to update freelancers.json on GitHub');
+                }
+                
+                console.log('✅ Payment method updated on GitHub');
+                
+            } catch (error) {
+                console.error('❌ Error updating payment method:', error);
+                throw error;
             }
         }
 
