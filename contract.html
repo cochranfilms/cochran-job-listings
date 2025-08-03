@@ -935,8 +935,8 @@
                 console.log('📤 Uploading PDF to GitHub via server:', filename);
                 
                 // Upload to GitHub via server API
-                const response = await fetch(`/api/github/upload/${filename}`, {
-                    method: 'POST',
+                const response = await fetch(`/api/github/file/${filename}`, {
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -1846,7 +1846,7 @@
                     };
                     
                     // Update freelancers.json on GitHub directly
-                    await updateGitHubFile('freelancers.json', updatedFreelancersData, `Update freelancers.json - Contract signed by ${contractData.freelancerName} - ${new Date().toLocaleString()}`);
+                    await updateGitHubFile('freelancers.json', JSON.stringify(updatedFreelancersData, null, 2), `Update freelancers.json - Contract signed by ${contractData.freelancerName} - ${new Date().toLocaleString()}`);
                     
                     console.log('✅ Freelancers.json updated on GitHub with password and contract status');
                     
@@ -1932,7 +1932,7 @@
                 uploadedContractsData.exportDate = new Date().toISOString();
                 
                 // Update uploaded-contracts.json on GitHub
-                await updateGitHubFile('uploaded-contracts.json', uploadedContractsData, `Add signed contract: ${contractData.contractId} - ${contractData.freelancerName}`);
+                await updateGitHubFile('uploaded-contracts.json', JSON.stringify(uploadedContractsData, null, 2), `Add signed contract: ${contractData.contractId} - ${contractData.freelancerName}`);
                 
                 console.log('✅ Uploaded-contracts.json updated on GitHub');
                 

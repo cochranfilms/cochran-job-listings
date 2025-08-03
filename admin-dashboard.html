@@ -310,8 +310,8 @@
                 const fileName = `contracts/${contractData.contractId}.pdf`;
                 
                 // Upload file via our secure server endpoint
-                const uploadResponse = await fetch(`/api/github/upload/${fileName}`, {
-                    method: 'POST',
+                const uploadResponse = await fetch(`/api/github/file/${fileName}`, {
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
