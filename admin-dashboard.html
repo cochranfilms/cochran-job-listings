@@ -1544,7 +1544,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     totalFreelancers: freelancers.length
                 };
                 
-                await updateGitHubFile('freelancers.json', exportData, `Update freelancers.json - ${new Date().toLocaleString()}`);
+                await updateGitHubFile('freelancers.json', JSON.stringify(exportData, null, 2), `Update freelancers.json - ${new Date().toLocaleString()}`);
                 console.log('✅ Freelancers.json updated on GitHub');
                 
                 // Show success message
@@ -1569,7 +1569,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     totalJobs: jobs.length
                 };
                 
-                await updateGitHubFile('jobs-data.json', exportData, `Update jobs-data.json - ${new Date().toLocaleString()}`);
+                await updateGitHubFile('jobs-data.json', JSON.stringify(exportData, null, 2), `Update jobs-data.json - ${new Date().toLocaleString()}`);
                 console.log('✅ jobs-data.json updated on GitHub with', jobs.length, 'total jobs');
                 
                 // Show success message
