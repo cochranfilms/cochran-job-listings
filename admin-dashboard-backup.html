@@ -881,7 +881,7 @@
         // Load existing jobs
         async function loadJobs() {
             try {
-                const response = await fetch('jobs-data.json');
+                const response = await fetch('/api/jobs-data');
                 if (response.ok) {
                     const data = await response.json();
                     jobs = data.jobs || [];

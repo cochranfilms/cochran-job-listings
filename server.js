@@ -160,7 +160,7 @@ app.get('/api/health', (req, res) => {
         status: 'ok', 
         timestamp: new Date().toISOString(),
         githubConfigured: !!GITHUB_CONFIG.token,
-        deployment: 'v3.0.0-fresh' // Force completely fresh deployment
+        deployment: 'v3.0.1-FORCE' // Force deployment NOW
     });
 });
 
