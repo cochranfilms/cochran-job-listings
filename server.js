@@ -151,23 +151,25 @@ app.get('/api/github/info', (req, res) => {
     });
 });
 
-// Health check
-app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
-        timestamp: new Date().toISOString(),
-        githubConfigured: !!GITHUB_CONFIG.token,
-        deployment: 'v2.0.1' // Force new deployment
-    });
-});
-
-// Serve JSON files directly from server
+// Serve JSON files directly from server (BEFORE other routes)
 app.get('/jobs-data.json', (req, res) => {
-    res.sendFile(path.join(__dirname, 'jobs-data.json'));
+    console.log('📄 Serving jobs-data.json');
+    try {
+        res.sendFile(path.join(__dirname, 'jobs-data.json'));
+    } catch (error) {
+        console.error('❌ Error serving jobs-data.json:', error);
+        res.status(500).json({ error: 'Failed to load jobs data' });
+    }
 });
 
 app.get('/freelancers.json', (req, res) => {
-    res.sendFile(path.join(__dirname, 'freelancers.json'));
+    console.log('📄 Serving freelancers.json');
+    try {
+        res.sendFile(path.join(__dirname, 'freelancers.json'));
+    } catch (error) {
+        console.error('❌ Error serving freelancers.json:', error);
+        res.status(500).json({ error: 'Failed to load freelancers data' });
+    }
 });
 
 app.get('/uploaded-contracts.json', (req, res) => {
@@ -177,6 +179,18 @@ app.get('/uploaded-contracts.json', (req, res) => {
 app.get('/project-status.json', (req, res) => {
     res.sendFile(path.join(__dirname, 'project-status.json'));
 });
+
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        githubConfigured: !!GITHUB_CONFIG.token,
+        deployment: 'v2.0.2' // Force new deployment
+    });
+});
+
+// JSON routes moved above
 
 // Serve the main HTML files
 app.get('/', (req, res) => {
