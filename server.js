@@ -164,11 +164,16 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// DEBUG: Log all routes after health
+console.log('🔧 Registering additional API routes...');
+
 // JSON Data API Routes (replacing direct file serving) - TESTING
 app.get('/api/test', (req, res) => {
     console.log('📄 /api/test endpoint hit');
     res.json({ message: 'API routes are working!', timestamp: new Date().toISOString() });
 });
+
+console.log('🔧 Test route registered');
 
 app.get('/api/jobs-data', (req, res) => {
     console.log('📄 /api/jobs-data endpoint hit');
