@@ -86,9 +86,27 @@ app.put('/api/github/file/:filename', async (req, res) => {
         const { filename } = req.params;
         const { content, message, sha } = req.body;
         
+        console.log(`📝 PUT request for ${filename}:`, { content: typeof content, message, sha: sha ? 'present' : 'none' });
+        
+        if (!content) {
+            return res.status(400).json({ error: 'Content is required' });
+        }
+        
+        if (!message) {
+            return res.status(400).json({ error: 'Commit message is required' });
+        }
+        
+        // Convert content to base64 - handle both object and string content
+        let contentString;
+        if (typeof content === 'string') {
+            contentString = content;
+        } else {
+            contentString = JSON.stringify(content, null, 2);
+        }
+        
         const updateData = {
             message,
-            content: Buffer.from(JSON.stringify(content, null, 2)).toString('base64'),
+            content: Buffer.from(contentString).toString('base64'),
             branch: GITHUB_CONFIG.branch
         };
         
@@ -99,6 +117,7 @@ app.put('/api/github/file/:filename', async (req, res) => {
         const data = await githubAPI(`/contents/${filename}`, 'PUT', updateData);
         res.json(data);
     } catch (error) {
+        console.error(`❌ PUT /api/github/file/${req.params.filename} error:`, error);
         res.status(500).json({ error: error.message });
     }
 });
