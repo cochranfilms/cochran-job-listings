@@ -154,6 +154,10 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
 });
 
+app.get('/admin-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
+});
+
 // Start server (only for local development)
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => {
