@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const path = require('path');
+const fs = require('fs');
 
 // Load environment variables
 require('dotenv').config();
@@ -159,30 +160,34 @@ app.get('/api/health', (req, res) => {
         status: 'ok', 
         timestamp: new Date().toISOString(),
         githubConfigured: !!GITHUB_CONFIG.token,
-        deployment: 'v2.0.3' // Force new deployment
+        deployment: 'v2.1.0' // Force new deployment
     });
 });
 
 // JSON Data API Routes (replacing direct file serving)
 app.get('/api/jobs-data', (req, res) => {
+    console.log('📄 /api/jobs-data endpoint hit');
     try {
-        const jobs = require('./jobs-data.json');
-        console.log('✅ Serving jobs data via API:', jobs.jobs.length, 'jobs');
-        res.json(jobs);
+        const jobsPath = path.join(__dirname, 'jobs-data.json');
+        const jobsData = JSON.parse(fs.readFileSync(jobsPath, 'utf8'));
+        console.log('✅ Serving jobs data via API:', jobsData.jobs?.length || 0, 'jobs');
+        res.json(jobsData);
     } catch (error) {
         console.error('❌ Error loading jobs-data.json:', error);
-        res.status(500).json({ error: 'Failed to load jobs data' });
+        res.status(500).json({ error: 'Failed to load jobs data', details: error.message });
     }
 });
 
 app.get('/api/freelancers', (req, res) => {
+    console.log('📄 /api/freelancers endpoint hit');
     try {
-        const freelancers = require('./freelancers.json');
+        const freelancersPath = path.join(__dirname, 'freelancers.json');
+        const freelancersData = JSON.parse(fs.readFileSync(freelancersPath, 'utf8'));
         console.log('✅ Serving freelancers data via API');
-        res.json(freelancers);
+        res.json(freelancersData);
     } catch (error) {
         console.error('❌ Error loading freelancers.json:', error);
-        res.status(500).json({ error: 'Failed to load freelancers data' });
+        res.status(500).json({ error: 'Failed to load freelancers data', details: error.message });
     }
 });
 
