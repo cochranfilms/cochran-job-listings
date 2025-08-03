@@ -86,6 +86,11 @@
             
             // Load GitHub configuration
             await loadGitHubConfig();
+            
+            // Clear any old local contract data from localStorage
+            localStorage.removeItem('uploadedContracts');
+            localStorage.removeItem('signedContracts');
+            console.log('🧹 Cleared old local contract data from localStorage');
         });
 
         // Check if already authenticated
@@ -407,12 +412,12 @@
                     uploadedContracts = data.contracts || [];
                     console.log('✅ Loaded', uploadedContracts.length, 'uploaded contracts from API');
                 } else {
-                    console.warn('⚠️ Could not load uploaded contracts from API, using localStorage fallback');
-                    uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+                    console.warn('⚠️ Could not load uploaded contracts from API, showing empty state');
+                    uploadedContracts = [];
                 }
             } catch (error) {
                 console.error('❌ Error loading uploaded contracts:', error);
-                uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+                uploadedContracts = [];
             }
             
             displayUploadedContracts();

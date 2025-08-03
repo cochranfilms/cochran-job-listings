@@ -999,12 +999,7 @@
                         notes: 'Automatically uploaded via contract signing'
                     };
                     
-                    // Save to localStorage for immediate access
-                    let existingUploads = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
-                    existingUploads.push(uploadedContract);
-                    localStorage.setItem('uploadedContracts', JSON.stringify(existingUploads));
-                    
-                    console.log('✅ Contract uploaded and tracked locally');
+                    console.log('✅ Contract uploaded to GitHub');
                     return uploadedContract;
                 } else {
                     const error = await response.json();
@@ -1056,6 +1051,11 @@
         
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            // Clear any old local contract data from localStorage
+            localStorage.removeItem('uploadedContracts');
+            localStorage.removeItem('signedContracts');
+            console.log('🧹 Cleared old local contract data from localStorage');
+            
             loadFreelancerData();
             
             // Ensure main containers are visible on page load
@@ -1730,10 +1730,7 @@
                     }, 1000);
                 }
                 
-                // Save to localStorage (immediate backup)
-                let existingContracts = JSON.parse(localStorage.getItem('signedContracts') || '[]');
-                existingContracts.push(signedContractData);
-                localStorage.setItem('signedContracts', JSON.stringify(existingContracts));
+                // Contract data saved to GitHub (no local backup needed)
                 
                 // Securely store password for admin access
                 let adminPasswords = JSON.parse(localStorage.getItem('adminPortalPasswords') || '{}');
