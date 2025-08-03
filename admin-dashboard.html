@@ -1465,54 +1465,75 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
 
         // ==================== GITHUB API INTEGRATION ====================
 
-        // Update JSON file on GitHub via secure server API
-        async function updateGitHubFile(filename, content, commitMessage) {
+        // Update JSON file on GitHub via server API
+        async function updateGitHubFile(filename, content, commitMessage, retryCount = 0) {
             try {
-                console.log(`🔄 Updating ${filename} on GitHub via secure server...`);
+                console.log(`🔄 Updating ${filename} on GitHub via server... (attempt ${retryCount + 1})`);
                 
-                // First, get the current file to obtain the SHA (required for updates)
-                const getResponse = await fetch(`/api/github/file/${filename}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
+                // First, get the current file to retrieve its SHA (required for updates)
                 let currentSha = null;
-                if (getResponse.ok) {
-                    const fileData = await getResponse.json();
-                    currentSha = fileData.sha;
-                    console.log(`📄 Current ${filename} SHA: ${currentSha}`);
-                } else if (getResponse.status !== 404) {
-                    // If it's not a "file not found" error, something else went wrong
-                    const error = await getResponse.json();
-                    throw new Error(`Failed to get current file: ${error.error}`);
+                try {
+                    console.log(`🔍 Getting current SHA for ${filename}...`);
+                    const getResponse = await fetch(`/api/github/file/${filename}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (getResponse.ok) {
+                        const currentFile = await getResponse.json();
+                        currentSha = currentFile.sha;
+                        console.log(`✅ Retrieved current SHA: ${currentSha.substring(0, 7)}`);
+                    } else if (getResponse.status === 404) {
+                        console.log(`📄 File ${filename} doesn't exist yet, creating new file`);
+                        // File doesn't exist, so we don't need SHA for creation
+                    } else {
+                        console.warn(`⚠️ Could not get current SHA for ${filename}, status: ${getResponse.status}`);
+                    }
+                } catch (shaError) {
+                    console.warn(`⚠️ Error getting SHA for ${filename}:`, shaError);
+                    // Continue without SHA - might be a new file
                 }
                 
-                // Update the file via our secure server endpoint
-                const updateResponse = await fetch(`/api/github/file/${filename}`, {
+                // Now update the file
+                const requestBody = {
+                    content: content,
+                    message: commitMessage
+                };
+                
+                // Include SHA if we have it (for existing files)
+                if (currentSha) {
+                    requestBody.sha = currentSha;
+                    console.log(`🔗 Including SHA in update request`);
+                }
+                
+                const response = await fetch(`/api/github/file/${filename}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        content: content,
-                        message: commitMessage,
-                        sha: currentSha
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
-                if (updateResponse.ok) {
-                    const result = await updateResponse.json();
-                    console.log(`✅ ${filename} updated successfully:`, result.commit.sha);
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log(`✅ File updated successfully:`, result.commit.sha);
                     return result;
                 } else {
-                    const error = await updateResponse.json();
-                    throw new Error(`Server error: ${error.error}`);
+                    const error = await response.json();
+                    throw new Error(`Server API error: ${error.error}`);
                 }
-                
             } catch (error) {
                 console.error(`❌ Error updating ${filename}:`, error);
+                
+                // Retry logic for token/network issues
+                if (retryCount < 2 && (error.message.includes('token') || error.message.includes('network') || error.message.includes('500'))) {
+                    console.log(`🔄 Retrying in 2 seconds... (attempt ${retryCount + 1})`);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    return updateGitHubFile(filename, content, commitMessage, retryCount + 1);
+                }
+                
                 throw error;
             }
         }
