@@ -920,6 +920,15 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             displayFreelancers();
             console.log('✅ Total freelancers loaded:', freelancers.length);
             
+            // Populate dropdown options
+            populateDropdownOptions();
+            
+            // Populate freelancer dropdowns
+            populateFreelancerDropdowns();
+            
+            // Show payment method summary
+            displayPaymentMethodSummary();
+            
             // Show status in the interface
             const statusElement = document.getElementById('freelancerStatus');
             if (statusElement) {
@@ -928,6 +937,138 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         }
         
 
+
+        // Populate freelancer dropdowns
+        function populateFreelancerDropdowns() {
+            // Populate contract upload freelancer dropdown
+            const uploadFreelancerSelect = document.getElementById('uploadFreelancerName');
+            if (uploadFreelancerSelect) {
+                uploadFreelancerSelect.innerHTML = '<option value="">Select a freelancer...</option>';
+                freelancers.forEach(freelancer => {
+                    const option = document.createElement('option');
+                    option.value = freelancer.name;
+                    option.textContent = freelancer.name;
+                    uploadFreelancerSelect.appendChild(option);
+                });
+            }
+            
+            // Populate job assignment freelancer dropdown
+            const jobAssignmentSelect = document.getElementById('jobAssignmentFreelancer');
+            if (jobAssignmentSelect) {
+                jobAssignmentSelect.innerHTML = '<option value="">Choose a freelancer...</option>';
+                freelancers.forEach(freelancer => {
+                    const option = document.createElement('option');
+                    option.value = freelancer.name;
+                    option.textContent = freelancer.name;
+                    jobAssignmentSelect.appendChild(option);
+                });
+            }
+            
+            console.log('👥 Populated freelancer dropdowns with', freelancers.length, 'options');
+        }
+
+        // Populate dropdown options from JSON data
+        function populateDropdownOptions() {
+            // Get unique roles from freelancers.json
+            const roles = new Set();
+            freelancers.forEach(freelancer => {
+                if (freelancer.role) roles.add(freelancer.role);
+            });
+            
+            // Get unique locations from freelancers.json
+            const locations = new Set();
+            freelancers.forEach(freelancer => {
+                if (freelancer.location) locations.add(freelancer.location);
+            });
+            
+            // Get unique rates from freelancers.json
+            const rates = new Set();
+            freelancers.forEach(freelancer => {
+                if (freelancer.rate) rates.add(freelancer.rate);
+            });
+            
+            // Get job titles from jobs-data.json
+            const jobTitles = jobs.map(job => job.title);
+            
+            // Get project types from jobs-data.json (extract from descriptions)
+            const projectTypes = new Set();
+            jobs.forEach(job => {
+                if (job.description) {
+                    // Extract project type from job description or title
+                    const type = job.title.includes('Photographer') ? 'Photography' :
+                               job.title.includes('Editor') ? 'Editor Project' :
+                               job.title.includes('Videographer') ? 'Video' :
+                               'General';
+                    projectTypes.add(type);
+                }
+            });
+            
+            // Store for use in dropdowns
+            window.dropdownOptions = {
+                roles: Array.from(roles),
+                locations: Array.from(locations),
+                rates: Array.from(rates),
+                jobTitles: jobTitles,
+                projectTypes: Array.from(projectTypes),
+                paymentMethods: ['Cash', 'Check', 'Zelle', 'PayPal', 'Invoice Request'],
+                projectStatuses: ['upcoming', 'in-progress', 'completed', 'cancelled'],
+                paymentStatuses: ['pending', 'processing', 'paid', 'overdue']
+            };
+            
+            console.log('📋 Populated dropdown options:', window.dropdownOptions);
+        }
+
+        // Display payment method summary
+        function displayPaymentMethodSummary() {
+            const paymentMethods = {};
+            let totalUsers = 0;
+            let usersWithPaymentMethod = 0;
+            
+            freelancers.forEach(freelancer => {
+                totalUsers++;
+                if (freelancer.paymentMethod) {
+                    usersWithPaymentMethod++;
+                    paymentMethods[freelancer.paymentMethod] = (paymentMethods[freelancer.paymentMethod] || 0) + 1;
+                }
+            });
+            
+            // Create summary HTML
+            const summaryHTML = `
+                <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                    <h3 style="color: #FFB200; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-credit-card"></i> Payment Method Summary
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #FFB200;">${usersWithPaymentMethod}</div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8);">Users with Payment Method</div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #ff6b6b;">${totalUsers - usersWithPaymentMethod}</div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8);">Users Pending Selection</div>
+                        </div>
+                    </div>
+                    ${Object.keys(paymentMethods).length > 0 ? `
+                        <div style="margin-top: 1rem;">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Payment Method Breakdown:</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                ${Object.entries(paymentMethods).map(([method, count]) => `
+                                    <span style="background: rgba(255,178,0,0.3); color: #FFB200; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">
+                                        ${method.toUpperCase()}: ${count}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            // Insert summary at the top of the freelancers list
+            const container = document.getElementById('contractsList');
+            if (container && container.children.length > 0) {
+                container.insertAdjacentHTML('afterbegin', summaryHTML);
+            }
+        }
 
         // Display freelancers
         function displayFreelancers() {
@@ -973,7 +1114,23 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                         <span>🎯 ${freelancer.role}</span>
                         <span>💰 ${freelancer.rate}</span>
                         <span>📍 ${freelancer.location}</span>
-                        ${freelancer.paymentMethod ? `<span style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">💳 ${freelancer.paymentMethod.toUpperCase()}</span>` : ''}
+                    </div>
+                    
+                    <!-- Payment Method Section -->
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="color: #FFB200;">💳 Payment Method</strong>
+                            ${freelancer.paymentMethod ? 
+                                `<span style="background: rgba(255,178,0,0.3); color: #FFB200; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">${freelancer.paymentMethod.toUpperCase()}</span>` : 
+                                `<span style="background: rgba(255,0,0,0.2); color: #ff6b6b; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">NOT SET</span>`
+                            }
+                        </div>
+                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8);">
+                            ${freelancer.paymentMethod ? 
+                                `User has selected <strong>${freelancer.paymentMethod.toUpperCase()}</strong> as their preferred payment method.` : 
+                                `User has not yet selected a payment method. They can do this in their portal.`
+                            }
+                        </div>
                     </div>
                     
                     <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
@@ -3067,19 +3224,55 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     </div>
                     <div class="form-group">
                         <label for="freelancerRole">Role *</label>
-                        <input type="text" id="freelancerRole" name="role" placeholder="e.g., Videographer, Photographer, Editor" required>
+                        <select id="freelancerRole" name="role" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                            <option value="">Select a role...</option>
+                            <option value="Backdrop Photographer">Backdrop Photographer</option>
+                            <option value="Editor">Editor</option>
+                            <option value="Videographer">Videographer</option>
+                            <option value="Photographer">Photographer</option>
+                            <option value="Full Stack Designer">Full Stack Designer</option>
+                            <option value="Video Editor">Video Editor</option>
+                            <option value="Corporate Videographer">Corporate Videographer</option>
+                        </select>
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            💡 Based on existing roles in your system
+                        </small>
                     </div>
                     <div class="form-group">
                         <label for="freelancerLocation">Project Location</label>
-                        <input type="text" id="freelancerLocation" name="location" placeholder="e.g., 6695 Church Street, Douglasville, GA 30134" value="Atlanta Area">
+                        <select id="freelancerLocation" name="location" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                            <option value="">Select a location...</option>
+                            <option value="6695 Church Street, Douglasville, GA 30134">6695 Church Street, Douglasville, GA 30134</option>
+                            <option value="Sandy Springs, GA">Sandy Springs, GA</option>
+                            <option value="Douglasville, GA">Douglasville, GA</option>
+                            <option value="Atlanta, GA">Atlanta, GA</option>
+                            <option value="Atlanta Area">Atlanta Area</option>
+                        </select>
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            📍 Based on existing locations in your system
+                        </small>
                     </div>
                     <div class="form-group">
                         <label for="projectStart">Project Start Date & Time</label>
-                        <input type="text" id="projectStart" name="projectStart" placeholder="e.g., November 8, 2025 at 3:15 PM" value="TBD">
+                        <input type="text" id="projectStart" name="projectStart" placeholder="e.g., November 8, 2025 at 3:15 PM" value="TBD" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            📅 Keep as text input for flexibility with specific dates
+                        </small>
                     </div>
                     <div class="form-group">
                         <label for="freelancerRate">Rate *</label>
-                        <input type="text" id="freelancerRate" name="rate" placeholder="e.g., $400.00 USD (Flat) or $25/hour" required>
+                        <select id="freelancerRate" name="rate" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                            <option value="">Select a rate...</option>
+                            <option value="$400.00 USD (Flat)">$400.00 USD (Flat)</option>
+                            <option value="$900.00 USD (Flat)">$900.00 USD (Flat)</option>
+                            <option value="$300 + Tip">$300 + Tip</option>
+                            <option value="$450.00 USD (Flat)">$450.00 USD (Flat)</option>
+                            <option value="$750.00 USD (Flat)">$750.00 USD (Flat)</option>
+                            <option value="$500.00 USD (Flat)">$500.00 USD (Flat)</option>
+                        </select>
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            💰 Based on existing rates in your system
+                        </small>
                     </div>
                     <div class="form-group">
                         <label for="approvedDate">Approved Date</label>
@@ -3133,11 +3326,27 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                             </div>
                             <div class="form-group">
                                 <label for="jobRole">Role</label>
-                                <input type="text" id="jobRole" placeholder="e.g., Video Editor">
+                                <select id="jobRole" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                                    <option value="">Select a role...</option>
+                                    <option value="Backdrop Photographer">Backdrop Photographer</option>
+                                    <option value="Editor">Editor</option>
+                                    <option value="Videographer">Videographer</option>
+                                    <option value="Photographer">Photographer</option>
+                                    <option value="Full Stack Designer">Full Stack Designer</option>
+                                    <option value="Video Editor">Video Editor</option>
+                                    <option value="Corporate Videographer">Corporate Videographer</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="assignmentJobLocation">Location</label>
-                                <input type="text" id="assignmentJobLocation" placeholder="e.g., Atlanta, GA">
+                                <select id="assignmentJobLocation" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                                    <option value="">Select a location...</option>
+                                    <option value="6695 Church Street, Douglasville, GA 30134">6695 Church Street, Douglasville, GA 30134</option>
+                                    <option value="Sandy Springs, GA">Sandy Springs, GA</option>
+                                    <option value="Douglasville, GA">Douglasville, GA</option>
+                                    <option value="Atlanta, GA">Atlanta, GA</option>
+                                    <option value="Atlanta Area">Atlanta Area</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="assignmentJobProjectStart">Project Start</label>
@@ -3269,9 +3478,14 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 <div id="contractDetailsForm" style="display: none; margin-top: 2rem;">
                     <h3 style="color: #FFB200; margin-bottom: 1rem;">📋 Contract Details</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                        <div class="form-group">
-                            <label for="uploadFreelancerName">Freelancer Name</label>
-                            <input type="text" id="uploadFreelancerName" placeholder="Enter freelancer's full name">
+                                            <div class="form-group">
+                        <label for="uploadFreelancerName">Freelancer Name</label>
+                        <select id="uploadFreelancerName" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                            <option value="">Select a freelancer...</option>
+                        </select>
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            👥 Populated from existing freelancers in your system
+                        </small>
                     </div>
                         <div class="form-group">
                             <label for="uploadFreelancerEmail">Email</label>
