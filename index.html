@@ -697,118 +697,145 @@
       color: var(--white);
     }
     
-    /* Global Strategic Action Buttons */
+    /* Global Strategic Action Buttons - Dark Theme */
     .global-strategic-actions {
-      max-width: 1000px;
-      margin: 1.5rem auto 2rem auto;
-      padding: 1.5rem;
-      background: linear-gradient(135deg, rgba(0, 0, 0, 0.25), rgba(26, 26, 26, 0.25));
-      border-radius: 16px;
-      border: 1px solid rgba(255, 178, 0, 0.2);
-      backdrop-filter: blur(15px);
+      max-width: 1200px;
+      margin: 2rem auto 3rem auto;
+      padding: 2rem;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(26, 26, 26, 0.8));
+      border-radius: 20px;
+      border: 1px solid rgba(255, 178, 0, 0.3);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
     
     .strategic-header {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
     }
     
     .strategic-header h3 {
       color: #FFB200;
       font-family: 'Cinzel', serif;
-      font-size: 1.4rem;
+      font-size: 1.8rem;
       margin-bottom: 0.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
+      text-shadow: 0 2px 10px rgba(255,178,0,0.3);
     }
     
     .strategic-header p {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1rem;
       margin: 0;
     }
     
     .strategic-buttons {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1rem;
-      max-width: 750px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 900px;
       margin: 0 auto;
     }
     
     .btn-strategic {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 1rem;
-      border-radius: 12px;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-radius: 15px;
       text-decoration: none;
-      transition: all 0.3s ease;
-      border: 1px solid transparent;
-      min-height: 60px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid transparent;
+      min-height: 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-strategic::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .btn-strategic:hover::before {
+      opacity: 1;
     }
     
     .btn-strategic .btn-icon {
-      font-size: 1.5rem;
-      min-width: 40px;
+      font-size: 2rem;
+      min-width: 50px;
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      z-index: 2;
     }
     
     .btn-strategic .btn-content {
       flex: 1;
       text-align: left;
+      position: relative;
+      z-index: 2;
     }
     
     .btn-strategic .btn-title {
-      font-size: 1rem;
+      font-size: 1.2rem;
       font-weight: 600;
-      margin-bottom: 0.2rem;
+      margin-bottom: 0.25rem;
       font-family: 'Cinzel', serif;
     }
     
     .btn-strategic .btn-desc {
-      font-size: 0.8rem;
-      opacity: 0.85;
+      font-size: 0.9rem;
+      opacity: 0.9;
     }
     
     .btn-contract {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.8), rgba(22, 163, 74, 0.8));
+      background: linear-gradient(135deg, #22c55e, #16a34a);
       color: white;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
     }
     
     .btn-contract:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.25);
-      border-color: rgba(34, 197, 94, 0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+      border-color: rgba(34, 197, 94, 0.5);
     }
     
     .btn-portal {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8));
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
       color: white;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
     }
     
     .btn-portal:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
-      border-color: rgba(59, 130, 246, 0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+      border-color: rgba(59, 130, 246, 0.5);
     }
     
     .btn-help {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.8), rgba(217, 119, 6, 0.8));
+      background: linear-gradient(135deg, #f59e0b, #d97706);
       color: white;
       border: none;
       cursor: pointer;
       font-family: inherit;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
     }
     
     .btn-help:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
-      border-color: rgba(245, 158, 11, 0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+      border-color: rgba(245, 158, 11, 0.5);
     }
     
     /* Help Modal */
@@ -965,6 +992,7 @@
       .global-strategic-actions {
         margin: 1.5rem 1rem 2rem 1rem;
         padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(26, 26, 26, 0.9));
       }
       
       .strategic-header h3 {
@@ -974,6 +1002,7 @@
       .strategic-buttons {
         grid-template-columns: 1fr;
         gap: 1rem;
+        max-width: 100%;
       }
       
       .btn-strategic {
