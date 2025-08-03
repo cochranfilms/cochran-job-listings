@@ -672,13 +672,13 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         async function loadJobs() {
             console.log('🔄 Loading jobs...');
             
-            // First try to load from jobs-data.json
+            // First try to load from jobs API
             try {
-                const response = await fetch('jobs-data.json');
+                const response = await fetch('/api/jobs-data');
                 if (response.ok) {
                     const data = await response.json();
                     jobs = data.jobs || [];
-                    console.log('📖 Loaded', jobs.length, 'jobs from jobs-data.json');
+                    console.log('📖 Loaded', jobs.length, 'jobs from API');
                 } else {
                     // Fallback to localStorage
                     jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
@@ -855,10 +855,9 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         async function loadFreelancers() {
             console.log('🔄 Loading freelancers...');
             
-            // First, try to load from freelancers.json (GitHub source) with cache busting
+            // First, try to load from freelancers API
             try {
-                const timestamp = new Date().getTime();
-                const response = await fetch(`freelancers.json?t=${timestamp}`);
+                const response = await fetch('/api/freelancers');
                 if (response.ok) {
                     const jsonData = await response.json();
                     const approvedFreelancers = jsonData.approvedFreelancers || {};
@@ -881,7 +880,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                         primaryJob: data.primaryJob || null
                     }));
                     
-                    console.log('📖 Loaded', freelancers.length, 'freelancers from freelancers.json (GitHub)');
+                    console.log('📖 Loaded', freelancers.length, 'freelancers from API');
                     
                     // Update localStorage to sync with GitHub data
                     localStorage.setItem('freelancers', JSON.stringify(freelancers));

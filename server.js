@@ -151,34 +151,7 @@ app.get('/api/github/info', (req, res) => {
     });
 });
 
-// Serve JSON files directly from server (BEFORE other routes)
-app.get('/jobs-data.json', (req, res) => {
-    console.log('📄 Serving jobs-data.json');
-    try {
-        res.sendFile(path.join(__dirname, 'jobs-data.json'));
-    } catch (error) {
-        console.error('❌ Error serving jobs-data.json:', error);
-        res.status(500).json({ error: 'Failed to load jobs data' });
-    }
-});
-
-app.get('/freelancers.json', (req, res) => {
-    console.log('📄 Serving freelancers.json');
-    try {
-        res.sendFile(path.join(__dirname, 'freelancers.json'));
-    } catch (error) {
-        console.error('❌ Error serving freelancers.json:', error);
-        res.status(500).json({ error: 'Failed to load freelancers data' });
-    }
-});
-
-app.get('/uploaded-contracts.json', (req, res) => {
-    res.sendFile(path.join(__dirname, 'uploaded-contracts.json'));
-});
-
-app.get('/project-status.json', (req, res) => {
-    res.sendFile(path.join(__dirname, 'project-status.json'));
-});
+// Old JSON file routes removed - now using /api/ routes
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -186,8 +159,51 @@ app.get('/api/health', (req, res) => {
         status: 'ok', 
         timestamp: new Date().toISOString(),
         githubConfigured: !!GITHUB_CONFIG.token,
-        deployment: 'v2.0.2' // Force new deployment
+        deployment: 'v2.0.3' // Force new deployment
     });
+});
+
+// JSON Data API Routes (replacing direct file serving)
+app.get('/api/jobs-data', (req, res) => {
+    try {
+        const jobs = require('./jobs-data.json');
+        console.log('✅ Serving jobs data via API:', jobs.jobs.length, 'jobs');
+        res.json(jobs);
+    } catch (error) {
+        console.error('❌ Error loading jobs-data.json:', error);
+        res.status(500).json({ error: 'Failed to load jobs data' });
+    }
+});
+
+app.get('/api/freelancers', (req, res) => {
+    try {
+        const freelancers = require('./freelancers.json');
+        console.log('✅ Serving freelancers data via API');
+        res.json(freelancers);
+    } catch (error) {
+        console.error('❌ Error loading freelancers.json:', error);
+        res.status(500).json({ error: 'Failed to load freelancers data' });
+    }
+});
+
+app.get('/api/uploaded-contracts', (req, res) => {
+    try {
+        const contracts = require('./uploaded-contracts.json');
+        res.json(contracts);
+    } catch (error) {
+        console.error('❌ Error loading uploaded-contracts.json:', error);
+        res.status(500).json({ error: 'Failed to load contracts data' });
+    }
+});
+
+app.get('/api/project-status', (req, res) => {
+    try {
+        const status = require('./project-status.json');
+        res.json(status);
+    } catch (error) {
+        console.error('❌ Error loading project-status.json:', error);
+        res.status(500).json({ error: 'Failed to load project status data' });
+    }
 });
 
 // JSON routes moved above

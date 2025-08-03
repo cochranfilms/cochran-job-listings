@@ -25,10 +25,9 @@
         // Load freelancer data from JSON file
         async function loadFreelancerData() {
             try {
-                // First, try to load directly from freelancers.json file (prevent caching)
+                // First, try to load directly from freelancers API
                 try {
-                    const timestamp = new Date().getTime();
-                    const response = await fetch(`freelancers.json?t=${timestamp}`);
+                    const response = await fetch('/api/freelancers');
                     if (response.ok) {
                         const jsonData = await response.json();
                         if (jsonData.approvedFreelancers) {
@@ -325,7 +324,7 @@
         // Load jobs data from JSON file
         async function loadJobsData() {
             try {
-                const response = await fetch('jobs-data.json');
+                                        const response = await fetch('/api/jobs-data');
                 if (response.ok) {
                     const jsonData = await response.json();
                     jobsData = jsonData.jobs || [];

@@ -987,7 +987,7 @@
         // Load freelancer data from JSON file
         async function loadFreelancerData() {
             try {
-                const response = await fetch('freelancers.json');
+                const response = await fetch('/api/freelancers');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -1184,7 +1184,7 @@
             // First, load the latest freelancer data from JSON file (prevent caching)
             try {
                 const timestamp = new Date().getTime();
-                const response = await fetch(`freelancers.json?t=${timestamp}`);
+                const response = await fetch('/api/freelancers');
                 if (response.ok) {
                     const jsonData = await response.json();
                     if (jsonData.approvedFreelancers) {
@@ -1797,7 +1797,7 @@
                 
                 while (retryCount < maxRetries) {
                     try {
-                        response = await fetch(`freelancers.json?t=${Date.now()}`);
+                        response = await fetch('/api/freelancers');
                         if (response.ok) break;
                         retryCount++;
                         if (retryCount < maxRetries) {
