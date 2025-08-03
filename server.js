@@ -143,6 +143,10 @@ app.get('/api/health', (req, res) => {
 
 // Serve the main HTML files
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/contract', (req, res) => {
     res.sendFile(path.join(__dirname, 'contract.html'));
 });
 
