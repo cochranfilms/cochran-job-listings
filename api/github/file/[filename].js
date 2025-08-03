@@ -1,5 +1,18 @@
 module.exports = async (req, res) => {
-    const { filename } = req.query;
+    // Handle nested paths by decoding and getting the full filename
+    let filename = req.query.filename;
+    
+    // If filename is encoded, decode it
+    if (filename && filename.includes('%')) {
+        filename = decodeURIComponent(filename);
+    }
+    
+    // Handle case where Vercel might split the path
+    if (req.query['0']) {
+        // Reconstruct the full path if it was split
+        filename = [filename, ...Object.values(req.query).slice(1)].join('/');
+    }
+    
     console.log(`📄 GitHub file endpoint hit: ${req.method} /api/github/file/${filename}`);
     
     // Set CORS headers

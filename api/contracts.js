@@ -1,0 +1,107 @@
+module.exports = async (req, res) => {
+    console.log(`📄 Contracts API endpoint hit: ${req.method}`);
+    
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
+    // GitHub configuration from environment variables
+    const GITHUB_CONFIG = {
+        token: process.env.GITHUB_TOKEN,
+        owner: process.env.GITHUB_OWNER || 'cochranfilms',
+        repo: process.env.GITHUB_REPO || 'cochran-job-listings',
+        branch: process.env.GITHUB_BRANCH || 'main'
+    };
+
+    if (!GITHUB_CONFIG.token) {
+        console.error('❌ GITHUB_TOKEN environment variable not set');
+        return res.status(500).json({ error: 'GitHub token not configured' });
+    }
+
+    if (req.method === 'POST') {
+        try {
+            const { contractId, pdfContent, freelancerName } = req.body;
+            
+            if (!contractId || !pdfContent) {
+                return res.status(400).json({ error: 'contractId and pdfContent are required' });
+            }
+
+            const filename = `contracts/${contractId}.pdf`;
+            const commitMessage = `Add signed contract: ${contractId}${freelancerName ? ` - ${freelancerName}` : ''}`;
+            
+            console.log(`📤 Uploading contract PDF: ${filename}`);
+            
+            // Check if file already exists
+            let existingSha = null;
+            try {
+                const getResponse = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}?ref=${GITHUB_CONFIG.branch}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'Cochran-Films-Contract-System'
+                    }
+                });
+                
+                if (getResponse.ok) {
+                    const existingFile = await getResponse.json();
+                    existingSha = existingFile.sha;
+                    console.log(`📄 Found existing file, SHA: ${existingSha.substring(0, 7)}`);
+                }
+            } catch (getError) {
+                console.log(`📄 File doesn't exist yet, creating new: ${filename}`);
+            }
+
+            const requestBody = {
+                message: commitMessage,
+                content: pdfContent, // Should already be base64
+                branch: GITHUB_CONFIG.branch
+            };
+            
+            // Include SHA if file exists
+            if (existingSha) {
+                requestBody.sha = existingSha;
+            }
+
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Cochran-Films-Contract-System'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log(`✅ Contract PDF uploaded successfully: ${result.commit.sha.substring(0, 7)}`);
+                
+                res.json({
+                    success: true,
+                    contractId: contractId,
+                    filename: filename,
+                    downloadUrl: result.content.download_url,
+                    sha: result.commit.sha,
+                    commit: result.commit
+                });
+            } else {
+                const error = await response.json();
+                console.error(`❌ GitHub API error:`, error);
+                res.status(response.status).json({ error: error.message || 'GitHub API error' });
+            }
+
+        } catch (error) {
+            console.error(`❌ Error uploading contract:`, error);
+            res.status(500).json({ error: 'Failed to upload contract to GitHub', details: error.message });
+        }
+    } else {
+        res.status(405).json({ error: 'Method not allowed' });
+    }
+};
