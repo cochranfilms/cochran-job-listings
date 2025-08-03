@@ -1,7 +1,6 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/server.js" },
     { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
     { "source": "/user-portal", "destination": "/user-portal.html" },
     { "source": "/contract", "destination": "/contract.html" },
