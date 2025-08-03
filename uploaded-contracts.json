@@ -1,6 +1,6 @@
 {
-  "exportDate": "2025-08-03T03:49:57.278Z",
-  "totalContracts": 4,
+  "exportDate": "2025-08-03T20:31:22.005Z",
+  "totalContracts": 5,
   "contracts": [
     {
       "contractId": "CF-UPLOAD-1754184793435-QBJ5D",
@@ -64,6 +64,22 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-02",
       "signedDate": "2025-08-02"
+    },
+    {
+      "contractId": "CF-1754253069791-LOXIP",
+      "freelancerName": "Test User",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Editor",
+      "rate": "$750.00 USD (Flat)",
+      "location": "Douglasville, GA",
+      "fileName": "CF-1754253069791-LOXIP.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-03T20:31:22.005Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754253069791-LOXIP.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-03",
+      "signedDate": "2025-08-03"
     }
   ]
 }
