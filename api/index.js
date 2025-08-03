@@ -70,7 +70,7 @@ async function githubAPI(endpoint, method = 'GET', body = null) {
 // Routes
 
 // Get file contents
-app.get('/api/github/file/:filename', async (req, res) => {
+app.get('/github/file/:filename', async (req, res) => {
     try {
         const { filename } = req.params;
         const data = await githubAPI(`/contents/${filename}`);
@@ -142,7 +142,7 @@ app.post('/api/github/upload/:filename', async (req, res) => {
 });
 
 // Get repository info
-app.get('/api/github/info', (req, res) => {
+app.get('/github/info', (req, res) => {
     res.json({
         owner: GITHUB_CONFIG.owner,
         repo: GITHUB_CONFIG.repo,
@@ -154,12 +154,12 @@ app.get('/api/github/info', (req, res) => {
 // Old JSON file routes removed - now using /api/ routes
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
         githubConfigured: !!GITHUB_CONFIG.token,
-        deployment: 'v4.0.0-API-ROUTES' // Force deployment NOW
+        deployment: 'v4.1.0-VERCEL-FUNCTIONS' // Force deployment NOW
     });
 });
 
@@ -167,31 +167,31 @@ app.get('/api/health', (req, res) => {
 console.log('🔧 Registering additional API routes...');
 
 // JSON Data API Routes (replacing direct file serving) - TESTING
-app.get('/api/test', (req, res) => {
+app.get('/test', (req, res) => {
     console.log('📄 /api/test endpoint hit');
     res.json({ message: 'API routes are working!', timestamp: new Date().toISOString() });
 });
 
 console.log('🔧 Test route registered');
 
-app.get('/api/jobs-data', (req, res) => {
+app.get('/jobs-data', (req, res) => {
     console.log('📄 /api/jobs-data endpoint hit');
     try {
-        const jobsPath = path.join(__dirname, 'jobs-data.json');
+        const jobsPath = path.join(__dirname, '..', 'jobs-data.json');
         console.log('📁 Looking for jobs file at:', jobsPath);
         const jobsData = JSON.parse(fs.readFileSync(jobsPath, 'utf8'));
         console.log('✅ Serving jobs data via API:', jobsData.jobs?.length || 0, 'jobs');
         res.json(jobsData);
     } catch (error) {
         console.error('❌ Error loading jobs-data.json:', error);
-        res.status(500).json({ error: 'Failed to load jobs data', details: error.message, path: path.join(__dirname, 'jobs-data.json') });
+        res.status(500).json({ error: 'Failed to load jobs data', details: error.message, path: path.join(__dirname, '..', 'jobs-data.json') });
     }
 });
 
-app.get('/api/freelancers', (req, res) => {
+app.get('/freelancers', (req, res) => {
     console.log('📄 /api/freelancers endpoint hit');
     try {
-        const freelancersPath = path.join(__dirname, 'freelancers.json');
+        const freelancersPath = path.join(__dirname, '..', 'freelancers.json');
         const freelancersData = JSON.parse(fs.readFileSync(freelancersPath, 'utf8'));
         console.log('✅ Serving freelancers data via API');
         res.json(freelancersData);
@@ -201,10 +201,10 @@ app.get('/api/freelancers', (req, res) => {
     }
 });
 
-app.get('/api/uploaded-contracts', (req, res) => {
+app.get('/uploaded-contracts', (req, res) => {
     console.log('📄 /api/uploaded-contracts endpoint hit');
     try {
-        const contractsPath = path.join(__dirname, 'uploaded-contracts.json');
+        const contractsPath = path.join(__dirname, '..', 'uploaded-contracts.json');
         console.log('📁 Looking for contracts file at:', contractsPath);
         const contractsData = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
         console.log('✅ Serving contracts data via API:', contractsData.contracts?.length || 0, 'contracts');
@@ -215,10 +215,10 @@ app.get('/api/uploaded-contracts', (req, res) => {
     }
 });
 
-app.get('/api/project-status', (req, res) => {
+app.get('/project-status', (req, res) => {
     console.log('📄 /api/project-status endpoint hit');
     try {
-        const statusPath = path.join(__dirname, 'project-status.json');
+        const statusPath = path.join(__dirname, '..', 'project-status.json');
         console.log('📁 Looking for status file at:', statusPath);
         const statusData = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
         console.log('✅ Serving project status data via API');
