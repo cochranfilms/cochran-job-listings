@@ -160,21 +160,27 @@ app.get('/api/health', (req, res) => {
         status: 'ok', 
         timestamp: new Date().toISOString(),
         githubConfigured: !!GITHUB_CONFIG.token,
-        deployment: 'v2.1.0' // Force new deployment
+        deployment: 'v2.1.1' // Force new deployment
     });
 });
 
-// JSON Data API Routes (replacing direct file serving)
+// JSON Data API Routes (replacing direct file serving) - TESTING
+app.get('/api/test', (req, res) => {
+    console.log('📄 /api/test endpoint hit');
+    res.json({ message: 'API routes are working!', timestamp: new Date().toISOString() });
+});
+
 app.get('/api/jobs-data', (req, res) => {
     console.log('📄 /api/jobs-data endpoint hit');
     try {
         const jobsPath = path.join(__dirname, 'jobs-data.json');
+        console.log('📁 Looking for jobs file at:', jobsPath);
         const jobsData = JSON.parse(fs.readFileSync(jobsPath, 'utf8'));
         console.log('✅ Serving jobs data via API:', jobsData.jobs?.length || 0, 'jobs');
         res.json(jobsData);
     } catch (error) {
         console.error('❌ Error loading jobs-data.json:', error);
-        res.status(500).json({ error: 'Failed to load jobs data', details: error.message });
+        res.status(500).json({ error: 'Failed to load jobs data', details: error.message, path: path.join(__dirname, 'jobs-data.json') });
     }
 });
 
