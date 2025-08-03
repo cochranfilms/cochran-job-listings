@@ -1,5 +1,13 @@
 {
   "version": 2,
+  "functions": {
+    "api/github/file/[filename].js": {
+      "maxDuration": 30
+    },
+    "api/github/info.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
     { "source": "/user-portal", "destination": "/user-portal.html" },
