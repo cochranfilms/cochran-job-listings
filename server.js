@@ -23,11 +23,10 @@ const GITHUB_CONFIG = {
     branch: process.env.GITHUB_BRANCH || 'main'
 };
 
-// Validate GitHub token is set
+// Validate GitHub token is set (but don't crash the server)
 if (!GITHUB_CONFIG.token) {
-    console.error('❌ GITHUB_TOKEN environment variable is required!');
-    console.error('Please set the GITHUB_TOKEN environment variable in your Vercel dashboard');
-    process.exit(1);
+    console.error('⚠️  GITHUB_TOKEN environment variable not set - GitHub features will be disabled');
+    console.error('Please set the GITHUB_TOKEN environment variable in your Vercel dashboard for full functionality');
 }
 
 console.log('✅ GitHub configuration loaded:');

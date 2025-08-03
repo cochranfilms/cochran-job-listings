@@ -1,14 +1,14 @@
 {
   "version": 2,
   "functions": {
-    "server.js": {
-      "runtime": "@vercel/node@3"
-    }
+    "server.js": { "runtime": "@vercel/node@3" }
   },
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/server.js"
-    }
+    { "source": "/api/(.*)", "destination": "/server.js" },
+    { "source": "/admin-dashboard", "destination": "/server.js" },
+    { "source": "/user-portal", "destination": "/server.js" },
+    { "source": "/contract", "destination": "/server.js" },
+    { "source": "/admin", "destination": "/server.js" },
+    { "source": "/", "destination": "/server.js" }
   ]
 }
