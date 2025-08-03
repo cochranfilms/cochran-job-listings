@@ -896,7 +896,8 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                         contractUploadedDate: data.contractUploadedDate || null,
                         contractId: data.contractId || null,
                         jobs: data.jobs || [],
-                        primaryJob: data.primaryJob || null
+                        primaryJob: data.primaryJob || null,
+                        paymentMethod: data.paymentMethod || null
                     }));
                     
                     console.log('📖 Loaded', freelancers.length, 'freelancers from API');
