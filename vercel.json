@@ -2,10 +2,10 @@
   "version": 2,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/server.js" },
-    { "source": "/admin-dashboard", "destination": "/server.js" },
-    { "source": "/user-portal", "destination": "/server.js" },
-    { "source": "/contract", "destination": "/server.js" },
-    { "source": "/admin", "destination": "/server.js" },
-    { "source": "/", "destination": "/server.js" }
+    { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
+    { "source": "/user-portal", "destination": "/user-portal.html" },
+    { "source": "/contract", "destination": "/contract.html" },
+    { "source": "/admin", "destination": "/admin-dashboard.html" },
+    { "source": "/", "destination": "/index.html" }
   ]
 }
