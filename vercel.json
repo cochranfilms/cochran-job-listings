@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "server.js": {}
-  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/server.js" },
     { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
