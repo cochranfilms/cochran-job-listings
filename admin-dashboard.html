@@ -674,7 +674,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             
             // First try to load from jobs API
             try {
-                const response = await fetch('https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/jobs-data.json');
+                const response = await fetch('/api/jobs-data');
                 if (response.ok) {
                     const data = await response.json();
                     jobs = data.jobs || [];
@@ -857,7 +857,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             
             // First, try to load from freelancers API
             try {
-                const response = await fetch('https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/freelancers.json');
+                const response = await fetch('/api/freelancers');
                 if (response.ok) {
                     const jsonData = await response.json();
                     const approvedFreelancers = jsonData.approvedFreelancers || {};

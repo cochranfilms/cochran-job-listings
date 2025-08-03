@@ -159,7 +159,7 @@ app.get('/api/health', (req, res) => {
         status: 'ok', 
         timestamp: new Date().toISOString(),
         githubConfigured: !!GITHUB_CONFIG.token,
-        deployment: 'v3.0.1-FORCE' // Force deployment NOW
+        deployment: 'v4.0.0-API-ROUTES' // Force deployment NOW
     });
 });
 
@@ -202,22 +202,30 @@ app.get('/api/freelancers', (req, res) => {
 });
 
 app.get('/api/uploaded-contracts', (req, res) => {
+    console.log('📄 /api/uploaded-contracts endpoint hit');
     try {
-        const contracts = require('./uploaded-contracts.json');
-        res.json(contracts);
+        const contractsPath = path.join(__dirname, 'uploaded-contracts.json');
+        console.log('📁 Looking for contracts file at:', contractsPath);
+        const contractsData = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
+        console.log('✅ Serving contracts data via API:', contractsData.contracts?.length || 0, 'contracts');
+        res.json(contractsData);
     } catch (error) {
         console.error('❌ Error loading uploaded-contracts.json:', error);
-        res.status(500).json({ error: 'Failed to load contracts data' });
+        res.status(500).json({ error: 'Failed to load contracts data', details: error.message });
     }
 });
 
 app.get('/api/project-status', (req, res) => {
+    console.log('📄 /api/project-status endpoint hit');
     try {
-        const status = require('./project-status.json');
-        res.json(status);
+        const statusPath = path.join(__dirname, 'project-status.json');
+        console.log('📁 Looking for status file at:', statusPath);
+        const statusData = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
+        console.log('✅ Serving project status data via API');
+        res.json(statusData);
     } catch (error) {
         console.error('❌ Error loading project-status.json:', error);
-        res.status(500).json({ error: 'Failed to load project status data' });
+        res.status(500).json({ error: 'Failed to load project status data', details: error.message });
     }
 });
 
