@@ -1329,7 +1329,18 @@
                     throw new Error('User not found in freelancers data');
                 }
                 
+                // Get current SHA for freelancers.json
+                const shaResponse = await fetch('/api/github/file/freelancers.json');
+                let sha = null;
+                if (shaResponse.ok) {
+                    const shaData = await shaResponse.json();
+                    sha = shaData.sha;
+                }
+                
                 // Update the freelancers.json file on GitHub
+                console.log('🔄 Updating freelancers.json with payment method:', paymentMethod);
+                console.log('📝 Data being sent:', JSON.stringify(freelancersData, null, 2).substring(0, 200) + '...');
+                
                 const updateResponse = await fetch('/api/github/file/freelancers.json', {
                     method: 'PUT',
                     headers: {
@@ -1337,15 +1348,27 @@
                     },
                     body: JSON.stringify({
                         content: JSON.stringify(freelancersData, null, 2),
-                        message: `Update payment method for ${email} to ${paymentMethod} - ${new Date().toLocaleString()}`
+                        message: `Update payment method for ${email} to ${paymentMethod} - ${new Date().toLocaleString()}`,
+                        sha: sha
                     })
                 });
                 
                 if (!updateResponse.ok) {
-                    throw new Error('Failed to update freelancers.json on GitHub');
+                    const errorText = await updateResponse.text();
+                    console.error('❌ GitHub update failed:', updateResponse.status, errorText);
+                    throw new Error(`Failed to update freelancers.json on GitHub: ${updateResponse.status} - ${errorText}`);
                 }
                 
                 console.log('✅ Payment method updated on GitHub');
+                
+                // Notify admin dashboard if it's open (optional)
+                if (window.opener && window.opener.location.href.includes('admin-dashboard.html')) {
+                    window.opener.postMessage({
+                        type: 'paymentMethodUpdated',
+                        email: email,
+                        paymentMethod: paymentMethod
+                    }, '*');
+                }
                 
             } catch (error) {
                 console.error('❌ Error updating payment method:', error);
