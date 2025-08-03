@@ -41,8 +41,35 @@
         }
       ],
       "primaryJob": "job-cody-cochran-1754251870240"
+    },
+    "Test User": {
+      "email": "codylcochran89@gmail.com",
+      "password": null,
+      "contractUrl": "contract.html",
+      "role": "Editor",
+      "location": "Douglasville, GA",
+      "projectStart": "September 11th, 2025 at 5:00pm",
+      "rate": "$750.00 USD (Flat)",
+      "approvedDate": "2025-08-03",
+      "contractStatus": "pending",
+      "contractSignedDate": null,
+      "contractUploadedDate": null,
+      "contractId": null,
+      "jobs": [
+        {
+          "id": "job-test-user-1754253024544",
+          "role": "Editor",
+          "location": "Douglasville, GA",
+          "projectStart": "September 11th, 2025 at 5:00pm",
+          "rate": "$750.00 USD (Flat)",
+          "status": "upcoming",
+          "projectType": "Editor Project",
+          "description": "Primary assignment for Test User"
+        }
+      ],
+      "primaryJob": "job-test-user-1754253024544"
     }
   },
   "lastUpdated": "2025-08-03",
-  "totalFreelancers": 2
+  "totalFreelancers": 3
 }
