@@ -12,6 +12,14 @@
       "dest": "/server.js"
     },
     {
+      "src": "/(admin|admin-dashboard|user-portal|contract)/?",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/(.*)\\.(js|css|png|jpg|jpeg|gif|ico|svg|json|html|pdf|ttf|woff|woff2)",
+      "dest": "/$1.$2"
+    },
+    {
       "src": "/(.*)",
       "dest": "/server.js"
     }

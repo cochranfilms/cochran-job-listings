@@ -25,7 +25,7 @@ const GITHUB_CONFIG = {
 // Validate GitHub token is set
 if (!GITHUB_CONFIG.token) {
     console.error('❌ GITHUB_TOKEN environment variable is required!');
-    console.error('Set it with: export GITHUB_TOKEN=your_token_here');
+    console.error('Please set the GITHUB_TOKEN environment variable in your Vercel dashboard');
     process.exit(1);
 }
 
@@ -33,7 +33,7 @@ console.log('✅ GitHub configuration loaded:');
 console.log(`   Owner: ${GITHUB_CONFIG.owner}`);
 console.log(`   Repo: ${GITHUB_CONFIG.repo}`);
 console.log(`   Branch: ${GITHUB_CONFIG.branch}`);
-console.log(`   Token: ${GITHUB_CONFIG.token.substring(0, 10)}...${GITHUB_CONFIG.token.substring(GITHUB_CONFIG.token.length - 4)}`);
+console.log(`   Token: configured ✓`);
 
 // GitHub API helper function
 async function githubAPI(endpoint, method = 'GET', body = null) {
@@ -176,6 +176,10 @@ app.get('/admin', (req, res) => {
 
 app.get('/admin-dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
+});
+
+app.get('/user-portal', (req, res) => {
+    res.sendFile(path.join(__dirname, 'user-portal.html'));
 });
 
 // Start server (only for local development)
