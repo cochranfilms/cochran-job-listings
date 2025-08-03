@@ -17,17 +17,17 @@
     },
     "Cody Cochran": {
       "email": "codylcochran89@gmail.com",
-      "password": null,
+      "password": "Testing1234",
       "contractUrl": "contract.html",
       "role": "Backdrop Photographer",
       "location": "Sandy Springs, GA",
       "projectStart": "September 11th, 2025 at 5:00pm",
       "rate": "$450.00 USD (Flat)",
       "approvedDate": "2025-08-03",
-      "contractStatus": "pending",
-      "contractSignedDate": null,
+      "contractStatus": "signed",
+      "contractSignedDate": "8/3/2025, 4:31:09 PM",
       "contractUploadedDate": null,
-      "contractId": null,
+      "contractId": "CF-1754253069791-LOXIP",
       "jobs": [
         {
           "id": "job-cody-cochran-1754251870240",
