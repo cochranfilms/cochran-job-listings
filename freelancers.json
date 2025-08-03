@@ -15,32 +15,32 @@
       "jobs": [],
       "primaryJob": null
     },
-    "Cody Cochran": {
-      "email": "codylcochran89@gmail.com",
-      "password": null,
+    "Erica Cochran": {
+      "email": "dedejackson727@gmail.com",
+      "password": "New1234",
       "contractUrl": "contract.html",
-      "role": "Backdrop Photographer",
+      "role": "Editor",
       "location": "Sandy Springs, GA",
-      "projectStart": "September 11th, 2025 at 5:00pm",
-      "rate": "$450.00 USD (Flat)",
-      "approvedDate": "2025-08-03",
-      "contractStatus": "pending",
-      "contractSignedDate": null,
+      "projectStart": "August 16th, 2025 at 2:00pm",
+      "rate": "$900.00 USD (Flat)",
+      "approvedDate": "2025-08-02",
+      "contractStatus": "signed",
+      "contractSignedDate": "8/3/2025, 4:37:35 PM",
       "contractUploadedDate": null,
-      "contractId": null,
+      "contractId": "CF-1754253455924-4AAVL",
       "jobs": [
         {
-          "id": "job-cody-cochran-1754251870240",
-          "role": "Backdrop Photographer",
+          "id": "job-erica-cochran-1754253392085",
+          "role": "Editor",
           "location": "Sandy Springs, GA",
-          "projectStart": "September 11th, 2025 at 5:00pm",
-          "rate": "$450.00 USD (Flat)",
+          "projectStart": "August 16th, 2025 at 2:00pm",
+          "rate": "$900.00 USD (Flat)",
           "status": "upcoming",
-          "projectType": "Backdrop Photographer Project",
-          "description": "Primary assignment for Cody Cochran"
+          "projectType": "Editor Project",
+          "description": "Primary assignment for Erica Cochran"
         }
       ],
-      "primaryJob": "job-cody-cochran-1754251870240"
+      "primaryJob": "job-erica-cochran-1754253392085"
     }
   },
   "lastUpdated": "2025-08-03",
