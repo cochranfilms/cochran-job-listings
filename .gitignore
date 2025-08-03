@@ -1,0 +1,9 @@
+# GitHub Configuration (contains sensitive tokens)
+config/
+config/github-config.json
+
+# Other sensitive files
+*.env
+.env
+secrets/
+tokens/ 

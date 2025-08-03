@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Sheets Test</title>
+</head>
+<body>
+    <h1>Google Sheets Test</h1>
+    <button onclick="testSheets()">Test Google Sheets Access</button>
+    <div id="result"></div>
+
+    <script>
+        async function testSheets() {
+            const SHEET_ID = '16TQDK8y1iP-ZemI3_YmrZKqrrq69UNe2fpXkB0SyDL4';
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+            
+            document.getElementById('result').innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                if (text.includes('Sorry, unable to open')) {
+                    document.getElementById('result').innerHTML = 
+                        '<p style="color: red;">❌ Sheet is not public. Please make it public and try again.</p>';
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        '<p style="color: green;">✅ Sheet is accessible!</p><pre>' + text.substring(0, 500) + '</pre>';
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    '<p style="color: red;">❌ Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html> 

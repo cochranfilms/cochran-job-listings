@@ -1,0 +1,69 @@
+{
+  "exportDate": "2025-08-03T03:49:57.278Z",
+  "totalContracts": 4,
+  "contracts": [
+    {
+      "contractId": "CF-UPLOAD-1754184793435-QBJ5D",
+      "freelancerName": "Testical Users",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Editor",
+      "rate": "$400 Flat Rate",
+      "location": "Sandy Springs, GA",
+      "contractDate": "2025-08-03",
+      "notes": "Contract ID: CF-1754177258988-5M0PT",
+      "fileName": "Contract_Testical_Users.pdf",
+      "fileSize": 41271,
+      "uploadDate": "2025-08-03T01:33:13.435Z",
+      "uploadTimestamp": "8/2/2025, 9:33:13 PM",
+      "status": "UPLOADED"
+    },
+    {
+      "contractId": "CF-1754190280552-5BWC4",
+      "freelancerName": "Dean Dean",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Editor",
+      "rate": "$900.00 USD (Flat)",
+      "location": "Douglasville, GA",
+      "fileName": "CF-1754190280552-5BWC4.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-03T03:04:42.024Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754190280552-5BWC4.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-02",
+      "signedDate": "2025-08-02"
+    },
+    {
+      "contractId": "CF-1754191120086-NZKDN",
+      "freelancerName": "test sample",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Editor",
+      "rate": "$450.00 USD (Flat)",
+      "location": "Douglasville, GA",
+      "fileName": "CF-1754191120086-NZKDN.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-03T03:18:43.670Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754191120086-NZKDN.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-02",
+      "signedDate": "2025-08-02"
+    },
+    {
+      "contractId": "CF-1754192993575-7F0I9",
+      "freelancerName": "Cody Cochran",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Full Stack Designer",
+      "rate": "$900.00 USD (Flat)",
+      "location": "Douglasville, GA",
+      "fileName": "CF-1754192993575-7F0I9.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-03T03:49:57.278Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754192993575-7F0I9.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-02",
+      "signedDate": "2025-08-02"
+    }
+  ]
+}

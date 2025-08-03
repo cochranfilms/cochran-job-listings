@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Cochran Films</title>
+    
+    <!-- Fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- JSZip for contract file generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #FFB200;
+            --primary-dark: #FF9000;
+            --gold: #FFD700;
+            --black: #000000;
+            --white: #ffffff;
+            --gray-light: #f8f9fa;
+            --gray-medium: #6c757d;
+            --gray-dark: #343a40;
+            --border-radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Login Screen Styles */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,178,0,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .login-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(255,178,0,0.2);
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-logo {
+            width: 140px;
+            height: auto;
+            margin-bottom: 2rem;
+            filter: 
+                drop-shadow(0 0 3px #FFB200)
+                drop-shadow(0 0 6px #FFB200)
+                drop-shadow(2px 2px 0px #000000);
+            animation: logoGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes logoGlow {
+            0% {
+                filter: 
+                    drop-shadow(0 0 3px #FFB200)
+                    drop-shadow(0 0 6px #FFB200)
+                    drop-shadow(2px 2px 0px #000000);
+            }
+            100% {
+                filter: 
+                    drop-shadow(0 0 5px #FFB200)
+                    drop-shadow(0 0 8px #FFB200)
+                    drop-shadow(2px 2px 0px #000000);
+            }
+        }
+        
+        .login-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #FFB200;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .login-subtitle {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .login-form {
+            text-align: left;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #FFB200;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #fff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(15px);
+        }
+        
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.6);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+        
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #FFB200;
+            z-index: -1;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .login-btn:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .login-btn:hover {
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,178,0,0.4);
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Main Admin Interface Styles */
+        .admin-interface {
+            display: none;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            position: relative;
+        }
+        
+        .admin-interface::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,178,0,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin: 2rem;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #FFB200;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.8);
+            font-size: 1.1rem;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: #FFB200;
+        }
+        
+        /* Tab Navigation */
+        .tab-navigation {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem 2rem;
+            margin: 0 2rem;
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            background: rgba(255, 178, 0, 0.1);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            color: #FFB200;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: #FFB200;
+        }
+        
+        .tab-btn.active {
+            background: #FFB200;
+            color: #000;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            margin: 2rem;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Common Form Styles */
+        .form-section {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .form-section h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #FFB200;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .workflow-info {
+            background: rgba(255,178,0,0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,178,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .workflow-info p {
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 1rem;
+        }
+        
+        .workflow-info ol {
+            color: rgba(255,255,255,0.8);
+            padding-left: 1.5rem;
+        }
+        
+        .workflow-info li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #FFB200;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(15px);
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.6);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-right: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #FFB200;
+            z-index: -1;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .btn:hover {
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,178,0,0.4);
+        }
+        
+        /* List Styles */
+        .list-section {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .list-section h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #FFB200;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .item-card {
+            border: 1px solid rgba(255,178,0,0.3);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .item-card:hover {
+            border-color: #FFB200;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,178,0,0.2);
+        }
+        
+        .item-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+        }
+        
+        .item-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+            flex-wrap: wrap;
+        }
+        
+        .item-description {
+            margin: 1rem 0;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .item-url {
+            word-break: break-all;
+            color: #FFB200;
+            font-family: monospace;
+            font-size: 0.8rem;
+            background: rgba(255,178,0,0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+        
+        .actions {
+            margin-top: 1rem;
+        }
+        
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        /* Export Section */
+        .export-section {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .export-section h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #FFB200;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .export-section p {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 1rem;
+        }
+        
+        pre {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: #FFB200;
+            border: 1px solid rgba(255,178,0,0.3);
+            font-size: 0.9rem;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .login-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+            
+            .header, .tab-navigation, .tab-content {
+                margin: 1rem;
+            }
+            
+            .tab-buttons {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                justify-content: center;
+            }
+            
+            .item-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .btn {
+                margin-bottom: 0.5rem;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <img src="Logo.png" alt="Cochran Films" class="login-logo">
+            <h1 class="login-title">⚙️ Admin Dashboard</h1>
+            <p class="login-subtitle">Manage jobs and contracts from one central location</p>
+            
+            <div id="errorMessage" class="error-message">
+                Incorrect password. Please try again.
+            </div>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">🔐 Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Admin Interface -->
+    <div id="adminInterface" class="admin-interface">
+        <div class="header">
+            <a href="#" class="logout-btn" onclick="logout()">🚪 Logout</a>
+            <h1>⚙️ Admin Dashboard</h1>
+            <p>Cochran Films - Central Management System</p>
+            <div style="margin-top: 1rem;">
+                <a href="https://collaborate.cochranfilms.com" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">📋 Job Listings</a>
+                <a href="contract.html" style="color: #FFB200; text-decoration: none; font-weight: 600;">🔐 Contract Access</a>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('jobs')">
+                    <span>📋</span> Job Listings
+                </button>
+                <button class="tab-btn" onclick="switchTab('contracts')">
+                    <span>🔐</span> Contract Management
+                </button>
+            </div>
+        </div>
+
+        <!-- Jobs Tab -->
+        <div id="jobs-tab" class="tab-content active">
+            <div class="form-section">
+                <h2>📋 How Job Management Works</h2>
+                <div class="workflow-info">
+                    <p><strong>Workflow:</strong></p>
+                    <ol>
+                        <li><strong>Add/Edit Jobs</strong> → Use this admin panel to create job listings</li>
+                        <li><strong>Export JSON</strong> → Download the updated jobs-data.json file</li>
+                        <li><strong>Update Website</strong> → Replace the jobs-data.json file on your server</li>
+                        <li><strong>Google Sheet</strong> → Handles all applicant submissions automatically</li>
+                    </ol>
+                    <p><strong>Note:</strong> The Google Sheet handles applicant data separately - this admin panel only manages job listings.</p>
+                </div>
+                
+                <h2>Add/Edit Job</h2>
+                <form id="jobForm">
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title *</label>
+                        <input type="text" id="jobTitle" name="title" placeholder="Enter job title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobDate">Event Date</label>
+                        <input type="date" id="jobDate" name="date">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobLocation">Location</label>
+                        <input type="text" id="jobLocation" name="location" value="Atlanta Area">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobPay">Pay Rate</label>
+                        <input type="text" id="jobPay" name="pay" placeholder="$150/day">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobDescription">Description</label>
+                        <textarea id="jobDescription" name="description" placeholder="Describe the role, requirements, and responsibilities..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobStatus">Status</label>
+                        <select id="jobStatus" name="status">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Save Job</button>
+                    <button type="button" class="btn" onclick="clearJobForm()">Clear Form</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h2>Current Jobs</h2>
+                <div id="jobsList"></div>
+            </div>
+
+            <div class="export-section">
+                <h2>Export Job Data</h2>
+                <p>Export your job listings to update <code>jobs-data.json</code>:</p>
+                <button class="btn" onclick="exportJobData()">Generate JSON</button>
+                <button class="btn" onclick="downloadJobJSON()" id="downloadJobBtn" style="display: none;">Download jobs-data.json</button>
+                <pre id="exportJobData"></pre>
+            </div>
+        </div>
+
+        <!-- Contracts Tab -->
+        <div id="contracts-tab" class="tab-content">
+            <div class="form-section">
+                <h2>🔐 How Contract Management Works</h2>
+                <div class="workflow-info">
+                    <p><strong>Workflow:</strong></p>
+                    <ol>
+                        <li><strong>Add/Edit Freelancers</strong> → Use this admin panel to manage freelancer access</li>
+                        <li><strong>Export JSON</strong> → Download the updated freelancers.json file</li>
+                        <li><strong>Update Website</strong> → Replace the freelancers.json file on your server</li>
+                        <li><strong>Contract Access</strong> → Freelancers can now access their contracts</li>
+                    </ol>
+                    <p><strong>Note:</strong> Each freelancer needs a unique name and email combination for secure access.</p>
+                </div>
+                
+                <h2>Add/Edit Freelancer</h2>
+                <form id="contractForm">
+                    <div class="form-group">
+                        <label for="freelancerName">Full Name *</label>
+                        <input type="text" id="freelancerName" name="name" placeholder="Enter freelancer's full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="freelancerEmail">Email Address *</label>
+                        <input type="email" id="freelancerEmail" name="email" placeholder="Enter freelancer's email address" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contractUrl">Contract URL *</label>
+                        <input type="url" id="contractUrl" name="contractUrl" placeholder="https://yourdomain.com/contracts/freelancer-name.html" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="freelancerRole">Role (Optional)</label>
+                        <input type="text" id="freelancerRole" name="role" placeholder="e.g., Videographer, Photographer, Editor">
+                    </div>
+                    <div class="form-group">
+                        <label for="approvedDate">Approved Date</label>
+                        <input type="date" id="approvedDate" name="approvedDate">
+                    </div>
+                    <button type="submit" class="btn">Save Freelancer</button>
+                    <button type="button" class="btn" onclick="clearContractForm()">Clear Form</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h2>Current Freelancers</h2>
+                <div id="contractsList"></div>
+            </div>
+
+            <div class="export-section">
+                <h2>Export Contract Data</h2>
+                <p>Export your freelancer data to update <code>freelancers.json</code>:</p>
+                <button class="btn" onclick="exportContractData()">Generate JSON</button>
+                <button class="btn" onclick="downloadContractJSON()" id="downloadContractBtn" style="display: none;">Download freelancers.json</button>
+                <pre id="exportContractData"></pre>
+            </div>
+
+            <div class="export-section">
+                <h2>Generate Contract Files</h2>
+                <p>Automatically generate HTML contract files for all freelancers:</p>
+                <button class="btn" onclick="generateAllContracts()">Generate All Contracts</button>
+                <button class="btn" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">Download Contract Files</button>
+                <div id="contractGenerationStatus"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Password Configuration - CHANGE THIS PASSWORD!
+        const ADMIN_PASSWORD = 'Deannajack3#';
+        
+        // Session management
+        let isAuthenticated = false;
+        let jobs = [];
+        let approvedFreelancers = {};
+
+        // Check if already authenticated
+        function checkAuth() {
+            console.log('checkAuth() called');
+            const session = sessionStorage.getItem('adminDashboardAuthenticated');
+            console.log('Session storage value:', session);
+            if (session === 'true') {
+                console.log('Already authenticated, showing admin interface');
+                isAuthenticated = true;
+                showAdminInterface();
+            } else {
+                console.log('Not authenticated, showing login screen');
+                showLoginScreen();
+            }
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            console.log('showLoginScreen() called');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('adminInterface').style.display = 'none';
+        }
+
+        // Show admin interface
+        function showAdminInterface() {
+            console.log('showAdminInterface() called');
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminInterface').style.display = 'block';
+            loadJobs();
+            loadFreelancers();
+        }
+
+        // Handle login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Login form submitted');
+            const password = document.getElementById('password').value;
+            console.log('Password entered:', password ? '***' : 'empty');
+            console.log('Expected password:', ADMIN_PASSWORD);
+            
+            if (password === ADMIN_PASSWORD) {
+                console.log('Password correct, logging in...');
+                isAuthenticated = true;
+                sessionStorage.setItem('adminDashboardAuthenticated', 'true');
+                showAdminInterface();
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('password').value = '';
+            } else {
+                console.log('Password incorrect');
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            }
+        });
+
+        // Logout function
+        function logout() {
+            isAuthenticated = false;
+            sessionStorage.removeItem('adminDashboardAuthenticated');
+            showLoginScreen();
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Load existing jobs
+        async function loadJobs() {
+            try {
+                const response = await fetch('jobs-data.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    jobs = data.jobs || [];
+                }
+            } catch (error) {
+                console.log('No existing jobs file found, starting fresh');
+                jobs = [];
+            }
+            displayJobs();
+        }
+
+        // Display jobs
+        function displayJobs() {
+            const jobsList = document.getElementById('jobsList');
+            jobsList.innerHTML = '';
+
+            jobs.forEach((job, index) => {
+                const jobDiv = document.createElement('div');
+                jobDiv.className = 'item-card';
+                jobDiv.innerHTML = `
+                    <h3>${job.title || 'Untitled Job'}</h3>
+                    <div class="item-meta">
+                        <span>📅 ${job.date || 'TBD'}</span>
+                        <span>📍 ${job.location || 'Location TBD'}</span>
+                        <span>💰 ${job.pay || 'Pay TBD'}</span>
+                        <span class="status-${(job.status || 'Active').toLowerCase()}">${job.status || 'Active'}</span>
+                    </div>
+                    <div class="item-description">${job.description || 'No description provided'}</div>
+                    <div class="actions">
+                        <button class="btn btn-small" onclick="editJob(${index})">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">Delete</button>
+                    </div>
+                `;
+                jobsList.appendChild(jobDiv);
+            });
+        }
+
+        // Add/Edit job
+        document.getElementById('jobForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const job = {
+                title: formData.get('title'),
+                date: formData.get('date'),
+                location: formData.get('location'),
+                pay: formData.get('pay'),
+                description: formData.get('description'),
+                status: formData.get('status')
+            };
+
+            const editIndex = e.target.dataset.editIndex;
+            if (editIndex !== undefined) {
+                jobs[editIndex] = job;
+                delete e.target.dataset.editIndex;
+            } else {
+                jobs.push(job);
+            }
+
+            displayJobs();
+            clearJobForm();
+        });
+
+        // Edit job
+        function editJob(index) {
+            const job = jobs[index];
+            document.getElementById('jobTitle').value = job.title || '';
+            document.getElementById('jobDate').value = job.date || '';
+            document.getElementById('jobLocation').value = job.location || '';
+            document.getElementById('jobPay').value = job.pay || '';
+            document.getElementById('jobDescription').value = job.description || '';
+            document.getElementById('jobStatus').value = job.status || 'Active';
+            
+            document.getElementById('jobForm').dataset.editIndex = index;
+        }
+
+        // Delete job
+        function deleteJob(index) {
+            if (confirm('Are you sure you want to delete this job?')) {
+                jobs.splice(index, 1);
+                displayJobs();
+            }
+        }
+
+        // Clear job form
+        function clearJobForm() {
+            document.getElementById('jobForm').reset();
+            delete document.getElementById('jobForm').dataset.editIndex;
+        }
+
+        // Export job data
+        function exportJobData() {
+            const data = {
+                jobs: jobs,
+                lastUpdated: new Date().toISOString().split('T')[0],
+                totalJobs: jobs.length
+            };
+            
+            document.getElementById('exportJobData').textContent = JSON.stringify(data, null, 2);
+            document.getElementById('downloadJobBtn').style.display = 'block';
+        }
+
+        // Download job JSON
+        function downloadJobJSON() {
+            const data = {
+                jobs: jobs,
+                lastUpdated: new Date().toISOString().split('T')[0],
+                totalJobs: jobs.length
+            };
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'jobs-data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Load existing freelancers
+        async function loadFreelancers() {
+            try {
+                const response = await fetch('freelancers.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    approvedFreelancers = data.approvedFreelancers || {};
+                }
+            } catch (error) {
+                console.log('No existing freelancers file found, starting fresh');
+                approvedFreelancers = {};
+            }
+            displayFreelancers();
+        }
+
+        // Display freelancers
+        function displayFreelancers() {
+            const contractsList = document.getElementById('contractsList');
+            contractsList.innerHTML = '';
+
+            Object.keys(approvedFreelancers).forEach((name, index) => {
+                const freelancer = approvedFreelancers[name];
+                const contractDiv = document.createElement('div');
+                contractDiv.className = 'item-card';
+                contractDiv.innerHTML = `
+                    <h3>${name}</h3>
+                    <div class="item-meta">
+                        <span>📧 ${freelancer.email}</span>
+                        <span>🎭 ${freelancer.role || 'Role not specified'}</span>
+                        <span>📅 ${freelancer.approvedDate || 'Date not specified'}</span>
+                    </div>
+                    <div class="item-url">${freelancer.contractUrl}</div>
+                    <div class="actions">
+                        <button class="btn btn-small" onclick="editFreelancer('${name}')">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteFreelancer('${name}')">Delete</button>
+                    </div>
+                `;
+                contractsList.appendChild(contractDiv);
+            });
+        }
+
+        // Add/Edit freelancer
+        document.getElementById('contractForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const freelancer = {
+                email: formData.get('email'),
+                contractUrl: formData.get('contractUrl'),
+                role: formData.get('role'),
+                approvedDate: formData.get('approvedDate')
+            };
+
+            const name = formData.get('name');
+            const editName = e.target.dataset.editName;
+            
+            if (editName && editName !== name) {
+                // Name changed, delete old entry
+                delete approvedFreelancers[editName];
+            }
+            
+            approvedFreelancers[name] = freelancer;
+            delete e.target.dataset.editName;
+
+            displayFreelancers();
+            clearContractForm();
+        });
+
+        // Edit freelancer
+        function editFreelancer(name) {
+            const freelancer = approvedFreelancers[name];
+            document.getElementById('freelancerName').value = name;
+            document.getElementById('freelancerEmail').value = freelancer.email || '';
+            document.getElementById('contractUrl').value = freelancer.contractUrl || '';
+            document.getElementById('freelancerRole').value = freelancer.role || '';
+            document.getElementById('approvedDate').value = freelancer.approvedDate || '';
+            
+            document.getElementById('contractForm').dataset.editName = name;
+        }
+
+        // Delete freelancer
+        function deleteFreelancer(name) {
+            if (confirm(`Are you sure you want to delete ${name}?`)) {
+                delete approvedFreelancers[name];
+                displayFreelancers();
+            }
+        }
+
+        // Clear contract form
+        function clearContractForm() {
+            document.getElementById('contractForm').reset();
+            delete document.getElementById('contractForm').dataset.editName;
+        }
+
+        // Export contract data
+        function exportContractData() {
+            const data = {
+                approvedFreelancers: approvedFreelancers,
+                lastUpdated: new Date().toISOString().split('T')[0],
+                totalFreelancers: Object.keys(approvedFreelancers).length
+            };
+            
+            document.getElementById('exportContractData').textContent = JSON.stringify(data, null, 2);
+            document.getElementById('downloadContractBtn').style.display = 'block';
+        }
+
+        // Download contract JSON
+        function downloadContractJSON() {
+            const data = {
+                approvedFreelancers: approvedFreelancers,
+                lastUpdated: new Date().toISOString().split('T')[0],
+                totalFreelancers: Object.keys(approvedFreelancers).length
+            };
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'freelancers.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Generate contract HTML for a specific freelancer
+        function generateContractHTML(freelancerName, freelancerData) {
+            const fileName = freelancerName.toLowerCase().replace(/\s+/g, '-') + '.html';
+            const effectiveDate = freelancerData.approvedDate || new Date().toISOString().split('T')[0];
+            
+            // Default values if not specified
+            const role = freelancerData.role || 'Contractor';
+            const location = 'Atlanta Area';
+            const projectStart = 'TBD';
+            const rate = freelancerData.rate || '$150/day';
+            
+            // Create a simple contract HTML without nested template literals
+            const contractHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelance Agreement - ${freelancerName} | Cochran Films</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #000; color: #fff; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: #1a1a1a; padding: 40px; border-radius: 12px; border: 1px solid #FFB200; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #FFB200; padding-bottom: 20px; }
+        h1 { color: #FFB200; font-size: 28px; margin-bottom: 10px; }
+        h2 { color: #FFB200; font-size: 24px; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px; }
+        h3 { color: #fff; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; }
+        ul { margin: 15px 0; padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        .project-info { background: rgba(255,178,0,0.1); padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid rgba(255,178,0,0.3); }
+        .project-info ul { list-style: none; padding-left: 0; }
+        .project-info li { margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #333; }
+        .project-info li:last-child { border-bottom: none; }
+        .signature-section { margin-top: 40px; padding-top: 30px; border-top: 2px solid rgba(255,178,0,0.3); }
+        .signature-box { display: flex; justify-content: space-between; margin-top: 20px; gap: 30px; }
+        .signature-party { flex: 1; padding: 20px; background: rgba(255,178,0,0.1); border-radius: 8px; border: 2px solid rgba(255,178,0,0.3); }
+        .signature-input, .date-input { width: 100%; padding: 8px; border: 1px solid rgba(255,178,0,0.5); border-radius: 4px; margin-top: 5px; background: rgba(255,178,0,0.1); color: #fff; }
+        .btn { background: linear-gradient(135deg, #FFB200, #FFD700); color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; margin: 0 10px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,178,0,0.3); }
+        .btn-secondary { background: rgba(255,178,0,0.2); color: #fff; border: 1px solid rgba(255,178,0,0.5); }
+        .action-buttons { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid rgba(255,178,0,0.3); }
+        @media (max-width: 768px) { .container { padding: 20px; } .signature-box { flex-direction: column; gap: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 Freelance Agreement</h1>
+            <p><strong>Issued By:</strong> Cochran Films<br><strong>Effective Date:</strong> ${effectiveDate}</p>
+        </div>
+        <h2>📌 Project Overview</h2>
+        <p>This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>${freelancerName}</strong>, hereinafter referred to as the "Contractor."</p>
+        <div class="project-info">
+            <ul>
+                <li><strong>Role:</strong> ${role}</li>
+                <li><strong>Location:</strong> ${location}</li>
+                <li><strong>Project Start:</strong> ${projectStart}</li>
+                <li><strong>Rate:</strong> ${rate}</li>
+            </ul>
+        </div>
+        <h2>✅ Contractor Responsibilities</h2>
+        <ul>
+            <li>Arrive at the project location on time.</li>
+            <li>Professionally manage their assigned role and responsibilities.</li>
+            <li>Complete the job to professional standards.</li>
+            <li>Use personal equipment unless otherwise arranged.</li>
+            <li>Maintain a respectful demeanor with staff and clients.</li>
+        </ul>
+        <h2>📸 BTS Content & Ownership</h2>
+        <p>The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.</p>
+        <h2>💵 Payment Terms</h2>
+        <p>Payment of ${rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).</p>
+        <h2>🛡️ Independent Contractor</h2>
+        <p>The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.</p>
+        <h2>📝 Agreement</h2>
+        <p>By continuing, the Contractor agrees to the above terms. A physical or digital signature may be collected separately.</p>
+        <div class="signature-section">
+            <h3>Contractor Signature</h3>
+            <div class="signature-box">
+                <div class="signature-party">
+                    <strong>Contractor:</strong><br>
+                    Name: ${freelancerName}<br>
+                    <input type="text" class="signature-input" id="contractorSignature" placeholder="Type your full name to sign" required>
+                    <input type="date" class="date-input" id="contractorDate" required>
+                </div>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="btn" id="signButton" onclick="signContract()">✍️ Sign Contract</button>
+            <button class="btn btn-secondary" id="downloadButton" onclick="downloadPDF()" style="display: none;">📄 Download PDF</button>
+        </div>
+    </div>
+    <script>
+        const contractData = { 
+            freelancerName: "${freelancerName}", 
+            role: "${role}", 
+            location: "${location}", 
+            projectStart: "${projectStart}", 
+            rate: "${rate}", 
+            effectiveDate: "${effectiveDate}" 
+        };
+        
+        function signContract() { 
+            const contractorSignature = document.getElementById("contractorSignature").value.trim(); 
+            const contractorDate = document.getElementById("contractorDate").value; 
+            if (!contractorSignature || !contractorDate) { 
+                alert("Please fill in your signature and date to sign the contract."); 
+                return; 
+            } 
+            if (contractorSignature.length < 3) { 
+                alert("Please enter your full name as your signature."); 
+                return; 
+            } 
+            document.body.classList.add("signed"); 
+            const signButton = document.getElementById("signButton"); 
+            signButton.textContent = "✅ Contract Signed"; 
+            signButton.style.background = "#28a745"; 
+            signButton.disabled = true; 
+            const downloadButton = document.getElementById("downloadButton"); 
+            downloadButton.style.display = "inline-block"; 
+            const signatureInput = document.getElementById("contractorSignature"); 
+            signatureInput.style.fontFamily = "cursive"; 
+            signatureInput.style.color = "#000"; 
+            signatureInput.readOnly = true; 
+            alert("Contract signed successfully! You can now download the signed PDF or print the contract."); 
+        }
+        
+        function downloadPDF() { 
+            const contractorSignature = document.getElementById("contractorSignature").value.trim(); 
+            const contractorDate = document.getElementById("contractorDate").value; 
+            if (!contractorSignature || !contractorDate) { 
+                alert("Please sign the contract first before downloading."); 
+                return; 
+            } 
+            const pdfContent = \`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Freelance Agreement - \${contractData.freelancerName}</title><style>body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; } .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #FFB200; } h1 { color: #000; font-size: 28px; margin-bottom: 10px; } h2 { color: #000; font-size: 24px; margin: 25px 0 15px 0; border-left: 4px solid #FFB200; padding-left: 15px; } p { margin-bottom: 15px; } ul { margin: 15px 0; padding-left: 20px; } li { margin-bottom: 8px; } .project-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FFB200; } .signature-section { margin-top: 40px; padding-top: 30px; border-top: 2px solid #e9ecef; } .signature-box { display: flex; justify-content: space-between; margin-top: 20px; gap: 30px; } .signature-party { flex: 1; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e9ecef; } .signature-text { font-family: "Brush Script MT", cursive; font-size: 18px; color: #000; margin-top: 5px; }</style></head><body><div class="header"><h1>📄 Freelance Agreement</h1><p><strong>Issued By:</strong> Cochran Films<br><strong>Effective Date:</strong> \${contractData.effectiveDate}</p></div><h2>📌 Project Overview</h2><p>This agreement is entered into between <strong>Cochran Films</strong>, a media production company based in Georgia, and <strong>\${contractData.freelancerName}</strong>, hereinafter referred to as the "Contractor."</p><div class="project-info"><ul><li><strong>Role:</strong> \${contractData.role}</li><li><strong>Location:</strong> \${contractData.location}</li><li><strong>Project Start:</strong> \${contractData.projectStart}</li><li><strong>Rate:</strong> \${contractData.rate}</li></ul></div><h2>✅ Contractor Responsibilities</h2><ul><li>Arrive at the project location on time.</li><li>Professionally manage their assigned role and responsibilities.</li><li>Complete the job to professional standards.</li><li>Use personal equipment unless otherwise arranged.</li><li>Maintain a respectful demeanor with staff and clients.</li></ul><h2>📸 BTS Content & Ownership</h2><p>The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.</p><h2>💵 Payment Terms</h2><p>Payment of \${contractData.rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).</p><h2>🛡️ Independent Contractor</h2><p>The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.</p><h2>📝 Agreement</h2><p>By continuing, the Contractor agrees to the above terms. A physical or digital signature may be collected separately.</p><div class="signature-section"><h3>Signatures</h3><div class="signature-box"><div class="signature-party"><strong>Cochran Films Representative:</strong><br>Name: Cody Cochran<br>Title: Founder, Cochran Films<br><div class="signature-text">Signature: Cody Cochran</div><div class="signature-text">Date: \${contractData.effectiveDate}</div></div><div class="signature-party"><strong>Contractor:</strong><br>Name: \${contractData.freelancerName}<br><div class="signature-text">Signature: \${contractorSignature}</div><div class="signature-text">Date: \${contractorDate}</div></div></div></div></body></html>\`; 
+            const pdfWindow = window.open("", "_blank"); 
+            pdfWindow.document.write(pdfContent); 
+            pdfWindow.document.close(); 
+            pdfWindow.onload = function() { 
+                pdfWindow.print(); 
+                setTimeout(() => { 
+                    pdfWindow.close(); 
+                }, 1000); 
+            }; 
+        }
+        
+        document.addEventListener("DOMContentLoaded", function() { 
+            const today = new Date().toISOString().split("T")[0]; 
+            document.getElementById("contractorDate").value = today; 
+        });
+        
+        document.getElementById("contractorSignature").addEventListener("input", function() { 
+            const signature = this.value.trim(); 
+            const signButton = document.getElementById("signButton"); 
+            if (signature.length >= 3) { 
+                signButton.disabled = false; 
+            } else { 
+                signButton.disabled = true; 
+            } 
+        });
+    </script>
+</body>
+</html>`;
+
+            return { fileName, contractHTML };
+        }
+
+        // Generate all contract files
+        function generateAllContracts() {
+            const statusDiv = document.getElementById('contractGenerationStatus');
+            statusDiv.innerHTML = '<p style="color: #FFB200;">🔄 Generating contract files...</p>';
+            
+            const contracts = {};
+            
+            Object.keys(approvedFreelancers).forEach(freelancerName => {
+                const freelancerData = approvedFreelancers[freelancerName];
+                const { fileName, contractHTML } = generateContractHTML(freelancerName, freelancerData);
+                contracts[fileName] = contractHTML;
+            });
+            
+            // Store contracts for download
+            window.generatedContracts = contracts;
+            
+            statusDiv.innerHTML = `
+                <p style="color: #22c55e;">✅ Generated ${Object.keys(contracts).length} contract files:</p>
+                <ul style="color: #FFB200; margin-left: 20px;">
+                    ${Object.keys(contracts).map(fileName => `<li>${fileName}</li>`).join('')}
+                </ul>
+            `;
+            
+            document.getElementById('downloadContractsBtn').style.display = 'block';
+        }
+
+        // Download all contract files as a zip
+        function downloadContractFiles() {
+            if (!window.generatedContracts) {
+                alert('Please generate contracts first.');
+                return;
+            }
+            
+            // Create a zip file with all contracts
+            const zip = new JSZip();
+            
+            Object.keys(window.generatedContracts).forEach(fileName => {
+                zip.file(fileName, window.generatedContracts[fileName]);
+            });
+            
+            zip.generateAsync({type: 'blob'}).then(function(content) {
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'contracts.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            checkAuth();
+        });
+        
+        // Fallback initialization
+        if (document.readyState === 'loading') {
+            console.log('Document still loading, waiting for DOMContentLoaded...');
+        } else {
+            console.log('Document already loaded, initializing immediately...');
+            checkAuth();
+        }
+    </script>
+</body>
+</html>

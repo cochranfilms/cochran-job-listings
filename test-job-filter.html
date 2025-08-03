@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Filter Test - Cochran Films</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .job-row {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .job-row.included {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        .job-row.excluded {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+        .job-row.applicant {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+        }
+        .debug-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Job Filter Test</h1>
+    <p>This page tests the job filtering logic to ensure only job listings (not applicant submissions) are displayed.</p>
+    
+    <div class="test-section">
+        <h2>Test Data</h2>
+        <button onclick="runTest()">Run Filter Test</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Test data that mimics your Google Sheet structure
+        const testData = {
+            jobs: [
+                // Job listings (should be included)
+                {
+                    title: "Backdrop Photographer Base",
+                    date: "10/24/2025",
+                    location: "Douglasville, GA",
+                    pay: "$300",
+                    description: "You will be taking pictures",
+                    status: "Active"
+                },
+                {
+                    title: "Backdrop Photographer Spot", 
+                    date: "11/08/2025",
+                    location: "Douglasville, GA",
+                    pay: "$400",
+                    description: "You will be taking pictures",
+                    status: "Active"
+                },
+                // Applicant submissions (should be excluded)
+                {
+                    title: "Backdrop Photographer Base",
+                    date: "11/8/2025",
+                    location: "Douglasville, GA", 
+                    pay: "$400",
+                    description: "You will be taking pictur",
+                    status: "",
+                    "Email Address": "njstanner@yahoo.com",
+                    "Full Name": "Nick Stanner",
+                    "Phone Number": "8183973460",
+                    "Instagram or Portfolio Website": "https://www.instagram.com/stanne",
+                    "How did you hear about Cochran Films?": "Other",
+                    "Applying For Which Job": "Backdrop Photographer Base"
+                },
+                {
+                    title: "Backdrop Photographer Spot",
+                    date: "10/24/2025", 
+                    location: "Douglasville, GA",
+                    pay: "$300",
+                    description: "You will be taking pictur",
+                    status: "",
+                    "Email Address": "njstanner@yahoo.com",
+                    "Full Name": "Nick Stanner", 
+                    "Phone Number": "8183973460",
+                    "Instagram or Portfolio Website": "https://www.instagram.com/stanne",
+                    "How did you hear about Cochran Films?": "Other",
+                    "Applying For Which Job": "Backdrop Photographer Spot"
+                },
+                // Edge cases
+                {
+                    title: "Bob Rider",
+                    date: "10/2/2025",
+                    location: "Douglasville, GA", 
+                    pay: "$600",
+                    description: "we are getting pretty des",
+                    status: "Filled"
+                },
+                {
+                    title: "ff ff",
+                    date: "12/22/2025",
+                    location: "Atlanta, GA",
+                    pay: "$1,000", 
+                    description: "Testsd sd sds sds",
+                    status: "Filled"
+                }
+            ]
+        };
+
+        function filterJobs(jobs) {
+            return jobs.map(job => {
+                const cleanStatus = String(job.status || '')
+                    .toLowerCase()
+                    .trim()
+                    .replace(/['"]/g, '')
+                    .replace(/\s+/g, ' ');
+                
+                // Check if this row contains applicant information
+                const hasApplicantInfo = job.email || job.Email || job['Email Address'] || 
+                                       job.phone || job.Phone || job['Phone Number'] ||
+                                       job['Full Name'] || job.full_name || job.name ||
+                                       job.instagram || job.Instagram || job['Instagram or Portfolio Website'] ||
+                                       job['How did you hear about Cochran Films?'] || job['how_did_you_hear'] ||
+                                       job.timestamp || job.Timestamp ||
+                                       job['Applying For Which Job'] || job['applying_for_which_job'];
+                
+                // Check if title looks like applicant name
+                const titleLooksLikeApplicantName = job.title && (
+                    job.title.includes('@') ||
+                    job.title.match(/^\d{3}-\d{3}-\d{4}$/) ||
+                    job.title.match(/^[A-Za-z]+\s+[A-Za-z]+$/) && !job.title.toLowerCase().includes('photographer') && !job.title.toLowerCase().includes('videographer') && !job.title.toLowerCase().includes('editor')
+                );
+                
+                const willInclude = job.title && 
+                                   cleanStatus === 'active' && 
+                                   !hasApplicantInfo &&
+                                   !titleLooksLikeApplicantName;
+                
+                return {
+                    job,
+                    cleanStatus,
+                    hasApplicantInfo: !!hasApplicantInfo,
+                    titleLooksLikeApplicantName: !!titleLooksLikeApplicantName,
+                    willInclude
+                };
+            });
+        }
+
+        function runTest() {
+            const results = filterJobs(testData.jobs);
+            const resultsDiv = document.getElementById('test-results');
+            
+            let html = '<h3>Filter Results:</h3>';
+            
+            results.forEach((result, index) => {
+                const job = result.job;
+                const cssClass = result.willInclude ? 'included' : 
+                               result.hasApplicantInfo ? 'applicant' : 'excluded';
+                
+                html += `
+                    <div class="job-row ${cssClass}">
+                        <strong>Row ${index + 1}: ${job.title}</strong>
+                        <div class="debug-info">
+                            Status: "${result.cleanStatus}" | 
+                            Has Applicant Info: ${result.hasApplicantInfo} | 
+                            Title Looks Like Name: ${result.titleLooksLikeApplicantName} | 
+                            Will Include: ${result.willInclude}
+                        </div>
+                        <div>Date: ${job.date} | Location: ${job.location} | Pay: ${job.pay}</div>
+                        ${job['Email Address'] ? `<div>Email: ${job['Email Address']}</div>` : ''}
+                        ${job['Full Name'] ? `<div>Name: ${job['Full Name']}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            const includedCount = results.filter(r => r.willInclude).length;
+            const excludedCount = results.filter(r => !r.willInclude).length;
+            
+            html += `
+                <div style="margin-top: 20px; padding: 10px; background: #e9ecef; border-radius: 4px;">
+                    <strong>Summary:</strong> ${includedCount} jobs included, ${excludedCount} jobs excluded
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,38 @@
+{
+  "jobs": [
+    {
+      "title": "Backdrop Photographer Base",
+      "date": "2025-11-08",
+      "location": "Douglasville, GA",
+      "pay": "$400",
+      "description": "You will be taking pictures for on-site printing at the 2nd annual Stranger Things block party from 4-9pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+      "status": "Active"
+    },
+    {
+      "title": "Backdrop Photographer Spotlight",
+      "date": "2025-10-24",
+      "location": "Douglasville, GA",
+      "pay": "$300 + Tip",
+      "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+      "status": "Active"
+    },
+    {
+      "title": "Wedding Photographer",
+      "date": "2025-07-15",
+      "location": "Atlanta, GA",
+      "pay": "$500",
+      "description": "Beautiful outdoor wedding ceremony and reception coverage. Looking for experienced wedding photographer with own equipment.",
+      "status": "Filled"
+    },
+    {
+      "title": "Corporate Event Videographer",
+      "date": "2025-06-20",
+      "location": "Downtown Atlanta",
+      "pay": "$350",
+      "description": "Annual corporate meeting and awards ceremony. Need professional videographer with multi-camera setup experience.",
+      "status": "Inactive"
+    }
+  ],
+  "lastUpdated": "2025-07-31",
+  "totalJobs": 4
+}

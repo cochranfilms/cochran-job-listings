@@ -1,0 +1,3108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Cochran Films</title>
+    
+    <!-- Favicon to prevent 404 error -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⚙️</text></svg>">
+    
+    <!-- Content Security Policy - Allow Google APIs, EmailJS, and GitHub API -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://ssl.gstatic.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://apis.google.com https://accounts.google.com https://www.googleapis.com https://api.emailjs.com https://api.github.com; frame-src https://accounts.google.com;"
+    
+    <!-- Fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- EmailJS for automated job acceptance emails -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
+    <script>
+        // Simple admin dashboard configuration
+        let signedContracts = [];
+        let uploadedContracts = [];
+        let contractsAnalytics = {};
+        let currentUploadFile = null;
+
+        // EmailJS Configuration for Job Acceptance
+        const EMAILJS_CONFIG = {
+            publicKey: 'p4pF3OWvh-DXtae4c',
+            serviceId: 'service_t11yvru',
+            jobAcceptanceTemplateId: 'template_job_acceptance' // ⚠️ This template ID doesn't exist - create it in EmailJS dashboard
+        };
+
+        // Global GitHub configuration
+        let GITHUB_CONFIG = {
+            token: null,
+            owner: 'cochranfilms',
+            repo: 'cochran-job-listings',
+            repoOwner: 'cochranfilms',
+            repoName: 'cochran-job-listings',
+            branch: 'main'
+        };
+        
+        // Load GitHub configuration from external file
+        async function loadGitHubConfig() {
+            try {
+                const response = await fetch('config/github-config.json');
+                if (response.ok) {
+                    const config = await response.json();
+                    GITHUB_CONFIG = {
+                        token: config.githubToken,
+                        owner: config.repoOwner || 'cochranfilms',
+                        repo: config.repoName || 'cochran-job-listings',
+                        repoOwner: config.repoOwner || 'cochranfilms',
+                        repoName: config.repoName || 'cochran-job-listings',
+                        branch: config.branch || 'main'
+                    };
+                    console.log('✅ GitHub configuration loaded successfully');
+                    return true;
+                } else {
+                    console.warn('⚠️ Could not load GitHub config file, using fallback');
+                    return false;
+                }
+            } catch (error) {
+                console.warn('⚠️ Error loading GitHub config:', error);
+                return false;
+            }
+        }
+        
+        // Secure token management
+        function getGitHubToken() {
+            // First try to get token from localStorage (for admin override)
+            let token = localStorage.getItem('github_token');
+            
+            // If no local token, use the global token from config
+            if (!token) {
+                token = GITHUB_CONFIG.token;
+                
+                if (!token) {
+                    console.warn('⚠️ GitHub token not configured. Please check config/github-config.json');
+                    return null;
+                }
+            }
+            return token;
+        }
+
+        function setGitHubToken(newToken) {
+            localStorage.setItem('github_token', newToken);
+            console.log('✅ GitHub token updated securely');
+        }
+
+        // Initialize EmailJS and GitHub config
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (typeof emailjs !== 'undefined') {
+                emailjs.init(EMAILJS_CONFIG.publicKey);
+                console.log('✅ EmailJS initialized for job acceptance emails');
+            } else {
+                console.warn('⚠️ EmailJS library not loaded');
+            }
+            
+            // Load GitHub configuration
+            await loadGitHubConfig();
+        });
+
+        // Check if already authenticated
+        function checkAuth() {
+            const session = sessionStorage.getItem('adminDashboardAuthenticated');
+            if (session === 'true') {
+                isAuthenticated = true;
+                showAdminInterface();
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('adminInterface').style.display = 'none';
+        }
+
+        // Show admin interface
+        async function showAdminInterface() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminInterface').style.display = 'block';
+            
+            await loadJobs();
+            await loadFreelancers();
+            loadUploadedContracts();
+            await loadProjectStatus();
+        }
+
+        // Handle login
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple authentication
+            if (username === 'admin' && password === 'Deannajack3#') {
+                sessionStorage.setItem('adminDashboardAuthenticated', 'true');
+                isAuthenticated = true;
+                showAdminInterface();
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+
+        // Initialize login form handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+        });
+
+        // Logout
+        function logout() {
+            sessionStorage.removeItem('adminDashboardAuthenticated');
+            isAuthenticated = false;
+            showLoginScreen();
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const btns = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            btns.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // ==================== CONTRACTS UPLOAD FUNCTIONALITY ====================
+
+        // Initialize drag and drop for PDF upload
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadZone = document.getElementById('pdfUploadZone');
+            const fileInput = document.getElementById('contractFileInput');
+            
+            if (uploadZone && fileInput) {
+                uploadZone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    uploadZone.classList.add('dragover');
+                });
+                
+                uploadZone.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    uploadZone.classList.remove('dragover');
+                });
+                
+                uploadZone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    uploadZone.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    handleFileSelection(files);
+                });
+                
+                fileInput.addEventListener('change', function(e) {
+                    handleFileSelection(e.target.files);
+                });
+            }
+        });
+
+        // Handle file selection
+        function handleFileSelection(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            if (file.type !== 'application/pdf') {
+                alert('Please select a PDF file only.');
+                return;
+            }
+            
+            currentUploadFile = file;
+            document.getElementById('contractDetailsForm').style.display = 'block';
+            document.getElementById('uploadDate').value = new Date().toISOString().split('T')[0];
+            
+            // Scroll to form
+            document.getElementById('contractDetailsForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Save uploaded contract
+        async function saveUploadedContract() {
+            if (!currentUploadFile) {
+                alert('No file selected.');
+                return;
+            }
+            
+            const name = document.getElementById('uploadFreelancerName').value.trim();
+            const email = document.getElementById('uploadFreelancerEmail').value.trim();
+            const role = document.getElementById('uploadRole').value.trim();
+            const rate = document.getElementById('uploadRate').value.trim();
+            const location = document.getElementById('uploadLocation').value.trim();
+            const date = document.getElementById('uploadDate').value;
+            const notes = document.getElementById('uploadNotes').value.trim();
+            
+            if (!name || !email || !role) {
+                alert('Please fill in at least the name, email, and role fields.');
+                return;
+            }
+            
+            // Generate unique contract ID
+            const contractId = 'CF-UPLOAD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+            
+            // Create contract data
+            const contractData = {
+                contractId: contractId,
+                freelancerName: name,
+                freelancerEmail: email,
+                role: role,
+                rate: rate,
+                location: location,
+                contractDate: date,
+                notes: notes,
+                fileName: currentUploadFile.name,
+                fileSize: currentUploadFile.size,
+                uploadDate: new Date().toISOString(),
+                uploadTimestamp: new Date().toLocaleString(),
+                status: 'UPLOADED'
+            };
+            
+            try {
+                // Upload PDF to GitHub contracts folder
+                const pdfDownloadUrl = await uploadContractToGitHub(currentUploadFile, contractData);
+                contractData.githubUrl = pdfDownloadUrl;
+                
+                // Save to localStorage
+                uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+                uploadedContracts.push(contractData);
+                localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
+                
+                // Update uploaded-contracts.json on GitHub
+                await updateUploadedContractsOnGitHub();
+                
+                // Update freelancer status in freelancers array
+                updateFreelancerContractStatus(email, contractId, date);
+                
+                // Update freelancers.json on GitHub
+                await updateFreelancersOnGitHub();
+                
+                alert('✅ Contract uploaded successfully to GitHub!');
+                
+            } catch (error) {
+                console.error('❌ Error uploading contract:', error);
+                alert(`Error uploading contract: ${error.message}`);
+            }
+            
+            // Save file data (base64) for later download
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                contractData.fileData = e.target.result;
+                uploadedContracts[uploadedContracts.length - 1] = contractData;
+                localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
+                
+                console.log('✅ Contract uploaded and saved:', contractData);
+                
+                // Automatically update GitHub
+                await updateUploadedContractsOnGitHub();
+                
+                // Reset form
+                cancelContractUpload();
+                
+                // Refresh list
+                loadUploadedContracts();
+                
+                alert(`✅ Contract uploaded successfully!\n\nContract ID: ${contractId}\nFreelancer: ${name}\n\n📋 Freelancer status updated to "uploaded" - they can now see their signed contract in the user portal!`);
+            };
+            reader.readAsDataURL(currentUploadFile);
+        }
+
+        // Upload contract PDF to GitHub
+        async function uploadContractToGitHub(file, contractData) {
+            try {
+                const token = getGitHubToken();
+                if (!token) {
+                    throw new Error('No GitHub token found. Please set one using the "Manage GitHub Token" button.');
+                }
+                
+                console.log('📤 Uploading contract PDF to GitHub...');
+                
+                // Convert file to base64
+                const base64Content = await fileToBase64(file);
+                
+                // Create filename based on contract ID
+                const fileName = `contracts/${contractData.contractId}.pdf`;
+                
+                // Upload file to GitHub
+                const uploadData = {
+                    message: `Upload contract PDF for ${contractData.freelancerName} - ${new Date().toLocaleString()}`,
+                    content: base64Content,
+                    branch: GITHUB_CONFIG.branch
+                };
+                
+                const uploadResponse = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${fileName}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(uploadData)
+                });
+                
+                if (uploadResponse.ok) {
+                    const result = await uploadResponse.json();
+                    console.log('✅ Contract PDF uploaded to GitHub:', result.content.download_url);
+                    return result.content.download_url;
+                } else {
+                    const error = await uploadResponse.json();
+                    throw new Error(`GitHub API error: ${error.message}`);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error uploading contract PDF:', error);
+                throw error;
+            }
+        }
+        
+        // Convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+        
+        // Download contract PDF from GitHub
+        async function downloadContractFromGitHub(contractId) {
+            try {
+                const token = getGitHubToken();
+                if (!token) {
+                    throw new Error('No GitHub token found.');
+                }
+                
+                const fileName = `contracts/${contractId}.pdf`;
+                
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${fileName}`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const fileData = await response.json();
+                    return fileData.download_url;
+                } else {
+                    throw new Error('Contract PDF not found on GitHub');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error downloading contract PDF:', error);
+                throw error;
+            }
+        }
+
+        // Cancel contract upload
+        function cancelContractUpload() {
+            currentUploadFile = null;
+            document.getElementById('contractDetailsForm').style.display = 'none';
+            document.getElementById('contractFileInput').value = '';
+            
+            // Clear form
+            document.getElementById('uploadFreelancerName').value = '';
+            document.getElementById('uploadFreelancerEmail').value = '';
+            document.getElementById('uploadRole').value = '';
+            document.getElementById('uploadRate').value = '';
+            document.getElementById('uploadLocation').value = '';
+            document.getElementById('uploadDate').value = '';
+            document.getElementById('uploadNotes').value = '';
+        }
+
+        // Load uploaded contracts
+        function loadUploadedContracts() {
+            console.log('🔄 Loading uploaded contracts...');
+            
+            uploadedContracts = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
+            displayUploadedContracts();
+            updateContractAnalytics();
+            
+            console.log('✅ Loaded', uploadedContracts.length, 'uploaded contracts');
+        }
+
+        // Display uploaded contracts
+        function displayUploadedContracts() {
+            const container = document.getElementById('uploadedContractsList');
+            const countElement = document.getElementById('contractCount');
+            
+            if (uploadedContracts.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">📋 No Contracts Uploaded Yet</h3>
+                        <p>Upload signed contract PDFs using the form above</p>
+                    </div>
+                `;
+                countElement.textContent = '';
+                return;
+            }
+            
+            countElement.textContent = `(${uploadedContracts.length} contract${uploadedContracts.length !== 1 ? 's' : ''})`;
+            
+            const contractsHTML = uploadedContracts.map((contract, index) => `
+                <div class="item-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>${contract.freelancerName}</h3>
+                        <div style="text-align: right; font-size: 0.8rem; color: rgba(255,255,255,0.6);">
+                            <div>📁 ${contract.fileName}</div>
+                            <div>📤 ${new Date(contract.uploadDate).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="item-meta">
+                        <span>📧 ${contract.freelancerEmail}</span>
+                        <span>🎯 ${contract.role}</span>
+                        <span>💰 ${contract.rate}</span>
+                        <span>📍 ${contract.location}</span>
+                        ${contract.contractDate ? `<span>📅 ${contract.contractDate}</span>` : ''}
+                    </div>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                            <div><strong>Contract ID:</strong><br>${contract.contractId}</div>
+                            <div><strong>File Size:</strong><br>${(contract.fileSize / 1024).toFixed(1)} KB</div>
+                        </div>
+                        ${contract.notes ? `<div style="margin-top: 0.5rem;"><strong>Notes:</strong><br>${contract.notes}</div>` : ''}
+                    </div>
+                    
+                    <div class="actions">
+                        <button class="btn btn-small" onclick="downloadUploadedContract(${index})">
+                            <i class="fas fa-download"></i> Download PDF
+                        </button>
+                        <button class="btn btn-small" onclick="viewUploadedContractDetails(${index})">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteUploadedContract(${index})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = contractsHTML;
+        }
+
+        // Download uploaded contract
+        function downloadUploadedContract(index) {
+            const contract = uploadedContracts[index];
+            if (!contract || !contract.fileData) {
+                alert('❌ Contract file not found.');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.href = contract.fileData;
+            link.download = contract.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('📄 Downloaded contract:', contract.fileName);
+        }
+
+        // View uploaded contract details
+        function viewUploadedContractDetails(index) {
+            const contract = uploadedContracts[index];
+            
+            const details = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 COCHRAN FILMS - CONTRACT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 BASIC INFO:
+Contract ID: ${contract.contractId}
+Freelancer: ${contract.freelancerName}
+Email: ${contract.freelancerEmail}
+Role: ${contract.role}
+Rate: ${contract.rate}
+Location: ${contract.location}
+Contract Date: ${contract.contractDate || 'Not specified'}
+
+📁 FILE INFO:
+File Name: ${contract.fileName}
+File Size: ${(contract.fileSize / 1024).toFixed(1)} KB
+Upload Date: ${new Date(contract.uploadDate).toLocaleString()}
+Status: ${contract.status}
+
+${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            `.trim();
+            
+            alert(details);
+        }
+
+        // Delete uploaded contract
+        async function deleteUploadedContract(index) {
+            const contract = uploadedContracts[index];
+            if (confirm(`Are you sure you want to delete the contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis action cannot be undone.`)) {
+                uploadedContracts.splice(index, 1);
+                localStorage.setItem('uploadedContracts', JSON.stringify(uploadedContracts));
+                
+                // Automatically update GitHub
+                await updateUploadedContractsOnGitHub();
+                
+                displayUploadedContracts();
+                updateContractAnalytics();
+            }
+        }
+
+        // Export contract list
+        function exportContractList() {
+            if (uploadedContracts.length === 0) {
+                alert('No contracts to export.');
+                return;
+            }
+            
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                totalContracts: uploadedContracts.length,
+                contracts: uploadedContracts.map(contract => ({
+                    ...contract,
+                    fileData: undefined // Remove file data from export
+                }))
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `cochran-films-contracts-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log('📦 Contract list exported');
+        }
+
+        // Export uploaded contracts for user portal access
+        function exportUploadedContractsForPortal() {
+            if (uploadedContracts.length === 0) {
+                alert('No uploaded contracts to export.');
+                return;
+            }
+            
+            const exportData = {
+                lastUpdated: new Date().toISOString(),
+                totalContracts: uploadedContracts.length,
+                uploadedContracts: uploadedContracts
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `uploaded-contracts.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log('📦 Uploaded contracts exported for user portal');
+            alert('✅ Uploaded contracts exported as uploaded-contracts.json\n\nUpload this file to your server so users can access their signed contracts!');
+        }
+
+        // Update contract analytics
+        function updateContractAnalytics() {
+            const analytics = {
+                total: uploadedContracts.length,
+                thisMonth: uploadedContracts.filter(c => {
+                    const uploadDate = new Date(c.uploadDate);
+                    const now = new Date();
+                    return uploadDate.getMonth() === now.getMonth() && uploadDate.getFullYear() === now.getFullYear();
+                }).length,
+                roles: {},
+                totalFileSize: uploadedContracts.reduce((sum, c) => sum + (c.fileSize || 0), 0)
+            };
+            
+            // Count roles
+            uploadedContracts.forEach(contract => {
+                const role = contract.role || 'Unknown';
+                analytics.roles[role] = (analytics.roles[role] || 0) + 1;
+            });
+            
+            const container = document.getElementById('contractAnalytics');
+            container.innerHTML = `
+                <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.3);">
+                    <h4 style="color: #FFB200; margin-bottom: 0.5rem;">📊 Total Contracts</h4>
+                    <div style="font-size: 2rem; font-weight: bold; color: #FFB200;">${analytics.total}</div>
+                </div>
+                
+                <div style="background: rgba(34,197,94,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(34,197,94,0.3);">
+                    <h4 style="color: #22c55e; margin-bottom: 0.5rem;">📅 This Month</h4>
+                    <div style="font-size: 2rem; font-weight: bold; color: #22c55e;">${analytics.thisMonth}</div>
+                </div>
+                
+                <div style="background: rgba(59,130,246,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59,130,246,0.3);">
+                    <h4 style="color: #3b82f6; margin-bottom: 0.5rem;">💾 Total Size</h4>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #3b82f6;">${(analytics.totalFileSize / 1024 / 1024).toFixed(1)} MB</div>
+                </div>
+                
+                <div style="background: rgba(168,85,247,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(168,85,247,0.3);">
+                    <h4 style="color: #a855f7; margin-bottom: 0.5rem;">🎯 Top Role</h4>
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #a855f7;">
+                        ${Object.keys(analytics.roles).length > 0 ? 
+                            Object.entries(analytics.roles).sort((a, b) => b[1] - a[1])[0][0] : 
+                            'No roles yet'
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update freelancer contract status when contract is uploaded
+        function updateFreelancerContractStatus(email, contractId, contractDate) {
+            try {
+                // Find and update the freelancer in the local array
+                const freelancerIndex = freelancers.findIndex(f => f.email.toLowerCase() === email.toLowerCase());
+                if (freelancerIndex >= 0) {
+                    freelancers[freelancerIndex].contractStatus = 'uploaded';
+                    freelancers[freelancerIndex].contractId = contractId;
+                    freelancers[freelancerIndex].contractUploadedDate = contractDate;
+                    freelancers[freelancerIndex].contractSignedDate = contractDate; // Assume signed same day for now
+                    
+                    // Save updated freelancers array
+                    localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                    
+                    console.log('✅ Updated freelancer contract status:', freelancers[freelancerIndex]);
+                    
+                    // Refresh freelancer list display
+                    displayFreelancers();
+                    
+                    // Show notification to export updated data
+                    setTimeout(() => {
+                        if (confirm('📋 Freelancer contract status updated!\n\nWould you like to export the updated freelancers.json file now?\n\nThis will ensure the user portal reflects the signed contract status.')) {
+                            exportContractData();
+                        }
+                    }, 1000);
+                } else {
+                    console.warn('⚠️ Freelancer not found in local array for email:', email);
+                    alert(`⚠️ Note: Freelancer ${email} not found in local database.\n\nConsider adding them to the freelancer list first, then re-uploading the contract.`);
+                }
+            } catch (error) {
+                console.error('❌ Error updating freelancer contract status:', error);
+            }
+        }
+
+        // ==================== JOBS MANAGEMENT FUNCTIONALITY ====================
+        
+        let jobs = [];
+        let editingJobIndex = -1;
+
+        // Load jobs from jobs-data.json and localStorage
+        async function loadJobs() {
+            console.log('🔄 Loading jobs...');
+            
+            // First try to load from jobs-data.json
+            try {
+                const response = await fetch('jobs-data.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    jobs = data.jobs || [];
+                    console.log('📖 Loaded', jobs.length, 'jobs from jobs-data.json');
+                } else {
+                    // Fallback to localStorage
+                    jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
+                    console.log('📝 Loaded', jobs.length, 'jobs from localStorage');
+                }
+            } catch (error) {
+                // Fallback to localStorage
+                jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
+                console.log('📝 Loaded', jobs.length, 'jobs from localStorage (fallback)');
+            }
+            
+            displayJobs();
+            console.log('✅ Total jobs loaded:', jobs.length);
+        }
+
+        // Display jobs
+        function displayJobs() {
+            const container = document.getElementById('jobsList');
+            
+            if (jobs.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">📋 No Jobs Created Yet</h3>
+                        <p>Create your first job listing using the form above</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const jobsHTML = jobs.map((job, index) => `
+                <div class="item-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>${job.title}</h3>
+                        <span style="background: ${job.status === 'Active' ? '#22c55e' : '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">${job.status}</span>
+                    </div>
+                    
+                    <div class="item-meta">
+                        <span>📅 ${job.date || 'No date set'}</span>
+                        <span>📍 ${job.location || 'No location'}</span>
+                        <span>💰 ${job.pay || 'No pay listed'}</span>
+                    </div>
+                    
+                    <div class="item-description">
+                        ${job.description || 'No description provided'}
+                    </div>
+                    
+                    <div class="actions">
+                        <button class="btn btn-small" onclick="editJob(${index})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = jobsHTML;
+        }
+
+        // Job form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const jobForm = document.getElementById('jobForm');
+            if (jobForm) {
+                jobForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveJob();
+                });
+            }
+        });
+
+        // Save job
+        async function saveJob() {
+            const formData = new FormData(document.getElementById('jobForm'));
+            const jobData = {
+                title: formData.get('title'),
+                date: formData.get('date'),
+                location: formData.get('location'),
+                pay: formData.get('pay'),
+                description: formData.get('description'),
+                status: formData.get('status')
+            };
+
+            if (!jobData.title.trim()) {
+                alert('Job title is required');
+                return;
+            }
+
+            if (editingJobIndex >= 0) {
+                jobs[editingJobIndex] = jobData;
+                editingJobIndex = -1;
+            } else {
+                jobs.push(jobData);
+            }
+
+            // Update localStorage with current jobs
+            localStorage.setItem('jobs', JSON.stringify(jobs));
+            
+            // Automatically update GitHub with merged data
+            await updateJobsOnGitHub();
+            
+            displayJobs();
+            clearJobForm();
+            alert('Job saved successfully and updated on GitHub!');
+        }
+
+        // Edit job
+        function editJob(index) {
+            const job = jobs[index];
+            document.getElementById('jobTitle').value = job.title;
+            document.getElementById('jobDate').value = job.date;
+            document.getElementById('jobLocation').value = job.location;
+            document.getElementById('jobPay').value = job.pay;
+            document.getElementById('jobDescription').value = job.description;
+            document.getElementById('jobStatus').value = job.status;
+            editingJobIndex = index;
+        }
+
+        // Delete job
+        async function deleteJob(index) {
+            const job = jobs[index];
+            if (confirm(`Are you sure you want to delete "${job.title}"?`)) {
+                jobs.splice(index, 1);
+                localStorage.setItem('jobs', JSON.stringify(jobs));
+                
+                // Update GitHub
+                await updateJobsOnGitHub();
+                
+                displayJobs();
+                alert('Job deleted successfully and updated on GitHub!');
+            }
+        }
+
+        // Clear job form
+        function clearJobForm() {
+            document.getElementById('jobForm').reset();
+            document.getElementById('jobLocation').value = 'Atlanta Area';
+            editingJobIndex = -1;
+        }
+
+        // Export job data
+        function exportJobData() {
+            const exportData = {
+                jobs: jobs,
+                exportDate: new Date().toISOString()
+            };
+            document.getElementById('exportJobData').textContent = JSON.stringify(exportData, null, 2);
+            document.getElementById('downloadJobBtn').style.display = 'inline-block';
+        }
+
+        // Download job JSON
+        function downloadJobJSON() {
+            const exportData = {
+                jobs: jobs,
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `jobs-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== FREELANCER MANAGEMENT FUNCTIONALITY ====================
+        
+        let freelancers = [];
+        let editingFreelancerIndex = -1;
+
+        // Load freelancers from freelancers.json and localStorage
+        async function loadFreelancers() {
+            console.log('🔄 Loading freelancers...');
+            
+            // First, try to load from freelancers.json (GitHub source) with cache busting
+            try {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`freelancers.json?t=${timestamp}`);
+                if (response.ok) {
+                    const jsonData = await response.json();
+                    const approvedFreelancers = jsonData.approvedFreelancers || {};
+                    
+                    // Convert the object format to array format for the admin dashboard
+                    freelancers = Object.entries(approvedFreelancers).map(([name, data]) => ({
+                        name: name,
+                        email: data.email,
+                        password: data.password,
+                        role: data.role,
+                        location: data.location,
+                        projectStart: data.projectStart,
+                        rate: data.rate,
+                        approvedDate: data.approvedDate,
+                        contractStatus: data.contractStatus || 'pending',
+                        contractSignedDate: data.contractSignedDate || null,
+                        contractUploadedDate: data.contractUploadedDate || null,
+                        contractId: data.contractId || null,
+                        jobs: data.jobs || [],
+                        primaryJob: data.primaryJob || null
+                    }));
+                    
+                    console.log('📖 Loaded', freelancers.length, 'freelancers from freelancers.json (GitHub)');
+                    
+                    // Update localStorage to sync with GitHub data
+                    localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                    
+                } else {
+                    console.warn('⚠️ Could not load freelancers.json, trying localStorage');
+                    freelancers = JSON.parse(localStorage.getItem('freelancers') || '[]');
+                    console.log('📝 Loaded', freelancers.length, 'freelancers from localStorage');
+                }
+            } catch (error) {
+                console.warn('⚠️ Error loading freelancers.json:', error);
+                freelancers = JSON.parse(localStorage.getItem('freelancers') || '[]');
+                console.log('📝 Loaded', freelancers.length, 'freelancers from localStorage (fallback)');
+            }
+            
+
+            
+            displayFreelancers();
+            console.log('✅ Total freelancers loaded:', freelancers.length);
+            
+            // Show status in the interface
+            const statusElement = document.getElementById('freelancerStatus');
+            if (statusElement) {
+                statusElement.textContent = `Loaded ${freelancers.length} freelancers from ${freelancers.length > 0 ? 'freelancers.json' : 'localStorage'}`;
+            }
+        }
+        
+
+
+        // Display freelancers
+        function displayFreelancers() {
+            const container = document.getElementById('contractsList');
+            
+            if (freelancers.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">👥 No Freelancers Added Yet</h3>
+                        <p>Add freelancers using the form above to manage contracts</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const freelancersHTML = freelancers.map((freelancer, index) => `
+                <div class="item-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>${freelancer.name}</h3>
+                                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <span style="background: ${freelancer.contractStatus === 'uploaded' ? '#22c55e' : freelancer.contractStatus === 'signed' ? '#f59e0b' : '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                    ${freelancer.contractStatus === 'uploaded' ? 'Contract Complete' : freelancer.contractStatus === 'signed' ? 'Contract Signed' : 'Pending Approval'}
+                                </span>
+                                <span style="background: ${freelancer.password ? '#22c55e' : '#f59e0b'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                    ${freelancer.password ? '🔐 Password Set' : '⏳ Pending Password'}
+                                </span>
+                                <button onclick="showProjectStatusManager('${freelancer.name}')" style="background: #3b82f6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                                    📊 Project Status
+                                </button>
+                            ${!freelancer.approvedDate ? `
+                                <button onclick="approveFreelancer(${index})" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                                    ✅ Approve
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="item-meta">
+                        <span>📧 ${freelancer.email}</span>
+                        <span>🎯 ${freelancer.role}</span>
+                        <span>💰 ${freelancer.rate}</span>
+                        <span>📍 ${freelancer.location}</span>
+                    </div>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                            <div><strong>Project Start:</strong><br>${freelancer.projectStart}</div>
+                            <div><strong>Approved Date:</strong><br>${freelancer.approvedDate || 'Not approved yet'}</div>
+                        </div>
+                        ${freelancer.jobs && freelancer.jobs.length > 0 ? `
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,178,0,0.3);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <strong style="color: #22c55e;">🎯 Assigned Jobs (${freelancer.jobs.length})</strong>
+                                    ${freelancer.primaryJob ? `<span style="background: #22c55e; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Primary Job</span>` : ''}
+                                </div>
+                                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8);">
+                                    ${freelancer.jobs.slice(0, 2).map(job => `
+                                        <div style="margin-bottom: 0.25rem;">• ${job.role || 'No role'} - ${job.status || 'No status'} (${job.id})</div>
+                                    `).join('')}
+                                    ${freelancer.jobs.length > 2 ? `<div style="font-style: italic; color: rgba(255,255,255,0.6);">... and ${freelancer.jobs.length - 2} more</div>` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="actions">
+                        <button class="btn btn-small" onclick="editFreelancer(${index})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteFreelancer(${index})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = freelancersHTML;
+            
+            // Update job assignment dropdown
+            populateJobAssignmentDropdown();
+            
+            // Check for updated freelancers.json data and show export button
+            const updatedData = localStorage.getItem('updatedFreelancersJson');
+            const exportUpdatedBtn = document.getElementById('exportUpdatedBtn');
+            if (updatedData && exportUpdatedBtn) {
+                exportUpdatedBtn.style.display = 'inline-block';
+                console.log('🔄 Updated freelancers.json data available for export');
+            }
+        }
+
+        // Contract form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const contractForm = document.getElementById('contractForm');
+            if (contractForm) {
+                contractForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveFreelancer();
+                });
+            }
+        });
+
+        // Save freelancer
+        async function saveFreelancer() {
+            const freelancerData = {
+                name: document.getElementById('freelancerName').value,
+                email: document.getElementById('freelancerEmail').value,
+                password: null, // Password will be set by freelancer during contract signing
+                role: document.getElementById('freelancerRole').value,
+                location: document.getElementById('freelancerLocation').value,
+                projectStart: document.getElementById('projectStart').value,
+                rate: document.getElementById('freelancerRate').value,
+                approvedDate: document.getElementById('approvedDate').value,
+                contractStatus: 'pending',
+                contractSignedDate: null,
+                contractUploadedDate: null,
+                contractId: null,
+                passwordSet: false // Track if password has been set
+            };
+
+            if (!freelancerData.name.trim() || !freelancerData.email.trim() || !freelancerData.role.trim()) {
+                alert('Name, email, and role are required');
+                return;
+            }
+
+            if (editingFreelancerIndex >= 0) {
+                // Preserve existing contract status and additional data when editing
+                const existingFreelancer = freelancers[editingFreelancerIndex];
+                freelancerData.contractStatus = existingFreelancer.contractStatus || 'pending';
+                freelancerData.contractSignedDate = existingFreelancer.contractSignedDate || null;
+                freelancerData.contractUploadedDate = existingFreelancer.contractUploadedDate || null;
+                freelancerData.contractId = existingFreelancer.contractId || null;
+                freelancerData.jobs = existingFreelancer.jobs || [];
+                freelancerData.primaryJob = existingFreelancer.primaryJob || null;
+                freelancerData.contractUrl = existingFreelancer.contractUrl || "contract.html";
+                
+                freelancers[editingFreelancerIndex] = freelancerData;
+                editingFreelancerIndex = -1;
+                alert('Freelancer updated successfully!');
+            } else {
+                // Set default values for new freelancers
+                freelancerData.contractUrl = "contract.html";
+                
+                // Automatically create a primary job from the freelancer details
+                const primaryJobId = 'job-' + freelancerData.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+                const primaryJob = {
+                    id: primaryJobId,
+                    role: freelancerData.role,
+                    location: freelancerData.location,
+                    projectStart: freelancerData.projectStart,
+                    rate: freelancerData.rate,
+                    status: 'upcoming',
+                    projectType: freelancerData.role + ' Project',
+                    description: `Primary assignment for ${freelancerData.name}`
+                };
+                
+                freelancerData.jobs = [primaryJob];
+                freelancerData.primaryJob = primaryJobId;
+                
+                freelancers.push(freelancerData);
+                
+                // Send job acceptance email for new freelancers
+                sendJobAcceptanceEmail(freelancerData);
+            }
+
+            localStorage.setItem('freelancers', JSON.stringify(freelancers));
+            
+            // Automatically update GitHub
+            await updateFreelancersOnGitHub();
+            
+            displayFreelancers();
+            clearContractForm();
+        }
+
+        // Send job acceptance email
+        async function sendJobAcceptanceEmail(freelancerData) {
+            try {
+                // Generate contract ID for tracking
+                const contractId = 'CF-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+                
+                // Prepare email parameters
+                const emailParams = {
+                    to_email: freelancerData.email,
+                    freelancer_name: freelancerData.name || 'Freelancer',
+                    role: freelancerData.role || 'Contractor',
+                    location: freelancerData.location || 'Atlanta Area',
+                    rate: freelancerData.rate || 'Rate to be determined',
+                    project_start: freelancerData.projectStart || 'TBD',
+                    contract_id: contractId
+                };
+
+                console.log('📧 Sending job acceptance email to:', freelancerData.email);
+
+                // Send email using EmailJS
+                if (typeof emailjs !== 'undefined') {
+                    await emailjs.send(
+                        EMAILJS_CONFIG.serviceId, 
+                        EMAILJS_CONFIG.jobAcceptanceTemplateId, 
+                        emailParams
+                    );
+                    
+                    console.log('✅ Job acceptance email sent successfully');
+                    
+                    // Show success message
+                    setTimeout(() => {
+                        alert(`🎉 Freelancer approved and email sent!\n\n📧 Email sent to: ${freelancerData.email}\n📄 Contract ID: ${contractId}\n\n✅ The freelancer will receive the job acceptance email with contract signing instructions.`);
+                    }, 1000);
+                    
+                } else {
+                    console.warn('⚠️ EmailJS not available, skipping email send');
+                    alert('✅ Freelancer saved successfully!\n\n⚠️ EmailJS not configured - please set up EmailJS to send automatic job acceptance emails.');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error sending job acceptance email:', error);
+                alert('✅ Freelancer saved successfully!\n\n⚠️ Email sending failed. Please check EmailJS configuration.');
+            }
+        }
+
+        // Approve existing freelancer (for freelancers already in the system)
+        function approveFreelancer(index) {
+            const freelancer = freelancers[index];
+            
+            if (confirm(`Are you sure you want to approve ${freelancer.name}?\n\nThis will send them a job acceptance email with contract signing instructions.`)) {
+                // Update approval date if not set
+                if (!freelancer.approvedDate) {
+                    freelancer.approvedDate = new Date().toISOString().split('T')[0];
+                }
+                
+                // Send job acceptance email
+                sendJobAcceptanceEmail(freelancer);
+                
+                // Save updated freelancer data
+                localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                displayFreelancers();
+            }
+        }
+
+        // Edit freelancer
+        function editFreelancer(index) {
+            const freelancer = freelancers[index];
+            document.getElementById('freelancerName').value = freelancer.name;
+            document.getElementById('freelancerEmail').value = freelancer.email;
+            document.getElementById('freelancerPassword').value = freelancer.password || 'Password will be set during contract signing';
+            document.getElementById('freelancerRole').value = freelancer.role;
+            document.getElementById('freelancerLocation').value = freelancer.location;
+            document.getElementById('projectStart').value = freelancer.projectStart;
+            document.getElementById('freelancerRate').value = freelancer.rate;
+            document.getElementById('approvedDate').value = freelancer.approvedDate;
+            editingFreelancerIndex = index;
+        }
+
+        // Delete freelancer
+        async function deleteFreelancer(index) {
+            const freelancer = freelancers[index];
+            if (confirm(`Are you sure you want to delete "${freelancer.name}"?`)) {
+                try {
+                    // Remove freelancer from freelancers array
+                    freelancers.splice(index, 1);
+                    localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                    
+                    // Update freelancers.json on GitHub
+                    await updateFreelancersOnGitHub();
+                    
+                    displayFreelancers();
+                    alert('Freelancer deleted successfully and freelancers.json updated on GitHub!');
+                } catch (error) {
+                    console.error('❌ Error deleting freelancer:', error);
+                    alert(`Error deleting freelancer: ${error.message}. The freelancer was removed locally but the GitHub update failed.`);
+                    displayFreelancers(); // Still update the display
+                }
+            }
+        }
+
+        // Manual refresh function
+        async function refreshFreelancers() {
+            console.log('🔄 Manually refreshing freelancers...');
+            
+            // Clear any cached data
+            localStorage.removeItem('freelancers');
+            
+            // Clear browser cache for freelancers.json
+            if ('caches' in window) {
+                try {
+                    const cacheNames = await caches.keys();
+                    for (const cacheName of cacheNames) {
+                        const cache = await caches.open(cacheName);
+                        await cache.delete('freelancers.json');
+                    }
+                    console.log('🗑️ Cleared browser cache for freelancers.json');
+                } catch (error) {
+                    console.warn('⚠️ Could not clear cache:', error);
+                }
+            }
+            
+            await loadFreelancers();
+        }
+
+        // Clear contract form
+        function clearContractForm() {
+            document.getElementById('contractForm').reset();
+            document.getElementById('freelancerLocation').value = 'Atlanta Area';
+            document.getElementById('projectStart').value = 'TBD';
+            document.getElementById('contractUrl').value = 'contract.html';
+            document.getElementById('freelancerPassword').value = '';
+            editingFreelancerIndex = -1;
+        }
+
+
+
+
+
+        // ==================== JOB ASSIGNMENT FUNCTIONALITY ====================
+
+        // Populate freelancer dropdown for job assignment
+        function populateJobAssignmentDropdown() {
+            const select = document.getElementById('jobAssignmentFreelancer');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">Choose a freelancer...</option>';
+            freelancers.forEach((freelancer, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = freelancer.name;
+                select.appendChild(option);
+            });
+        }
+
+        // Handle freelancer selection for job assignment
+        function handleFreelancerSelection() {
+            const select = document.getElementById('jobAssignmentFreelancer');
+            const jobInfo = document.getElementById('freelancerJobInfo');
+            const currentJobsList = document.getElementById('currentJobsList');
+            
+            if (!select || !jobInfo || !currentJobsList) return;
+            
+            const selectedIndex = select.value;
+            if (selectedIndex === '') {
+                jobInfo.style.display = 'none';
+                return;
+            }
+            
+            const freelancer = freelancers[selectedIndex];
+            jobInfo.style.display = 'block';
+            
+            if (freelancer.jobs && freelancer.jobs.length > 0) {
+                const jobsHTML = freelancer.jobs.map((job, jobIndex) => `
+                    <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid rgba(255,178,0,0.2);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="color: #FFB200;">${job.id}</strong>
+                            ${job.id === freelancer.primaryJob ? '<span style="background: #22c55e; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Primary</span>' : ''}
+                        </div>
+                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8);">
+                            <div>🎯 ${job.role || 'No role'}</div>
+                            <div>📍 ${job.location || 'No location'}</div>
+                            <div>💰 ${job.rate || 'No rate'}</div>
+                            <div>📅 ${job.projectStart || 'No date'}</div>
+                            <div>📊 ${job.status || 'No status'}</div>
+                        </div>
+                        <button onclick="removeJobFromFreelancer(${selectedIndex}, ${jobIndex})" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; margin-top: 0.5rem;">Remove</button>
+                    </div>
+                `).join('');
+                currentJobsList.innerHTML = jobsHTML;
+            } else {
+                currentJobsList.innerHTML = '<p style="color: rgba(255,255,255,0.6); font-style: italic;">No jobs assigned yet</p>';
+            }
+        }
+
+        // Add job to freelancer
+        function addJobToFreelancer() {
+            const freelancerIndex = document.getElementById('jobAssignmentFreelancer').value;
+            if (freelancerIndex === '') {
+                alert('Please select a freelancer first.');
+                return;
+            }
+            
+            const jobData = {
+                id: document.getElementById('jobId').value,
+                role: document.getElementById('jobRole').value,
+                location: document.getElementById('assignmentJobLocation').value,
+                projectStart: document.getElementById('assignmentJobProjectStart').value,
+                rate: document.getElementById('assignmentJobRate').value,
+                status: document.getElementById('assignmentJobStatus').value,
+                projectType: document.getElementById('assignmentJobProjectType').value,
+                description: document.getElementById('assignmentJobDescription').value
+            };
+            
+            if (!jobData.id.trim()) {
+                alert('Job ID is required.');
+                return;
+            }
+            
+            const freelancer = freelancers[freelancerIndex];
+            if (!freelancer.jobs) {
+                freelancer.jobs = [];
+            }
+            
+            // Check if job ID already exists
+            const existingJobIndex = freelancer.jobs.findIndex(job => job.id === jobData.id);
+            if (existingJobIndex >= 0) {
+                if (confirm('A job with this ID already exists. Do you want to replace it?')) {
+                    freelancer.jobs[existingJobIndex] = jobData;
+                } else {
+                    return;
+                }
+            } else {
+                freelancer.jobs.push(jobData);
+            }
+            
+            // Set as primary job if checkbox is checked
+            if (document.getElementById('primaryJobCheckbox').checked) {
+                freelancer.primaryJob = jobData.id;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('freelancers', JSON.stringify(freelancers));
+            
+            // Refresh displays
+            displayFreelancers();
+            handleFreelancerSelection();
+            
+            // Clear form
+            document.getElementById('jobAssignmentForm').reset();
+            
+            alert(`✅ Job "${jobData.id}" added to ${freelancer.name}!`);
+        }
+
+        // Remove job from freelancer
+        function removeJobFromFreelancer(freelancerIndex, jobIndex) {
+            const freelancer = freelancers[freelancerIndex];
+            const job = freelancer.jobs[jobIndex];
+            
+            if (confirm(`Are you sure you want to remove job "${job.id}" from ${freelancer.name}?`)) {
+                freelancer.jobs.splice(jobIndex, 1);
+                
+                // If this was the primary job, clear it
+                if (freelancer.primaryJob === job.id) {
+                    freelancer.primaryJob = null;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                
+                // Refresh displays
+                displayFreelancers();
+                handleFreelancerSelection();
+                
+                alert(`✅ Job "${job.id}" removed from ${freelancer.name}!`);
+            }
+        }
+
+        // Initialize job assignment functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const jobAssignmentForm = document.getElementById('jobAssignmentForm');
+            const freelancerSelect = document.getElementById('jobAssignmentFreelancer');
+            
+            if (jobAssignmentForm) {
+                jobAssignmentForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    addJobToFreelancer();
+                });
+            }
+            
+            if (freelancerSelect) {
+                freelancerSelect.addEventListener('change', handleFreelancerSelection);
+            }
+        });
+
+
+
+        // ==================== QUICK IMPORT FROM EMAIL ====================
+
+        // Parse email data and auto-fill form
+        function parseEmailData() {
+            const emailText = document.getElementById('quickImportData').value;
+            if (!emailText.trim()) {
+                alert('Please paste the contract data from your email first.');
+                return;
+            }
+
+            // Try to extract contract information using regex patterns
+            const extractData = (text) => {
+                const patterns = {
+                    freelancer_name: /(?:Freelancer|Name):\s*([^\n\r]+)/i,
+                    freelancer_email: /(?:Email):\s*([^\n\r\s]+)/i,
+                    role: /(?:Role):\s*([^\n\r]+)/i,
+                    location: /(?:Location):\s*([^\n\r]+)/i,
+                    rate: /(?:Rate):\s*([^\n\r]+)/i,
+                    contract_id: /(?:Contract ID):\s*([^\n\r]+)/i,
+                    signed_date: /(?:Signed):\s*([^\n\r]+)/i
+                };
+
+                const extracted = {};
+                for (const [key, pattern] of Object.entries(patterns)) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        extracted[key] = match[1].trim();
+                    }
+                }
+                return extracted;
+            };
+
+            const data = extractData(emailText);
+            
+            // Auto-fill the upload form fields
+            if (data.freelancer_name) {
+                document.getElementById('uploadFreelancerName').value = data.freelancer_name;
+            }
+            if (data.freelancer_email) {
+                document.getElementById('uploadFreelancerEmail').value = data.freelancer_email;
+            }
+            if (data.role) {
+                document.getElementById('uploadRole').value = data.role;
+            }
+            if (data.location) {
+                document.getElementById('uploadLocation').value = data.location;
+            }
+            if (data.rate) {
+                document.getElementById('uploadRate').value = data.rate;
+            }
+            if (data.signed_date) {
+                // Try to parse and format the date
+                try {
+                    const date = new Date(data.signed_date);
+                    if (!isNaN(date.getTime())) {
+                        document.getElementById('uploadDate').value = date.toISOString().split('T')[0];
+                    }
+                } catch (e) {
+                    // If date parsing fails, just use today's date
+                    document.getElementById('uploadDate').value = new Date().toISOString().split('T')[0];
+                }
+            }
+            
+            // Add contract ID to notes if available
+            if (data.contract_id) {
+                const notesField = document.getElementById('uploadNotes');
+                notesField.value = `Contract ID: ${data.contract_id}\n${notesField.value}`.trim();
+            }
+
+            // Clear the import text area
+            document.getElementById('quickImportData').value = '';
+            
+            // Show success message
+            const filledFields = Object.values(data).filter(v => v).length;
+            if (filledFields > 0) {
+                alert(`✅ Auto-filled ${filledFields} fields! Now upload your PDF file.`);
+                
+                // Scroll to the form
+                document.getElementById('contractDetailsForm').style.display = 'block';
+                document.getElementById('contractDetailsForm').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert('❌ Could not extract contract data. Please check the format and try again.');
+            }
+        }
+
+        // ==================== GITHUB API INTEGRATION ====================
+
+        // Update JSON file on GitHub via API
+        async function updateGitHubFile(filename, content, commitMessage) {
+            try {
+                const token = getGitHubToken();
+                if (!token) {
+                    throw new Error('No GitHub token found. Please set one using the "Manage GitHub Token" button.');
+                }
+                
+                console.log(`🔄 Updating ${filename} on GitHub...`);
+                
+                // Get current file SHA (required for updates)
+                const getFileResponse = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                let currentSha = null;
+                if (getFileResponse.ok) {
+                    const fileData = await getFileResponse.json();
+                    currentSha = fileData.sha;
+                }
+                
+                // Prepare the update request
+                const updateData = {
+                    message: commitMessage,
+                    content: btoa(JSON.stringify(content, null, 2)), // Base64 encode content
+                    branch: GITHUB_CONFIG.branch
+                };
+                
+                if (currentSha) {
+                    updateData.sha = currentSha;
+                }
+                
+                // Update the file
+                const updateResponse = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (updateResponse.ok) {
+                    const result = await updateResponse.json();
+                    console.log(`✅ ${filename} updated successfully:`, result.commit.sha);
+                    return result;
+                } else {
+                    const error = await updateResponse.json();
+                    throw new Error(`GitHub API error: ${error.message}`);
+                }
+                
+            } catch (error) {
+                console.error(`❌ Error updating ${filename}:`, error);
+                throw error;
+            }
+        }
+
+        // Update freelancers.json on GitHub
+        async function updateFreelancersOnGitHub() {
+            try {
+                const exportData = {
+                    approvedFreelancers: freelancers.reduce((acc, freelancer) => {
+                        acc[freelancer.name] = {
+                            email: freelancer.email,
+                            password: freelancer.password,
+                            contractUrl: freelancer.contractUrl || "contract.html",
+                            role: freelancer.role,
+                            location: freelancer.location,
+                            projectStart: freelancer.projectStart,
+                            rate: freelancer.rate,
+                            approvedDate: freelancer.approvedDate,
+                            contractStatus: freelancer.contractStatus || 'pending',
+                            contractSignedDate: freelancer.contractSignedDate,
+                            contractUploadedDate: freelancer.contractUploadedDate,
+                            contractId: freelancer.contractId,
+                            jobs: freelancer.jobs || [],
+                            primaryJob: freelancer.primaryJob
+                        };
+                        return acc;
+                    }, {}),
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    totalFreelancers: freelancers.length
+                };
+                
+                await updateGitHubFile('freelancers.json', exportData, `Update freelancers.json - ${new Date().toLocaleString()}`);
+                console.log('✅ Freelancers.json updated on GitHub');
+                
+                // Show success message
+                showUpdateStatus('✅ freelancers.json updated on GitHub successfully!', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error updating freelancers.json:', error);
+                showUpdateStatus(`❌ Error updating freelancers.json: ${error.message}`, 'error');
+            }
+        }
+
+        // Update jobs-data.json on GitHub
+        async function updateJobsOnGitHub() {
+            try {
+                console.log('📊 Jobs in admin dashboard:', jobs.length);
+                console.log('📊 Jobs to upload:', jobs.map(j => j.title));
+
+                // Use ONLY the jobs from admin dashboard (no merging with existing)
+                const exportData = {
+                    jobs: jobs,
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    totalJobs: jobs.length
+                };
+                
+                await updateGitHubFile('jobs-data.json', exportData, `Update jobs-data.json - ${new Date().toLocaleString()}`);
+                console.log('✅ jobs-data.json updated on GitHub with', jobs.length, 'total jobs');
+                
+                // Show success message
+                showUpdateStatus(`✅ jobs-data.json updated on GitHub successfully! (${jobs.length} total jobs)`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Error updating jobs-data.json:', error);
+                showUpdateStatus(`❌ Error updating jobs-data.json: ${error.message}`, 'error');
+            }
+        }
+        
+
+
+        // Show update status message
+        function showUpdateStatus(message, type) {
+            const statusDiv = document.createElement('div');
+            statusDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                background: ${type === 'success' ? 'linear-gradient(135deg, #22c55e, #16a34a)' : 'linear-gradient(135deg, #ef4444, #dc2626)'};
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            `;
+            statusDiv.textContent = message;
+            
+            document.body.appendChild(statusDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.parentNode.removeChild(statusDiv);
+                }
+            }, 5000);
+        }
+
+
+
+        // Show token manager modal
+        function showTokenManager() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    max-width: 500px;
+                    width: 100%;
+                    position: relative;
+                ">
+                    <button onclick="this.closest('div[style*=\'position: fixed\']').remove()" 
+                            style="
+                                position: absolute;
+                                top: 1rem;
+                                right: 1rem;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 30px;
+                                height: 30px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            ">×</button>
+                    
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">🔐 GitHub Token Management</h3>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Current Token Status:</label>
+                        <div style="padding: 0.5rem; background: #f8f9fa; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+                            ${getGitHubToken() ? '✅ Token is set' : '❌ No token found'}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New GitHub Token:</label>
+                        <input type="password" id="newGitHubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" 
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                        <small style="color: #666; font-size: 0.8rem;">
+                            Get your token from <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings</a>
+                        </small>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button onclick="updateGitHubToken()" style="
+                            background: linear-gradient(135deg, #22c55e, #16a34a);
+                            color: white;
+                            border: none;
+                            padding: 0.75rem 1.5rem;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-weight: 600;
+                        ">Update Token</button>
+                        
+                        <button onclick="clearGitHubToken()" style="
+                            background: linear-gradient(135deg, #ef4444, #dc2626);
+                            color: white;
+                            border: none;
+                            padding: 0.75rem 1.5rem;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-weight: 600;
+                        ">Clear Token</button>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
+                        <strong>🔒 Security Note:</strong>
+                        <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+                            <li>Tokens are stored securely in your browser's localStorage</li>
+                            <li>Never share your token or commit it to repositories</li>
+                            <li>Rotate your token regularly for security</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Update GitHub token
+        function updateGitHubToken() {
+            const newToken = document.getElementById('newGitHubToken').value.trim();
+            if (!newToken) {
+                alert('Please enter a valid GitHub token');
+                return;
+            }
+            
+            setGitHubToken(newToken);
+            alert('✅ GitHub token updated successfully!');
+            
+            // Close modal
+            document.querySelector('div[style*="position: fixed"]').remove();
+        }
+
+        // Clear GitHub token
+        function clearGitHubToken() {
+            if (confirm('Are you sure you want to clear the GitHub token? This will disable automatic updates.')) {
+                localStorage.removeItem('github_token');
+                alert('✅ GitHub token cleared successfully!');
+                
+                // Close modal
+                document.querySelector('div[style*="position: fixed"]').remove();
+            }
+        }
+
+        // Update uploaded-contracts.json on GitHub
+        async function updateUploadedContractsOnGitHub() {
+            try {
+                const exportData = {
+                    exportDate: new Date().toISOString(),
+                    totalContracts: uploadedContracts.length,
+                    contracts: uploadedContracts.map(contract => ({
+                        contractId: contract.contractId,
+                        freelancerName: contract.freelancerName,
+                        freelancerEmail: contract.freelancerEmail,
+                        role: contract.role,
+                        rate: contract.rate,
+                        location: contract.location,
+                        contractDate: contract.contractDate,
+                        notes: contract.notes,
+                        fileName: contract.fileName,
+                        fileSize: contract.fileSize,
+                        uploadDate: contract.uploadDate,
+                        uploadTimestamp: contract.uploadTimestamp,
+                        status: contract.status
+                    }))
+                };
+                
+                await updateGitHubFile('uploaded-contracts.json', exportData, `Update uploaded-contracts.json - ${new Date().toLocaleString()}`);
+                console.log('✅ uploaded-contracts.json updated on GitHub');
+                
+                // Show success message
+                showUpdateStatus('✅ uploaded-contracts.json updated on GitHub successfully!', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error updating uploaded-contracts.json:', error);
+                showUpdateStatus(`❌ Error updating uploaded-contracts.json: ${error.message}`, 'error');
+            }
+        }
+
+        // ==================== PROJECT STATUS MANAGEMENT ====================
+        
+        // Load project status from JSON file
+        async function loadProjectStatus() {
+            try {
+                const response = await fetch('project-status.json');
+                if (response.ok) {
+                    const jsonData = await response.json();
+                    projectStatus = jsonData.projectStatus || {};
+                    console.log('✅ Project status loaded from JSON file:', Object.keys(projectStatus).length, 'freelancers');
+                } else {
+                    console.warn('⚠️ Could not load project-status.json, using empty object');
+                    projectStatus = {};
+                }
+            } catch (error) {
+                console.error('❌ Error loading project status:', error);
+                projectStatus = {};
+            }
+        }
+        
+        // Update project status on GitHub
+        async function updateProjectStatusOnGitHub() {
+            try {
+                const exportData = {
+                    projectStatus: projectStatus,
+                    statusOptions: {
+                        projectStatus: ["upcoming", "in-progress", "completed", "cancelled"],
+                        paymentStatus: ["pending", "processing", "paid", "overdue"]
+                    },
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    totalProjects: Object.keys(projectStatus).length
+                };
+                
+                await updateGitHubFile('project-status.json', exportData, `Update project-status.json - ${new Date().toLocaleString()}`);
+                console.log('✅ project-status.json updated on GitHub');
+                
+                // Show success message
+                showUpdateStatus('✅ project-status.json updated on GitHub successfully!', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error updating project-status.json:', error);
+                showUpdateStatus(`❌ Error updating project-status.json: ${error.message}`, 'error');
+            }
+        }
+        
+        // Update project status for a specific job
+        function updateProjectStatus(freelancerName, jobId, newStatus, paymentStatus = null) {
+            if (!projectStatus[freelancerName]) {
+                projectStatus[freelancerName] = { jobs: {} };
+            }
+            
+            if (!projectStatus[freelancerName].jobs[jobId]) {
+                // Create job entry if it doesn't exist
+                const freelancer = freelancers.find(f => f.name === freelancerName);
+                if (freelancer) {
+                    const job = freelancer.jobs.find(j => j.id === jobId);
+                    if (job) {
+                        projectStatus[freelancerName].jobs[jobId] = {
+                            id: job.id,
+                            role: job.role,
+                            location: job.location,
+                            projectStart: job.projectStart,
+                            rate: job.rate,
+                            projectStatus: newStatus,
+                            paymentStatus: paymentStatus || 'pending',
+                            completionDate: newStatus === 'completed' ? new Date().toISOString().split('T')[0] : null,
+                            paymentDate: paymentStatus === 'paid' ? new Date().toISOString().split('T')[0] : null,
+                            projectType: job.projectType || 'General',
+                            description: job.description || ''
+                        };
+                    }
+                }
+            } else {
+                // Update existing job
+                projectStatus[freelancerName].jobs[jobId].projectStatus = newStatus;
+                if (paymentStatus) {
+                    projectStatus[freelancerName].jobs[jobId].paymentStatus = paymentStatus;
+                }
+                
+                if (newStatus === 'completed') {
+                    projectStatus[freelancerName].jobs[jobId].completionDate = new Date().toISOString().split('T')[0];
+                }
+                
+                if (paymentStatus === 'paid') {
+                    projectStatus[freelancerName].jobs[jobId].paymentDate = new Date().toISOString().split('T')[0];
+                }
+            }
+            
+            // Update GitHub
+            updateProjectStatusOnGitHub();
+            
+            console.log(`✅ Updated project status for ${freelancerName} - ${jobId}: ${newStatus}`);
+        }
+        
+        // Show project status manager modal
+        function showProjectStatusManager(freelancerName) {
+            const freelancer = freelancers.find(f => f.name === freelancerName);
+            if (!freelancer) {
+                alert('Freelancer not found');
+                return;
+            }
+            
+            const userProjects = projectStatus[freelancerName] || { jobs: {} };
+            const jobs = Object.values(userProjects.jobs);
+            
+            let jobsHTML = '';
+            if (jobs.length > 0) {
+                jobsHTML = jobs.map(job => `
+                    <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.2);">
+                        <h4 style="color: #FFB200; margin-bottom: 0.5rem;">${job.role}</h4>
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">${job.description || 'No description'}</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="color: #FFB200; font-weight: bold;">Project Status:</label>
+                                <select id="projectStatus_${job.id}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
+                                    <option value="upcoming" ${job.projectStatus === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+                                    <option value="in-progress" ${job.projectStatus === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="completed" ${job.projectStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="cancelled" ${job.projectStatus === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color: #FFB200; font-weight: bold;">Payment Status:</label>
+                                <select id="paymentStatus_${job.id}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
+                                    <option value="pending" ${job.paymentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="processing" ${job.paymentStatus === 'processing' ? 'selected' : ''}>Processing</option>
+                                    <option value="paid" ${job.paymentStatus === 'paid' ? 'selected' : ''}>Paid</option>
+                                    <option value="overdue" ${job.paymentStatus === 'overdue' ? 'selected' : ''}>Overdue</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="updateJobStatus('${freelancerName}', '${job.id}')" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">
+                            Update Status
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                jobsHTML = '<p style="color: rgba(255,255,255,0.6); font-style: italic;">No jobs found for this freelancer.</p>';
+            }
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: #1a1a1a;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    border: 1px solid #FFB200;
+                ">
+                    <button onclick="this.closest('div[style*=\'position: fixed\']').remove()" 
+                            style="
+                                position: absolute;
+                                top: 1rem;
+                                right: 1rem;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 30px;
+                                height: 30px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            ">×</button>
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">📊 Project Status Manager</h3>
+                    <h4 style="color: white; margin-bottom: 1rem;">${freelancerName}</h4>
+                    ${jobsHTML}
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Update job status from modal
+        function updateJobStatus(freelancerName, jobId) {
+            const projectStatusSelect = document.getElementById(`projectStatus_${jobId}`);
+            const paymentStatusSelect = document.getElementById(`paymentStatus_${jobId}`);
+            
+            if (!projectStatusSelect || !paymentStatusSelect) {
+                alert('Status elements not found');
+                return;
+            }
+            
+            const newProjectStatus = projectStatusSelect.value;
+            const newPaymentStatus = paymentStatusSelect.value;
+            
+            updateProjectStatus(freelancerName, jobId, newProjectStatus, newPaymentStatus);
+            
+            // Close modal
+            document.querySelector('div[style*="position: fixed"]').remove();
+            
+            alert(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}\nPayment: ${newPaymentStatus}`);
+        }
+        
+        // ==================== AUTOMATIC JSON GENERATION ====================
+        
+        // Initialize dashboard on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication status
+            const session = sessionStorage.getItem('adminDashboardAuthenticated');
+            if (session === 'true') {
+                isAuthenticated = true;
+                showAdminInterface();
+            }
+        });
+    </script>
+    
+    <style>
+        :root {
+            --primary: #FFB200;
+            --primary-dark: #FF9000;
+            --gold: #FFD700;
+            --black: #000000;
+            --white: #ffffff;
+            --gray-light: #f8f9fa;
+            --gray-medium: #6c757d;
+            --gray-dark: #343a40;
+            --border-radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Login Screen Styles */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,178,0,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .login-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(255,178,0,0.2);
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-logo {
+            width: 140px;
+            height: auto;
+            margin-bottom: 2rem;
+            filter: 
+                drop-shadow(0 0 3px #FFB200)
+                drop-shadow(0 0 6px #FFB200)
+                drop-shadow(2px 2px 0px #000000);
+            animation: logoGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes logoGlow {
+            0% {
+                filter: 
+                    drop-shadow(0 0 3px #FFB200)
+                    drop-shadow(0 0 6px #FFB200)
+                    drop-shadow(2px 2px 0px #000000);
+            }
+            100% {
+                filter: 
+                    drop-shadow(0 0 5px #FFB200)
+                    drop-shadow(0 0 8px #FFB200)
+                    drop-shadow(2px 2px 0px #000000);
+            }
+        }
+        
+        .login-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #FFB200;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .login-subtitle {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .login-form {
+            text-align: left;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #FFB200;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #fff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(15px);
+        }
+        
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.6);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+        
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #FFB200;
+            z-index: -1;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .login-btn:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .login-btn:hover {
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,178,0,0.4);
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Main Admin Interface Styles */
+        .admin-interface {
+            display: none;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            position: relative;
+        }
+        
+        .admin-interface::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,178,0,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin: 2rem;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #FFB200;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.8);
+            font-size: 1.1rem;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: #FFB200;
+        }
+        
+        /* Tab Navigation */
+        .tab-navigation {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem 2rem;
+            margin: 0 2rem;
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            background: rgba(255, 178, 0, 0.1);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            color: #FFB200;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: #FFB200;
+        }
+        
+        .tab-btn.active {
+            background: #FFB200;
+            color: #000;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            margin: 2rem;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Common Form Styles */
+        .form-section {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .form-section h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #FFB200;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .workflow-info {
+            background: rgba(255,178,0,0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,178,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .workflow-info p {
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 1rem;
+        }
+        
+        .workflow-info ol {
+            color: rgba(255,255,255,0.8);
+            padding-left: 1.5rem;
+        }
+        
+        .workflow-info li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #FFB200;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(15px);
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.6);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-right: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #FFB200;
+            z-index: -1;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .btn:hover {
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,178,0,0.4);
+        }
+        
+        /* List Styles */
+        .list-section {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .list-section h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #FFB200;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+        
+        .item-card {
+            border: 1px solid rgba(255,178,0,0.3);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .item-card:hover {
+            border-color: #FFB200;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,178,0,0.2);
+        }
+        
+        .item-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+        }
+        
+        .item-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+            flex-wrap: wrap;
+        }
+        
+        .item-description {
+            margin: 1rem 0;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .actions {
+            margin-top: 1rem;
+        }
+        
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        /* PDF Upload Styles */
+        .upload-section {
+            background: rgba(34, 197, 94, 0.1);
+            border: 2px dashed rgba(34, 197, 94, 0.3);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.15);
+        }
+        
+        .upload-section.dragover {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.2);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: #22c55e;
+            margin-bottom: 1rem;
+        }
+        
+        .upload-text {
+            color: #22c55e;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .upload-instructions {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        #contractFileInput {
+            display: none;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .login-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+            
+            .header, .tab-navigation, .tab-content {
+                margin: 1rem;
+            }
+            
+            .tab-buttons {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                justify-content: center;
+            }
+            
+            .item-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .btn {
+                margin-bottom: 0.5rem;
+                width: 100%;
+            }
+        }
+
+        /* Export Section Styles */
+        .export-section {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,178,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .export-section h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #FFB200;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 10px rgba(255,178,0,0.3);
+        }
+
+        .export-section pre {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #fff;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <img src="Logo.png" alt="Cochran Films" class="login-logo">
+            <h1 class="login-title">⚙️ Admin Dashboard</h1>
+            <p class="login-subtitle">Manage jobs and contracts from one central location</p>
+            
+            <div id="errorMessage" class="error-message">
+                Incorrect password. Please try again.
+            </div>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" value="admin" readonly style="background: rgba(255,255,255,0.1);">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">🔐 Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Admin Interface -->
+    <div id="adminInterface" class="admin-interface">
+        <div class="header">
+            <a href="#" class="logout-btn" onclick="logout()">🚪 Logout</a>
+            <h1>⚙️ Admin Dashboard</h1>
+            <p>Cochran Films - Central Management System</p>
+            <div style="margin-top: 1rem;">
+                <a href="https://collaborate.cochranfilms.com" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">📋 Job Listings</a>
+                <a href="contract.html" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">🔐 Contract Access</a>
+                <a href="user-portal.html" style="color: #FFB200; text-decoration: none; font-weight: 600;">👤 User Portal</a>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('jobs')">
+                    <span>📋</span> Job Listings
+                </button>
+                <button class="tab-btn" onclick="switchTab('contracts')">
+                    <span>🔐</span> Contract Management
+                </button>
+                <button class="tab-btn" onclick="switchTab('signed')">
+                    <span>✍️</span> Signed Contracts
+                </button>
+            </div>
+        </div>
+
+        <!-- Jobs Tab -->
+        <div id="jobs-tab" class="tab-content active">
+            <div class="form-section">
+                <h2>📋 How Job Management Works</h2>
+                <div class="workflow-info">
+                    <p><strong>Workflow:</strong></p>
+                    <ol>
+                        <li><strong>Add/Edit Jobs</strong> → Use this admin panel to create job listings</li>
+                        <li><strong>Export JSON</strong> → Download the updated jobs-data.json file</li>
+                        <li><strong>Update Website</strong> → Replace the jobs-data.json file on your server</li>
+                        <li><strong>Google Sheet</strong> → Handles all applicant submissions automatically</li>
+                    </ol>
+                    <p><strong>Note:</strong> The Google Sheet handles applicant data separately - this admin panel only manages job listings.</p>
+                </div>
+                
+                <h2>Add/Edit Job</h2>
+                <form id="jobForm">
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title *</label>
+                        <input type="text" id="jobTitle" name="title" placeholder="Enter job title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobDate">Event Date</label>
+                        <input type="date" id="jobDate" name="date">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobLocation">Location</label>
+                        <input type="text" id="jobLocation" name="location" value="Atlanta Area">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobPay">Pay Rate</label>
+                        <input type="text" id="jobPay" name="pay" placeholder="$150/day">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobDescription">Description</label>
+                        <textarea id="jobDescription" name="description" placeholder="Describe the role, requirements, and responsibilities..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobStatus">Status</label>
+                        <select id="jobStatus" name="status">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Save Job</button>
+                    <button type="button" class="btn" onclick="clearJobForm()">Clear Form</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h2>Current Jobs</h2>
+                <div id="jobsList"></div>
+            </div>
+
+            <div class="export-section">
+                <h2>Export Job Data</h2>
+                <p>Export your job listings to update <code>jobs-data.json</code>:</p>
+                <button class="btn" onclick="exportJobData()">Generate JSON</button>
+                <button class="btn" onclick="downloadJobJSON()" id="downloadJobBtn" style="display: none;">Download jobs-data.json</button>
+                <pre id="exportJobData"></pre>
+            </div>
+        </div>
+
+        <!-- Contracts Tab -->
+        <div id="contracts-tab" class="tab-content">
+            <div class="form-section">
+                <h2>🔐 How Contract Management Works</h2>
+                <div class="workflow-info">
+                    <p><strong>✨ Streamlined Automated Workflow:</strong></p>
+                    <ol>
+                        <li><strong>Add Freelancers</strong> → Add freelancer details (no password needed)</li>
+                        <li><strong>Auto-Job Creation</strong> → Primary job automatically created from freelancer details</li>
+                        <li><strong>Auto-Approval</strong> → When you save a new freelancer, they automatically receive a job acceptance email</li>
+                        <li><strong>Manual Approval</strong> → For existing freelancers, click the "✅ Approve" button to send job acceptance email</li>
+                        <li><strong>Additional Jobs</strong> → Assign extra jobs to freelancers (optional)</li>
+                        <li><strong>Contract Signing</strong> → Freelancers sign contracts directly on contract.html and set their own password</li>
+                        <li><strong>Automatic Updates</strong> → Password and contract status automatically update in freelancers.json</li>
+                        <li><strong>Email Notifications</strong> → You get instant email alerts when contracts are signed</li>
+                        <li><strong>Real-time Dashboard</strong> → See password status and contract progress in real-time</li>
+                    </ol>
+                    <p><strong>📧 Email Setup:</strong> Configure EmailJS credentials in contract.html to receive signing notifications.</p>
+                    <p><strong>🎯 Benefits:</strong> No password conflicts! Freelancers set their own passwords during contract signing, and everything updates automatically.</p>
+                </div>
+                
+                <h2>Add/Edit Freelancer</h2>
+                <form id="contractForm">
+                    <div class="form-group">
+                        <label for="freelancerName">Full Name *</label>
+                        <input type="text" id="freelancerName" name="name" placeholder="Enter freelancer's full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="freelancerEmail">Email Address *</label>
+                        <input type="email" id="freelancerEmail" name="email" placeholder="Enter freelancer's email address" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="freelancerPassword" style="color: rgba(255,255,255,0.6);">Portal Password</label>
+                        <input type="text" id="freelancerPassword" name="password" placeholder="Password will be set by freelancer during contract signing" readonly style="background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);">
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            🔄 Password will be set automatically when freelancer signs their contract
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="contractUrl">Contract URL *</label>
+                        <input type="text" id="contractUrl" name="contractUrl" placeholder="contract.html" value="contract.html" readonly style="background: rgba(255,255,255,0.1);">
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            📝 All freelancers use the same contract.html portal. No individual files needed!
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="freelancerRole">Role *</label>
+                        <input type="text" id="freelancerRole" name="role" placeholder="e.g., Videographer, Photographer, Editor" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="freelancerLocation">Project Location</label>
+                        <input type="text" id="freelancerLocation" name="location" placeholder="e.g., 6695 Church Street, Douglasville, GA 30134" value="Atlanta Area">
+                    </div>
+                    <div class="form-group">
+                        <label for="projectStart">Project Start Date & Time</label>
+                        <input type="text" id="projectStart" name="projectStart" placeholder="e.g., November 8, 2025 at 3:15 PM" value="TBD">
+                    </div>
+                    <div class="form-group">
+                        <label for="freelancerRate">Rate *</label>
+                        <input type="text" id="freelancerRate" name="rate" placeholder="e.g., $400.00 USD (Flat) or $25/hour" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="approvedDate">Approved Date</label>
+                        <input type="date" id="approvedDate" name="approvedDate">
+                    </div>
+                    <button type="submit" class="btn">Save Freelancer</button>
+                    <button type="button" class="btn" onclick="clearContractForm()">Clear Form</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h2>Current Freelancers</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <p style="color: rgba(255,255,255,0.7); margin: 0;">Manage your freelancer contracts and assignments</p>
+                        <p id="freelancerStatus" style="color: #22c55e; margin: 0.25rem 0 0 0; font-size: 0.9rem;">Loading freelancers...</p>
+                    </div>
+                    <button class="btn" onclick="refreshFreelancers()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
+                        <i class="fas fa-sync-alt"></i> Refresh Data
+                    </button>
+                </div>
+                <div id="contractsList"></div>
+            </div>
+
+            <!-- Job Assignment Section -->
+            <div class="form-section">
+                <h2>🎯 Assign Additional Jobs to Freelancers</h2>
+                <div class="workflow-info">
+                    <p><strong>Additional Job Assignment:</strong> Assign extra jobs to freelancers. The primary job is automatically created from the freelancer details when you save them.</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">Select Freelancer</h3>
+                        <select id="jobAssignmentFreelancer" style="margin-bottom: 1rem;">
+                            <option value="">Choose a freelancer...</option>
+                        </select>
+                        
+                        <div id="freelancerJobInfo" style="display: none; background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,178,0,0.3); margin-bottom: 1rem;">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Current Jobs:</h4>
+                            <div id="currentJobsList"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 style="color: #22c55e; margin-bottom: 1rem;">Add New Job</h3>
+                        <form id="jobAssignmentForm">
+                            <div class="form-group">
+                                <label for="jobId">Job ID *</label>
+                                <input type="text" id="jobId" placeholder="e.g., job-001" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="jobRole">Role</label>
+                                <input type="text" id="jobRole" placeholder="e.g., Video Editor">
+                            </div>
+                            <div class="form-group">
+                                <label for="assignmentJobLocation">Location</label>
+                                <input type="text" id="assignmentJobLocation" placeholder="e.g., Atlanta, GA">
+                            </div>
+                            <div class="form-group">
+                                <label for="assignmentJobProjectStart">Project Start</label>
+                                <input type="text" id="assignmentJobProjectStart" placeholder="e.g., August 19th, 2025 at 2:00pm">
+                            </div>
+                            <div class="form-group">
+                                <label for="assignmentJobRate">Rate</label>
+                                <input type="text" id="assignmentJobRate" placeholder="e.g., $450.00 USD (Flat)">
+                            </div>
+                            <div class="form-group">
+                                <label for="assignmentJobStatus">Status</label>
+                                <select id="assignmentJobStatus">
+                                    <option value="upcoming">Upcoming</option>
+                                    <option value="active">Active</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="assignmentJobProjectType">Project Type</label>
+                                <input type="text" id="assignmentJobProjectType" placeholder="e.g., Corporate Video">
+                            </div>
+                            <div class="form-group">
+                                <label for="assignmentJobDescription">Description</label>
+                                <textarea id="assignmentJobDescription" placeholder="Describe the job requirements..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="primaryJobCheckbox">
+                                    <input type="checkbox" id="primaryJobCheckbox" style="width: auto; margin-right: 0.5rem;">
+                                    Set as Primary Job
+                                </label>
+                            </div>
+                            <button type="submit" class="btn">Add Job</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="export-section">
+                <h2>GitHub Integration</h2>
+                <p>Manage your GitHub token for automatic updates:</p>
+                <button class="btn" onclick="showTokenManager()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                    <i class="fas fa-key"></i> Manage GitHub Token
+                </button>
+            </div>
+
+            <div class="export-section">
+                <h2>📧 Email Notification Setup</h2>
+                <p>To receive email notifications when contracts are signed, configure EmailJS in contract.html:</p>
+                <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2); margin-bottom: 2rem;">
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">Setup Instructions:</h3>
+                    <ol style="color: rgba(255,255,255,0.9); line-height: 1.6;">
+                        <li><strong>Sign up for EmailJS:</strong> Go to <a href="https://www.emailjs.com/" target="_blank" style="color: #FFB200;">emailjs.com</a> and create a free account</li>
+                        <li><strong>Create Email Service:</strong> Connect your email provider (Gmail, Outlook, etc.)</li>
+                        <li><strong>Create Email Template:</strong> Design your contract signing notification email</li>
+                        <li><strong>Get Credentials:</strong> Copy your Public Key, Service ID, and Template ID</li>
+                        <li><strong>Update contract.html:</strong> Replace the placeholder values in EMAILJS_CONFIG</li>
+                    </ol>
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(255,178,0,0.1); border-radius: 8px; border: 1px solid rgba(255,178,0,0.3);">
+                        <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 0.9rem;">
+                            💡 <strong>Template Variables Available:</strong><br>
+                            freelancer_name, freelancer_email, role, location, project_start, rate, signature_date, signed_timestamp, effective_date
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(34, 197, 94, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3);">
+                    <h3 style="color: #22c55e; margin-bottom: 0.5rem;">✨ New Workflow Benefits:</h3>
+                    <ul style="color: rgba(255,255,255,0.9); margin: 0;">
+                        <li>✅ No more individual HTML file generation</li>
+                        <li>✅ Automatic email notifications when contracts are signed</li>
+                        <li>✅ Digital signature validation and verification</li>
+                        <li>✅ Instant signed PDF downloads for freelancers</li>
+                        <li>✅ Single contract.html portal handles everything</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signed Contracts Tab -->
+        <div id="signed-tab" class="tab-content">
+            <div class="form-section">
+                <h2>✍️ Signed Contracts Management</h2>
+                <div class="workflow-info">
+                    <p><strong>📋 Simple Workflow:</strong></p>
+                    <ol>
+                        <li><strong>Freelancers Sign:</strong> They sign contracts via contract.html and receive email confirmations</li>
+                        <li><strong>You Receive Email:</strong> Get detailed email notifications with all contract info</li>
+                        <li><strong>Manual Upload:</strong> Upload the signed PDFs here for organized storage</li>
+                        <li><strong>Easy Management:</strong> View, organize, and download all uploaded contracts</li>
+                    </ol>
+                    <p><strong>💡 Benefits:</strong> Simple, reliable workflow with email notifications and organized PDF storage.</p>
+                </div>
+                </div>
+                
+            <!-- PDF Upload Section -->
+            <div class="form-section">
+                <h2>📤 Upload Signed Contract PDF</h2>
+                
+                <!-- Quick Import Section -->
+                <div style="background: rgba(34, 197, 94, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3); margin-bottom: 2rem;">
+                    <h3 style="color: #22c55e; margin-bottom: 1rem;">⚡ Quick Import from Email</h3>
+                    <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem; font-size: 0.9rem;">
+                        Copy contract data from your admin notification email and paste it here to auto-fill the form:
+                    </p>
+                    <textarea id="quickImportData" placeholder="Paste contract data from admin email here (e.g., Freelancer: John Doe, Email: john@example.com, Role: Videographer...)" style="width: 100%; height: 80px; margin-bottom: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(34, 197, 94, 0.5); color: #fff; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem;"></textarea>
+                    <button class="btn" onclick="parseEmailData()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
+                        <i class="fas fa-magic"></i> Auto-Fill from Email Data
+                    </button>
+                </div>
+                
+                <div class="upload-section" id="pdfUploadZone">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">
+                        Drag & Drop PDF files here or click to browse
+                    </div>
+                    <div class="upload-instructions">
+                        Upload signed contract PDFs received from freelancers (PDF files only)
+                    </div>
+                    <input type="file" id="contractFileInput" accept=".pdf" multiple>
+                    <button class="btn upload-btn" onclick="document.getElementById('contractFileInput').click()">
+                        <i class="fas fa-plus"></i> Choose PDF Files
+                    </button>
+                </div>
+                
+                <!-- Manual Contract Details Form -->
+                <div id="contractDetailsForm" style="display: none; margin-top: 2rem;">
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">📋 Contract Details</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label for="uploadFreelancerName">Freelancer Name</label>
+                            <input type="text" id="uploadFreelancerName" placeholder="Enter freelancer's full name">
+                    </div>
+                        <div class="form-group">
+                            <label for="uploadFreelancerEmail">Email</label>
+                            <input type="email" id="uploadFreelancerEmail" placeholder="Enter freelancer's email">
+                    </div>
+                        <div class="form-group">
+                            <label for="uploadRole">Role</label>
+                            <input type="text" id="uploadRole" placeholder="e.g., Videographer, Photographer">
+                </div>
+                        <div class="form-group">
+                            <label for="uploadRate">Rate</label>
+                            <input type="text" id="uploadRate" placeholder="e.g., $400 flat, $150/day">
+                </div>
+                        <div class="form-group">
+                            <label for="uploadLocation">Location</label>
+                            <input type="text" id="uploadLocation" placeholder="Project location">
+            </div>
+                        <div class="form-group">
+                            <label for="uploadDate">Contract Date</label>
+                            <input type="date" id="uploadDate">
+        </div>
+    </div>
+                    <div class="form-group">
+                        <label for="uploadNotes">Notes (Optional)</label>
+                        <textarea id="uploadNotes" placeholder="Any additional notes about this contract"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button class="btn" onclick="saveUploadedContract()">
+                            <i class="fas fa-save"></i> Save Contract
+                        </button>
+                        <button class="btn" onclick="cancelContractUpload()" style="background: #6b7280;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+                </div>
+
+            <div class="list-section">
+                <h2>📁 Uploaded Contracts</h2>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <button class="btn" onclick="loadUploadedContracts()">🔄 Refresh</button>
+                    <button class="btn" onclick="exportContractList()">📦 Export List</button>
+                    <button class="btn" onclick="exportUploadedContractsForPortal()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
+                        📄 Export for User Portal
+                    </button>
+                    <span id="contractCount" style="color: rgba(255,255,255,0.8);"></span>
+                    </div>
+
+                <div id="uploadedContractsList">
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">📋 No Contracts Uploaded Yet</h3>
+                        <p>Upload signed contract PDFs using the form above</p>
+                    </div>
+                    </div>
+                            </div>
+                            
+            <div class="export-section">
+                <h2>📊 Contract Analytics</h2>
+                <div id="contractAnalytics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <!-- Analytics will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+</body>
+</html>
