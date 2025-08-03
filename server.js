@@ -161,6 +161,23 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Serve JSON files directly from server
+app.get('/jobs-data.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'jobs-data.json'));
+});
+
+app.get('/freelancers.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'freelancers.json'));
+});
+
+app.get('/uploaded-contracts.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'uploaded-contracts.json'));
+});
+
+app.get('/project-status.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'project-status.json'));
+});
+
 // Serve the main HTML files
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
