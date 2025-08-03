@@ -1846,22 +1846,48 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 // Create job entry if it doesn't exist
                 const freelancer = freelancers.find(f => f.name === freelancerName);
                 if (freelancer) {
-                    const job = freelancer.jobs.find(j => j.id === jobId);
-                    if (job) {
-                        projectStatus[freelancerName].jobs[jobId] = {
-                            id: job.id,
-                            role: job.role,
-                            location: job.location,
-                            projectStart: job.projectStart,
-                            rate: job.rate,
-                            projectStatus: newStatus,
-                            paymentStatus: paymentStatus || 'pending',
-                            completionDate: newStatus === 'completed' ? new Date().toISOString().split('T')[0] : null,
-                            paymentDate: paymentStatus === 'paid' ? new Date().toISOString().split('T')[0] : null,
-                            projectType: job.projectType || 'General',
-                            description: job.description || ''
+                    // First try to find job in freelancer's jobs array
+                    let job = freelancer.jobs.find(j => j.id === jobId);
+                    
+                    // If not found in jobs array, create a job from freelancer's primary data
+                    if (!job && freelancer.primaryJob) {
+                        job = {
+                            id: freelancer.primaryJob,
+                            role: freelancer.role,
+                            location: freelancer.location,
+                            projectStart: freelancer.projectStart,
+                            rate: freelancer.rate,
+                            projectType: freelancer.role + ' Project',
+                            description: `Primary assignment for ${freelancerName}`
                         };
                     }
+                    
+                    // If still no job, create a default job entry
+                    if (!job) {
+                        job = {
+                            id: `job-${freelancerName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+                            role: freelancer.role,
+                            location: freelancer.location,
+                            projectStart: freelancer.projectStart,
+                            rate: freelancer.rate,
+                            projectType: freelancer.role + ' Project',
+                            description: `Primary assignment for ${freelancerName}`
+                        };
+                    }
+                    
+                    projectStatus[freelancerName].jobs[jobId] = {
+                        id: job.id,
+                        role: job.role,
+                        location: job.location,
+                        projectStart: job.projectStart,
+                        rate: job.rate,
+                        projectStatus: newStatus,
+                        paymentStatus: paymentStatus || 'pending',
+                        completionDate: newStatus === 'completed' ? new Date().toISOString().split('T')[0] : null,
+                        paymentDate: paymentStatus === 'paid' ? new Date().toISOString().split('T')[0] : null,
+                        projectType: job.projectType || 'General',
+                        description: job.description || ''
+                    };
                 }
             } else {
                 // Update existing job
@@ -1894,7 +1920,32 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             }
             
             const userProjects = projectStatus[freelancerName] || { jobs: {} };
-            const jobs = Object.values(userProjects.jobs);
+            let jobs = Object.values(userProjects.jobs);
+            
+            // If no jobs in project status, create a default job from freelancer data
+            if (jobs.length === 0) {
+                const defaultJobId = freelancer.primaryJob || `job-${freelancerName.toLowerCase().replace(/\s+/g, '-')}-default`;
+                const defaultJob = {
+                    id: defaultJobId,
+                    role: freelancer.role,
+                    location: freelancer.location,
+                    projectStart: freelancer.projectStart,
+                    rate: freelancer.rate,
+                    projectStatus: 'upcoming',
+                    paymentStatus: 'pending',
+                    projectType: freelancer.role + ' Project',
+                    description: `Primary assignment for ${freelancerName}`
+                };
+                
+                // Add to project status
+                if (!projectStatus[freelancerName]) {
+                    projectStatus[freelancerName] = { jobs: {} };
+                }
+                projectStatus[freelancerName].jobs[defaultJobId] = defaultJob;
+                jobs = [defaultJob];
+                
+                console.log(`📋 Created default job for ${freelancerName}:`, defaultJob);
+            }
             
             let jobsHTML = '';
             if (jobs.length > 0) {

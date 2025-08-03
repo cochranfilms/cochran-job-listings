@@ -783,6 +783,37 @@
                 return;
             }
 
+            // Load project status data
+            loadProjectStatus().then(() => {
+                displayJobsWithStatus();
+            }).catch(error => {
+                console.error('❌ Error loading project status:', error);
+                displayJobsWithStatus();
+            });
+        }
+
+        // Load project status from JSON file
+        async function loadProjectStatus() {
+            try {
+                const response = await fetch('project-status.json');
+                if (response.ok) {
+                    const jsonData = await response.json();
+                    window.projectStatus = jsonData.projectStatus || {};
+                    console.log('✅ Project status loaded:', Object.keys(window.projectStatus).length, 'users');
+                } else {
+                    console.warn('⚠️ Could not load project-status.json, using empty object');
+                    window.projectStatus = {};
+                }
+            } catch (error) {
+                console.error('❌ Error loading project status:', error);
+                window.projectStatus = {};
+            }
+        }
+
+        // Display jobs with project status
+        function displayJobsWithStatus() {
+            const container = document.getElementById('userJobs');
+            
             // Get the selected job or fall back to primary job
             const selectedJob = getSelectedJob();
             if (!selectedJob) {
@@ -795,13 +826,21 @@
                 return;
             }
 
+            // Get project status for this job
+            const userProjectStatus = window.projectStatus[currentUser.name] || { jobs: {} };
+            const jobProjectStatus = userProjectStatus.jobs[selectedJob.id] || {
+                projectStatus: 'upcoming',
+                paymentStatus: 'pending'
+            };
+
             // Display the selected job's information
             const jobInfo = {
                 role: selectedJob.role,
                 location: selectedJob.location,
                 projectStart: selectedJob.projectStart,
                 rate: selectedJob.rate,
-                status: getJobStatus(selectedJob.projectStart),
+                status: jobProjectStatus.projectStatus || getJobStatus(selectedJob.projectStart),
+                paymentStatus: jobProjectStatus.paymentStatus || 'pending',
                 projectType: selectedJob.projectType,
                 description: selectedJob.description
             };
@@ -832,7 +871,10 @@
                             <p class="job-location"><i class="fas fa-map-marker-alt"></i> ${jobInfo.location}</p>
                             <p class="job-type-info"><i class="fas fa-tag"></i> ${jobInfo.projectType}</p>
                         </div>
-                        <span class="job-status ${jobInfo.status.toLowerCase()}">${jobInfo.status}</span>
+                        <div class="status-container">
+                            <span class="job-status ${jobInfo.status.toLowerCase()}">${jobInfo.status}</span>
+                            <span class="payment-status ${jobInfo.paymentStatus.toLowerCase()}">${jobInfo.paymentStatus}</span>
+                        </div>
                     </div>
                     
                     <div class="job-details">
@@ -2167,6 +2209,13 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             margin-bottom: 0.25rem;
         }
 
+        .status-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            align-items: flex-end;
+        }
+
         .job-status {
             background: rgba(255, 178, 0, 0.1);
             color: #FFB200;
@@ -2174,6 +2223,35 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             border-radius: 12px;
             font-size: 0.8rem;
             font-weight: 600;
+        }
+
+        .payment-status {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .payment-status.pending {
+            background: rgba(255, 178, 0, 0.1);
+            color: #FFB200;
+        }
+
+        .payment-status.processing {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .payment-status.paid {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .payment-status.overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
         }
 
         .job-status.upcoming {
