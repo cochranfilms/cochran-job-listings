@@ -1,7 +1,7 @@
 {
   "version": 2,
   "functions": {
-    "server.js": { "runtime": "@vercel/node@3" }
+    "server.js": { "runtime": "@vercel/node@18.x" }
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/server.js" },
