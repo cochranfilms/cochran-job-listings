@@ -26,7 +26,6 @@
         let signedContracts = [];
         let uploadedContracts = [];
         let contractsAnalytics = {};
-        let currentUploadFile = null;
 
         // EmailJS Configuration for Job Acceptance
         const EMAILJS_CONFIG = {
@@ -176,223 +175,11 @@
 
         // ==================== CONTRACTS UPLOAD FUNCTIONALITY ====================
 
-        // Initialize drag and drop for PDF upload
-        document.addEventListener('DOMContentLoaded', function() {
-            const uploadZone = document.getElementById('pdfUploadZone');
-            const fileInput = document.getElementById('contractFileInput');
-            
-            if (uploadZone && fileInput) {
-                uploadZone.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                    uploadZone.classList.add('dragover');
-                });
-                
-                uploadZone.addEventListener('dragleave', function(e) {
-                    e.preventDefault();
-                    uploadZone.classList.remove('dragover');
-                });
-                
-                uploadZone.addEventListener('drop', function(e) {
-                    e.preventDefault();
-                    uploadZone.classList.remove('dragover');
-                    const files = e.dataTransfer.files;
-                    handleFileSelection(files);
-                });
-                
-                fileInput.addEventListener('change', function(e) {
-                    handleFileSelection(e.target.files);
-                });
-            }
-        });
+        // Manual upload functionality removed - contracts are now automatically uploaded via contract signing
 
-        // Handle file selection
-        function handleFileSelection(files) {
-            if (files.length === 0) return;
-            
-            const file = files[0];
-            if (file.type !== 'application/pdf') {
-                alert('Please select a PDF file only.');
-                return;
-            }
-            
-            currentUploadFile = file;
-            document.getElementById('contractDetailsForm').style.display = 'block';
-            document.getElementById('uploadDate').value = new Date().toISOString().split('T')[0];
-            
-            // Scroll to form
-            document.getElementById('contractDetailsForm').scrollIntoView({ behavior: 'smooth' });
-        }
+        // Manual upload functionality removed - contracts are now automatically uploaded via contract signing
 
-        // Save uploaded contract
-        async function saveUploadedContract() {
-            if (!currentUploadFile) {
-                alert('No file selected.');
-                return;
-            }
-            
-            const name = document.getElementById('uploadFreelancerName').value.trim();
-            const email = document.getElementById('uploadFreelancerEmail').value.trim();
-            const role = document.getElementById('uploadRole').value.trim();
-            const rate = document.getElementById('uploadRate').value.trim();
-            const location = document.getElementById('uploadLocation').value.trim();
-            const date = document.getElementById('uploadDate').value;
-            const notes = document.getElementById('uploadNotes').value.trim();
-            
-            if (!name || !email || !role) {
-                alert('Please fill in at least the name, email, and role fields.');
-                return;
-            }
-            
-            // Generate unique contract ID
-            const contractId = 'CF-UPLOAD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
-            
-            // Create contract data
-            const contractData = {
-                contractId: contractId,
-                freelancerName: name,
-                freelancerEmail: email,
-                role: role,
-                rate: rate,
-                location: location,
-                contractDate: date,
-                notes: notes,
-                fileName: currentUploadFile.name,
-                fileSize: currentUploadFile.size,
-                uploadDate: new Date().toISOString(),
-                uploadTimestamp: new Date().toLocaleString(),
-                status: 'UPLOADED'
-            };
-            
-            try {
-                // Upload PDF to GitHub contracts folder
-                const pdfDownloadUrl = await uploadContractToGitHub(currentUploadFile, contractData);
-                contractData.githubUrl = pdfDownloadUrl;
-                
-                // Update uploaded-contracts.json on GitHub with the new contract
-                await updateUploadedContractsOnGitHubWithNewContract(contractData);
-                
-                // Update freelancer status in freelancers array
-                updateFreelancerContractStatus(email, contractId, date);
-                
-                // Update freelancers.json on GitHub
-                await updateFreelancersOnGitHub();
-                
-                alert('✅ Contract uploaded successfully to GitHub!');
-                
-            } catch (error) {
-                console.error('❌ Error uploading contract:', error);
-                alert(`Error uploading contract: ${error.message}`);
-            }
-            
-            // Save file data (base64) for later download
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                contractData.fileData = e.target.result;
-                
-                console.log('✅ Contract uploaded and saved:', contractData);
-                
-                // Reset form
-                cancelContractUpload();
-                
-                // Refresh list from API
-                await loadUploadedContracts();
-                
-                alert(`✅ Contract uploaded successfully!\n\nContract ID: ${contractId}\nFreelancer: ${name}\n\n📋 Freelancer status updated to "uploaded" - they can now see their signed contract in the user portal!`);
-            };
-            reader.readAsDataURL(currentUploadFile);
-        }
-
-        // Upload contract PDF to GitHub via secure server
-        async function uploadContractToGitHub(file, contractData) {
-            try {
-                console.log('📤 Uploading contract PDF to GitHub via secure server...');
-                
-                // Convert file to base64
-                const base64Content = await fileToBase64(file);
-                
-                // Create filename based on contract ID
-                const fileName = `contracts/${contractData.contractId}.pdf`;
-                
-                // Upload file via our secure server endpoint
-                const uploadResponse = await fetch(`/api/github/file/${fileName}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        content: base64Content,
-                        message: `Upload contract PDF for ${contractData.freelancerName} - ${new Date().toLocaleString()}`
-                    })
-                });
-                
-                if (uploadResponse.ok) {
-                    const result = await uploadResponse.json();
-                    console.log('✅ Contract PDF uploaded to GitHub:', result.content.download_url);
-                    return result.content.download_url;
-                } else {
-                    const error = await uploadResponse.json();
-                    throw new Error(`Server error: ${error.error}`);
-                }
-                
-            } catch (error) {
-                console.error('❌ Error uploading contract PDF:', error);
-                throw error;
-            }
-        }
-        
-        // Convert file to base64
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => {
-                    const base64 = reader.result.split(',')[1];
-                    resolve(base64);
-                };
-                reader.onerror = error => reject(error);
-            });
-        }
-        
-        // Download contract PDF from GitHub via secure server
-        async function downloadContractFromGitHub(contractId) {
-            try {
-                const fileName = `contracts/${contractId}.pdf`;
-                
-                const response = await fetch(`/api/github/file/${fileName}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const fileData = await response.json();
-                    return fileData.download_url;
-                } else {
-                    throw new Error('Contract PDF not found on GitHub');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error downloading contract PDF:', error);
-                throw error;
-            }
-        }
-
-        // Cancel contract upload
-        function cancelContractUpload() {
-            currentUploadFile = null;
-            document.getElementById('contractDetailsForm').style.display = 'none';
-            document.getElementById('contractFileInput').value = '';
-            
-            // Clear form
-            document.getElementById('uploadFreelancerName').value = '';
-            document.getElementById('uploadFreelancerEmail').value = '';
-            document.getElementById('uploadRole').value = '';
-            document.getElementById('uploadRate').value = '';
-            document.getElementById('uploadLocation').value = '';
-            document.getElementById('uploadDate').value = '';
-            document.getElementById('uploadNotes').value = '';
-        }
+        // Manual upload functions removed - contracts are now automatically uploaded via contract signing
 
         // Load uploaded contracts
         async function loadUploadedContracts() {
@@ -532,11 +319,13 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         async function deleteUploadedContract(index) {
             const contract = uploadedContracts[index];
             if (confirm(`Are you sure you want to delete the contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis action cannot be undone.`)) {
-                // Remove from GitHub directly
-                await deleteContractFromGitHub(contract);
+                uploadedContracts.splice(index, 1);
                 
-                // Refresh from API
-                await loadUploadedContracts();
+                // Automatically update GitHub
+                await updateUploadedContractsOnGitHub();
+                
+                displayUploadedContracts();
+                updateContractAnalytics();
             }
         }
 
@@ -917,8 +706,8 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             displayFreelancers();
             console.log('✅ Total freelancers loaded:', freelancers.length);
             
-            // Populate dropdown options
-            populateDropdownOptions();
+            // Load and populate dropdown options
+            loadDropdownOptions();
             
             // Populate freelancer dropdowns
             populateFreelancerDropdowns();
@@ -964,7 +753,34 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             console.log('👥 Populated freelancer dropdowns with', freelancers.length, 'options');
         }
 
-        // Populate dropdown options from JSON data
+        // Load dropdown options from localStorage or use defaults
+        function loadDropdownOptions() {
+            const savedOptions = localStorage.getItem('adminDropdownOptions');
+            if (savedOptions) {
+                window.dropdownOptions = JSON.parse(savedOptions);
+                console.log('📋 Loaded dropdown options from localStorage:', window.dropdownOptions);
+            } else {
+                // Initialize with default options
+                window.dropdownOptions = {
+                    roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Photographer', 'Full Stack Designer', 'Video Editor', 'Corporate Videographer'],
+                    locations: ['6695 Church Street, Douglasville, GA 30134', 'Sandy Springs, GA', 'Douglasville, GA', 'Atlanta, GA', 'Atlanta Area'],
+                    rates: ['$400.00 USD (Flat)', '$450.00 USD (Flat)', '$500.00 USD (Flat)', '$750.00 USD (Flat)', '$900.00 USD (Flat)', '$150/day', '$200/day'],
+                    projectTypes: ['Photography', 'Video', 'Editor Project', 'Corporate Video', 'Event Coverage', 'Product Photography', 'Real Estate', 'Wedding', 'Commercial'],
+                    paymentMethods: ['Cash', 'Check', 'Zelle', 'PayPal', 'Invoice Request'],
+                    projectStatuses: ['upcoming', 'in-progress', 'completed', 'cancelled'],
+                    paymentStatuses: ['pending', 'processing', 'paid', 'overdue']
+                };
+                console.log('📋 Initialized default dropdown options:', window.dropdownOptions);
+            }
+            
+            // Populate the management interface
+            populateDropdownManagementInterface();
+            
+            // Populate job assignment dropdowns
+            populateJobAssignmentDropdowns();
+        }
+        
+        // Populate dropdown options from JSON data (legacy function)
         function populateDropdownOptions() {
             // Get unique roles from freelancers.json
             const roles = new Set();
@@ -1000,21 +816,150 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 }
             });
             
-            // Store for use in dropdowns
-            window.dropdownOptions = {
-                roles: Array.from(roles),
-                locations: Array.from(locations),
-                rates: Array.from(rates),
-                jobTitles: jobTitles,
-                projectTypes: Array.from(projectTypes),
-                paymentMethods: ['Cash', 'Check', 'Zelle', 'PayPal', 'Invoice Request'],
-                projectStatuses: ['upcoming', 'in-progress', 'completed', 'cancelled'],
-                paymentStatuses: ['pending', 'processing', 'paid', 'overdue']
-            };
+            // Merge with existing options
+            if (window.dropdownOptions) {
+                window.dropdownOptions.roles = [...new Set([...window.dropdownOptions.roles, ...Array.from(roles)])];
+                window.dropdownOptions.locations = [...new Set([...window.dropdownOptions.locations, ...Array.from(locations)])];
+                window.dropdownOptions.rates = [...new Set([...window.dropdownOptions.rates, ...Array.from(rates)])];
+                window.dropdownOptions.projectTypes = [...new Set([...window.dropdownOptions.projectTypes, ...Array.from(projectTypes)])];
+            } else {
+                window.dropdownOptions = {
+                    roles: Array.from(roles),
+                    locations: Array.from(locations),
+                    rates: Array.from(rates),
+                    jobTitles: jobTitles,
+                    projectTypes: Array.from(projectTypes),
+                    paymentMethods: ['Cash', 'Check', 'Zelle', 'PayPal', 'Invoice Request'],
+                    projectStatuses: ['upcoming', 'in-progress', 'completed', 'cancelled'],
+                    paymentStatuses: ['pending', 'processing', 'paid', 'overdue']
+                };
+            }
             
             console.log('📋 Populated dropdown options:', window.dropdownOptions);
         }
 
+        // Add dropdown option
+        function addDropdownOption(category, inputId) {
+            const input = document.getElementById(inputId);
+            const value = input.value.trim();
+            
+            if (!value) {
+                alert('Please enter a value to add.');
+                return;
+            }
+            
+            if (!window.dropdownOptions[category]) {
+                window.dropdownOptions[category] = [];
+            }
+            
+            if (window.dropdownOptions[category].includes(value)) {
+                alert('This option already exists.');
+                return;
+            }
+            
+            window.dropdownOptions[category].push(value);
+            input.value = '';
+            
+            // Update the management interface
+            populateDropdownManagementInterface();
+            
+            // Update job assignment dropdowns
+            populateJobAssignmentDropdowns();
+            
+            console.log(`✅ Added ${value} to ${category}`);
+        }
+        
+        // Remove dropdown option
+        function removeDropdownOption(category, value) {
+            if (window.dropdownOptions[category]) {
+                window.dropdownOptions[category] = window.dropdownOptions[category].filter(item => item !== value);
+                populateDropdownManagementInterface();
+                populateJobAssignmentDropdowns();
+                console.log(`✅ Removed ${value} from ${category}`);
+            }
+        }
+        
+        // Populate dropdown management interface
+        function populateDropdownManagementInterface() {
+            const categories = ['roles', 'locations', 'rates', 'projectTypes'];
+            
+            categories.forEach(category => {
+                const container = document.getElementById(`${category}List`);
+                if (container && window.dropdownOptions[category]) {
+                    container.innerHTML = window.dropdownOptions[category].map(item => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.25rem;">
+                            <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">${item}</span>
+                            <button onclick="removeDropdownOption('${category}', '${item}')" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `).join('');
+                }
+            });
+        }
+        
+        // Populate job assignment dropdowns
+        function populateJobAssignmentDropdowns() {
+            if (!window.dropdownOptions) return;
+            
+            // Populate role dropdown
+            const roleSelect = document.getElementById('jobRole');
+            if (roleSelect) {
+                roleSelect.innerHTML = '<option value="">Select a role...</option>';
+                window.dropdownOptions.roles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role;
+                    option.textContent = role;
+                    roleSelect.appendChild(option);
+                });
+            }
+            
+            // Populate location dropdown
+            const locationSelect = document.getElementById('assignmentJobLocation');
+            if (locationSelect) {
+                locationSelect.innerHTML = '<option value="">Select a location...</option>';
+                window.dropdownOptions.locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location;
+                    option.textContent = location;
+                    locationSelect.appendChild(option);
+                });
+            }
+            
+            // Populate rate dropdown
+            const rateSelect = document.getElementById('assignmentJobRate');
+            if (rateSelect) {
+                rateSelect.innerHTML = '<option value="">Select a rate...</option>';
+                window.dropdownOptions.rates.forEach(rate => {
+                    const option = document.createElement('option');
+                    option.value = rate;
+                    option.textContent = rate;
+                    rateSelect.appendChild(option);
+                });
+            }
+            
+            // Populate project type dropdown
+            const projectTypeSelect = document.getElementById('assignmentJobProjectType');
+            if (projectTypeSelect) {
+                projectTypeSelect.innerHTML = '<option value="">Select a project type...</option>';
+                window.dropdownOptions.projectTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    projectTypeSelect.appendChild(option);
+                });
+            }
+        }
+        
+        // Save dropdown options to localStorage
+        function saveDropdownOptions() {
+            if (window.dropdownOptions) {
+                localStorage.setItem('adminDropdownOptions', JSON.stringify(window.dropdownOptions));
+                console.log('✅ Saved dropdown options to localStorage');
+                alert('✅ Dropdown options saved successfully!');
+            }
+        }
+        
         // Display payment method summary
         function displayPaymentMethodSummary() {
             const paymentMethods = {};
@@ -1461,11 +1406,30 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 return;
             }
             
+            // Format the project start date for better display
+            const projectStartInput = document.getElementById('assignmentJobProjectStart').value;
+            let formattedProjectStart = projectStartInput;
+            if (projectStartInput) {
+                try {
+                    const date = new Date(projectStartInput);
+                    formattedProjectStart = date.toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch (e) {
+                    // If date parsing fails, use the original value
+                    formattedProjectStart = projectStartInput;
+                }
+            }
+            
             const jobData = {
                 id: document.getElementById('jobId').value,
                 role: document.getElementById('jobRole').value,
                 location: document.getElementById('assignmentJobLocation').value,
-                projectStart: document.getElementById('assignmentJobProjectStart').value,
+                projectStart: formattedProjectStart,
                 rate: document.getElementById('assignmentJobRate').value,
                 status: document.getElementById('assignmentJobStatus').value,
                 projectType: document.getElementById('assignmentJobProjectType').value,
@@ -1933,75 +1897,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             }
         }
 
-        // Update uploaded-contracts.json on GitHub with a new contract
-        async function updateUploadedContractsOnGitHubWithNewContract(newContract) {
-            try {
-                // Load current contracts from API
-                const response = await fetch('/api/uploaded-contracts');
-                if (!response.ok) {
-                    throw new Error('Could not load current contracts from API');
-                }
-                
-                const currentData = await response.json();
-                const currentContracts = currentData.contracts || [];
-                
-                // Add the new contract
-                currentContracts.push(newContract);
-                
-                const exportData = {
-                    exportDate: new Date().toISOString(),
-                    totalContracts: currentContracts.length,
-                    contracts: currentContracts
-                };
-                
-                await updateGitHubFile('uploaded-contracts.json', JSON.stringify(exportData, null, 2), `Add contract ${newContract.contractId} - ${newContract.freelancerName} - ${new Date().toLocaleString()}`);
-                console.log('✅ uploaded-contracts.json updated on GitHub with new contract');
-                
-                // Show success message
-                showUpdateStatus('✅ Contract added to uploaded-contracts.json successfully!', 'success');
-                
-            } catch (error) {
-                console.error('❌ Error updating uploaded-contracts.json:', error);
-                showUpdateStatus(`❌ Error updating uploaded-contracts.json: ${error.message}`, 'error');
-            }
-        }
-        
-        // Delete contract from GitHub
-        async function deleteContractFromGitHub(contractToDelete) {
-            try {
-                // Load current contracts from API
-                const response = await fetch('/api/uploaded-contracts');
-                if (!response.ok) {
-                    throw new Error('Could not load current contracts from API');
-                }
-                
-                const currentData = await response.json();
-                const currentContracts = currentData.contracts || [];
-                
-                // Remove the contract
-                const filteredContracts = currentContracts.filter(contract => 
-                    contract.contractId !== contractToDelete.contractId
-                );
-                
-                const exportData = {
-                    exportDate: new Date().toISOString(),
-                    totalContracts: filteredContracts.length,
-                    contracts: filteredContracts
-                };
-                
-                await updateGitHubFile('uploaded-contracts.json', JSON.stringify(exportData, null, 2), `Remove contract ${contractToDelete.contractId} - ${contractToDelete.freelancerName} - ${new Date().toLocaleString()}`);
-                console.log('✅ Contract removed from uploaded-contracts.json');
-                
-                // Show success message
-                showUpdateStatus('✅ Contract removed from uploaded-contracts.json successfully!', 'success');
-                
-            } catch (error) {
-                console.error('❌ Error removing contract from uploaded-contracts.json:', error);
-                showUpdateStatus(`❌ Error removing contract: ${error.message}`, 'error');
-            }
-        }
-        
-        // Update uploaded-contracts.json on GitHub (for existing contracts)
+        // Update uploaded-contracts.json on GitHub
         async function updateUploadedContractsOnGitHub() {
             try {
                 const exportData = {
@@ -3012,53 +2908,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             color: white;
         }
         
-        /* PDF Upload Styles */
-        .upload-section {
-            background: rgba(34, 197, 94, 0.1);
-            border: 2px dashed rgba(34, 197, 94, 0.3);
-            padding: 2rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .upload-section:hover {
-            border-color: rgba(34, 197, 94, 0.5);
-            background: rgba(34, 197, 94, 0.15);
-        }
-        
-        .upload-section.dragover {
-            border-color: #22c55e;
-            background: rgba(34, 197, 94, 0.2);
-        }
-        
-        .upload-icon {
-            font-size: 3rem;
-            color: #22c55e;
-            margin-bottom: 1rem;
-        }
-        
-        .upload-text {
-            color: #22c55e;
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-        }
-        
-        .upload-instructions {
-            color: rgba(255,255,255,0.7);
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-        
-        #contractFileInput {
-            display: none;
-        }
-        
-        .upload-btn {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            color: white;
-        }
+        /* Upload section styles removed - manual upload functionality no longer needed */
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -3393,33 +3243,23 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                                 <label for="jobRole">Role</label>
                                 <select id="jobRole" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
                                     <option value="">Select a role...</option>
-                                    <option value="Backdrop Photographer">Backdrop Photographer</option>
-                                    <option value="Editor">Editor</option>
-                                    <option value="Videographer">Videographer</option>
-                                    <option value="Photographer">Photographer</option>
-                                    <option value="Full Stack Designer">Full Stack Designer</option>
-                                    <option value="Video Editor">Video Editor</option>
-                                    <option value="Corporate Videographer">Corporate Videographer</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="assignmentJobLocation">Location</label>
                                 <select id="assignmentJobLocation" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
                                     <option value="">Select a location...</option>
-                                    <option value="6695 Church Street, Douglasville, GA 30134">6695 Church Street, Douglasville, GA 30134</option>
-                                    <option value="Sandy Springs, GA">Sandy Springs, GA</option>
-                                    <option value="Douglasville, GA">Douglasville, GA</option>
-                                    <option value="Atlanta, GA">Atlanta, GA</option>
-                                    <option value="Atlanta Area">Atlanta Area</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="assignmentJobProjectStart">Project Start</label>
-                                <input type="text" id="assignmentJobProjectStart" placeholder="e.g., August 19th, 2025 at 2:00pm">
+                                <input type="datetime-local" id="assignmentJobProjectStart" placeholder="Select date and time">
                             </div>
                             <div class="form-group">
                                 <label for="assignmentJobRate">Rate</label>
-                                <input type="text" id="assignmentJobRate" placeholder="e.g., $450.00 USD (Flat)">
+                                <select id="assignmentJobRate" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                                    <option value="">Select a rate...</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="assignmentJobStatus">Status</label>
@@ -3432,7 +3272,9 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                             </div>
                             <div class="form-group">
                                 <label for="assignmentJobProjectType">Project Type</label>
-                                <input type="text" id="assignmentJobProjectType" placeholder="e.g., Corporate Video">
+                                <select id="assignmentJobProjectType" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                                    <option value="">Select a project type...</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="assignmentJobDescription">Description</label>
@@ -3456,6 +3298,81 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 <button class="btn" onclick="showTokenManager()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
                     <i class="fas fa-key"></i> Manage GitHub Token
                 </button>
+            </div>
+
+            <!-- Dropdown Options Management Section -->
+            <div class="form-section">
+                <h2>⚙️ Manage Dropdown Options</h2>
+                <div class="workflow-info">
+                    <p><strong>Dropdown Management:</strong> Add and manage options for dropdown selectors throughout the admin dashboard. This makes data entry faster and more consistent.</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <!-- Roles Management -->
+                    <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2);">
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">🎯 Roles</h3>
+                        <div class="form-group">
+                            <input type="text" id="newRole" placeholder="Add new role (e.g., Videographer)" style="margin-bottom: 0.5rem;">
+                            <button class="btn btn-small" onclick="addDropdownOption('roles', 'newRole')" style="background: #22c55e;">
+                                <i class="fas fa-plus"></i> Add Role
+                            </button>
+                        </div>
+                        <div id="rolesList" style="margin-top: 1rem;">
+                            <!-- Roles will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Locations Management -->
+                    <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2);">
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">📍 Locations</h3>
+                        <div class="form-group">
+                            <input type="text" id="newLocation" placeholder="Add new location (e.g., Atlanta, GA)" style="margin-bottom: 0.5rem;">
+                            <button class="btn btn-small" onclick="addDropdownOption('locations', 'newLocation')" style="background: #22c55e;">
+                                <i class="fas fa-plus"></i> Add Location
+                            </button>
+                        </div>
+                        <div id="locationsList" style="margin-top: 1rem;">
+                            <!-- Locations will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Rates Management -->
+                    <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2);">
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">💰 Rates</h3>
+                        <div class="form-group">
+                            <input type="text" id="newRate" placeholder="Add new rate (e.g., $500.00 USD (Flat))" style="margin-bottom: 0.5rem;">
+                            <button class="btn btn-small" onclick="addDropdownOption('rates', 'newRate')" style="background: #22c55e;">
+                                <i class="fas fa-plus"></i> Add Rate
+                            </button>
+                        </div>
+                        <div id="ratesList" style="margin-top: 1rem;">
+                            <!-- Rates will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Project Types Management -->
+                    <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2);">
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">🎬 Project Types</h3>
+                        <div class="form-group">
+                            <input type="text" id="newProjectType" placeholder="Add new project type (e.g., Corporate Video)" style="margin-bottom: 0.5rem;">
+                            <button class="btn btn-small" onclick="addDropdownOption('projectTypes', 'newProjectType')" style="background: #22c55e;">
+                                <i class="fas fa-plus"></i> Add Project Type
+                            </button>
+                        </div>
+                        <div id="projectTypesList" style="margin-top: 1rem;">
+                            <!-- Project types will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem; text-align: center;">
+                    <button class="btn" onclick="saveDropdownOptions()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
+                        <i class="fas fa-save"></i> Save All Dropdown Options
+                    </button>
+                    <button class="btn" onclick="loadDropdownOptions()" style="background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; margin-left: 1rem;">
+                        <i class="fas fa-sync"></i> Refresh Options
+                    </button>
+                </div>
             </div>
 
             <div class="export-section">
@@ -3523,69 +3440,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     </button>
                 </div>
                 
-                <div class="upload-section" id="pdfUploadZone">
-                    <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <div class="upload-text">
-                        Drag & Drop PDF files here or click to browse
-                    </div>
-                    <div class="upload-instructions">
-                        Upload signed contract PDFs received from freelancers (PDF files only)
-                    </div>
-                    <input type="file" id="contractFileInput" accept=".pdf" multiple>
-                    <button class="btn upload-btn" onclick="document.getElementById('contractFileInput').click()">
-                        <i class="fas fa-plus"></i> Choose PDF Files
-                    </button>
-                </div>
-                
-                <!-- Manual Contract Details Form -->
-                <div id="contractDetailsForm" style="display: none; margin-top: 2rem;">
-                    <h3 style="color: #FFB200; margin-bottom: 1rem;">📋 Contract Details</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                                            <div class="form-group">
-                        <label for="uploadFreelancerName">Freelancer Name</label>
-                        <select id="uploadFreelancerName" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
-                            <option value="">Select a freelancer...</option>
-                        </select>
-                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
-                            👥 Populated from existing freelancers in your system
-                        </small>
-                    </div>
-                        <div class="form-group">
-                            <label for="uploadFreelancerEmail">Email</label>
-                            <input type="email" id="uploadFreelancerEmail" placeholder="Enter freelancer's email">
-                    </div>
-                        <div class="form-group">
-                            <label for="uploadRole">Role</label>
-                            <input type="text" id="uploadRole" placeholder="e.g., Videographer, Photographer">
-                </div>
-                        <div class="form-group">
-                            <label for="uploadRate">Rate</label>
-                            <input type="text" id="uploadRate" placeholder="e.g., $400 flat, $150/day">
-                </div>
-                        <div class="form-group">
-                            <label for="uploadLocation">Location</label>
-                            <input type="text" id="uploadLocation" placeholder="Project location">
-            </div>
-                        <div class="form-group">
-                            <label for="uploadDate">Contract Date</label>
-                            <input type="date" id="uploadDate">
-        </div>
-    </div>
-                    <div class="form-group">
-                        <label for="uploadNotes">Notes (Optional)</label>
-                        <textarea id="uploadNotes" placeholder="Any additional notes about this contract"></textarea>
-                    </div>
-                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                        <button class="btn" onclick="saveUploadedContract()">
-                            <i class="fas fa-save"></i> Save Contract
-                        </button>
-                        <button class="btn" onclick="cancelContractUpload()" style="background: #6b7280;">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
-                </div>
+                <!-- Manual upload functionality removed - contracts are now automatically uploaded via contract signing -->
                 </div>
 
             <div class="list-section">
