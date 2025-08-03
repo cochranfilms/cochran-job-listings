@@ -12,7 +12,19 @@
       "dest": "/server.js"
     },
     {
-      "src": "/(admin|admin-dashboard|user-portal|contract)/?",
+      "src": "/admin-dashboard",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/user-portal", 
+      "dest": "/server.js"
+    },
+    {
+      "src": "/contract",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/admin",
       "dest": "/server.js"
     },
     {
