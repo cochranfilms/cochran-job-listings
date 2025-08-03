@@ -27,7 +27,7 @@
             try {
                 // First, try to load directly from freelancers API
                 try {
-                    const response = await fetch('/api/freelancers');
+                    const response = await fetch('https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/freelancers.json');
                     if (response.ok) {
                         const jsonData = await response.json();
                         if (jsonData.approvedFreelancers) {
@@ -324,7 +324,7 @@
         // Load jobs data from JSON file
         async function loadJobsData() {
             try {
-                                        const response = await fetch('/api/jobs-data');
+                                        const response = await fetch('https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/jobs-data.json');
                 if (response.ok) {
                     const jsonData = await response.json();
                     jobsData = jsonData.jobs || [];
