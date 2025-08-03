@@ -156,7 +156,8 @@ app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
-        githubConfigured: !!GITHUB_CONFIG.token
+        githubConfigured: !!GITHUB_CONFIG.token,
+        deployment: 'v2.0.1' // Force new deployment
     });
 });
 
