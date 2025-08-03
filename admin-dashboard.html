@@ -268,11 +268,8 @@
                 const pdfDownloadUrl = await uploadContractToGitHub(currentUploadFile, contractData);
                 contractData.githubUrl = pdfDownloadUrl;
                 
-                // Add to current uploaded contracts array
-                uploadedContracts.push(contractData);
-                
-                // Update uploaded-contracts.json on GitHub
-                await updateUploadedContractsOnGitHub();
+                // Update uploaded-contracts.json on GitHub with the new contract
+                await updateUploadedContractsOnGitHubWithNewContract(contractData);
                 
                 // Update freelancer status in freelancers array
                 updateFreelancerContractStatus(email, contractId, date);
@@ -291,17 +288,13 @@
             const reader = new FileReader();
             reader.onload = async function(e) {
                 contractData.fileData = e.target.result;
-                uploadedContracts[uploadedContracts.length - 1] = contractData;
                 
                 console.log('✅ Contract uploaded and saved:', contractData);
-                
-                // Automatically update GitHub
-                await updateUploadedContractsOnGitHub();
                 
                 // Reset form
                 cancelContractUpload();
                 
-                // Refresh list
+                // Refresh list from API
                 await loadUploadedContracts();
                 
                 alert(`✅ Contract uploaded successfully!\n\nContract ID: ${contractId}\nFreelancer: ${name}\n\n📋 Freelancer status updated to "uploaded" - they can now see their signed contract in the user portal!`);
@@ -539,13 +532,11 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         async function deleteUploadedContract(index) {
             const contract = uploadedContracts[index];
             if (confirm(`Are you sure you want to delete the contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis action cannot be undone.`)) {
-                uploadedContracts.splice(index, 1);
+                // Remove from GitHub directly
+                await deleteContractFromGitHub(contract);
                 
-                // Automatically update GitHub
-                await updateUploadedContractsOnGitHub();
-                
-                displayUploadedContracts();
-                updateContractAnalytics();
+                // Refresh from API
+                await loadUploadedContracts();
             }
         }
 
@@ -1942,7 +1933,75 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             }
         }
 
-        // Update uploaded-contracts.json on GitHub
+        // Update uploaded-contracts.json on GitHub with a new contract
+        async function updateUploadedContractsOnGitHubWithNewContract(newContract) {
+            try {
+                // Load current contracts from API
+                const response = await fetch('/api/uploaded-contracts');
+                if (!response.ok) {
+                    throw new Error('Could not load current contracts from API');
+                }
+                
+                const currentData = await response.json();
+                const currentContracts = currentData.contracts || [];
+                
+                // Add the new contract
+                currentContracts.push(newContract);
+                
+                const exportData = {
+                    exportDate: new Date().toISOString(),
+                    totalContracts: currentContracts.length,
+                    contracts: currentContracts
+                };
+                
+                await updateGitHubFile('uploaded-contracts.json', JSON.stringify(exportData, null, 2), `Add contract ${newContract.contractId} - ${newContract.freelancerName} - ${new Date().toLocaleString()}`);
+                console.log('✅ uploaded-contracts.json updated on GitHub with new contract');
+                
+                // Show success message
+                showUpdateStatus('✅ Contract added to uploaded-contracts.json successfully!', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error updating uploaded-contracts.json:', error);
+                showUpdateStatus(`❌ Error updating uploaded-contracts.json: ${error.message}`, 'error');
+            }
+        }
+        
+        // Delete contract from GitHub
+        async function deleteContractFromGitHub(contractToDelete) {
+            try {
+                // Load current contracts from API
+                const response = await fetch('/api/uploaded-contracts');
+                if (!response.ok) {
+                    throw new Error('Could not load current contracts from API');
+                }
+                
+                const currentData = await response.json();
+                const currentContracts = currentData.contracts || [];
+                
+                // Remove the contract
+                const filteredContracts = currentContracts.filter(contract => 
+                    contract.contractId !== contractToDelete.contractId
+                );
+                
+                const exportData = {
+                    exportDate: new Date().toISOString(),
+                    totalContracts: filteredContracts.length,
+                    contracts: filteredContracts
+                };
+                
+                await updateGitHubFile('uploaded-contracts.json', JSON.stringify(exportData, null, 2), `Remove contract ${contractToDelete.contractId} - ${contractToDelete.freelancerName} - ${new Date().toLocaleString()}`);
+                console.log('✅ Contract removed from uploaded-contracts.json');
+                
+                // Show success message
+                showUpdateStatus('✅ Contract removed from uploaded-contracts.json successfully!', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error removing contract from uploaded-contracts.json:', error);
+                showUpdateStatus(`❌ Error removing contract: ${error.message}`, 'error');
+            }
+        }
+        
+        // Update uploaded-contracts.json on GitHub (for existing contracts)
         async function updateUploadedContractsOnGitHub() {
             try {
                 const exportData = {
