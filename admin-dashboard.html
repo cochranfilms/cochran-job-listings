@@ -1292,7 +1292,12 @@
 
         // Get performance review status badge
         function getPerformanceReviewStatus(userData) {
-            const existingReview = performanceReviews[userData.profile?.email];
+            // Try multiple ways to get the email
+            const userEmail = userData.profile?.email || userData.email || userData.profile?.userEmail;
+            console.log('🔍 Checking performance review for user:', userData.name, 'Email:', userEmail);
+            console.log('🔍 Available performance reviews:', Object.keys(performanceReviews));
+            
+            const existingReview = performanceReviews[userEmail];
             
             if (existingReview) {
                 const statusColor = existingReview.status === 'completed' ? '#22c55e' : 
@@ -1305,7 +1310,9 @@
 
         // Get performance review summary
         function getPerformanceReviewSummary(userData) {
-            const existingReview = performanceReviews[userData.profile?.email];
+            // Try multiple ways to get the email
+            const userEmail = userData.profile?.email || userData.email || userData.profile?.userEmail;
+            const existingReview = performanceReviews[userEmail];
             
             if (existingReview) {
                 const reviewDate = existingReview.reviewDate ? new Date(existingReview.reviewDate).toLocaleDateString() : 'N/A';
@@ -1337,7 +1344,9 @@
 
         // Get performance review button
         function getPerformanceReviewButton(userData) {
-            const existingReview = performanceReviews[userData.profile?.email];
+            // Try multiple ways to get the email
+            const userEmail = userData.profile?.email || userData.email || userData.profile?.userEmail;
+            const existingReview = performanceReviews[userEmail];
             
             if (existingReview) {
                 return `
@@ -1564,7 +1573,13 @@
         }
 
         // Display users
-        function displayUsers() {
+        async function displayUsers() {
+            // Ensure performance reviews are loaded before displaying users
+            if (Object.keys(performanceReviews).length === 0) {
+                console.log('🔄 Loading performance reviews before displaying users...');
+                await loadPerformanceReviews();
+            }
+            
             const container = document.getElementById('contractsList');
             
             if (Object.keys(users).length === 0) {
@@ -1703,12 +1718,12 @@
                     // Update users.json on GitHub
                     await updateUsersOnGitHub();
                     
-                    displayUsers();
+                    await displayUsers();
                     showNotification(`User "${userName}" has been deleted and users.json updated on GitHub!`, 'success');
                 } catch (error) {
                     console.error('❌ Error deleting user:', error);
                     showNotification(`Error deleting user: ${error.message}. The user was removed locally but the GitHub update failed.`, 'error');
-                    displayUsers(); // Still update the display
+                    await displayUsers(); // Still update the display
                 }
             }
         }
@@ -2582,6 +2597,7 @@
         async function loadPerformanceReviews() {
             try {
                 console.log('🔄 Loading performance reviews...');
+                console.log('🔍 Current performanceReviews object:', performanceReviews);
                 
                 // Try API endpoint first
                 try {
@@ -3750,26 +3766,42 @@
             }
         }
         
-        // Delete performance review
+        // Delete performance review (works with orphaned reviews)
         async function deletePerformanceReview(email) {
             if (confirm(`Are you sure you want to delete the performance review for ${email}?`)) {
                 try {
-                    const response = await fetch(`/api/performance/${email}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json'
+                    // Remove from local performanceReviews object
+                    if (performanceReviews[email]) {
+                        delete performanceReviews[email];
+                        console.log(`✅ Performance review for ${email} deleted from local data`);
+                        
+                        // Try API first, but don't fail if it doesn't work
+                        try {
+                            const response = await fetch(`/api/performance/${email}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                console.log(`✅ Performance review for ${email} deleted via API`);
+                            } else {
+                                console.warn(`⚠️ API deletion failed for ${email}, but local deletion succeeded`);
+                            }
+                        } catch (apiError) {
+                            console.warn(`⚠️ API deletion failed for ${email}, but local deletion succeeded:`, apiError);
                         }
-                    });
-                    
-                    if (response.ok) {
-                        const result = await response.json();
+                        
+                        // Update GitHub with the modified data
+                        await updatePerformanceReviewsOnGitHub();
+                        
                         showNotification(`Performance review for ${email} deleted successfully!`, 'success');
-                        // Refresh the performance reviews
-                        await loadPerformanceReviews();
+                        
+                        // Refresh the performance reviews display
                         showPerformanceReviewManager();
                     } else {
-                        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-                        showNotification(`Error: ${error.error || error.message}`, 'error');
+                        showNotification(`Performance review for ${email} not found`, 'error');
                     }
                 } catch (error) {
                     console.error('Error deleting performance review:', error);
