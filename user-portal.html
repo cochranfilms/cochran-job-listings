@@ -26,11 +26,14 @@
         // Load performance reviews from API
         async function loadPerformanceReviews() {
             try {
+                console.log('🔄 Loading performance reviews from API...');
                 const response = await fetch('/api/performance');
+                console.log('📡 API response status:', response.status);
                 if (response.ok) {
                     const data = await response.json();
                     performanceReviews = data.performanceReviews || {};
                     console.log('✅ Performance reviews loaded from API:', Object.keys(performanceReviews).length, 'reviews');
+                    console.log('📋 Performance reviews data:', performanceReviews);
                 } else {
                     console.warn('⚠️ Could not load performance reviews from API, using empty object');
                     performanceReviews = {};
@@ -43,7 +46,12 @@
 
         // Get user's performance review
         function getUserPerformanceReview(userEmail) {
-            return performanceReviews[userEmail] || null;
+            console.log('🔍 Getting performance review for:', userEmail);
+            console.log('📊 Available performance reviews:', Object.keys(performanceReviews));
+            console.log('📋 Performance reviews data:', performanceReviews);
+            const review = performanceReviews[userEmail] || null;
+            console.log('✅ Found review:', review);
+            return review;
         }
 
         // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
