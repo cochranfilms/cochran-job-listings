@@ -2236,9 +2236,19 @@
                                     <div class="action-required">
                                         <i class="fas fa-exclamation-triangle"></i>
                                         <strong>Action Required:</strong> ${data.currentStep.action.text}
-                                        <a href="${data.currentStep.action.url}" class="modal-action-btn">
-                                            <i class="${data.currentStep.action.icon}"></i> Take Action
-                                        </a>
+                                        ${data.currentStep.action.onclick ? `
+                                            <button onclick="${data.currentStep.action.onclick}" class="modal-action-btn">
+                                                <i class="${data.currentStep.action.icon}"></i> Take Action
+                                            </button>
+                                        ` : data.currentStep.action.url ? `
+                                            <a href="${data.currentStep.action.url}" class="modal-action-btn">
+                                                <i class="${data.currentStep.action.icon}"></i> Take Action
+                                            </a>
+                                        ` : `
+                                            <button onclick="switchPortalTab('profile')" class="modal-action-btn">
+                                                <i class="${data.currentStep.action.icon}"></i> Take Action
+                                            </button>
+                                        `}
                                     </div>
                                 ` : ''}
                             </div>
