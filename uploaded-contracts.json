@@ -30,8 +30,23 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-04",
       "signedDate": "2025-08-04"
+    },
+    {
+      "contractId": "CF-1754285962387-2JGYM",
+      "freelancerName": "Testing Again",
+      "role": "Contractor",
+      "rate": "Not specified",
+      "location": "Atlanta Area",
+      "fileName": "CF-1754285962387-2JGYM.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T05:39:27.615Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754285962387-2JGYM.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-04",
+      "signedDate": "2025-08-04"
     }
   ],
-  "lastUpdated": "2025-08-04T05:28:47.697Z",
-  "totalContracts": 2
+  "lastUpdated": "2025-08-04T05:39:27.615Z",
+  "totalContracts": 3
 }
