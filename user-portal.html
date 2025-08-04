@@ -206,6 +206,16 @@
             showNotification(message, type);
         }
 
+        // ==================== MODAL MANAGEMENT ====================
+        
+        // Universal modal close function
+        function closeModal(button) {
+            const modal = button.closest('div[style*="position: fixed"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
         // ==================== JSON UPDATE NOTIFICATIONS ====================
         
         // Enhanced notification for JSON updates in user portal
@@ -542,7 +552,7 @@
         // Load jobs data from JSON file
         async function loadJobsData() {
             try {
-                                        const response = await fetch('/api/jobs-data');
+                const response = await fetch('jobs-data.json');
                 if (response.ok) {
                     const jsonData = await response.json();
                     jobsData = jsonData.jobs || [];
@@ -1398,18 +1408,43 @@
                 {
                     id: 'performance',
                     title: 'Performance Review',
-                    description: paymentStatus === 'paid' ? 'Performance review available' : 'Review available after payment',
+                    description: (() => {
+                        if (paymentStatus !== 'paid') return 'Review available after payment';
+                        const userReview = getUserPerformanceReview(currentUser.email);
+                        return userReview ? 'Performance review available ✅' : 'Performance review pending';
+                    })(),
                     icon: 'fas fa-star',
-                    status: paymentStatus === 'paid' ? 'current' : 'pending',
-                    date: null,
-                    details: paymentStatus === 'paid' ? 
-                        'Your performance review is now available. This helps us improve our collaboration and your future opportunities.' :
-                        'Performance review will be available after payment processing is complete.',
-                    action: paymentStatus === 'paid' ? {
-                        text: 'View Performance Review',
-                        onclick: 'viewPerformanceReview()',
-                        icon: 'fas fa-star'
-                    } : null
+                    status: (() => {
+                        if (paymentStatus !== 'paid') return 'pending';
+                        const userReview = getUserPerformanceReview(currentUser.email);
+                        return userReview ? 'completed' : 'current';
+                    })(),
+                    date: (() => {
+                        const userReview = getUserPerformanceReview(currentUser.email);
+                        return userReview?.reviewDate ? new Date(userReview.reviewDate) : null;
+                    })(),
+                    details: (() => {
+                        if (paymentStatus !== 'paid') {
+                            return 'Performance review will be available after payment processing is complete.';
+                        }
+                        const userReview = getUserPerformanceReview(currentUser.email);
+                        return userReview ? 
+                            '✅ Your performance review has been completed. This helps us improve our collaboration and your future opportunities.' :
+                            'Your performance review is now available. This helps us improve our collaboration and your future opportunities.';
+                    })(),
+                    action: (() => {
+                        if (paymentStatus !== 'paid') return null;
+                        const userReview = getUserPerformanceReview(currentUser.email);
+                        return userReview ? {
+                            text: 'View Performance Review',
+                            onclick: 'viewPerformanceReview()',
+                            icon: 'fas fa-star'
+                        } : {
+                            text: 'Performance Review Pending',
+                            onclick: 'showNotification("Performance review is being prepared by admin.", "info")',
+                            icon: 'fas fa-clock'
+                        };
+                    })()
                 }
             ];
             
@@ -1468,7 +1503,7 @@
                 <div style="background: #1a1a1a; padding: 2rem; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,178,0,0.3);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                         <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-star"></i> Performance Review</h2>
-                        <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" 
+                        <button onclick="closeModal(this)" 
                                 style="background: none; border: none; color: #FFB200; font-size: 1.5rem; cursor: pointer;">×</button>
                     </div>
                     
@@ -2117,6 +2152,7 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             await loadFreelancerData();
             await loadProjectStatus();
             await loadJobsData();
+            await loadPerformanceReviews();
             
             if (currentUser) {
                 // Find updated user data
@@ -2137,6 +2173,7 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             await loadFreelancerData();
             await loadProjectStatus();
             await loadJobsData();
+            await loadPerformanceReviews();
             checkAuth();
             
             // Add login form handler
