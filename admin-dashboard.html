@@ -397,7 +397,7 @@
                             ">×</button>
                     
                     <h3 style="color: #FFB200; margin-bottom: 1.5rem; text-align: center;">
-                        🎬 COCHRAN FILMS - CONTRACT DETAILS
+🎬 COCHRAN FILMS - CONTRACT DETAILS
                     </h3>
                     
                     <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
@@ -1515,13 +1515,13 @@
                     
                     for (const contractUrl of possibleUrls) {
                         try {
-                            const link = document.createElement('a');
-                            link.href = contractUrl;
-                            link.download = contractFileName;
-                            link.target = '_blank';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                    const link = document.createElement('a');
+                    link.href = contractUrl;
+                    link.download = contractFileName;
+                    link.target = '_blank';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                             downloadAttempted = true;
                             console.log('📄 Contract download attempted for:', userName, 'with URL:', contractUrl);
                             break;
@@ -3229,7 +3229,9 @@
         }
         
         // Performance Review Management System
-        function showPerformanceReviewManager() {
+        async function showPerformanceReviewManager() {
+            // Load performance reviews first
+            await loadPerformanceReviews();
             const modal = document.createElement('div');
             modal.id = 'performanceReviewModal';
             modal.style.cssText = `
@@ -3341,13 +3343,24 @@
             }
         }
         
-        // API token for authentication - IMPORTANT: Replace with your actual GitHub API token
-        // To set up: 
-        // 1. Go to GitHub Settings > Developer settings > Personal access tokens
-        // 2. Generate a new token with 'repo' permissions
-        // 3. Replace 'your-secure-api-token-here' with your actual token
-        // 4. Make sure your server is running (node server.js)
-        const API_TOKEN = 'your-secure-api-token-here';
+        // Performance reviews data - loaded from performance.json via API
+        let performanceReviews = {};
+        
+        // Load performance reviews from API
+        async function loadPerformanceReviews() {
+            try {
+                const response = await fetch('/api/performance');
+                if (response.ok) {
+                    const data = await response.json();
+                    performanceReviews = data.performanceReviews || {};
+                    console.log('✅ Loaded performance reviews:', Object.keys(performanceReviews));
+                } else {
+                    console.error('❌ Failed to load performance reviews:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ Error loading performance reviews:', error);
+            }
+        }
         
         // Create new performance review
         function createNewPerformanceReview() {
@@ -3413,8 +3426,8 @@
                                 <option value="3">3 - Average</option>
                                 <option value="4">4 - Good</option>
                                 <option value="5">5 - Excellent</option>
-                            </select>
-                        </div>
+                                </select>
+                            </div>
                         
                         <div style="margin-bottom: 1rem;">
                             <label style="color: #FFB200; font-weight: bold; display: block; margin-bottom: 0.5rem;">Category Ratings:</label>
@@ -3428,7 +3441,7 @@
                                         <option value="4">4</option>
                                         <option value="5">5</option>
                                     </select>
-                                </div>
+                        </div>
                                 <div style="margin-bottom: 0.5rem;">
                                     <label style="color: white; font-size: 0.9rem;">Quality:</label>
                                     <select class="category-rating" data-category="Quality" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px; margin-top: 0.25rem;">
@@ -3488,8 +3501,8 @@
                             </button>
                             <button type="button" onclick="closeCreateReviewModal()" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">
                                 Cancel
-                            </button>
-                        </div>
+                        </button>
+                    </div>
                     </form>
                 </div>
             `;
@@ -3724,17 +3737,10 @@
         async function deletePerformanceReview(email) {
             if (confirm(`Are you sure you want to delete the performance review for ${email}?`)) {
                 try {
-                    // Check if API_TOKEN is set
-                    if (!API_TOKEN || API_TOKEN === 'your-secure-api-token-here') {
-                        showNotification('API token not configured. Please set the API_TOKEN in the code.', 'error');
-                        return;
-                    }
-
                     const response = await fetch(`/api/performance/${email}`, {
                         method: 'DELETE',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${API_TOKEN}`
+                            'Content-Type': 'application/json'
                         }
                     });
                     
@@ -3745,16 +3751,8 @@
                         await loadPerformanceReviews();
                         showPerformanceReviewManager();
                     } else {
-                        // Handle non-JSON responses
-                        const contentType = response.headers.get('content-type');
-                        if (contentType && contentType.includes('application/json')) {
-                            const error = await response.json();
-                            showNotification(`Error: ${error.error || error.message}`, 'error');
-                        } else {
-                            const errorText = await response.text();
-                            console.error('Non-JSON response:', errorText);
-                            showNotification(`Server error: ${response.status} - ${response.statusText}`, 'error');
-                        }
+                        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+                        showNotification(`Error: ${error.error || error.message}`, 'error');
                     }
                 } catch (error) {
                     console.error('Error deleting performance review:', error);

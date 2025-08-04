@@ -23,16 +23,16 @@
         let jobsData = [];
         let performanceReviews = [];
 
-        // Load performance reviews from JSON file
+        // Load performance reviews from API
         async function loadPerformanceReviews() {
             try {
-                const response = await fetch('performance.json');
+                const response = await fetch('/api/performance');
                 if (response.ok) {
-                    const jsonData = await response.json();
-                    performanceReviews = jsonData.performanceReviews || {};
-                    console.log('✅ Performance reviews loaded from JSON file:', Object.keys(performanceReviews).length, 'reviews');
+                    const data = await response.json();
+                    performanceReviews = data.performanceReviews || {};
+                    console.log('✅ Performance reviews loaded from API:', Object.keys(performanceReviews).length, 'reviews');
                 } else {
-                    console.warn('⚠️ Could not load performance.json, using empty object');
+                    console.warn('⚠️ Could not load performance reviews from API, using empty object');
                     performanceReviews = {};
                 }
             } catch (error) {
