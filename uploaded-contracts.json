@@ -1,20 +1,7 @@
 {
-  "exportDate": "2025-08-04T08:43:58.135Z",
-  "totalContracts": 5,
+  "exportDate": "2025-08-04T08:45:31.323Z",
+  "totalContracts": 4,
   "contracts": [
-    {
-      "contractId": "CF-1754285322366-P8MCK",
-      "freelancerName": "Test Sack",
-      "role": "Contractor",
-      "rate": "Not specified",
-      "location": "Atlanta Area",
-      "contractDate": "2025-08-04",
-      "notes": "Automatically uploaded via contract signing",
-      "fileName": "CF-1754285322366-P8MCK.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T05:28:47.697Z",
-      "status": "uploaded"
-    },
     {
       "contractId": "CF-1754285962387-2JGYM",
       "freelancerName": "Testing Again",
