@@ -1973,12 +1973,29 @@
                 console.log('🔍 Looking for email:', contractData.freelancerEmail);
                 
                 // Find the user by email (case-insensitive)
-                const userKey = Object.keys(users).find(key => 
-                    users[key].profile?.email.toLowerCase() === contractData.freelancerEmail.toLowerCase()
-                );
+                const userKey = Object.keys(users).find(key => {
+                    const user = users[key];
+                    const userEmail = user?.profile?.email;
+                    const contractEmail = contractData.freelancerEmail;
+                    
+                    if (!userEmail || !contractEmail) {
+                        console.log(`⚠️ Missing email data - User email: ${userEmail}, Contract email: ${contractEmail}`);
+                        return false;
+                    }
+                    
+                    return userEmail.toLowerCase() === contractEmail.toLowerCase();
+                });
                 
                 if (userKey) {
                     console.log('✅ Found user in JSON:', userKey);
+                    
+                    // Ensure user structure exists
+                    if (!users[userKey].profile) {
+                        users[userKey].profile = {};
+                    }
+                    if (!users[userKey].contract) {
+                        users[userKey].contract = {};
+                    }
                     
                     // Update the user's password and contract status
                     users[userKey].profile.password = contractData.portalPassword;
@@ -2013,6 +2030,7 @@
                 } else {
                     console.warn('⚠️ User not found in users.json:', contractData.freelancerEmail);
                     console.warn('⚠️ Available emails:', Object.values(users).map(u => u.profile?.email).filter(Boolean));
+                    console.warn('⚠️ Contract data:', contractData);
                     
                     // Show error notification
                     setTimeout(() => {
@@ -2220,7 +2238,7 @@ Portal Email: ${contractData.freelancerEmail}
 Portal Password: [SECURE - Check admin dashboard]
 Portal URL: https://collaborate.cochranfilms.com/user-portal
 
-Note: Password has been securely stored. Add to freelancers.json for portal access activation.
+Note: Password has been securely stored. Add to users.json for portal access activation.
 Timestamp: ${new Date(contractData.signedTimestamp).toLocaleString()}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
