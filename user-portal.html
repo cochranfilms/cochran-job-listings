@@ -565,7 +565,7 @@
                 users.forEach(user => {
                     // Find ALL contracts for this user
                     const userContracts = uploadedContracts.filter(contract => 
-                        contract.freelancerEmail.toLowerCase() === user.email.toLowerCase()
+                        contract.freelancerEmail && contract.freelancerEmail.toLowerCase() === user.email.toLowerCase()
                     );
                     
                     if (userContracts.length > 0) {
@@ -813,8 +813,9 @@
         function displayUserInfo() {
             const container = document.getElementById('userInfo');
             
-            // Get all jobs for this user from the jobs array
-            const userJobs = currentUser.jobs || [];
+            // Get all jobs for this user from the jobs object and convert to array
+            const userJobsObject = currentUser.jobs || {};
+            const userJobs = Object.values(userJobsObject);
             const primaryJobId = currentUser.primaryJob;
             
             // Fix timezone issues with approved date
@@ -1007,7 +1008,8 @@
             if (!currentUser || !currentUser.jobs) {
                 return null;
             }
-            return currentUser.jobs[selectedJobIndex] || currentUser.jobs[0];
+            const userJobsArray = Object.values(currentUser.jobs);
+            return userJobsArray[selectedJobIndex] || userJobsArray[0];
         }
 
         // Display user contracts (integrated with uploaded-contracts.json)
@@ -1080,7 +1082,7 @@
                 container.innerHTML = `
                     <div class="contract-card">
                         <div class="contract-header">
-                            <h4><i class="fas fa-file-contract"></i> ${currentUser.jobs ? currentUser.jobs[0]?.role : currentUser.role}</h4>
+                            <h4><i class="fas fa-file-contract"></i> ${currentUser.jobs ? Object.values(currentUser.jobs)[0]?.role : currentUser.role}</h4>
                             <span class="status-badge signed">✅ CONTRACT COMPLETE</span>
                         </div>
                         <div class="contract-details">
@@ -1088,7 +1090,7 @@
                                 <div><strong>Contract ID:</strong> ${contractId}</div>
                                 <div><strong>Signed Date:</strong> ${signedDate}</div>
                                 <div><strong>Uploaded Date:</strong> ${userContract ? new Date(userContract.signedDate).toLocaleDateString() : 'N/A'}</div>
-                                <div><strong>Rate:</strong> ${currentUser.jobs ? currentUser.jobs[0]?.rate : currentUser.rate}</div>
+                                <div><strong>Rate:</strong> ${currentUser.jobs ? Object.values(currentUser.jobs)[0]?.rate : currentUser.rate}</div>
                             </div>
                             <div style="background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
                                 <p style="color: #22c55e; margin: 0; font-weight: 600;">
@@ -1189,11 +1191,12 @@
             };
 
             // Add job selector if user has multiple jobs
-            const jobSelectorHTML = currentUser.jobs && currentUser.jobs.length > 1 ? `
+            const userJobsArray = Object.values(currentUser.jobs || {});
+            const jobSelectorHTML = userJobsArray.length > 1 ? `
                 <div class="job-selector-header">
                     <h3>Select Job to View Timeline:</h3>
                     <div class="job-tabs">
-                        ${currentUser.jobs.map((job, index) => `
+                        ${userJobsArray.map((job, index) => `
                             <button class="job-tab ${index === selectedJobIndex ? 'active' : ''}" 
                                     onclick="selectJob(${index}, '${job.id}')">
                                 <i class="fas fa-${getJobIcon(job.projectType)}"></i>
