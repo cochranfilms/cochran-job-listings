@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Dede Jackson": {
+      "profile": {
+        "email": "dedejackson727@gmail.com",
+        "password": null,
+        "role": "Videographer",
+        "location": "Los Angeles, CA",
+        "projectStart": "2025-10-10T19:00",
+        "rate": "$125/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-dede-jackson-1754286139355": {
+          "id": "job-dede-jackson-1754286139355",
+          "role": "Videographer",
+          "location": "Los Angeles, CA",
+          "projectStart": "2025-10-10T19:00",
+          "rate": "$125/hour",
+          "projectType": "Videographer Project",
+          "description": "Primary assignment for Dede Jackson",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "completionDate": null,
+          "paymentDate": null
+        }
+      },
+      "primaryJob": "job-dede-jackson-1754286139355",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +51,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 0
+  "totalUsers": 1
 }
