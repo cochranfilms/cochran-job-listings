@@ -465,6 +465,10 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             });
             
             const container = document.getElementById('contractAnalytics');
+            if (!container) {
+                console.warn('⚠️ contractAnalytics container not found');
+                return;
+            }
             container.innerHTML = `
                 <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.3);">
                     <h4 style="color: #FFB200; margin-bottom: 0.5rem;">📊 Total Contracts</h4>
@@ -4123,6 +4127,12 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     </button>
                 </div>
                 <div id="contractsList"></div>
+                
+                <!-- Uploaded Contracts Section -->
+                <div style="margin-top: 2rem;">
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">📋 Uploaded Contracts</h3>
+                    <div id="uploadedContractsList"></div>
+                </div>
             </div>
 
             <!-- Job Assignment Section -->
