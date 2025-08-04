@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Testing Another": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": null,
+        "role": "Editor",
+        "location": "Miami, FL",
+        "projectStart": "2026-03-03T19:13",
+        "rate": "$50/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-testing-another-1754286918018": {
+          "id": "job-testing-another-1754286918018",
+          "role": "Editor",
+          "location": "Miami, FL",
+          "projectStart": "2026-03-03T19:13",
+          "rate": "$50/hour",
+          "projectType": "Editor Project",
+          "description": "Primary assignment for Testing Another",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "completionDate": null,
+          "paymentDate": null
+        }
+      },
+      "primaryJob": "job-testing-another-1754286918018",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +51,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 0
+  "totalUsers": 1
 }
