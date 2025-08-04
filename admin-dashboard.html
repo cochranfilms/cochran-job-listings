@@ -1071,11 +1071,11 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             let totalUsers = 0;
             let usersWithPaymentMethod = 0;
             
-            freelancers.forEach(freelancer => {
+            Object.values(users).forEach(userData => {
                 totalUsers++;
-                if (freelancer.paymentMethod) {
+                if (userData.paymentMethod) {
                     usersWithPaymentMethod++;
-                    paymentMethods[freelancer.paymentMethod] = (paymentMethods[freelancer.paymentMethod] || 0) + 1;
+                    paymentMethods[userData.paymentMethod] = (paymentMethods[userData.paymentMethod] || 0) + 1;
                 }
             });
             
@@ -1119,7 +1119,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
 
         // Check for performance review alerts
         function checkPerformanceReviewAlerts() {
-            const pendingReviews = freelancers.filter(freelancer => shouldShowPerformanceReview(freelancer));
+            const pendingReviews = Object.values(users).filter(userData => shouldShowPerformanceReview(userData));
             
             if (pendingReviews.length > 0) {
                 const alertContainer = document.createElement('div');
@@ -1145,7 +1145,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                                 style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer;">×</button>
                     </div>
                     <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">
-                        ${pendingReviews.length} freelancer${pendingReviews.length > 1 ? 's' : ''} need${pendingReviews.length > 1 ? '' : 's'} performance review.
+                        ${pendingReviews.length} user${pendingReviews.length > 1 ? 's' : ''} need${pendingReviews.length > 1 ? '' : 's'} performance review.
                     </p>
                     <div style="margin-top: 0.5rem;">
                         <button onclick="showPerformanceReviewList()" 
