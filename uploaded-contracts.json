@@ -1,5 +1,24 @@
 {
   "exportDate": "2025-08-04T14:06:06.259Z",
-  "totalContracts": 0,
-  "contracts": []
+  "totalContracts": 1,
+  "contracts": [],
+  "uploadedContracts": [
+    {
+      "contractId": "CF-1754316544169-8D3OA",
+      "freelancerName": "Thing Three",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Editor",
+      "rate": "$50/hour",
+      "location": "Miami, FL",
+      "fileName": "CF-1754316544169-8D3OA.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T14:09:16.156Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754316544169-8D3OA.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-04",
+      "signedDate": "2025-08-04"
+    }
+  ],
+  "lastUpdated": "2025-08-04T14:09:16.156Z"
 }
