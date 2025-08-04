@@ -14,36 +14,8 @@
       "contractId": null,
       "jobs": [],
       "primaryJob": null
-    },
-    "Erica Cochran": {
-      "email": "dedejackson727@gmail.com",
-      "password": "New1234",
-      "contractUrl": "contract.html",
-      "role": "Editor",
-      "location": "Sandy Springs, GA",
-      "projectStart": "August 16th, 2025 at 2:00pm",
-      "rate": "$900.00 USD (Flat)",
-      "approvedDate": "2025-08-02",
-      "contractStatus": "signed",
-      "contractSignedDate": "8/3/2025, 4:37:35 PM",
-      "contractUploadedDate": null,
-      "contractId": "CF-1754253455924-4AAVL",
-      "jobs": [
-        {
-          "id": "job-erica-cochran-1754253392085",
-          "role": "Editor",
-          "location": "Sandy Springs, GA",
-          "projectStart": "August 16th, 2025 at 2:00pm",
-          "rate": "$900.00 USD (Flat)",
-          "status": "upcoming",
-          "projectType": "Editor Project",
-          "description": "Primary assignment for Erica Cochran"
-        }
-      ],
-      "primaryJob": "job-erica-cochran-1754253392085",
-      "paymentMethod": "zelle"
     }
   },
-  "lastUpdated": "2025-08-03",
-  "totalFreelancers": 2
+  "lastUpdated": "2025-08-04",
+  "totalFreelancers": 1
 }
