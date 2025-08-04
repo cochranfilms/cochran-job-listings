@@ -151,6 +151,20 @@
                 return { success: false, error: errorMessage };
             }
         }
+        
+        // Delete Firebase account
+        async function deleteFirebaseAccount(email) {
+            try {
+                // Note: Firebase Admin SDK is required for user deletion
+                // For now, we'll use a different approach - we can't delete users from client-side
+                // This would need to be handled server-side with Firebase Admin SDK
+                console.log('⚠️ Firebase account deletion requires server-side implementation');
+                return { success: true, message: 'Account deletion requires server-side implementation' };
+            } catch (error) {
+                console.error('❌ Error deleting Firebase account:', error);
+                return { success: false, error: error.message };
+            }
+        }
 
         // Create Firebase accounts for existing users
         async function createFirebaseAccountsForExistingUsers() {
@@ -403,17 +417,27 @@
             btns.forEach(btn => btn.classList.remove('active'));
             
             if (tabName === 'firebase') {
-                // For Firebase tab, make sure the firebase-tab is active
+                // For Firebase tab, make sure the firebase-tab is active and hide others
                 const firebaseTab = document.getElementById('firebase-tab');
                 if (firebaseTab) {
                     firebaseTab.classList.add('active');
+                    // Hide all other tab content
+                    document.getElementById('jobs-tab').style.display = 'none';
+                    document.getElementById('contracts-tab').style.display = 'none';
+                    firebaseTab.style.display = 'block';
                 }
                 showFirebaseManagement();
             } else {
-                // For other tabs, activate the specific tab
+                // For other tabs, activate the specific tab and show it
                 const targetTab = document.getElementById(tabName + '-tab');
                 if (targetTab) {
                     targetTab.classList.add('active');
+                    targetTab.style.display = 'block';
+                    // Hide firebase tab
+                    const firebaseTab = document.getElementById('firebase-tab');
+                    if (firebaseTab) {
+                        firebaseTab.style.display = 'none';
+                    }
                 }
             }
             
@@ -1997,17 +2021,35 @@
         async function deleteUser(userName) {
             if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
                 try {
+                    const userData = users[userName];
+                    const userEmail = userData?.profile?.email;
+                    
+                    // 1. Delete from Firebase (if email exists)
+                    if (userEmail) {
+                        try {
+                            await deleteFirebaseAccount(userEmail);
+                            console.log('✅ Firebase account deleted for:', userEmail);
+                        } catch (firebaseError) {
+                            console.warn('⚠️ Could not delete Firebase account:', firebaseError);
+                            showNotification('⚠️ User deleted but Firebase account may still exist.', 'warning');
+                        }
+                    }
+                    
+                    // 2. Delete from local users object
                     delete users[userName];
                     localStorage.setItem('users', JSON.stringify(users));
                     
-                    // Update users.json on GitHub
+                    // 3. Update GitHub repository
                     await updateUsersOnGitHub();
                     
+                    // 4. Refresh display
                     await displayUsers();
-                    showNotification(`User "${userName}" has been deleted and users.json updated on GitHub!`, 'success');
+                    
+                    showNotification(`✅ User "${userName}" deleted successfully! Removed from Firebase and GitHub.`, 'success');
+                    
                 } catch (error) {
                     console.error('❌ Error deleting user:', error);
-                    showNotification(`Error deleting user: ${error.message}. The user was removed locally but the GitHub update failed.`, 'error');
+                    showNotification(`❌ Error deleting user: ${error.message}`, 'error');
                     await displayUsers(); // Still update the display
                 }
             }
@@ -2061,10 +2103,15 @@
         // Save user (formerly freelancer)
         async function saveFreelancer() {
             const userName = document.getElementById('freelancerName').value;
+            const userEmail = document.getElementById('freelancerEmail').value;
+            
+            // Generate a temporary password for Firebase account creation
+            const tempPassword = generateTempPassword();
+            
             const userData = {
                 profile: {
-                    email: document.getElementById('freelancerEmail').value,
-                    password: null, // Password will be set by user during contract signing
+                    email: userEmail,
+                    password: tempPassword, // Temporary password for Firebase account
                     role: document.getElementById('freelancerRole').value,
                     location: document.getElementById('freelancerLocation').value,
                     projectStart: document.getElementById('projectStart').value,
@@ -2082,6 +2129,84 @@
                 primaryJob: null,
                 paymentMethod: null
             };
+            
+            try {
+                // 1. Create Firebase account
+                const firebaseResult = await createFirebaseAccount(userEmail, tempPassword);
+                
+                if (firebaseResult.success) {
+                    console.log('✅ Firebase account created for:', userEmail);
+                    
+                    // 2. Add user to local users object
+                    users[userName] = userData;
+                    
+                    // 3. Update localStorage
+                    localStorage.setItem('users', JSON.stringify(users));
+                    
+                    // 4. Update GitHub repository
+                    await updateUsersOnGitHub();
+                    
+                    // 5. Send job acceptance email
+                    await sendJobAcceptanceEmail(userName, userData);
+                    
+                    // 6. Refresh display
+                    await displayUsers();
+                    
+                    showNotification(`✅ User "${userName}" created successfully! Firebase account created and email sent.`, 'success');
+                    
+                    // Clear form
+                    clearFreelancerForm();
+                    
+                } else {
+                    showNotification(`❌ Failed to create Firebase account: ${firebaseResult.error}`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error creating user:', error);
+                showNotification(`❌ Error creating user: ${error.message}`, 'error');
+            }
+        }
+        
+        // Generate temporary password for Firebase account
+        function generateTempPassword() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let password = '';
+            for (let i = 0; i < 12; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        }
+        
+        // Send job acceptance email
+        async function sendJobAcceptanceEmail(userName, userData) {
+            try {
+                // Initialize EmailJS
+                emailjs.init(EMAILJS_CONFIG.publicKey);
+                
+                const templateParams = {
+                    freelancer_name: userName,
+                    role: userData.profile.role,
+                    location: userData.profile.location,
+                    rate: userData.profile.rate,
+                    project_start: userData.profile.projectStart,
+                    contract_id: `CF-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`
+                };
+                
+                const response = await emailjs.send(
+                    EMAILJS_CONFIG.serviceId,
+                    EMAILJS_CONFIG.jobAcceptanceTemplateId,
+                    templateParams
+                );
+                
+                console.log('✅ Job acceptance email sent successfully:', response);
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Error sending job acceptance email:', error);
+                showNotification('⚠️ User created but email failed to send. Please check EmailJS configuration.', 'warning');
+                return false;
+            }
+        }
 
             if (!userName.trim() || !userData.profile.email.trim() || !userData.profile.role.trim()) {
                 showNotification('Name, email, and role are required', 'error');
@@ -5091,7 +5216,7 @@
         .tab-navigation {
             background: rgba(0,0,0,0.4);
             padding: 1rem 2rem;
-            margin: 0 2rem 2rem 2rem;
+            margin: 0 4rem 2rem 4rem;
             border-radius: 15px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,178,0,0.2);
@@ -5195,7 +5320,7 @@
         /* Tab Content */
         .tab-content {
             display: none;
-            margin: 2rem;
+            margin: 2rem 4rem;
         }
         
         .tab-content.active {

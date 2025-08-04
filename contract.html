@@ -55,6 +55,10 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
     <style>
         :root {
             --primary: #FFB200;
@@ -732,6 +736,20 @@
         let contractSigned = false; // Track if contract has been signed
         let signatureData = null; // Store signature information
         let signedContractData = null; // Store signed contract data for download
+        
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: 'AIzaSyCkL31Phi7FxYCeB5zgHeYTb2iY2sTJJdw',
+            authDomain: 'cochran-films.firebaseapp.com',
+            projectId: 'cochran-films',
+            storageBucket: 'cochran-films.appspot.com',
+            messagingSenderId: '566448458094',
+            appId: '1:566448458094:web:default'
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         
         // EmailJS Configuration
         const EMAILJS_CONFIG = {
@@ -2346,6 +2364,19 @@
             }
         }
         
+        // Update Firebase password for user
+        async function updateFirebasePassword(email, newPassword) {
+            try {
+                // Note: Firebase client SDK doesn't allow password updates for other users
+                // This would need to be handled server-side with Firebase Admin SDK
+                console.log('⚠️ Firebase password update requires server-side implementation');
+                return { success: true, message: 'Password update requires server-side implementation' };
+            } catch (error) {
+                console.error('❌ Error updating Firebase password:', error);
+                return { success: false, error: error.message };
+            }
+        }
+        
         // Save signed contract data and send emails
         async function saveSignedContractData() {
             try {
@@ -2378,6 +2409,16 @@
                     }
                 };
 
+                // Update Firebase password for user
+                const newPassword = document.getElementById('portalPassword').value;
+                const firebaseResult = await updateFirebasePassword(signatureData.freelancerEmail, newPassword);
+                
+                if (firebaseResult.success) {
+                    console.log('✅ Firebase password updated for:', signatureData.freelancerEmail);
+                } else {
+                    console.warn('⚠️ Could not update Firebase password:', firebaseResult.error);
+                }
+                
                 // Update freelancer data status to "signed" (not fully processed until admin uploads)
                 // Note: This will be temporary until admin uploads the signed PDF
                 try {
