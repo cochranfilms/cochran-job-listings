@@ -15,8 +15,23 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-03",
       "signedDate": "2025-08-03"
+    },
+    {
+      "contractId": "CF-1754285322366-P8MCK",
+      "freelancerName": "Test Sack",
+      "role": "Contractor",
+      "rate": "Not specified",
+      "location": "Atlanta Area",
+      "fileName": "CF-1754285322366-P8MCK.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T05:28:47.697Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754285322366-P8MCK.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-04",
+      "signedDate": "2025-08-04"
     }
   ],
-  "lastUpdated": "2025-08-04T03:09:40.084Z",
-  "totalContracts": 1
+  "lastUpdated": "2025-08-04T05:28:47.697Z",
+  "totalContracts": 2
 }
