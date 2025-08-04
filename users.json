@@ -1,41 +1,5 @@
 {
-  "users": {
-    "Testical Sack": {
-      "profile": {
-        "email": "codylcochran89@gmail.com",
-        "password": null,
-        "role": "Editor",
-        "location": "Miami, FL",
-        "projectStart": "2025-12-24T10:00",
-        "rate": "$100/hour",
-        "approvedDate": "2025-08-03"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
-        "contractUploadedDate": null,
-        "contractId": null
-      },
-      "jobs": {
-        "job-testical-sack-1754284660109": {
-          "id": "job-testical-sack-1754284660109",
-          "role": "Editor",
-          "location": "Miami, FL",
-          "projectStart": "2025-12-24T10:00",
-          "rate": "$100/hour",
-          "projectType": "Editor Project",
-          "description": "Primary assignment for Testical Sack",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "completionDate": null,
-          "paymentDate": null
-        }
-      },
-      "primaryJob": "job-testical-sack-1754284660109",
-      "paymentMethod": null
-    }
-  },
+  "users": {},
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -51,5 +15,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 1
+  "totalUsers": 0
 }
