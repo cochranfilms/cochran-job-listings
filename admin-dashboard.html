@@ -108,6 +108,87 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
+        // Admin role management
+        const ADMIN_EMAILS = [
+            'admin@cochranfilms.com',
+            'cody@cochranfilms.com'
+        ];
+
+        // Check if user has admin privileges
+        function isAdminUser(email) {
+            return ADMIN_EMAILS.includes(email.toLowerCase());
+        }
+
+        // Create Firebase account for new user
+        async function createFirebaseAccount(email, password) {
+            try {
+                // Create user in Firebase Authentication
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                console.log('✅ Firebase account created for:', email);
+                
+                // Sign out the admin user after creating the account
+                await auth.signOut();
+                
+                return { success: true, uid: userCredential.user.uid };
+            } catch (error) {
+                console.error('❌ Error creating Firebase account:', error);
+                
+                // Handle specific errors
+                let errorMessage = 'Failed to create account.';
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'Email already exists in Firebase.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Invalid email format.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'Password is too weak.';
+                        break;
+                }
+                
+                return { success: false, error: errorMessage };
+            }
+        }
+
+        // Create Firebase accounts for existing users
+        async function createFirebaseAccountsForExistingUsers() {
+            try {
+                await loadUsers();
+                
+                let createdCount = 0;
+                let errorCount = 0;
+                
+                for (const [userName, userData] of Object.entries(users)) {
+                    const email = userData.profile?.email;
+                    const password = userData.profile?.password;
+                    
+                    if (email && password) {
+                        console.log(`🔄 Creating Firebase account for: ${email}`);
+                        
+                        const result = await createFirebaseAccount(email, password);
+                        
+                        if (result.success) {
+                            createdCount++;
+                            showNotification(`✅ Created Firebase account for ${email}`, 'success');
+                        } else {
+                            errorCount++;
+                            showNotification(`❌ Failed to create account for ${email}: ${result.error}`, 'error');
+                        }
+                        
+                        // Small delay to avoid rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+                
+                showNotification(`🎉 Firebase account creation complete! Created: ${createdCount}, Errors: ${errorCount}`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Error creating Firebase accounts:', error);
+                showNotification('❌ Error creating Firebase accounts. Please try again.', 'error');
+            }
+        }
+
         // Global GitHub configuration
         let GITHUB_CONFIG = {
             token: null,
@@ -215,8 +296,8 @@
                 // Firebase authentication
                 const userCredential = await auth.signInWithEmailAndPassword(username, password);
                 
-                // Check if user is admin (you can customize this logic)
-                if (userCredential.user.email === 'admin@cochranfilms.com' || userCredential.user.email === username) {
+                // Check if user has admin privileges
+                if (isAdminUser(userCredential.user.email)) {
                     sessionStorage.setItem('adminDashboardAuthenticated', 'true');
                     sessionStorage.setItem('adminUser', JSON.stringify({
                         email: userCredential.user.email,
@@ -319,7 +400,11 @@
             tabs.forEach(tab => tab.classList.remove('active'));
             btns.forEach(btn => btn.classList.remove('active'));
             
-            document.getElementById(tabName + '-tab').classList.add('active');
+            if (tabName === 'firebase') {
+                showFirebaseManagement();
+            } else {
+                document.getElementById(tabName + '-tab').classList.add('active');
+            }
             event.target.classList.add('active');
         }
 
@@ -1840,6 +1925,42 @@
             `).join('');
             
             container.innerHTML = usersHTML;
+        }
+
+        // Firebase Management Functions
+        function showFirebaseManagement() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = `
+                <div class="section">
+                    <h2><i class="fas fa-fire"></i> Firebase Authentication Management</h2>
+                    <div class="firebase-management">
+                        <div class="info-card">
+                            <h3><i class="fas fa-info-circle"></i> Current Authentication Setup</h3>
+                            <p><strong>Admin Dashboard:</strong> Uses Firebase Authentication with role-based access</p>
+                            <p><strong>User Portal:</strong> Now uses Firebase Authentication (updated)</p>
+                            <p><strong>Security:</strong> Only admin emails can access admin dashboard</p>
+                        </div>
+                        
+                        <div class="action-card">
+                            <h3><i class="fas fa-users"></i> Create Firebase Accounts</h3>
+                            <p>Create Firebase authentication accounts for all existing users in the system.</p>
+                            <button onclick="createFirebaseAccountsForExistingUsers()" class="action-btn">
+                                <i class="fas fa-plus"></i> Create Firebase Accounts
+                            </button>
+                        </div>
+                        
+                        <div class="info-card">
+                            <h3><i class="fas fa-shield-alt"></i> Security Notes</h3>
+                            <ul>
+                                <li>Admin emails: ${ADMIN_EMAILS.join(', ')}</li>
+                                <li>Users can only access their own portal</li>
+                                <li>Admins can access both admin dashboard and user portal</li>
+                                <li>Firebase handles password security and authentication</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // User management functions
@@ -4982,6 +5103,16 @@
         
         .tab-btn:hover {
             background: rgba(255, 178, 0, 0.2);
+            border-color: rgba(255, 178, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .tab-btn.active {
+            background: rgba(255, 178, 0, 0.3);
+            border-color: #FFB200;
+            color: white;
+        }
+            background: rgba(255, 178, 0, 0.2);
             border-color: #FFB200;
         }
         
@@ -5427,8 +5558,15 @@
                 <button class="tab-btn" onclick="switchTab('contracts')">
                     <span>👥</span> Creator Management
                 </button>
-
+                <button class="tab-btn" onclick="switchTab('firebase')">
+                    <span>🔥</span> Firebase Management
+                </button>
             </div>
+        </div>
+
+        <!-- Firebase Management Tab -->
+        <div id="firebase-tab" class="tab-content">
+            <!-- Content will be dynamically loaded by showFirebaseManagement() -->
         </div>
 
         <!-- Jobs Tab -->
