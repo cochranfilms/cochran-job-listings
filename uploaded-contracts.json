@@ -1,5 +1,22 @@
 {
-  "uploadedContracts": [],
-  "lastUpdated": "2025-01-27",
-  "totalContracts": 0
+  "uploadedContracts": [
+    {
+      "contractId": "CF-1754276968364-P766Y",
+      "freelancerName": "Test User",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Videographer",
+      "rate": "$50/hour",
+      "location": "Los Angeles, CA",
+      "fileName": "CF-1754276968364-P766Y.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T03:09:40.084Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754276968364-P766Y.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-03",
+      "signedDate": "2025-08-03"
+    }
+  ],
+  "lastUpdated": "2025-08-04T03:09:40.084Z",
+  "totalContracts": 1
 }
