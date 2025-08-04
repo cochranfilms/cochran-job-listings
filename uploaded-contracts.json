@@ -1,24 +1,5 @@
 {
-  "exportDate": "2025-08-04T12:26:47.498Z",
-  "totalContracts": 1,
-  "contracts": [],
-  "uploadedContracts": [
-    {
-      "contractId": "CF-1754310873361-UFY80",
-      "freelancerName": "Test Newest",
-      "freelancerEmail": "codylcochran87@gmail.com",
-      "role": "Director",
-      "rate": "$250/hour",
-      "location": "New York, NY",
-      "fileName": "CF-1754310873361-UFY80.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T12:34:46.074Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754310873361-UFY80.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
-    }
-  ],
-  "lastUpdated": "2025-08-04T12:34:46.074Z"
+  "exportDate": "2025-08-04T12:59:04.063Z",
+  "totalContracts": 0,
+  "contracts": []
 }
