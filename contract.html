@@ -980,119 +980,80 @@
                     'TRANSPORTATION: Contractor responsible for own transport.'
                 ];
                 
-                // Single column layout to prevent text overlapping
+                // Compact single column layout
                 let currentYPos = 120;
-                const lineHeight = 8; // Increased line height for better readability
-                const maxWidth = 170; // Maximum width for text wrapping
+                const lineHeight = 6; // Reduced line height for compact layout
                 
-                // Process each term with proper text wrapping
+                // Process each term with compact formatting
                 compactTerms.forEach((term, index) => {
-                    // Split long terms into multiple lines if needed
-                    const words = term.split(' ');
-                    let currentLine = '';
-                    let lines = [];
-                    
-                    words.forEach(word => {
-                        const testLine = currentLine + (currentLine ? ' ' : '') + word;
-                        if (doc.getTextWidth(testLine) < maxWidth) {
-                            currentLine = testLine;
-                        } else {
-                            if (currentLine) lines.push(currentLine);
-                            currentLine = word;
-                        }
-                    });
-                    if (currentLine) lines.push(currentLine);
-                    
-                    // Add the term number to the first line
-                    if (lines.length > 0) {
-                        lines[0] = `${index + 1}. ${lines[0]}`;
-                    }
-                    
-                    // Draw each line
-                    lines.forEach(line => {
-                        doc.text(line, 20, currentYPos);
-                        currentYPos += lineHeight;
-                    });
-                    
-                    // Add extra space between terms
-                    currentYPos += 2;
+                    // Add the term number and draw the line
+                    const numberedTerm = `${index + 1}. ${term}`;
+                    doc.text(numberedTerm, 20, currentYPos);
+                    currentYPos += lineHeight;
                 });
                 
-                // Use the current Y position for signature section
-                let termYPos = currentYPos + 15;
+                // Fixed signature section position for single page
+                const signatureY = 200; // Fixed position to ensure it fits
                 
                 // ==================== COMPACT SIGNATURES ====================
                 
-                // Professional signature section - ensure it fits on one page
-                if (termYPos > 180) {
-                    // If we're too close to bottom, start signatures on new page
-                    doc.addPage();
-                    termYPos = 20;
-                }
-                
                 // Signature header with professional styling
                 doc.setFillColor(255, 178, 0);
-                doc.rect(20, termYPos - 5, 170, 8, 'F');
+                doc.rect(20, signatureY - 5, 170, 8, 'F');
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('CONTRACT SIGNATURES', 105, termYPos + 2, { align: 'center' });
+                doc.text('CONTRACT SIGNATURES', 105, signatureY + 2, { align: 'center' });
                 
                 // Company signature (pre-signed) - Professional styling
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('COCHRAN FILMS (COMPANY)', 20, termYPos + 15);
+                doc.text('COCHRAN FILMS (COMPANY)', 20, signatureY + 15);
                 
                 // Company signature box with professional border
                 doc.setFillColor(248, 249, 250);
-                doc.rect(20, termYPos + 20, 75, 25, 'F');
+                doc.rect(20, signatureY + 20, 75, 25, 'F');
                 doc.setDrawColor(255, 178, 0);
                 doc.setLineWidth(0.5);
-                doc.rect(20, termYPos + 20, 75, 25, 'S');
+                doc.rect(20, signatureY + 20, 75, 25, 'S');
                 
                 doc.setFontSize(6);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                doc.text('Authorized Signature: Cody Cochran', 25, termYPos + 26);
-                doc.text('Title: Founder & CEO', 25, termYPos + 30);
-                doc.text('Date: ' + contractData.effectiveDate, 25, termYPos + 34);
-                doc.text('Email: info@cochranfilms.com', 25, termYPos + 38);
+                doc.text('Authorized Signature: Cody Cochran', 25, signatureY + 26);
+                doc.text('Title: Founder & CEO', 25, signatureY + 30);
+                doc.text('Date: ' + contractData.effectiveDate, 25, signatureY + 34);
                 
                 // Contractor signature - Professional styling
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('CONTRACTOR SIGNATURE', 105, termYPos + 15);
+                doc.text('CONTRACTOR SIGNATURE', 105, signatureY + 15);
                 
                 // Contractor signature box with professional border
                 doc.setFillColor(248, 249, 250);
-                doc.rect(105, termYPos + 20, 75, 25, 'F');
+                doc.rect(105, signatureY + 20, 75, 25, 'F');
                 doc.setDrawColor(255, 178, 0);
                 doc.setLineWidth(0.5);
-                doc.rect(105, termYPos + 20, 75, 25, 'S');
+                doc.rect(105, signatureY + 20, 75, 25, 'S');
                 
-                doc.setFontSize(8);
+                doc.setFontSize(6);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                doc.text('Contractor: ' + contractData.freelancerName, 115, termYPos + 40);
-                doc.text('Signature: ' + contractData.signature, 115, termYPos + 46);
-                doc.text('Date: ' + contractData.signatureDate, 115, termYPos + 52);
-                doc.text('ID: ' + contractData.contractId, 115, termYPos + 58);
+                doc.text('Contractor: ' + contractData.freelancerName, 115, signatureY + 26);
+                doc.text('Signature: ' + contractData.signature, 115, signatureY + 30);
+                doc.text('Date: ' + contractData.signatureDate, 115, signatureY + 34);
                 
-                // Add a line separator before footer
-                doc.setDrawColor(200, 200, 200);
-                doc.setLineWidth(0.2);
-                doc.line(20, termYPos + 65, 190, termYPos + 65);
+
                 
                 // ==================== PROFESSIONAL LEGAL FOOTER ====================
                 
-                // Calculate footer position to ensure it fits on the same page
-                const footerY = Math.min(termYPos + 60, 270); // Cap at 270mm to ensure it fits
+                // Footer - positioned at bottom with proper spacing
+                const footerY = 270; // Fixed bottom position
                 
-                // Always put footer on the same page - no page breaks
                 doc.setFillColor(248, 249, 250);
                 doc.rect(20, footerY - 5, 170, 15, 'F');
                 doc.setDrawColor(255, 178, 0);
@@ -1208,134 +1169,109 @@
                 doc.setFont('helvetica', 'bold');
                 doc.text('CONTRACT TERMS & CONDITIONS', 105, 111, { align: 'center' });
                 
-                doc.setFontSize(8);
+                doc.setFontSize(7);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                // Advanced terms with better formatting
-                const advancedTerms = [
-                    { title: 'INDEPENDENT CONTRACTOR', text: 'Not an employee of Cochran Films.' },
-                    { title: 'SERVICES', text: 'Provide professional services as specified.' },
-                    { title: 'COMPENSATION', text: 'Payment within 24 hours of completion.' },
-                    { title: 'STANDARDS', text: 'All work must meet Cochran Films quality.' },
-                    { title: 'ATTIRE', text: 'Professional attire (all black) required.' },
-                    { title: 'PUNCTUALITY', text: 'Arrive 15 minutes before start time.' },
-                    { title: 'DOCUMENTATION', text: 'Bring valid ID and signed contract.' },
-                    { title: 'EQUIPMENT', text: 'Use provided Cochran Films equipment.' },
-                    { title: 'CONDUCT', text: 'Maintain professional demeanor at all times.' },
-                    { title: 'SAFETY', text: 'Follow all safety protocols provided.' },
-                    { title: 'CONFIDENTIALITY', text: 'Respect project confidentiality.' },
-                    { title: 'BTS CONTENT', text: 'May freely take and share behind-the-scenes.' },
-                    { title: 'TAX OBLIGATIONS', text: 'Contractor responsible for personal taxes.' },
-                    { title: 'TRANSPORTATION', text: 'Contractor responsible for own transport.' }
+                // Compact terms for single page
+                const compactTerms = [
+                    '1. INDEPENDENT CONTRACTOR: Not an employee of Cochran Films.',
+                    '2. SERVICES: Provide professional services as specified.',
+                    '3. COMPENSATION: Payment within 24 hours of completion.',
+                    '4. STANDARDS: All work must meet Cochran Films quality.',
+                    '5. ATTIRE: Professional attire (all black) required.',
+                    '6. PUNCTUALITY: Arrive 15 minutes before start time.',
+                    '7. DOCUMENTATION: Bring valid ID and signed contract.',
+                    '8. EQUIPMENT: Use provided Cochran Films equipment.',
+                    '9. CONDUCT: Maintain professional demeanor at all times.',
+                    '10. SAFETY: Follow all safety protocols provided.',
+                    '11. CONFIDENTIALITY: Respect project confidentiality.',
+                    '12. BTS CONTENT: May freely take and share behind-the-scenes.',
+                    '13. TAX OBLIGATIONS: Contractor responsible for personal taxes.',
+                    '14. TRANSPORTATION: Contractor responsible for own transport.'
                 ];
                 
                 let currentYPos = 125;
-                const lineHeight = 10;
-                const maxWidth = 160;
+                const lineHeight = 6;
                 
-                // Process each term with advanced formatting
-                advancedTerms.forEach((term, index) => {
-                    // Check if we need a new page
-                    if (currentYPos > 180) {
-                        doc.addPage();
-                        currentYPos = 20;
+                // Process each term with compact formatting
+                compactTerms.forEach((term, index) => {
+                    // Ensure we stay within page bounds
+                    if (currentYPos > 160) {
+                        currentYPos = 125; // Reset to terms section if needed
                     }
                     
-                    // Title in bold
+                    // Bold the title part
+                    const colonIndex = term.indexOf(':');
+                    const title = term.substring(0, colonIndex + 1);
+                    const description = term.substring(colonIndex + 1);
+                    
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(8);
-                    doc.text(`${index + 1}. ${term.title}:`, 20, currentYPos);
-                    
-                    // Text in normal weight
-                    doc.setFont('helvetica', 'normal');
                     doc.setFontSize(7);
+                    doc.text(title, 20, currentYPos);
                     
-                    // Word wrap for the description
-                    const words = term.text.split(' ');
-                    let currentLine = '';
-                    let lines = [];
+                    // Normal weight for description
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(description, 20 + doc.getTextWidth(title), currentYPos);
                     
-                    words.forEach(word => {
-                        const testLine = currentLine + (currentLine ? ' ' : '') + word;
-                        if (doc.getTextWidth(testLine) < maxWidth) {
-                            currentLine = testLine;
-                        } else {
-                            if (currentLine) lines.push(currentLine);
-                            currentLine = word;
-                        }
-                    });
-                    if (currentLine) lines.push(currentLine);
-                    
-                    // Draw the description lines
-                    lines.forEach((line, lineIndex) => {
-                        const indent = lineIndex === 0 ? 25 : 30; // Indent continuation lines
-                        doc.text(line, indent, currentYPos + 4 + (lineIndex * 3));
-                    });
-                    
-                    currentYPos += lineHeight + (lines.length * 3);
+                    currentYPos += lineHeight;
                 });
                 
                 // ==================== ADVANCED SIGNATURES ====================
                 
-                // Ensure signature section fits
-                if (currentYPos > 180) {
-                    doc.addPage();
-                    currentYPos = 20;
-                }
+                // Fixed signature section position for single page
+                const signatureY = 200; // Fixed position to ensure it fits
                 
                 // Signature header
                 doc.setFillColor(255, 178, 0);
-                doc.rect(20, currentYPos - 5, 170, 8, 'F');
+                doc.rect(20, signatureY - 5, 170, 8, 'F');
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('CONTRACT SIGNATURES', 105, currentYPos + 2, { align: 'center' });
+                doc.text('CONTRACT SIGNATURES', 105, signatureY + 2, { align: 'center' });
                 
                 // Company signature
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('COCHRAN FILMS (COMPANY)', 20, currentYPos + 15);
+                doc.text('COCHRAN FILMS (COMPANY)', 20, signatureY + 15);
                 
                 doc.setFillColor(248, 249, 250);
-                doc.rect(20, currentYPos + 20, 75, 30, 'F');
+                doc.rect(20, signatureY + 20, 75, 25, 'F');
                 doc.setDrawColor(255, 178, 0);
                 doc.setLineWidth(0.5);
-                doc.rect(20, currentYPos + 20, 75, 30, 'S');
+                doc.rect(20, signatureY + 20, 75, 25, 'S');
                 
                 doc.setFontSize(6);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                doc.text('Authorized Signature: Cody Cochran', 25, currentYPos + 26);
-                doc.text('Title: Founder & CEO', 25, currentYPos + 30);
-                doc.text('Date: ' + contractData.effectiveDate, 25, currentYPos + 34);
-                doc.text('Email: info@cochranfilms.com', 25, currentYPos + 38);
+                doc.text('Authorized Signature: Cody Cochran', 25, signatureY + 26);
+                doc.text('Title: Founder & CEO', 25, signatureY + 30);
+                doc.text('Date: ' + contractData.effectiveDate, 25, signatureY + 34);
                 
                 // Contractor signature
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('CONTRACTOR SIGNATURE', 105, currentYPos + 15);
+                doc.text('CONTRACTOR SIGNATURE', 105, signatureY + 15);
                 
                 doc.setFillColor(248, 249, 250);
-                doc.rect(105, currentYPos + 20, 75, 30, 'F');
+                doc.rect(105, signatureY + 20, 75, 25, 'F');
                 doc.setDrawColor(255, 178, 0);
                 doc.setLineWidth(0.5);
-                doc.rect(105, currentYPos + 20, 75, 30, 'S');
+                doc.rect(105, signatureY + 20, 75, 25, 'S');
                 
-                doc.setFontSize(8);
+                doc.setFontSize(6);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                doc.text('Contractor: ' + contractData.freelancerName, 115, currentYPos + 26);
-                doc.text('Signature: ' + contractData.signature, 115, currentYPos + 30);
-                doc.text('Date: ' + contractData.signatureDate, 115, currentYPos + 34);
-                doc.text('ID: ' + contractData.contractId, 115, currentYPos + 38);
+                doc.text('Contractor: ' + contractData.freelancerName, 115, signatureY + 26);
+                doc.text('Signature: ' + contractData.signature, 115, signatureY + 30);
+                doc.text('Date: ' + contractData.signatureDate, 115, signatureY + 34);
                 
-                // Footer - always on same page
-                const footerY = Math.min(currentYPos + 40, 270); // Cap at 270mm to ensure it fits
+                // Footer - positioned at bottom with proper spacing
+                const footerY = 270; // Fixed bottom position
                 
                 doc.setFillColor(248, 249, 250);
                 doc.rect(20, footerY - 5, 170, 15, 'F');
@@ -1442,104 +1378,105 @@
                         body {
                             font-family: 'Arial', sans-serif;
                             margin: 0;
-                            padding: 20px;
+                            padding: 15px;
                             background: white;
                             color: black;
+                            line-height: 1.3;
                         }
                         .header {
                             background: #FFB200;
                             color: black;
-                            padding: 20px;
+                            padding: 15px;
                             text-align: center;
-                            margin-bottom: 20px;
+                            margin-bottom: 15px;
                         }
                         .header h1 {
                             margin: 0;
-                            font-size: 24px;
+                            font-size: 20px;
                             font-weight: bold;
                         }
                         .header h2 {
-                            margin: 5px 0 0 0;
-                            font-size: 16px;
+                            margin: 3px 0 0 0;
+                            font-size: 14px;
                             font-weight: normal;
                         }
                         .metadata {
-                            margin-bottom: 20px;
-                            font-size: 12px;
+                            margin-bottom: 15px;
+                            font-size: 10px;
                             color: #666;
                         }
                         .section {
-                            margin-bottom: 20px;
+                            margin-bottom: 15px;
                         }
                         .section-header {
                             background: #FFB200;
                             color: black;
-                            padding: 8px 15px;
+                            padding: 6px 12px;
                             font-weight: bold;
-                            font-size: 14px;
+                            font-size: 12px;
                         }
                         .info-boxes {
                             display: flex;
-                            gap: 20px;
-                            margin-bottom: 20px;
+                            gap: 15px;
+                            margin-bottom: 15px;
                         }
                         .info-box {
                             flex: 1;
                             border: 2px solid #FFB200;
-                            padding: 15px;
+                            padding: 10px;
                             background: #f8f9fa;
                         }
                         .info-box h3 {
-                            margin: 0 0 10px 0;
-                            font-size: 12px;
+                            margin: 0 0 8px 0;
+                            font-size: 10px;
                             font-weight: bold;
                             color: black;
                         }
                         .info-box p {
-                            margin: 5px 0;
-                            font-size: 11px;
+                            margin: 3px 0;
+                            font-size: 9px;
                             color: black;
                         }
                         .terms {
-                            margin-bottom: 20px;
+                            margin-bottom: 15px;
                         }
                         .term {
-                            margin-bottom: 10px;
-                            font-size: 11px;
-                            line-height: 1.4;
+                            margin-bottom: 6px;
+                            font-size: 9px;
+                            line-height: 1.2;
                         }
                         .term strong {
                             color: black;
                         }
                         .signatures {
                             display: flex;
-                            gap: 20px;
-                            margin-bottom: 20px;
+                            gap: 15px;
+                            margin-bottom: 15px;
                         }
                         .signature-box {
                             flex: 1;
                             border: 2px solid #FFB200;
-                            padding: 15px;
+                            padding: 10px;
                             background: #f8f9fa;
                         }
                         .signature-box h3 {
-                            margin: 0 0 10px 0;
-                            font-size: 12px;
+                            margin: 0 0 8px 0;
+                            font-size: 10px;
                             font-weight: bold;
                             color: black;
                         }
                         .signature-box p {
-                            margin: 5px 0;
-                            font-size: 11px;
+                            margin: 3px 0;
+                            font-size: 9px;
                             color: black;
                         }
                         .footer {
-                            margin-top: 30px;
-                            padding: 15px;
+                            margin-top: 20px;
+                            padding: 10px;
                             background: #f8f9fa;
                             border: 1px solid #FFB200;
                             text-align: center;
-                            font-size: 10px;
+                            font-size: 8px;
                             color: #666;
                         }
                         @media print {
