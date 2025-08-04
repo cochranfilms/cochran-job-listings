@@ -1,53 +1,55 @@
 {
   "users": {
-    "Test User": {
+    "Erica Jack": {
       "profile": {
-        "email": "codylcochran89@gmail.com",
-        "password": "Test1234",
-        "role": "Videographer",
-        "location": "Los Angeles, CA",
+        "email": "dedejackson727@gmail.com",
+        "password": null,
+        "role": "Assistant",
+        "location": "New York, NY",
+        "projectStart": "2025-11-21T20:00",
+        "rate": "$125/hour",
         "approvedDate": "2025-08-03"
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/3/2025, 11:09:28 PM",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
         "contractUploadedDate": null,
-        "contractId": "CF-1754276968364-P766Y"
+        "contractId": null
       },
       "jobs": {
-        "job-test-user-1754276911229": {
-          "id": "job-test-user-1754276911229",
-          "role": "Videographer",
-          "location": "Los Angeles, CA",
-          "projectStart": "2025-10-10T19:00",
-          "rate": "$50/hour",
-          "projectType": "Videographer Project",
-          "description": "Primary assignment for Test User",
+        "job-erica-jack-1754284085462": {
+          "id": "job-erica-jack-1754284085462",
+          "role": "Assistant",
+          "location": "New York, NY",
+          "projectStart": "2025-11-21T20:00",
+          "rate": "$125/hour",
+          "projectType": "Assistant Project",
+          "description": "Primary assignment for Erica Jack",
           "projectStatus": "upcoming",
           "paymentStatus": "pending",
           "completionDate": null,
           "paymentDate": null
         }
       },
-      "primaryJob": "job-test-user-1754276911229",
-      "paymentMethod": "check"
+      "primaryJob": "job-erica-jack-1754284085462",
+      "paymentMethod": null
     }
   },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
-      "in-progress", 
+      "in-progress",
       "completed",
       "cancelled"
     ],
     "paymentStatus": [
       "pending",
       "processing",
-      "paid", 
+      "paid",
       "overdue"
     ]
   },
   "lastUpdated": "2025-08-04",
   "totalUsers": 1
-} 
+}
