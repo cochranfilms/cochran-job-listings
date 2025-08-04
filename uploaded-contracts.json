@@ -1,6 +1,6 @@
 {
-  "exportDate": "2025-08-04T08:55:14.235Z",
-  "totalContracts": 2,
+  "exportDate": "2025-08-04T08:55:57.727Z",
+  "totalContracts": 1,
   "contracts": [
     {
       "contractId": "CF-1754286223831-CLLKM",
@@ -13,20 +13,6 @@
       "fileName": "CF-1754286223831-CLLKM.pdf",
       "fileSize": 0,
       "uploadDate": "2025-08-04T05:43:49.052Z",
-      "status": "uploaded"
-    },
-    {
-      "contractId": "CF-1754286996882-AJ0OM",
-      "freelancerName": "Testing Another",
-      "freelancerEmail": "codylcochran89@gmail.com",
-      "role": "Editor",
-      "rate": "$50/hour",
-      "location": "Miami, FL",
-      "contractDate": "2025-08-04",
-      "notes": "Automatically uploaded via contract signing",
-      "fileName": "CF-1754286996882-AJ0OM.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T05:56:48.810Z",
       "status": "uploaded"
     }
   ]
