@@ -3,7 +3,7 @@
     "Thing Four": {
       "profile": {
         "email": "clc.collective2025@gmail.com",
-        "password": null,
+        "password": "test1234",
         "role": "Videographer",
         "location": "New York, NY",
         "projectStart": "2025-10-10T22:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 4:27:05 PM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754339225224-9X8LJ"
       },
       "jobs": {
         "job-thing-four-1754338052945": {
