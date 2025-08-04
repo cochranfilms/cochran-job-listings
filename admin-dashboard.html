@@ -2177,101 +2177,19 @@
             return password;
         }
         
-        // Send job acceptance email
-        async function sendJobAcceptanceEmail(userName, userData) {
-            try {
-                // Initialize EmailJS
-                emailjs.init(EMAILJS_CONFIG.publicKey);
-                
-                const templateParams = {
-                    freelancer_name: userName,
-                    role: userData.profile.role,
-                    location: userData.profile.location,
-                    rate: userData.profile.rate,
-                    project_start: userData.profile.projectStart,
-                    contract_id: `CF-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`
-                };
-                
-                const response = await emailjs.send(
-                    EMAILJS_CONFIG.serviceId,
-                    EMAILJS_CONFIG.jobAcceptanceTemplateId,
-                    templateParams
-                );
-                
-                console.log('✅ Job acceptance email sent successfully:', response);
-                return true;
-                
-            } catch (error) {
-                console.error('❌ Error sending job acceptance email:', error);
-                showNotification('⚠️ User created but email failed to send. Please check EmailJS configuration.', 'warning');
-                return false;
-            }
-        }
 
+        
+        // Validate user data
+        function validateUserData(userName, userData) {
             if (!userName.trim() || !userData.profile.email.trim() || !userData.profile.role.trim()) {
                 showNotification('Name, email, and role are required', 'error');
-                return;
+                return false;
             }
-
-            if (editingFreelancerIndex >= 0) {
-                // Preserve existing data when editing
-                const existingUser = users[userName];
-                if (existingUser) {
-                    userData.contract = {
-                        ...userData.contract,
-                        ...existingUser.contract
-                    };
-                    userData.jobs = existingUser.jobs || {};
-                    userData.primaryJob = existingUser.primaryJob;
-                    userData.paymentMethod = existingUser.paymentMethod;
-                }
-                
-                users[userName] = userData;
-                editingFreelancerIndex = -1;
-                
-                // Reset form button text
-                const submitButton = document.querySelector('#contractForm button[type="submit"]');
-                if (submitButton) {
-                    submitButton.innerHTML = '<i class="fas fa-plus"></i> Add New User';
-                }
-                
-                showNotification('User updated successfully!', 'success');
-            } else {
-                // Create primary job for new users
-                const primaryJobId = 'job-' + userName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
-                const primaryJob = {
-                    id: primaryJobId,
-                    role: userData.profile.role,
-                    location: userData.profile.location,
-                    projectStart: userData.profile.projectStart,
-                    rate: userData.profile.rate,
-                    projectType: userData.profile.role + ' Project',
-                    description: `Primary assignment for ${userName}`,
-                    projectStatus: 'upcoming',
-                    paymentStatus: 'pending',
-                    completionDate: null,
-                    paymentDate: null
-                };
-                
-                userData.jobs[primaryJobId] = primaryJob;
-                userData.primaryJob = primaryJobId;
-                
-                users[userName] = userData;
-                
-                // Send job acceptance email for new users
-                sendJobAcceptanceEmail(userName, userData);
-            }
-
-            // Save to localStorage for backup
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            // Automatically update GitHub
-            await updateUsersOnGitHub();
-            
-            displayUsers();
-            clearContractForm();
+            return true;
         }
 
+
+        
         // Send job acceptance email
         async function sendJobAcceptanceEmail(userName, userData) {
             try {
