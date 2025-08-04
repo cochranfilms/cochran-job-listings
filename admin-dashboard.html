@@ -2545,6 +2545,9 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         // Update users on GitHub
         async function updateUsersOnGitHub() {
             try {
+                console.log('🔄 Starting GitHub update for users.json...');
+                console.log('📊 Current users data:', users);
+                
                 const exportData = {
                     users: users,
                     statusOptions: {
@@ -2555,6 +2558,8 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     totalUsers: Object.keys(users).length
                 };
                 
+                console.log('📝 Export data prepared:', exportData);
+                
                 await updateGitHubFile('users.json', JSON.stringify(exportData, null, 2), `Update users.json - ${new Date().toLocaleString()}`);
                 console.log('✅ users.json updated on GitHub');
                 
@@ -2564,6 +2569,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             } catch (error) {
                 console.error('❌ Error updating users.json:', error);
                 showUpdateStatus(`❌ Error updating users.json: ${error.message}`, 'error');
+                throw error; // Re-throw so calling function can handle it
             }
         }
         
@@ -2953,9 +2959,15 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             localStorage.setItem('users', JSON.stringify(users));
             
             // Update GitHub
-            await updateUsersOnGitHub();
-            
-            showNotification(`✅ Payment status updated for ${userName}!\nStatus: ${paymentStatus}`, 'success');
+            console.log('🔄 Updating GitHub with payment status change...');
+            try {
+                await updateUsersOnGitHub();
+                console.log('✅ GitHub update successful');
+                showNotification(`✅ Payment status updated for ${userName}!\nStatus: ${paymentStatus}`, 'success');
+            } catch (error) {
+                console.error('❌ Error updating GitHub:', error);
+                showNotification(`⚠️ Payment status saved locally but GitHub update failed: ${error.message}`, 'warning');
+            }
             
             // Refresh the display
             displayUsers();
