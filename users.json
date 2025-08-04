@@ -3,7 +3,7 @@
     "Thing Three": {
       "profile": {
         "email": "codylcochran87@gmail.com",
-        "password": null,
+        "password": "test54321",
         "role": "Editor",
         "location": "Miami, FL",
         "projectStart": "2026-04-04T19:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 10:09:04 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754316544169-8D3OA"
       },
       "jobs": {
         "job-thing-three-1754316497372": {
