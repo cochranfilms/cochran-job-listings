@@ -1419,7 +1419,7 @@
             const selectedJob = getSelectedJob();
             const projectData = selectedJob ? userProjectStatus.find(p => p.id === selectedJob.id) : null;
             const projectStatus = projectData ? projectData.projectStatus : 'upcoming';
-            const paymentStatus = projectData ? projectData.paymentStatus : 'pending';
+            const paymentStatus = projectData ? projectData.paymentStatus : currentUser.paymentStatus || 'pending';
             
             // Get job data from jobs-data.json
             const jobData = jobsData.find(job => job.id === selectedJob?.id);
@@ -1462,18 +1462,55 @@
                 {
                     id: 'contract',
                     title: 'Contract & Payment Setup',
-                    description: contractSigned ? 'Contract & payment setup complete ✅' : 'Setup contract and payment method',
+                    description: (() => {
+                        const contractComplete = contractSigned;
+                        const paymentComplete = currentUser.paymentStatus === 'configured' || (currentUser.paymentMethod && currentUser.paymentMethod !== 'pending');
+                        
+                        if (contractComplete && paymentComplete) return 'Contract & payment setup complete ✅';
+                        if (contractComplete) return 'Contract signed, payment method pending ⏳';
+                        return 'Setup contract and payment method';
+                    })(),
                     icon: 'fas fa-file-contract',
-                    status: contractSigned ? 'completed' : 'current',
+                    status: (() => {
+                        const contractComplete = contractSigned;
+                        const paymentComplete = currentUser.paymentStatus === 'configured' || (currentUser.paymentMethod && currentUser.paymentMethod !== 'pending');
+                        
+                        if (contractComplete && paymentComplete) return 'completed';
+                        if (contractComplete) return 'current';
+                        return 'current';
+                    })(),
                     date: userContract ? new Date(userContract.signedDate) : (currentUser.contractSignedDate ? new Date(currentUser.contractSignedDate) : null),
-                    details: contractSigned ? 
-                        '✅ Your contract has been signed and payment method configured. All terms are now in effect.' : 
-                        'Please review and sign your freelance contract and configure your payment method.',
-                    action: contractSigned ? null : {
-                        text: 'View Contract Status',
-                        onclick: 'switchPortalTab("jobs")',
-                        icon: 'fas fa-file-contract'
-                    }
+                    details: (() => {
+                        const contractComplete = contractSigned;
+                        const paymentComplete = currentUser.paymentStatus === 'configured' || (currentUser.paymentMethod && currentUser.paymentMethod !== 'pending');
+                        
+                        if (contractComplete && paymentComplete) {
+                            return '✅ Your contract has been signed and payment method configured. All terms are now in effect.';
+                        } else if (contractComplete) {
+                            return '📄 Contract signed successfully! Please configure your payment method in the portal to complete setup.';
+                        } else {
+                            return 'Please review and sign your freelance contract and configure your payment method.';
+                        }
+                    })(),
+                    action: (() => {
+                        const contractComplete = contractSigned;
+                        const paymentComplete = currentUser.paymentStatus === 'configured' || (currentUser.paymentMethod && currentUser.paymentMethod !== 'pending');
+                        
+                        if (contractComplete && paymentComplete) return null;
+                        if (contractComplete) {
+                            return {
+                                text: 'Configure Payment Method',
+                                onclick: 'switchPortalTab("profile")',
+                                icon: 'fas fa-credit-card'
+                            };
+                        } else {
+                            return {
+                                text: 'View Contract Status',
+                                onclick: 'switchPortalTab("jobs")',
+                                icon: 'fas fa-file-contract'
+                            };
+                        }
+                    })()
                 },
 
                 {
@@ -1529,13 +1566,17 @@
                     id: 'performance',
                     title: 'Performance Review',
                     description: (() => {
-                        if (paymentStatus !== 'paid') return 'Review available after payment';
+                        // Check if payment is completed (either 'paid' or project is completed)
+                        const paymentCompleted = paymentStatus === 'paid' || projectStatus === 'completed';
+                        if (!paymentCompleted) return 'Review available after payment';
                         const userReview = getUserPerformanceReview(currentUser.email);
                         return userReview ? 'Performance review available ✅' : 'Performance review pending';
                     })(),
                     icon: 'fas fa-star',
                     status: (() => {
-                        if (paymentStatus !== 'paid') return 'pending';
+                        // Check if payment is completed (either 'paid' or project is completed)
+                        const paymentCompleted = paymentStatus === 'paid' || projectStatus === 'completed';
+                        if (!paymentCompleted) return 'pending';
                         const userReview = getUserPerformanceReview(currentUser.email);
                         return userReview ? 'completed' : 'current';
                     })(),
@@ -1544,7 +1585,9 @@
                         return userReview?.reviewDate ? new Date(userReview.reviewDate) : null;
                     })(),
                     details: (() => {
-                        if (paymentStatus !== 'paid') {
+                        // Check if payment is completed (either 'paid' or project is completed)
+                        const paymentCompleted = paymentStatus === 'paid' || projectStatus === 'completed';
+                        if (!paymentCompleted) {
                             return 'Performance review will be available after payment processing is complete.';
                         }
                         const userReview = getUserPerformanceReview(currentUser.email);
@@ -1553,7 +1596,9 @@
                             'Your performance review is now available. This helps us improve our collaboration and your future opportunities.';
                     })(),
                     action: (() => {
-                        if (paymentStatus !== 'paid') return null;
+                        // Check if payment is completed (either 'paid' or project is completed)
+                        const paymentCompleted = paymentStatus === 'paid' || projectStatus === 'completed';
+                        if (!paymentCompleted) return null;
                         const userReview = getUserPerformanceReview(currentUser.email);
                         return userReview ? {
                             text: 'View Performance Review',
@@ -1767,6 +1812,7 @@
                 for (const [name, freelancer] of Object.entries(freelancers)) {
                     if (freelancer.email === email) {
                         freelancer.paymentMethod = paymentMethod;
+                        freelancer.paymentStatus = 'configured'; // Mark payment method as configured
                         userFound = true;
                         break;
                     }

@@ -26,7 +26,8 @@
         }
       ],
       "primaryJob": "job-test-user-1754276911229",
-      "paymentMethod": "check"
+      "paymentMethod": "check",
+      "paymentStatus": "pending"
     }
   },
   "lastUpdated": "2025-08-04",
