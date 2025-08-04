@@ -2201,7 +2201,9 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                             contractUploadedDate: freelancer.contractUploadedDate,
                             contractId: freelancer.contractId,
                             jobs: freelancer.jobs || [],
-                            primaryJob: freelancer.primaryJob
+                            primaryJob: freelancer.primaryJob,
+                            paymentMethod: freelancer.paymentMethod || null,
+                            paymentStatus: freelancer.paymentStatus || 'pending'
                         };
                         return acc;
                     }, {}),

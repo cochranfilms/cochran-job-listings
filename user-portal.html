@@ -372,6 +372,9 @@
                                 contractSignedDate: freelancer.contractSignedDate,
                                 contractUploadedDate: freelancer.contractUploadedDate,
                                 contractId: freelancer.contractId,
+                                // PAYMENT FIELDS - CRITICAL!
+                                paymentMethod: freelancer.paymentMethod || null,
+                                paymentStatus: freelancer.paymentStatus || 'pending',
                                 // Handle both old single job format and new multiple jobs format
                                 jobs: freelancer.jobs || [{
                                     id: 'legacy-job',
@@ -425,6 +428,9 @@
                                 contractSignedDate: freelancer.contractSignedDate,
                                 contractUploadedDate: freelancer.contractUploadedDate,
                                 contractId: freelancer.contractId,
+                                // PAYMENT FIELDS - CRITICAL!
+                                paymentMethod: freelancer.paymentMethod || null,
+                                paymentStatus: freelancer.paymentStatus || 'pending',
                                 jobs: freelancer.jobs || [{
                                     id: 'legacy-job',
                                     role: freelancer.role,
