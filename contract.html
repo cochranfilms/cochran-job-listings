@@ -684,7 +684,7 @@
                     <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(34, 197, 94, 0.3);">
                         <h4 style="color: #22c55e; margin-bottom: 1rem;"><i class="fas fa-user-circle"></i> Access Your Portal</h4>
                         <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.9);">
-                            View your contracts, job details, and project timeline in your personal freelancer portal.
+                            You can download your contract PDF directly to your device, or view it anytime in your personal freelancer portal along with job details and project timeline.
                         </p>
                         <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin-right: 0;">
                             <i class="fas fa-external-link-alt"></i> Open Freelancer Portal
@@ -2290,11 +2290,14 @@
                         <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(34, 197, 94, 0.3);">
                             <h4 style="color: #22c55e; margin-bottom: 1rem;"><i class="fas fa-user-circle"></i> Access Your Portal</h4>
                             <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.9);">
-                                View your contracts, job details, and project timeline in your personal freelancer portal.
+                                You can download your contract PDF directly to your device, or view it anytime in your personal freelancer portal along with job details and project timeline.
                             </p>
                             <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin-right: 0;">
                                 <i class="fas fa-external-link-alt"></i> Open Freelancer Portal
                             </a>
+                            <button onclick="downloadContractPDF({contractId: userData.contract?.contractId, freelancerName: userData.profile?.name, freelancerEmail: userData.profile?.email, role: userData.profile?.role, location: userData.profile?.location, projectStart: userData.profile?.projectStart, rate: userData.profile?.rate, effectiveDate: userData.profile?.approvedDate, signatureDate: userData.contract?.contractSignedDate, signature: userData.profile?.name})" class="contract-link" style="margin-left: 1rem;">
+                                <i class="fas fa-download"></i> Download Contract PDF
+                            </button>
                         </div>
                     </div>
                 </div>
