@@ -2,17 +2,17 @@
   "approvedFreelancers": {
     "Test User": {
       "email": "codylcochran89@gmail.com",
-      "password": null,
+      "password": "Test1234",
       "contractUrl": "contract.html",
       "role": "Videographer",
       "location": "Los Angeles, CA",
       "projectStart": "2025-10-10T19:00",
       "rate": "$50/hour",
       "approvedDate": "2025-08-03",
-      "contractStatus": "pending",
-      "contractSignedDate": null,
+      "contractStatus": "signed",
+      "contractSignedDate": "8/3/2025, 11:09:28 PM",
       "contractUploadedDate": null,
-      "contractId": null,
+      "contractId": "CF-1754276968364-P766Y",
       "jobs": [
         {
           "id": "job-test-user-1754276911229",
