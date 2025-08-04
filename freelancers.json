@@ -25,7 +25,8 @@
           "description": "Primary assignment for Test User"
         }
       ],
-      "primaryJob": "job-test-user-1754276911229"
+      "primaryJob": "job-test-user-1754276911229",
+      "paymentMethod": "cash"
     }
   },
   "lastUpdated": "2025-08-04",
