@@ -290,7 +290,10 @@
             const contractsHTML = uploadedContracts.map((contract, index) => `
                 <div class="item-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>${contract.freelancerName}</h3>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <input type="checkbox" name="contract-select" value="${index}" style="transform: scale(1.2);">
+                            <h3>${contract.freelancerName}</h3>
+                        </div>
                         <div style="text-align: right; font-size: 0.8rem; color: rgba(255,255,255,0.6);">
                             <div>📁 ${contract.fileName}</div>
                             <div>📤 ${new Date(contract.uploadDate).toLocaleDateString()}</div>
@@ -328,6 +331,59 @@
             `).join('');
             
             container.innerHTML = contractsHTML;
+        }
+
+        // Bulk delete selected contracts
+        async function bulkDeleteContracts() {
+            const selectedCheckboxes = document.querySelectorAll('input[name="contract-select"]:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                showNotification('❌ Please select at least one contract to delete.', 'warning');
+                return;
+            }
+            
+            const selectedContracts = Array.from(selectedCheckboxes).map(checkbox => {
+                const index = parseInt(checkbox.value);
+                return { index, contract: uploadedContracts[index] };
+            });
+            
+            if (confirm(`Are you sure you want to delete ${selectedContracts.length} contract(s)?\n\nThis will delete both the contract data AND the PDF files from GitHub.\n\nThis action cannot be undone.`)) {
+                try {
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    for (const { index, contract } of selectedContracts) {
+                        try {
+                            // Delete PDF file from GitHub
+                            await deleteContractPDFFromGitHub(contract);
+                            
+                            // Remove from local array (in reverse order to maintain indices)
+                            uploadedContracts.splice(index, 1);
+                            
+                            successCount++;
+                        } catch (error) {
+                            console.error(`❌ Error deleting contract ${contract.contractId}:`, error);
+                            errorCount++;
+                        }
+                    }
+                    
+                    // Update the JSON file on GitHub
+                    await updateUploadedContractsOnGitHub();
+                    
+                    displayUploadedContracts();
+                    updateContractAnalytics();
+                    
+                    if (errorCount === 0) {
+                        showNotification(`✅ Successfully deleted ${successCount} contract(s)!\n\nBoth contract data and PDF files have been removed from GitHub.`, 'success');
+                    } else {
+                        showNotification(`⚠️ Deleted ${successCount} contract(s), but ${errorCount} failed.\n\nCheck the console for details.`, 'warning');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Error in bulk delete:', error);
+                    showNotification(`❌ Error during bulk delete: ${error.message}`, 'error');
+                }
+            }
         }
 
         // Download uploaded contract
@@ -443,14 +499,26 @@
         // Delete uploaded contract
         async function deleteUploadedContract(index) {
             const contract = uploadedContracts[index];
-            if (confirm(`Are you sure you want to delete the contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis action cannot be undone.`)) {
-                uploadedContracts.splice(index, 1);
-                
-                // Automatically update GitHub
-                await updateUploadedContractsOnGitHub();
-                
-                displayUploadedContracts();
-                updateContractAnalytics();
+            if (confirm(`Are you sure you want to delete the contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis will delete both the contract data AND the PDF file from GitHub.\n\nThis action cannot be undone.`)) {
+                try {
+                    // First, delete the PDF file from GitHub
+                    await deleteContractPDFFromGitHub(contract);
+                    
+                    // Then remove from local array
+                    uploadedContracts.splice(index, 1);
+                    
+                    // Update the JSON file on GitHub
+                    await updateUploadedContractsOnGitHub();
+                    
+                    displayUploadedContracts();
+                    updateContractAnalytics();
+                    
+                    showNotification(`✅ Contract for ${contract.freelancerName} deleted successfully!\n\nBoth contract data and PDF file have been removed from GitHub.`, 'success');
+                    
+                } catch (error) {
+                    console.error('❌ Error deleting contract:', error);
+                    showNotification(`❌ Error deleting contract: ${error.message}`, 'error');
+                }
             }
         }
 
@@ -2633,6 +2701,61 @@
             } catch (error) {
                 console.error('❌ Error updating uploaded-contracts.json:', error);
                 showUpdateStatus(`❌ Error updating uploaded-contracts.json: ${error.message}`, 'error');
+            }
+        }
+
+        // Delete contract PDF file from GitHub
+        async function deleteContractPDFFromGitHub(contract) {
+            try {
+                console.log(`🗑️ Deleting contract PDF for ${contract.freelancerName}...`);
+                
+                // First, get the current file to retrieve its SHA (required for deletion)
+                const filename = `contracts/${contract.contractId}.pdf`;
+                console.log(`🔍 Getting current SHA for ${filename}...`);
+                
+                const getResponse = await fetch(`/api/github/file/${encodeURIComponent(filename)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (getResponse.ok) {
+                    const currentFile = await getResponse.json();
+                    const currentSha = currentFile.sha;
+                    console.log(`✅ Retrieved current SHA: ${currentSha.substring(0, 7)}`);
+                    
+                    // Now delete the file
+                    const deleteResponse = await fetch(`/api/github/file/${encodeURIComponent(filename)}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: `Delete contract PDF: ${contract.contractId} - ${contract.freelancerName}`,
+                            sha: currentSha
+                        })
+                    });
+                    
+                    if (deleteResponse.ok) {
+                        const result = await deleteResponse.json();
+                        console.log(`✅ Contract PDF deleted successfully: ${result.commit.sha.substring(0, 7)}`);
+                        return result;
+                    } else {
+                        const error = await deleteResponse.json();
+                        throw new Error(`Server API error: ${error.error}`);
+                    }
+                } else if (getResponse.status === 404) {
+                    console.log(`📄 Contract PDF ${filename} doesn't exist on GitHub, skipping deletion`);
+                    return { message: 'File not found, skipping deletion' };
+                } else {
+                    const error = await getResponse.json();
+                    throw new Error(`Could not get file SHA: ${error.error}`);
+                }
+                
+            } catch (error) {
+                console.error(`❌ Error deleting contract PDF:`, error);
+                throw error;
             }
         }
 
@@ -5465,7 +5588,12 @@
                 
                 <!-- Uploaded Contracts Section -->
                 <div style="margin-top: 2rem;">
-                    <h3 style="color: #FFB200; margin-bottom: 1rem;">📋 Uploaded Contracts</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="color: #FFB200; margin: 0;">📋 Uploaded Contracts</h3>
+                        <button class="btn btn-danger" onclick="bulkDeleteContracts()" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                            <i class="fas fa-trash"></i> Bulk Delete Selected
+                        </button>
+                    </div>
                     <div id="contractAnalytics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;"></div>
                     <div id="uploadedContractsList"></div>
                 </div>

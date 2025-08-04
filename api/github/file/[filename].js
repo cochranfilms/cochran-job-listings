@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
     if (req.method === 'OPTIONS') {
@@ -101,6 +101,45 @@ module.exports = async (req, res) => {
             if (response.ok) {
                 const result = await response.json();
                 console.log(`✅ ${filename} updated successfully (SHA: ${result.commit.sha.substring(0, 7)})`);
+                res.json(result);
+            } else {
+                const error = await response.json();
+                console.error(`❌ GitHub API error:`, error);
+                res.status(response.status).json({ error: error.message || 'GitHub API error' });
+            }
+
+        } else if (req.method === 'DELETE') {
+            // DELETE: Delete file from GitHub
+            const { message, sha } = req.body;
+            
+            if (!message || !sha) {
+                return res.status(400).json({ error: 'message and sha are required for deletion' });
+            }
+
+            console.log(`🗑️ Deleting ${filename} from GitHub...`);
+            console.log(`📝 Commit message: ${message}`);
+            console.log(`🔗 Using SHA: ${sha.substring(0, 7)}`);
+            
+            const requestBody = {
+                message: message,
+                sha: sha,
+                branch: GITHUB_CONFIG.branch
+            };
+
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Cochran-Films-Contract-System'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log(`✅ ${filename} deleted successfully (SHA: ${result.commit.sha.substring(0, 7)})`);
                 res.json(result);
             } else {
                 const error = await response.json();
