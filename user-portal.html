@@ -1581,7 +1581,7 @@
                         const paymentCompleted = paymentStatus === 'paid' || projectStatus === 'completed';
                         if (!paymentCompleted) return 'Review available after payment';
                         const userReview = getUserPerformanceReview(currentUser.email);
-                        return userReview ? 'Performance review available ✅' : 'Performance review needed';
+                        return userReview ? 'Performance review available ✅' : 'Performance review pending ⏳';
                     })(),
                     icon: 'fas fa-star',
                     status: (() => {
@@ -1589,7 +1589,7 @@
                         const paymentCompleted = paymentStatus === 'paid' || projectStatus === 'completed';
                         if (!paymentCompleted) return 'pending';
                         const userReview = getUserPerformanceReview(currentUser.email);
-                        return userReview ? 'completed' : 'pending';
+                        return userReview ? 'completed' : 'current';
                     })(),
                     date: (() => {
                         const userReview = getUserPerformanceReview(currentUser.email);

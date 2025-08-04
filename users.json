@@ -3,7 +3,7 @@
     "A Dog": {
       "profile": {
         "email": "dedejackson727@gmail.com",
-        "password": null,
+        "password": "test1234",
         "role": "Editor",
         "location": "Chicago, IL",
         "projectStart": "2026-03-03T20:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
-        "contractUploadedDate": null,
-        "contractId": null
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 5:01:11 AM",
+        "contractUploadedDate": "8/4/2025, 5:01:11 AM",
+        "contractId": "CF-1754300256758-ABCDE"
       },
       "jobs": {
         "job-a-dog-1754300256758": {

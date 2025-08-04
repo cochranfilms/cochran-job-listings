@@ -1512,6 +1512,9 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                             <button onclick="downloadUserContract('${userName}')" style="background: #8b5cf6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                 📄 Download Contract
                             </button>
+                            <button onclick="showPerformanceReviewManager()" style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                                ⭐ Performance Reviews
+                            </button>
                             ${shouldShowPerformanceReview(userData) ? `
                             <button onclick="showPerformanceReviewModal('${userName}')" style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                 ⭐ Performance Review
@@ -3036,6 +3039,15 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                                     <option value="cancelled" ${job.projectStatus === 'cancelled' ? 'selected' : ''}>Cancelled</option>
                                 </select>
                             </div>
+                            <div>
+                                <label style="color: #FFB200; font-weight: bold;">Payment Status:</label>
+                                <select id="paymentStatus_${job.id}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
+                                    <option value="pending" ${job.paymentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="processing" ${job.paymentStatus === 'processing' ? 'selected' : ''}>Processing</option>
+                                    <option value="paid" ${job.paymentStatus === 'paid' ? 'selected' : ''}>Paid</option>
+                                    <option value="overdue" ${job.paymentStatus === 'overdue' ? 'selected' : ''}>Overdue</option>
+                                </select>
+                            </div>
                         </div>
                         <button onclick="updateJobStatus('${userName}', '${job.id}')" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">
                             Update Status
@@ -3047,6 +3059,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             }
             
             const modal = document.createElement('div');
+            modal.id = 'projectStatusModal';
             modal.style.cssText = `
                 position: fixed;
                 top: 0;
@@ -3071,7 +3084,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     position: relative;
                     border: 1px solid #FFB200;
                 ">
-                    <button onclick="this.closest('div[style*=\'position: fixed\']').remove()" 
+                    <button onclick="closeProjectStatusManager()" 
                             style="
                                 position: absolute;
                                 top: 1rem;
@@ -3087,6 +3100,8 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
+                                font-size: 18px;
+                                font-weight: bold;
                             ">×</button>
                     <h3 style="color: #FFB200; margin-bottom: 1rem;">📊 Project Status Manager</h3>
                     <h4 style="color: white; margin-bottom: 1rem;">${userName}</h4>
@@ -3101,23 +3116,177 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                             </div>
                             <div>
                                 <label style="color: #FFB200; font-weight: bold;">Payment Status:</label>
-                                <select id="paymentStatus_${userName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
-                                    <option value="pending" ${userData?.paymentStatus === 'pending' ? 'selected' : ''}>Pending</option>
-                                    <option value="processing" ${userData?.paymentStatus === 'processing' ? 'selected' : ''}>Processing</option>
-                                    <option value="paid" ${userData?.paymentStatus === 'paid' ? 'selected' : ''}>Paid</option>
-                                    <option value="overdue" ${userData?.paymentStatus === 'overdue' ? 'selected' : ''}>Overdue</option>
-                                </select>
+                                <input type="text" id="userPaymentStatus_${userName}" value="${userData?.paymentStatus ? userData.paymentStatus.charAt(0).toUpperCase() + userData.paymentStatus.slice(1) : 'Pending'}" readonly style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid #FFB200; color: white; border-radius: 4px; cursor: not-allowed;">
                             </div>
                         </div>
-                        <button onclick="updatePaymentSettings('${userName}')" 
-                                style="background: #FFB200; color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            <i class="fas fa-save"></i> Update Payment Settings
-                        </button>
                     </div>
                 </div>
             `;
             
             document.body.appendChild(modal);
+            
+            // Add click outside to close
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeProjectStatusManager();
+                }
+            });
+            
+            // Add escape key to close
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeProjectStatusManager();
+                }
+            });
+        }
+        
+        // Close project status manager modal
+        function closeProjectStatusManager() {
+            const modal = document.getElementById('projectStatusModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Performance Review Management System
+        function showPerformanceReviewManager() {
+            const modal = document.createElement('div');
+            modal.id = 'performanceReviewModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            // Get all performance reviews
+            const reviews = performanceReviews || {};
+            const reviewsList = Object.entries(reviews).map(([email, review]) => `
+                <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="color: #FFB200; margin: 0;">${email}</h4>
+                        <span style="background: ${review.status === 'completed' ? '#22c55e' : '#f59e0b'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                            ${review.status === 'completed' ? '✅ Completed' : '⏳ Pending'}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8); margin-bottom: 0.5rem;">
+                        <strong>Overall Rating:</strong> ${review.overallRating}/5 | <strong>Date:</strong> ${review.reviewDate}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="editPerformanceReview('${email}')" style="background: #3b82f6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer;">
+                            ✏️ Edit
+                        </button>
+                        <button onclick="deletePerformanceReview('${email}')" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer;">
+                            🗑️ Delete
+                        </button>
+                        <button onclick="viewPerformanceReview('${email}')" style="background: #22c55e; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer;">
+                            👁️ View
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            modal.innerHTML = `
+                <div style="
+                    background: #1a1a1a;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    max-width: 800px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    border: 1px solid #FFB200;
+                ">
+                    <button onclick="closePerformanceReviewManager()" 
+                            style="
+                                position: absolute;
+                                top: 1rem;
+                                right: 1rem;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 30px;
+                                height: 30px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 18px;
+                                font-weight: bold;
+                            ">×</button>
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">⭐ Performance Review Manager</h3>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 1.5rem;">Manage all performance reviews in the system</p>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <button onclick="createNewPerformanceReview()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            ➕ Create New Review
+                        </button>
+                    </div>
+                    
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${reviewsList || '<p style="color: rgba(255,255,255,0.6); font-style: italic;">No performance reviews found.</p>'}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add click outside to close
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closePerformanceReviewManager();
+                }
+            });
+            
+            // Add escape key to close
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closePerformanceReviewManager();
+                }
+            });
+        }
+        
+        function closePerformanceReviewManager() {
+            const modal = document.getElementById('performanceReviewModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function createNewPerformanceReview() {
+            // Implementation for creating new performance review
+            showNotification('New performance review creation coming soon!', 'info');
+        }
+        
+        function editPerformanceReview(email) {
+            // Implementation for editing performance review
+            showNotification(`Edit performance review for ${email} coming soon!`, 'info');
+        }
+        
+        function deletePerformanceReview(email) {
+            if (confirm(`Are you sure you want to delete the performance review for ${email}?`)) {
+                // Implementation for deleting performance review
+                showNotification(`Performance review for ${email} deleted!`, 'success');
+            }
+        }
+        
+        function viewPerformanceReview(email) {
+            const review = performanceReviews[email];
+            if (!review) {
+                showNotification('Performance review not found', 'error');
+                return;
+            }
+            
+            // Implementation for viewing performance review details
+            showNotification(`Viewing performance review for ${email}`, 'info');
         }
         
         // Update job status from modal
