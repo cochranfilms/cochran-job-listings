@@ -1,42 +1,5 @@
 {
-  "users": {
-    "A Dog": {
-      "profile": {
-        "email": "dedejackson727@gmail.com",
-        "password": "test1234",
-        "role": "Editor",
-        "location": "Chicago, IL",
-        "projectStart": "2026-03-03T20:00",
-        "rate": "$75/hour",
-        "approvedDate": "2025-08-04"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/4/2025, 5:01:11 AM",
-        "contractUploadedDate": "8/4/2025, 5:01:11 AM",
-        "contractId": "CF-1754300256758-ABCDE"
-      },
-      "jobs": {
-        "job-a-dog-1754300256758": {
-          "id": "job-a-dog-1754300256758",
-          "role": "Editor",
-          "location": "Chicago, IL",
-          "projectStart": "2026-03-03T20:00",
-          "rate": "$75/hour",
-          "projectType": "Editor Project",
-          "description": "Primary assignment for A Dog",
-          "projectStatus": "in-progress",
-          "paymentStatus": "paid",
-          "completionDate": null,
-          "paymentDate": null
-        }
-      },
-      "primaryJob": "job-a-dog-1754300256758",
-      "paymentMethod": "zelle",
-      "paymentStatus": "paid"
-    }
-  },
+  "users": {},
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -52,5 +15,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 1
+  "totalUsers": 0
 }
