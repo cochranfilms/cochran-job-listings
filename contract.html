@@ -2208,7 +2208,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIGNED Contract - ${contractData.freelancerName}</title>
+    <title>COCHRAN FILMS - ${contractData.freelancerName} Contract</title>
     <style>
         @page {
             margin: 0.5in;
@@ -2230,7 +2230,7 @@
             color: #000000;
             background-color: #ffffff;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             -webkit-print-color-adjust: exact;
             color-adjust: exact;
         }
@@ -2239,75 +2239,72 @@
             max-width: 800px;
             margin: 0 auto;
             background: #ffffff;
-            padding: 30px;
-            border: 2px solid #FFB200;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 0;
         }
         
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #FFB200;
-        }
-        
-        .logo {
-            width: 180px;
-            height: auto;
-            margin-bottom: 15px;
-        }
-        
-        h1 {
-            font-size: 24px;
+        .header-banner {
+            background: #FFB200;
             color: #000000;
-            margin-bottom: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header-banner h1 {
+            font-size: 28px;
             font-weight: 700;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .header-banner h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 5px 0 0 0;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
         
-        .subtitle {
+        .contract-details {
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+        
+        .contract-id {
             font-size: 14px;
             color: #666666;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         
-        .status-banner {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            color: white;
-            padding: 12px;
-            border-radius: 6px;
-            text-align: center;
-            margin-bottom: 20px;
-            font-weight: 600;
-            font-size: 16px;
-        }
-        
-        .contract-info {
+        .contractor-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 30px;
             margin-bottom: 25px;
         }
         
-        .info-section {
+        .info-column {
             background: #f8f9fa;
             padding: 15px;
             border-radius: 6px;
             border-left: 4px solid #FFB200;
         }
         
-        .info-section h3 {
+        .info-column h3 {
             font-size: 16px;
             color: #000000;
-            margin-bottom: 10px;
-            font-weight: 600;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .info-item {
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-size: 14px;
+            display: flex;
+            justify-content: space-between;
         }
         
         .info-label {
@@ -2317,111 +2314,123 @@
         
         .info-value {
             color: #000000;
+            font-weight: 500;
         }
         
         .terms-section {
+            padding: 0 20px;
             margin-bottom: 25px;
         }
         
         .terms-section h3 {
-            font-size: 18px;
+            font-size: 20px;
             color: #000000;
-            margin-bottom: 12px;
-            font-weight: 600;
-            border-bottom: 2px solid #FFB200;
-            padding-bottom: 5px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .terms-list {
-            list-style: none;
-            padding-left: 0;
+            list-style: decimal;
+            padding-left: 20px;
+            margin-bottom: 20px;
         }
         
         .terms-list li {
-            margin-bottom: 8px;
-            padding-left: 20px;
-            position: relative;
+            margin-bottom: 12px;
             font-size: 14px;
+            line-height: 1.5;
         }
         
-        .terms-list li:before {
-            content: "•";
-            color: #FFB200;
-            font-weight: bold;
-            position: absolute;
-            left: 0;
+        .separator-banner {
+            background: #FFB200;
+            color: #000000;
+            padding: 15px;
+            text-align: center;
+            margin: 25px 0;
         }
         
-        .signatures {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 2px solid #FFB200;
+        .separator-banner h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
-        .signatures h3 {
-            font-size: 18px;
+        .signatures-section {
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+        
+        .signatures-section h3 {
+            font-size: 20px;
             color: #000000;
             margin-bottom: 15px;
-            font-weight: 600;
-            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
-        .signature-row {
+        .signature-banner {
+            background: #FFB200;
+            color: #000000;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .signature-banner h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .signature-blocks {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
         }
         
-        .signature-box {
-            padding: 15px;
+        .signature-block {
             background: #f8f9fa;
+            padding: 20px;
             border-radius: 6px;
             border: 1px solid #e9ecef;
         }
         
-        .signature-name {
-            font-weight: 600;
+        .signature-block h4 {
+            font-size: 16px;
             color: #000000;
-            margin-bottom: 5px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
         }
         
-        .signature-title {
-            font-size: 12px;
-            color: #666666;
-            margin-bottom: 15px;
+        .signature-info {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .signature-info strong {
+            color: #333333;
         }
         
         .signature-line {
             border-bottom: 2px solid #FFB200;
-            height: 25px;
-            margin-bottom: 5px;
-        }
-        
-        .signature-date {
-            font-size: 12px;
-            color: #666666;
-        }
-        
-        .footer {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #e9ecef;
-            text-align: center;
-            font-size: 12px;
-            color: #666666;
-        }
-        
-        .contract-id {
-            font-weight: 600;
-            color: #000000;
+            height: 30px;
+            margin: 15px 0 10px 0;
         }
         
         @media (max-width: 600px) {
-            .contract-info {
+            .contractor-info {
                 grid-template-columns: 1fr;
             }
             
-            .signature-row {
+            .signature-blocks {
                 grid-template-columns: 1fr;
             }
         }
@@ -2429,104 +2438,123 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films Logo" class="logo">
-            <h1>Freelance Agreement</h1>
-            <div class="subtitle">
-                <strong>Issued By:</strong> Cochran Films | <strong>Effective Date:</strong> ${contractData.effectiveDate}
-            </div>
+        <!-- Header Banner -->
+        <div class="header-banner">
+            <h1>COCHRAN FILMS</h1>
+            <h2>FREELANCE CONTRACT AGREEMENT</h2>
         </div>
-
-        <div class="status-banner">
-            ✅ DIGITALLY SIGNED & LEGALLY BINDING
-        </div>
-
-        <div class="contract-info">
-            <div class="info-section">
-                <h3>📋 Contractor Details</h3>
-                <div class="info-item">
-                    <span class="info-label">Name:</span> <span class="info-value">${contractData.freelancerName}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Email:</span> <span class="info-value">${contractData.freelancerEmail}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Role:</span> <span class="info-value">${contractData.role}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Location:</span> <span class="info-value">${contractData.location}</span>
-                </div>
+        
+        <!-- Contract Details -->
+        <div class="contract-details">
+            <div class="contract-id">
+                <strong>Contract ID:</strong> ${contractData.contractId} | <strong>Effective Date:</strong> ${contractData.effectiveDate}
             </div>
             
-            <div class="info-section">
-                <h3>📅 Project Details</h3>
-                <div class="info-item">
-                    <span class="info-label">Project Start:</span> <span class="info-value">${contractData.projectStart}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Rate:</span> <span class="info-value">${contractData.rate}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Contract ID:</span> <span class="info-value">${contractData.contractId}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Signed:</span> <span class="info-value">${new Date(contractData.signedTimestamp).toLocaleDateString()}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="terms-section">
-            <h3>✅ Contractor Responsibilities</h3>
-            <ul class="terms-list">
-                <li>Arrive at the project location on time</li>
-                <li>Professionally manage assigned role and responsibilities</li>
-                <li>Complete the job to professional standards</li>
-                <li>Use personal equipment unless otherwise arranged</li>
-                <li>Maintain a respectful demeanor with staff and clients</li>
-                <li>Wear company-branded gear provided (no charge)</li>
-                <li>Wear all black regardless of branded gear provided</li>
-            </ul>
-        </div>
-
-        <div class="terms-section">
-            <h3>📸 BTS Content & Ownership</h3>
-            <p style="font-size: 14px; margin: 0;">The Contractor may freely take and share BTS content. Cochran Films may repost with credit. Content ownership remains with the Contractor.</p>
-        </div>
-
-        <div class="terms-section">
-            <h3>💵 Payment Terms</h3>
-            <p style="font-size: 14px; margin: 0;">Payment of ${contractData.rate} will be made no later than 24 hours after the event by the agreed method (Zelle, PayPal, etc.).</p>
-        </div>
-
-        <div class="terms-section">
-            <h3>🛡️ Independent Contractor</h3>
-            <p style="font-size: 14px; margin: 0;">The Contractor is not an employee. No taxes or benefits will be withheld. Contractor handles all personal tax obligations and transportation.</p>
-        </div>
-
-        <div class="signatures">
-            <h3>✍️ Digital Signatures</h3>
-            
-            <div class="signature-row">
-                <div class="signature-box">
-                    <div class="signature-name">Cochran Films Representative</div>
-                    <div class="signature-title">Cody Cochran - Founder, Cochran Films</div>
-                    <div class="signature-line"></div>
-                    <div class="signature-date">Date: ${contractData.effectiveDate}</div>
+            <!-- Contractor Information -->
+            <div class="contractor-info">
+                <div class="info-column">
+                    <h3>CONTRACTOR INFORMATION</h3>
+                    <div class="info-item">
+                        <span class="info-label">Name:</span>
+                        <span class="info-value">${contractData.freelancerName}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Role:</span>
+                        <span class="info-value">${contractData.role}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value">${contractData.location}</span>
+                    </div>
                 </div>
                 
-                <div class="signature-box">
-                    <div class="signature-name">Contractor</div>
-                    <div class="signature-title">${contractData.freelancerName}</div>
-                    <div class="signature-line"></div>
-                    <div class="signature-date">Date: ${contractData.signatureDate}</div>
+                <div class="info-column">
+                    <h3>PROJECT DETAILS</h3>
+                    <div class="info-item">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">${contractData.freelancerEmail}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Start Date:</span>
+                        <span class="info-value">${contractData.projectStart}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Rate:</span>
+                        <span class="info-value">${contractData.rate}</span>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="footer">
-            <div class="contract-id">Contract ID: ${contractData.contractId}</div>
-            <div>Generated on: ${new Date(contractData.signedTimestamp).toLocaleDateString()} at ${new Date(contractData.signedTimestamp).toLocaleTimeString()}</div>
-            <div>This contract is legally binding and fully executed by both parties.</div>
+            
+            <!-- Contract Terms -->
+            <div class="terms-section">
+                <h3>CONTRACT TERMS & CONDITIONS</h3>
+                <ol class="terms-list">
+                    <li><strong>INDEPENDENT CONTRACTOR:</strong> Contractor is an independent contractor, not an employee of Cochran Films.</li>
+                    <li><strong>SERVICES:</strong> Contractor will provide ${contractData.role} services as specified in project details.</li>
+                    <li><strong>COMPENSATION:</strong> Contractor will receive ${contractData.rate} as agreed upon for services rendered.</li>
+                    <li><strong>PROFESSIONAL STANDARDS:</strong> Contractor must maintain professional standards and complete work to satisfaction.</li>
+                    <li><strong>ATTIRE:</strong> Contractor must wear company-branded gear provided and all black clothing during projects.</li>
+                    <li><strong>PUNCTUALITY:</strong> Contractor must arrive at project location on time as scheduled.</li>
+                    <li><strong>DOCUMENTATION:</strong> Contractor may take and share BTS content with proper credit to Cochran Films.</li>
+                    <li><strong>EQUIPMENT:</strong> Contractor will use personal equipment unless otherwise arranged.</li>
+                    <li><strong>CONDUCT:</strong> Contractor must maintain respectful demeanor with staff and clients.</li>
+                    <li><strong>SAFETY:</strong> Contractor must follow all safety protocols and guidelines.</li>
+                    <li><strong>CONFIDENTIALITY:</strong> Contractor must maintain confidentiality of client information.</li>
+                </ol>
+            </div>
+            
+            <!-- Separator Banner -->
+            <div class="separator-banner">
+                <h3>COCHRAN FILMS - CONTRACT TERMS (CONTINUED)</h3>
+            </div>
+            
+            <ol class="terms-list" style="margin-top: 20px;">
+                <li><strong>TAX OBLIGATIONS:</strong> Contractor is responsible for all personal tax obligations.</li>
+                <li><strong>TRANSPORTATION:</strong> Contractor is responsible for their own transportation.</li>
+            </ol>
+            
+            <!-- Signatures Section -->
+            <div class="signatures-section">
+                <h3>CONTRACT SIGNATURES</h3>
+                
+                <div class="signature-banner">
+                    <h3>COCHRAN FILMS - CONTRACT SIGNATURES</h3>
+                </div>
+                
+                <div class="signature-blocks">
+                    <div class="signature-block">
+                        <h4>COCHRAN FILMS (COMPANY)</h4>
+                        <div class="signature-info">
+                            <strong>Authorized Signature:</strong> Cody Cochran
+                        </div>
+                        <div class="signature-info">
+                            <strong>Title:</strong> Founder & CEO
+                        </div>
+                        <div class="signature-info">
+                            <strong>Date:</strong> ${contractData.effectiveDate}
+                        </div>
+                        <div class="signature-info">
+                            <strong>Email:</strong> info@cochranfilms.com
+                        </div>
+                    </div>
+                    
+                    <div class="signature-block">
+                        <h4>CONTRACTOR SIGNATURE</h4>
+                        <div class="signature-info">
+                            <strong>Contractor:</strong> ${contractData.freelancerName}
+                        </div>
+                        <div class="signature-info">
+                            <strong>Signature:</strong> ${contractData.signature}
+                        </div>
+                        <div class="signature-info">
+                            <strong>Date:</strong> ${contractData.signatureDate}
+                        </div>
+                        <div class="signature-info">
+                            <strong>ID:</strong> ${contractData.contractId}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </body>
