@@ -3,7 +3,7 @@
     "Thing Two": {
       "profile": {
         "email": "dedejackson727@gmail.com",
-        "password": null,
+        "password": "test4321",
         "role": "Producer",
         "location": "Los Angeles, CA",
         "projectStart": "2026-01-01T22:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 9:50:51 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754315451785-VLNVP"
       },
       "jobs": {
         "job-thing-two-1754315394206": {
