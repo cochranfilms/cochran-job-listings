@@ -174,6 +174,9 @@
             await loadUsers();
             await loadUploadedContracts();
             await loadPerformanceReviews();
+            
+            // Initialize real-time performance review monitoring
+            initializePerformanceReviewMonitoring();
         }
 
         // Handle login
@@ -208,10 +211,18 @@
                     loadUsers();
                 }
             });
+            
+            // Cleanup performance review monitoring on page unload
+            window.addEventListener('beforeunload', function() {
+                cleanupPerformanceReviewMonitoring();
+            });
         });
 
         // Logout
         function logout() {
+            // Cleanup performance review monitoring
+            cleanupPerformanceReviewMonitoring();
+            
             sessionStorage.removeItem('adminDashboardAuthenticated');
             isAuthenticated = false;
             showLoginScreen();
@@ -2828,42 +2839,8 @@
             
             const paymentStatus = document.getElementById(`paymentStatus_${userName}`).value;
             
-            // Update user's payment status (payment method is read-only, set by user)
-            userData.paymentStatus = paymentStatus;
-            
-            // Update all jobs for this user
-            if (userData.jobs) {
-                Object.values(userData.jobs).forEach(job => {
-                    job.paymentStatus = paymentStatus;
-                });
-            }
-            
-            // Save to localStorage
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            // Update GitHub
-            console.log('🔄 Updating GitHub with payment status change...');
-            try {
-                await updateUsersOnGitHub();
-                console.log('✅ GitHub update successful');
-                showNotification(`✅ Payment status updated for ${userName}!\nStatus: ${paymentStatus}`, 'success');
-                
-                // Add performance review notification if payment status is "paid"
-                if (paymentStatus === 'paid') {
-                    addNotification(
-                        'Performance Review Needed',
-                        `${userName} has completed a paid project and needs a performance review.`,
-                        'performance'
-                    );
-                    showNotification(`⭐ Performance review notification added for ${userName}`, 'info');
-                }
-            } catch (error) {
-                console.error('❌ Error updating GitHub:', error);
-                showNotification(`⚠️ Payment status saved locally but GitHub update failed: ${error.message}`, 'warning');
-            }
-            
-            // Refresh the display
-            displayUsers();
+            // Use the enhanced payment status update function
+            await updatePaymentStatusWithPerformanceReview(userName, paymentStatus);
         }
         
         // Show project status manager modal
@@ -3677,6 +3654,7 @@
         // Update job status from modal
         async function updateJobStatus(freelancerName, jobId) {
             const projectStatusSelect = document.getElementById(`projectStatus_${jobId}`);
+            const paymentStatusSelect = document.getElementById(`paymentStatus_${jobId}`);
             
             if (!projectStatusSelect) {
                 showNotification('Project status element not found', 'error');
@@ -3684,10 +3662,16 @@
             }
             
             const newProjectStatus = projectStatusSelect.value;
+            const newPaymentStatus = paymentStatusSelect ? paymentStatusSelect.value : null;
             
             // Update the job in the user's jobs
             if (users[freelancerName] && users[freelancerName].jobs && users[freelancerName].jobs[jobId]) {
                 users[freelancerName].jobs[jobId].projectStatus = newProjectStatus;
+                
+                // Update payment status if available
+                if (newPaymentStatus) {
+                    users[freelancerName].jobs[jobId].paymentStatus = newPaymentStatus;
+                }
                 
                 // Save to localStorage
                 localStorage.setItem('users', JSON.stringify(users));
@@ -3699,6 +3683,28 @@
                 document.querySelector('div[style*="position: fixed"]').remove();
                 
                 showNotification(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}`, 'success');
+                
+                // Check for performance review if payment status is "paid"
+                if (newPaymentStatus === 'paid') {
+                    console.log(`⭐ Payment completed for ${freelancerName}, triggering performance review workflow...`);
+                    
+                    // Add immediate notification
+                    addNotification(
+                        'Performance Review Needed',
+                        `${freelancerName} has completed a paid project and needs a performance review.`,
+                        'performance'
+                    );
+                    
+                    // Show immediate alert
+                    showImmediatePerformanceReviewAlert(freelancerName);
+                    
+                    // Trigger immediate performance review check
+                    setTimeout(async () => {
+                        await checkForNewPerformanceReviews();
+                    }, 1000);
+                    
+                    showNotification(`⭐ Performance review workflow triggered for ${freelancerName}`, 'info');
+                }
                 
                 // Refresh the display
                 displayUsers();
@@ -4033,6 +4039,342 @@
             
             showNotification(`${message} ${details}`, 'success');
         }
+
+        // Real-time Performance Review System
+        let performanceReviewPollingInterval = null;
+        let lastPerformanceCheck = 0;
+        
+        // Initialize real-time performance review monitoring
+        function initializePerformanceReviewMonitoring() {
+            console.log('🔄 Initializing real-time performance review monitoring...');
+            
+            // Start polling for performance reviews every 30 seconds
+            performanceReviewPollingInterval = setInterval(async () => {
+                await checkForNewPerformanceReviews();
+            }, 30000); // 30 seconds
+            
+            // Initial check
+            setTimeout(async () => {
+                await checkForNewPerformanceReviews();
+            }, 2000); // Check after 2 seconds
+            
+            // Update monitoring status
+            updateMonitoringStatus(true);
+            
+            console.log('✅ Real-time performance review monitoring started');
+        }
+        
+        // Check for new performance reviews that need attention
+        async function checkForNewPerformanceReviews() {
+            try {
+                console.log('🔍 Checking for new performance reviews...');
+                
+                // Reload users and performance reviews to get latest data
+                await loadUsers();
+                await loadPerformanceReviews();
+                
+                // Find users who need performance reviews
+                const pendingReviews = Object.values(users).filter(userData => {
+                    return shouldShowPerformanceReview(userData);
+                });
+                
+                console.log(`📊 Found ${pendingReviews.length} pending performance reviews`);
+                
+                // Update performance review alerts
+                updatePerformanceReviewAlerts(pendingReviews);
+                
+                // Check for new notifications that need to be added
+                await checkForNewPerformanceNotifications(pendingReviews);
+                
+                lastPerformanceCheck = Date.now();
+                
+            } catch (error) {
+                console.error('❌ Error checking performance reviews:', error);
+            }
+        }
+        
+        // Update performance review alerts in real-time
+        function updatePerformanceReviewAlerts(pendingReviews) {
+            const existingAlert = document.getElementById('performanceReviewAlert');
+            
+            if (pendingReviews.length > 0) {
+                if (!existingAlert) {
+                    // Create new alert
+                    const alertContainer = document.createElement('div');
+                    alertContainer.id = 'performanceReviewAlert';
+                    alertContainer.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: linear-gradient(135deg, #f59e0b, #d97706);
+                        color: white;
+                        padding: 1rem;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        z-index: 10000;
+                        max-width: 350px;
+                        animation: slideInRight 0.3s ease-out;
+                    `;
+                    
+                    alertContainer.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <h4 style="margin: 0; color: white;"><i class="fas fa-star"></i> Performance Reviews Due</h4>
+                            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem;">×</button>
+                        </div>
+                        <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">
+                            ${pendingReviews.length} freelancer${pendingReviews.length > 1 ? 's' : ''} need${pendingReviews.length > 1 ? '' : 's'} performance review.
+                        </p>
+                        <button onclick="showPerformanceReviewList()" 
+                                style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                            View All Reviews
+                        </button>
+                    `;
+                    
+                    document.body.appendChild(alertContainer);
+                    
+                    // Auto-hide after 10 seconds
+                    setTimeout(() => {
+                        if (alertContainer.parentNode) {
+                            alertContainer.remove();
+                        }
+                    }, 10000);
+                } else {
+                    // Update existing alert
+                    const countElement = existingAlert.querySelector('p');
+                    if (countElement) {
+                        countElement.innerHTML = `${pendingReviews.length} freelancer${pendingReviews.length > 1 ? 's' : ''} need${pendingReviews.length > 1 ? '' : 's'} performance review.`;
+                    }
+                }
+            } else {
+                // Remove alert if no pending reviews
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+            }
+        }
+        
+        // Check for new performance notifications that need to be added
+        async function checkForNewPerformanceNotifications(pendingReviews) {
+            try {
+                // Get existing notifications
+                const existingNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+                
+                // Check each pending review
+                for (const userData of pendingReviews) {
+                    const userEmail = userData.profile?.email;
+                    if (!userEmail) continue;
+                    
+                    // Check if notification already exists for this user
+                    const existingNotification = existingNotifications.find(n => 
+                        n.type === 'performance' && 
+                        n.message.includes(userData.name || userEmail)
+                    );
+                    
+                    // If no notification exists, add one
+                    if (!existingNotification) {
+                        addNotification(
+                            'Performance Review Needed',
+                            `${userData.name || userEmail} has completed a paid project and needs a performance review.`,
+                            'performance'
+                        );
+                        
+                        console.log(`📢 Added performance review notification for ${userData.name || userEmail}`);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Error checking performance notifications:', error);
+            }
+        }
+        
+        // Enhanced payment status update with immediate performance review trigger
+        async function updatePaymentStatusWithPerformanceReview(userName, paymentStatus) {
+            console.log(`🔄 Updating payment status for ${userName} to ${paymentStatus}...`);
+            
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
+                return;
+            }
+            
+            // Update user's payment status
+            userData.paymentStatus = paymentStatus;
+            
+            // Update all jobs for this user
+            if (userData.jobs) {
+                Object.values(userData.jobs).forEach(job => {
+                    job.paymentStatus = paymentStatus;
+                });
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            // Update GitHub
+            try {
+                await updateUsersOnGitHub();
+                showNotification(`✅ Payment status updated for ${userName}!\nStatus: ${paymentStatus}`, 'success');
+                
+                // Immediate performance review trigger for paid status
+                if (paymentStatus === 'paid') {
+                    console.log(`⭐ Payment completed for ${userName}, triggering performance review workflow...`);
+                    
+                    // Add immediate notification
+                    addNotification(
+                        'Performance Review Needed',
+                        `${userName} has completed a paid project and needs a performance review.`,
+                        'performance'
+                    );
+                    
+                    // Show immediate alert
+                    showImmediatePerformanceReviewAlert(userName);
+                    
+                    // Trigger immediate performance review check
+                    setTimeout(async () => {
+                        await checkForNewPerformanceReviews();
+                    }, 1000);
+                    
+                    showNotification(`⭐ Performance review workflow triggered for ${userName}`, 'info');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error updating GitHub:', error);
+                showNotification(`⚠️ Payment status saved locally but GitHub update failed: ${error.message}`, 'warning');
+            }
+            
+            // Refresh the display
+            displayUsers();
+        }
+        
+        // Show immediate performance review alert
+        function showImmediatePerformanceReviewAlert(userName) {
+            const alertContainer = document.createElement('div');
+            alertContainer.id = 'immediatePerformanceAlert';
+            alertContainer.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #f59e0b, #d97706);
+                color: white;
+                padding: 2rem;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+                z-index: 10001;
+                max-width: 400px;
+                text-align: center;
+                animation: pulse 2s infinite;
+            `;
+            
+            alertContainer.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <i class="fas fa-star" style="font-size: 3rem; color: #FFD700;"></i>
+                </div>
+                <h3 style="margin: 0 0 1rem 0; color: white;">Performance Review Required</h3>
+                <p style="margin: 0 0 1.5rem 0; font-size: 1.1rem;">
+                    ${userName} has completed a paid project and needs a performance review.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button onclick="showPerformanceReviewModal('${userName}'); this.closest('div').remove();" 
+                            style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer;">
+                        Review Now
+                    </button>
+                    <button onclick="this.closest('div').remove()" 
+                            style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer;">
+                        Later
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(alertContainer);
+            
+            // Auto-hide after 15 seconds
+            setTimeout(() => {
+                if (alertContainer.parentNode) {
+                    alertContainer.remove();
+                }
+            }, 15000);
+        }
+        
+        // Cleanup function for performance review monitoring
+        function cleanupPerformanceReviewMonitoring() {
+            if (performanceReviewPollingInterval) {
+                clearInterval(performanceReviewPollingInterval);
+                performanceReviewPollingInterval = null;
+                console.log('🔄 Performance review monitoring stopped');
+            }
+            
+            // Update monitoring status
+            updateMonitoringStatus(false);
+        }
+        
+        // Update monitoring status indicator
+        function updateMonitoringStatus(isActive) {
+            const statusElement = document.getElementById('monitoringStatus');
+            if (statusElement) {
+                if (isActive) {
+                    statusElement.style.background = 'rgba(34, 197, 94, 0.2)';
+                    statusElement.style.borderColor = '#22c55e';
+                    statusElement.style.color = '#22c55e';
+                    statusElement.innerHTML = `
+                        <i class="fas fa-circle" style="font-size: 0.6rem; animation: pulse 2s infinite;"></i>
+                        <span>Real-time Monitoring Active</span>
+                    `;
+                } else {
+                    statusElement.style.background = 'rgba(239, 68, 68, 0.2)';
+                    statusElement.style.borderColor = '#ef4444';
+                    statusElement.style.color = '#ef4444';
+                    statusElement.innerHTML = `
+                        <i class="fas fa-circle" style="font-size: 0.6rem;"></i>
+                        <span>Monitoring Inactive</span>
+                    `;
+                }
+            }
+        }
+        
+        // Manual performance review check
+        async function manualPerformanceReviewCheck() {
+            console.log('🔄 Manual performance review check triggered...');
+            
+            try {
+                // Show loading notification
+                showNotification('Checking for performance reviews...', 'info');
+                
+                // Perform the check
+                await checkForNewPerformanceReviews();
+                
+                // Show completion notification
+                const pendingReviews = Object.values(users).filter(userData => {
+                    return shouldShowPerformanceReview(userData);
+                });
+                
+                if (pendingReviews.length > 0) {
+                    showNotification(`Found ${pendingReviews.length} pending performance review${pendingReviews.length > 1 ? 's' : ''}`, 'success');
+                } else {
+                    showNotification('No pending performance reviews found', 'info');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error during manual performance review check:', error);
+                showNotification('Error checking performance reviews', 'error');
+            }
+        }
+        
+        // Add CSS for animations
+        const performanceReviewStyles = document.createElement('style');
+        performanceReviewStyles.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes pulse {
+                0% { transform: translate(-50%, -50%) scale(1); }
+                50% { transform: translate(-50%, -50%) scale(1.05); }
+                100% { transform: translate(-50%, -50%) scale(1); }
+            }
+        `;
+        document.head.appendChild(performanceReviewStyles);
     </script>
     
     <style>
@@ -4933,6 +5275,24 @@
                                 <i class="fas fa-star"></i>
                                 <span>Performance Reviews</span>
                             </button>
+                            <button class="action-btn link-btn" onclick="manualPerformanceReviewCheck()" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>Check Reviews</span>
+                            </button>
+                            <div class="monitoring-status" id="monitoringStatus" style="
+                                background: rgba(34, 197, 94, 0.2);
+                                border: 1px solid #22c55e;
+                                color: #22c55e;
+                                padding: 0.5rem 1rem;
+                                border-radius: 6px;
+                                font-size: 0.8rem;
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                            ">
+                                <i class="fas fa-circle" style="font-size: 0.6rem; animation: pulse 2s infinite;"></i>
+                                <span>Real-time Monitoring Active</span>
+                            </div>
                         </div>
                         
                         <div class="notification-container">
