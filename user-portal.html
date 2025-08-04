@@ -2569,18 +2569,52 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         }
 
         // Check authentication on page load
-        function checkAuth() {
+        async function checkAuth() {
             const savedUser = sessionStorage.getItem('userPortalAuthenticated');
             if (savedUser) {
                 try {
                     currentUser = JSON.parse(savedUser);
-                    showUserPortal();
+                    
+                    // Validate that user still exists in current data
+                    const userStillExists = await validateUserSession(currentUser);
+                    
+                    if (userStillExists) {
+                        showUserPortal();
+                    } else {
+                        // User was deleted, clear session and show login
+                        sessionStorage.removeItem('userPortalAuthenticated');
+                        currentUser = null;
+                        showNotification('Your account has been removed. Please contact the administrator.', 'error');
+                        showLoginScreen();
+                    }
                 } catch (error) {
+                    console.error('❌ Error parsing saved user data:', error);
+                    sessionStorage.removeItem('userPortalAuthenticated');
                     showLoginScreen();
                 }
             } else {
                 showLoginScreen();
             }
+        }
+        
+        // Validate if user session is still valid
+        async function validateUserSession(user) {
+            if (!user || !user.email) {
+                return false;
+            }
+            
+            // Check if user exists in current users data
+            const userExists = Object.values(users).some(u => 
+                u.profile?.email?.toLowerCase() === user.email.toLowerCase()
+            );
+            
+            if (!userExists) {
+                console.log('❌ User session invalid - user no longer exists:', user.email);
+                return false;
+            }
+            
+            console.log('✅ User session valid:', user.email);
+            return true;
         }
 
         // Refresh user data (reload from JSON file)
@@ -2592,14 +2626,28 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             await loadPerformanceReviews();
             
             if (currentUser) {
+                // Validate session first
+                const userStillExists = await validateUserSession(currentUser);
+                if (!userStillExists) {
+                    sessionStorage.removeItem('userPortalAuthenticated');
+                    currentUser = null;
+                    showNotification('Your account has been removed. Please contact the administrator.', 'error');
+                    showLoginScreen();
+                    return;
+                }
+                
                 // Find updated user data
-                const updatedUser = users.find(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
+                const updatedUser = Object.values(users).find(u => 
+                    u.profile?.email?.toLowerCase() === currentUser.email.toLowerCase()
+                );
                 if (updatedUser) {
                     currentUser = updatedUser;
                     console.log('✅ User data refreshed:', currentUser);
                     loadUserData(); // Refresh displays
+                    showNotification('Data refreshed successfully!', 'success');
                 } else {
                     console.warn('⚠️ User not found after refresh');
+                    showNotification('Unable to refresh user data', 'error');
                 }
             }
         }
@@ -2623,7 +2671,20 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             await loadUsersData();
             await loadJobsData();
             await loadPerformanceReviews();
-            checkAuth();
+            await checkAuth();
+            
+            // Set up periodic session validation (check every 30 seconds)
+            setInterval(async () => {
+                if (currentUser) {
+                    const userStillExists = await validateUserSession(currentUser);
+                    if (!userStillExists) {
+                        sessionStorage.removeItem('userPortalAuthenticated');
+                        currentUser = null;
+                        showNotification('Your account has been removed. Please contact the administrator.', 'error');
+                        showLoginScreen();
+                    }
+                }
+            }, 30000); // 30 seconds
             
             // Add login form handler
             const loginForm = document.getElementById('loginForm');
