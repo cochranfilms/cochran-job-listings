@@ -2054,13 +2054,34 @@
                 </div>
             `;
             
-            // Position the dropdown near the button
+            // Position the dropdown near the button with viewport bounds checking
             const button = document.querySelector('[onclick="togglePaymentDropdown()"]');
             if (button) {
                 const rect = button.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const dropdownWidth = 400; // min-width from CSS
+                
+                // Calculate optimal position
+                let left = rect.left - (dropdownWidth / 2) + (rect.width / 2);
+                let top = rect.bottom + 10;
+                
+                // Ensure dropdown stays within viewport bounds
+                if (left + dropdownWidth > viewportWidth) {
+                    left = viewportWidth - dropdownWidth - 20;
+                }
+                if (left < 20) {
+                    left = 20;
+                }
+                
+                // If dropdown would go below viewport, position it above the button
+                if (top + 400 > viewportHeight) { // 400px estimated height
+                    top = rect.top - 410;
+                }
+                
                 dropdown.style.position = 'fixed';
-                dropdown.style.top = (rect.bottom + 10) + 'px';
-                dropdown.style.left = (rect.left - 200) + 'px';
+                dropdown.style.top = top + 'px';
+                dropdown.style.left = left + 'px';
                 dropdown.style.zIndex = '10000';
             }
             

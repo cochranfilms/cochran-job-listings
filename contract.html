@@ -2343,6 +2343,24 @@
             line-height: 1.5;
         }
         
+        .terms-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .terms-column {
+            flex: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .terms-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+        
         .separator-banner {
             background: #FFB200;
             color: #000000;
@@ -2488,39 +2506,33 @@
             <!-- Contract Terms -->
             <div class="terms-section">
                 <h3>CONTRACT TERMS & CONDITIONS</h3>
-                <ol class="terms-list">
-                    <li><strong>INDEPENDENT CONTRACTOR:</strong> Contractor is an independent contractor, not an employee of Cochran Films.</li>
-                    <li><strong>SERVICES:</strong> Contractor will provide ${contractData.role} services as specified in project details.</li>
-                    <li><strong>COMPENSATION:</strong> Contractor will receive ${contractData.rate} as agreed upon for services rendered.</li>
-                    <li><strong>PROFESSIONAL STANDARDS:</strong> Contractor must maintain professional standards and complete work to satisfaction.</li>
-                    <li><strong>ATTIRE:</strong> Contractor must wear company-branded gear provided and all black clothing during projects.</li>
-                    <li><strong>PUNCTUALITY:</strong> Contractor must arrive at project location on time as scheduled.</li>
-                    <li><strong>DOCUMENTATION:</strong> Contractor may take and share BTS content with proper credit to Cochran Films.</li>
-                    <li><strong>EQUIPMENT:</strong> Contractor will use personal equipment unless otherwise arranged.</li>
-                    <li><strong>CONDUCT:</strong> Contractor must maintain respectful demeanor with staff and clients.</li>
-                    <li><strong>SAFETY:</strong> Contractor must follow all safety protocols and guidelines.</li>
-                    <li><strong>CONFIDENTIALITY:</strong> Contractor must maintain confidentiality of client information.</li>
-                </ol>
+                <div class="terms-grid">
+                    <div class="terms-column">
+                        <ol class="terms-list">
+                            <li><strong>INDEPENDENT CONTRACTOR:</strong> Contractor is not an employee of Cochran Films.</li>
+                            <li><strong>SERVICES:</strong> Provide professional ${contractData.role} services as specified.</li>
+                            <li><strong>COMPENSATION:</strong> Payment within 24 hours of project completion.</li>
+                            <li><strong>PROFESSIONAL STANDARDS:</strong> All work must meet Cochran Films quality standards.</li>
+                            <li><strong>ATTIRE:</strong> Professional attire (all black) required on set.</li>
+                            <li><strong>PUNCTUALITY:</strong> Arrive 15 minutes before scheduled start time.</li>
+                            <li><strong>DOCUMENTATION:</strong> Bring valid ID and signed contract to all projects.</li>
+                        </ol>
+                    </div>
+                    <div class="terms-column">
+                        <ol class="terms-list" start="8">
+                            <li><strong>EQUIPMENT:</strong> Use provided Cochran Films branded equipment when available.</li>
+                            <li><strong>CONDUCT:</strong> Maintain professional demeanor and respect at all times.</li>
+                            <li><strong>SAFETY:</strong> Follow all safety protocols and guidelines provided.</li>
+                            <li><strong>CONFIDENTIALITY:</strong> Respect and maintain confidentiality of project details.</li>
+                            <li><strong>TAX OBLIGATIONS:</strong> Contractor is responsible for all personal tax obligations.</li>
+                            <li><strong>TRANSPORTATION:</strong> Contractor is responsible for their own transportation.</li>
+                        </ol>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Separator Banner -->
-            <div class="separator-banner">
-                <h3>COCHRAN FILMS - CONTRACT TERMS (CONTINUED)</h3>
-            </div>
-            
-            <ol class="terms-list" style="margin-top: 20px;">
-                <li><strong>TAX OBLIGATIONS:</strong> Contractor is responsible for all personal tax obligations.</li>
-                <li><strong>TRANSPORTATION:</strong> Contractor is responsible for their own transportation.</li>
-            </ol>
             
             <!-- Signatures Section -->
             <div class="signatures-section">
-                <h3>CONTRACT SIGNATURES</h3>
-                
-                <div class="signature-banner">
-                    <h3>COCHRAN FILMS - CONTRACT SIGNATURES</h3>
-                </div>
-                
                 <div class="signature-blocks">
                     <div class="signature-block">
                         <h4>COCHRAN FILMS (COMPANY)</h4>

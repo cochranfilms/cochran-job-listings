@@ -1754,8 +1754,28 @@
                 return;
             }
             
-            // For now, just show a notification that user editing is not implemented yet
-            showNotification(`User editing for ${userName} is not implemented yet. This feature will be added soon.`, 'info');
+            // Populate the form with existing user data
+            document.getElementById('freelancerName').value = userName;
+            document.getElementById('freelancerEmail').value = userData.profile?.email || '';
+            document.getElementById('freelancerRole').value = userData.profile?.role || '';
+            document.getElementById('freelancerLocation').value = userData.profile?.location || '';
+            document.getElementById('projectStart').value = userData.profile?.projectStart || '';
+            document.getElementById('freelancerRate').value = userData.profile?.rate || '';
+            document.getElementById('approvedDate').value = userData.profile?.approvedDate || '';
+            
+            // Set editing mode
+            editingFreelancerIndex = 0; // Any positive number indicates editing mode
+            
+            // Update form button text
+            const submitButton = document.querySelector('#contractForm button[type="submit"]');
+            if (submitButton) {
+                submitButton.innerHTML = '<i class="fas fa-save"></i> Update User';
+            }
+            
+            // Scroll to form
+            document.getElementById('contractForm').scrollIntoView({ behavior: 'smooth' });
+            
+            showNotification(`Editing user: ${userName}`, 'info');
         }
 
 
@@ -1816,6 +1836,13 @@
                 
                 users[userName] = userData;
                 editingFreelancerIndex = -1;
+                
+                // Reset form button text
+                const submitButton = document.querySelector('#contractForm button[type="submit"]');
+                if (submitButton) {
+                    submitButton.innerHTML = '<i class="fas fa-plus"></i> Add New User';
+                }
+                
                 showNotification('User updated successfully!', 'success');
             } else {
                 // Create primary job for new users
