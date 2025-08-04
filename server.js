@@ -3,6 +3,9 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
+// Import API routes
+const performanceRouter = require('./api/performance');
+
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -230,6 +233,9 @@ app.put('/api/github/file/:filename', async (req, res) => {
     }
 });
 
+// Performance API routes
+app.use('/api/performance', performanceRouter);
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.status(200).json({
@@ -248,6 +254,10 @@ app.listen(PORT, () => {
     console.log(`   - GET  /api/uploaded-contracts`);
     console.log(`   - GET  /api/dropdown-options`);
     console.log(`   - GET  /api/health`);
+    console.log(`   - GET  /api/performance`);
+    console.log(`   - POST /api/performance`);
+    console.log(`   - PUT  /api/performance/:email`);
+    console.log(`   - DELETE /api/performance/:email`);
     console.log(`   - PUT  /api/github/file/:filename`);
     console.log(`\n🌐 Test page: http://localhost:${PORT}/test-api.html`);
     console.log(`📋 Admin dashboard: http://localhost:${PORT}/admin-dashboard.html`);
