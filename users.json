@@ -5,9 +5,9 @@
         "email": "clc.collective2025@gmail.com",
         "password": null,
         "role": "Videographer",
-        "location": "Miami, FL",
-        "projectStart": "2026-04-01T19:00",
-        "rate": "$75/hour",
+        "location": "New York, NY",
+        "projectStart": "2025-10-10T22:00",
+        "rate": "$300/hour",
         "approvedDate": "2025-08-04"
       },
       "contract": {
@@ -18,12 +18,12 @@
         "contractId": null
       },
       "jobs": {
-        "job-thing-four-1754337497901": {
-          "id": "job-thing-four-1754337497901",
+        "job-thing-four-1754338052945": {
+          "id": "job-thing-four-1754338052945",
           "role": "Videographer",
-          "location": "Miami, FL",
-          "projectStart": "2026-04-01T19:00",
-          "rate": "$75/hour",
+          "location": "New York, NY",
+          "projectStart": "2025-10-10T22:00",
+          "rate": "$300/hour",
           "projectType": "Videographer Project",
           "description": "Primary assignment for Thing Four",
           "projectStatus": "upcoming",
@@ -32,7 +32,7 @@
           "paymentDate": null
         }
       },
-      "primaryJob": "job-thing-four-1754337497901",
+      "primaryJob": "job-thing-four-1754338052945",
       "paymentMethod": null
     }
   },
