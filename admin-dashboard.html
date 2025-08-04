@@ -3016,15 +3016,6 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                                     <option value="cancelled" ${job.projectStatus === 'cancelled' ? 'selected' : ''}>Cancelled</option>
                                 </select>
                             </div>
-                            <div>
-                                <label style="color: #FFB200; font-weight: bold;">Payment Status:</label>
-                                <select id="paymentStatus_${job.id}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
-                                    <option value="pending" ${job.paymentStatus === 'pending' ? 'selected' : ''}>Pending</option>
-                                    <option value="processing" ${job.paymentStatus === 'processing' ? 'selected' : ''}>Processing</option>
-                                    <option value="paid" ${job.paymentStatus === 'paid' ? 'selected' : ''}>Paid</option>
-                                    <option value="overdue" ${job.paymentStatus === 'overdue' ? 'selected' : ''}>Overdue</option>
-                                </select>
-                            </div>
                         </div>
                         <button onclick="updateJobStatus('${userName}', '${job.id}')" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">
                             Update Status
@@ -3119,20 +3110,17 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         // Update job status from modal
         async function updateJobStatus(freelancerName, jobId) {
             const projectStatusSelect = document.getElementById(`projectStatus_${jobId}`);
-            const paymentStatusSelect = document.getElementById(`paymentStatus_${jobId}`);
             
-            if (!projectStatusSelect || !paymentStatusSelect) {
-                showNotification('Status elements not found', 'error');
+            if (!projectStatusSelect) {
+                showNotification('Project status element not found', 'error');
                 return;
             }
             
             const newProjectStatus = projectStatusSelect.value;
-            const newPaymentStatus = paymentStatusSelect.value;
             
             // Update the job in the user's jobs
             if (users[freelancerName] && users[freelancerName].jobs && users[freelancerName].jobs[jobId]) {
                 users[freelancerName].jobs[jobId].projectStatus = newProjectStatus;
-                users[freelancerName].jobs[jobId].paymentStatus = newPaymentStatus;
                 
                 // Save to localStorage
                 localStorage.setItem('users', JSON.stringify(users));
@@ -3143,7 +3131,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 // Close modal
                 document.querySelector('div[style*="position: fixed"]').remove();
                 
-                showNotification(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}\nPayment: ${newPaymentStatus}`, 'success');
+                showNotification(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}`, 'success');
                 
                 // Refresh the display
                 displayUsers();
