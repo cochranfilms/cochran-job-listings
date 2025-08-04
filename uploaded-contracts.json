@@ -1,5 +1,24 @@
 {
   "exportDate": "2025-08-04T08:57:17.368Z",
-  "totalContracts": 0,
-  "contracts": []
+  "totalContracts": 1,
+  "contracts": [],
+  "uploadedContracts": [
+    {
+      "contractId": "CF-1754298071313-548X3",
+      "freelancerName": "Test Final",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Videographer",
+      "rate": "$125/hour",
+      "location": "Miami, FL",
+      "fileName": "CF-1754298071313-548X3.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T09:01:23.076Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754298071313-548X3.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-04",
+      "signedDate": "2025-08-04"
+    }
+  ],
+  "lastUpdated": "2025-08-04T09:01:23.076Z"
 }
