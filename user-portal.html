@@ -2054,35 +2054,39 @@
                 </div>
             `;
             
-            // Position the dropdown near the button with viewport bounds checking
+            // Position the dropdown near the button with aggressive viewport bounds checking
             const button = document.querySelector('[onclick="togglePaymentDropdown()"]');
             if (button) {
                 const rect = button.getBoundingClientRect();
                 const viewportWidth = window.innerWidth;
                 const viewportHeight = window.innerHeight;
                 const dropdownWidth = 400; // min-width from CSS
+                const dropdownHeight = 500; // estimated height including all options
                 
-                // Calculate optimal position
-                let left = rect.left - (dropdownWidth / 2) + (rect.width / 2);
+                // Start with center positioning
+                let left = Math.max(20, Math.min(viewportWidth - dropdownWidth - 20, rect.left - (dropdownWidth / 2) + (rect.width / 2)));
                 let top = rect.bottom + 10;
                 
-                // Ensure dropdown stays within viewport bounds
-                if (left + dropdownWidth > viewportWidth) {
-                    left = viewportWidth - dropdownWidth - 20;
-                }
-                if (left < 20) {
-                    left = 20;
+                // If dropdown would go below viewport, position it above the button
+                if (top + dropdownHeight > viewportHeight) {
+                    top = Math.max(20, rect.top - dropdownHeight - 10);
                 }
                 
-                // If dropdown would go below viewport, position it above the button
-                if (top + 400 > viewportHeight) { // 400px estimated height
-                    top = rect.top - 410;
+                // If still too tall, center it vertically
+                if (top + dropdownHeight > viewportHeight) {
+                    top = Math.max(20, (viewportHeight - dropdownHeight) / 2);
                 }
+                
+                // Final bounds check
+                left = Math.max(20, Math.min(viewportWidth - dropdownWidth - 20, left));
+                top = Math.max(20, Math.min(viewportHeight - dropdownHeight - 20, top));
                 
                 dropdown.style.position = 'fixed';
                 dropdown.style.top = top + 'px';
                 dropdown.style.left = left + 'px';
                 dropdown.style.zIndex = '10000';
+                dropdown.style.maxHeight = (viewportHeight - 40) + 'px';
+                dropdown.style.overflowY = 'auto';
             }
             
             document.body.appendChild(dropdown);
@@ -2574,13 +2578,13 @@
                         <h3 style="color: #FFB200; margin-bottom: 0.5rem;">📋 Basic Information</h3>
                         <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
-                                <div><strong>Contract ID:</strong> ${userContract.contractId}</div>
-                                <div><strong>Freelancer:</strong> ${userContract.freelancerEmail}</div>
-                                <div><strong>Email:</strong> ${userContract.freelancerEmail}</div>
-                                <div><strong>Role:</strong> ${userContract.role}</div>
-                                <div><strong>Rate:</strong> ${userContract.rate}</div>
-                                <div><strong>Location:</strong> ${userContract.location}</div>
-                                <div><strong>Contract Date:</strong> ${userContract.contractDate || 'Not specified'}</div>
+                                <div><strong>Contract ID:</strong> ${userContract.contractId || 'Not specified'}</div>
+                                <div><strong>Freelancer:</strong> ${currentUser.name || currentUser.email || 'Not specified'}</div>
+                                <div><strong>Email:</strong> ${currentUser.email || 'Not specified'}</div>
+                                <div><strong>Role:</strong> ${userContract.role || currentUser.role || 'Not specified'}</div>
+                                <div><strong>Rate:</strong> ${userContract.rate || currentUser.rate || 'Not specified'}</div>
+                                <div><strong>Location:</strong> ${userContract.location || currentUser.location || 'Not specified'}</div>
+                                <div><strong>Contract Date:</strong> ${userContract.signedDate ? new Date(userContract.signedDate).toLocaleDateString() : 'Not specified'}</div>
                             </div>
                         </div>
                         
@@ -2598,10 +2602,10 @@
                         <h3 style="color: #FFB200; margin-bottom: 0.5rem;">📁 File Information</h3>
                         <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
                             <div style="font-size: 0.9rem;">
-                                <div><strong>File Name:</strong> ${userContract.fileName}</div>
-                                <div><strong>File Size:</strong> ${(userContract.fileSize / 1024).toFixed(1)} KB</div>
-                                <div><strong>Upload Date:</strong> ${new Date(userContract.uploadDate).toLocaleString()}</div>
-                                <div><strong>Status:</strong> <span style="color: #22c55e;">${userContract.status}</span></div>
+                                <div><strong>File Name:</strong> ${userContract.fileName || 'Not specified'}</div>
+                                <div><strong>File Size:</strong> ${userContract.fileSize ? (userContract.fileSize / 1024).toFixed(1) + ' KB' : 'Not specified'}</div>
+                                <div><strong>Upload Date:</strong> ${userContract.signedDate ? new Date(userContract.signedDate).toLocaleString() : 'Not specified'}</div>
+                                <div><strong>Status:</strong> <span style="color: #22c55e;">${userContract.status || 'uploaded'}</span></div>
                             </div>
                         </div>
                         

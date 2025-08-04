@@ -951,7 +951,7 @@
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                // Ultra-compact terms list - designed to fit on one page
+                // Professional compact terms list - designed to fit on one page
                 const compactTerms = [
                     '1. INDEPENDENT CONTRACTOR: Not an employee of Cochran Films.',
                     '2. SERVICES: Provide professional services as specified.',
@@ -969,27 +969,35 @@
                     '14. TRANSPORTATION: Contractor responsible for own transport.'
                 ];
                 
-                // Two-column layout for terms to fit on one page
-                const leftTerms = compactTerms.slice(0, 7);
-                const rightTerms = compactTerms.slice(7);
+                // Three-column layout for better space utilization
+                const leftTerms = compactTerms.slice(0, 5);
+                const middleTerms = compactTerms.slice(5, 9);
+                const rightTerms = compactTerms.slice(9);
                 
                 let leftYPos = 120;
+                let middleYPos = 120;
                 let rightYPos = 120;
                 
                 // Left column
                 leftTerms.forEach((term, index) => {
-                    doc.text(term, 25, leftYPos);
-                    leftYPos += 5;
+                    doc.text(term, 20, leftYPos);
+                    leftYPos += 6;
+                });
+                
+                // Middle column
+                middleTerms.forEach((term, index) => {
+                    doc.text(term, 75, middleYPos);
+                    middleYPos += 6;
                 });
                 
                 // Right column
                 rightTerms.forEach((term, index) => {
-                    doc.text(term, 110, rightYPos);
-                    rightYPos += 5;
+                    doc.text(term, 130, rightYPos);
+                    rightYPos += 6;
                 });
                 
-                // Use the higher Y position for signature section
-                let termYPos = Math.max(leftYPos, rightYPos) + 10;
+                // Use the highest Y position for signature section
+                let termYPos = Math.max(leftYPos, middleYPos, rightYPos) + 15;
                 
                 // ==================== COMPACT SIGNATURES ====================
                 
@@ -1009,37 +1017,37 @@
                 doc.text('CONTRACT SIGNATURES', 105, termYPos + 2, { align: 'center' });
                 
                 // Company signature (pre-signed)
-                doc.setFontSize(9);
+                doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('COCHRAN FILMS (COMPANY)', 20, termYPos + 20);
+                doc.text('COCHRAN FILMS (COMPANY)', 20, termYPos + 15);
                 
                 // Company signature box
                 doc.setFillColor(248, 249, 250);
-                doc.rect(20, termYPos + 25, 80, 30, 'F');
+                doc.rect(20, termYPos + 20, 75, 25, 'F');
                 doc.setDrawColor(200, 200, 200);
-                doc.rect(20, termYPos + 25, 80, 30, 'S');
+                doc.rect(20, termYPos + 20, 75, 25, 'S');
                 
-                doc.setFontSize(7);
+                doc.setFontSize(6);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                doc.text('Authorized Signature: Cody Cochran', 25, termYPos + 32);
-                doc.text('Title: Founder & CEO', 25, termYPos + 37);
-                doc.text('Date: ' + contractData.effectiveDate, 25, termYPos + 42);
-                doc.text('Email: info@cochranfilms.com', 25, termYPos + 47);
+                doc.text('Authorized Signature: Cody Cochran', 25, termYPos + 26);
+                doc.text('Title: Founder & CEO', 25, termYPos + 30);
+                doc.text('Date: ' + contractData.effectiveDate, 25, termYPos + 34);
+                doc.text('Email: info@cochranfilms.com', 25, termYPos + 38);
                 
                 // Contractor signature
-                doc.setFontSize(9);
+                doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('CONTRACTOR SIGNATURE', 110, termYPos + 20);
+                doc.text('CONTRACTOR SIGNATURE', 105, termYPos + 15);
                 
                 // Contractor signature box
                 doc.setFillColor(248, 249, 250);
-                doc.rect(110, termYPos + 25, 80, 30, 'F');
+                doc.rect(105, termYPos + 20, 75, 25, 'F');
                 doc.setDrawColor(200, 200, 200);
-                doc.rect(110, termYPos + 25, 80, 30, 'S');
+                doc.rect(105, termYPos + 20, 75, 25, 'S');
                 
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
