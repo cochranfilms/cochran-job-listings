@@ -33,7 +33,8 @@
         }
       },
       "primaryJob": "job-test-newest-1754310796429",
-      "paymentMethod": null
+      "paymentMethod": "invoice",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
