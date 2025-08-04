@@ -1580,27 +1580,37 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     </div>
                     
                     <div class="actions">
-                        <button class="btn btn-small" onclick="editFreelancer(${index})">
-                            <i class="fas fa-edit"></i> Edit
+                        <button class="btn btn-small" onclick="editUser('${userName}')">
+                            <i class="fas fa-edit"></i> Edit User
                         </button>
-                        <button class="btn btn-small btn-danger" onclick="deleteFreelancer(${index})">
-                            <i class="fas fa-trash"></i> Delete
+                        <button class="btn btn-small btn-danger" onclick="deleteUser('${userName}')">
+                            <i class="fas fa-trash"></i> Delete User
                         </button>
                     </div>
                 </div>
             `).join('');
             
-            container.innerHTML = freelancersHTML;
+            container.innerHTML = usersHTML;
+        }
+
+        // User management functions
+        function editUser(userName) {
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
+                return;
+            }
             
-            // Update job assignment dropdown
-            populateJobAssignmentDropdown();
-            
-            // Check for updated freelancers.json data and show export button
-            const updatedData = localStorage.getItem('updatedFreelancersJson');
-            const exportUpdatedBtn = document.getElementById('exportUpdatedBtn');
-            if (updatedData && exportUpdatedBtn) {
-                exportUpdatedBtn.style.display = 'inline-block';
-                console.log('🔄 Updated freelancers.json data available for export');
+            // For now, just show a notification that user editing is not implemented yet
+            showNotification(`User editing for ${userName} is not implemented yet. This feature will be added soon.`, 'info');
+        }
+
+        function deleteUser(userName) {
+            if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+                delete users[userName];
+                localStorage.setItem('users', JSON.stringify(users));
+                displayUsers();
+                showNotification(`User "${userName}" has been deleted.`, 'success');
             }
         }
 
