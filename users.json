@@ -1,41 +1,5 @@
 {
-  "users": {
-    "Thing Four": {
-      "profile": {
-        "email": "clc.collective2025@gmail.com",
-        "password": "test1234",
-        "role": "Videographer",
-        "location": "New York, NY",
-        "projectStart": "2025-10-10T22:00",
-        "rate": "$300/hour",
-        "approvedDate": "2025-08-04"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/4/2025, 4:27:05 PM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754339225224-9X8LJ"
-      },
-      "jobs": {
-        "job-thing-four-1754338052945": {
-          "id": "job-thing-four-1754338052945",
-          "role": "Videographer",
-          "location": "New York, NY",
-          "projectStart": "2025-10-10T22:00",
-          "rate": "$300/hour",
-          "projectType": "Videographer Project",
-          "description": "Primary assignment for Thing Four",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "completionDate": null,
-          "paymentDate": null
-        }
-      },
-      "primaryJob": "job-thing-four-1754338052945",
-      "paymentMethod": null
-    }
-  },
+  "users": {},
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -51,5 +15,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 1
+  "totalUsers": 0
 }
