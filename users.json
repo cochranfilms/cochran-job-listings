@@ -1,53 +1,19 @@
 {
-  "users": {
-    "Test User": {
-      "profile": {
-        "email": "codylcochran89@gmail.com",
-        "password": "Test1234",
-        "role": "Videographer",
-        "location": "Los Angeles, CA",
-        "approvedDate": "2025-08-03"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/3/2025, 11:09:28 PM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754276968364-P766Y"
-      },
-      "jobs": {
-        "job-test-user-1754276911229": {
-          "id": "job-test-user-1754276911229",
-          "role": "Videographer",
-          "location": "Los Angeles, CA",
-          "projectStart": "2025-10-10T19:00",
-          "rate": "$50/hour",
-          "projectType": "Videographer Project",
-          "description": "Primary assignment for Test User",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "completionDate": null,
-          "paymentDate": null
-        }
-      },
-      "primaryJob": "job-test-user-1754276911229",
-      "paymentMethod": "check"
-    }
-  },
+  "users": {},
   "statusOptions": {
     "projectStatus": [
       "upcoming",
-      "in-progress", 
+      "in-progress",
       "completed",
       "cancelled"
     ],
     "paymentStatus": [
       "pending",
       "processing",
-      "paid", 
+      "paid",
       "overdue"
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 1
-} 
+  "totalUsers": 0
+}
