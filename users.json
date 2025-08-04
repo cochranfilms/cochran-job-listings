@@ -33,7 +33,8 @@
         }
       },
       "primaryJob": "job-cody-cochran-1754296113828",
-      "paymentMethod": null
+      "paymentMethod": "cash",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
