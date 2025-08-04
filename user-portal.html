@@ -2514,35 +2514,114 @@
                 return;
             }
             
-            const details = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎬 COCHRAN FILMS - CONTRACT DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📋 BASIC INFO:
-Contract ID: ${userContract.contractId}
-Freelancer: ${userContract.freelancerEmail}
-Email: ${userContract.freelancerEmail}
-Role: ${userContract.role}
-Rate: ${userContract.rate}
-Location: ${userContract.location}
-Contract Date: ${userContract.contractDate || 'Not specified'}
-
-${userContract.jobId && userContract.jobId !== 'legacy-job' ? `🎯 JOB INFO:
-Job ID: ${userContract.jobId}
-Job Role: ${userContract.jobRole || userContract.role}
-Job Description: ${userContract.jobDescription || 'Not specified'}
-
-` : ''}📁 FILE INFO:
-File Name: ${userContract.fileName}
-File Size: ${(userContract.fileSize / 1024).toFixed(1)} KB
-Upload Date: ${new Date(userContract.uploadDate).toLocaleString()}
-Status: ${userContract.status}
-
-${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            `.trim();
+            // Create a proper modal for contract details
+            const modal = document.createElement('div');
+            modal.id = 'contractDetailsModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            `;
             
-            showNotification(details, 'info');
+            const details = `
+                <div style="
+                    background: #1a1a1a;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    border: 1px solid #FFB200;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-file-contract"></i> Contract Details</h2>
+                        <button onclick="closeContractDetailsModal()" 
+                                style="
+                                    background: #ef4444;
+                                    color: white;
+                                    border: none;
+                                    padding: 0.5rem;
+                                    border-radius: 50%;
+                                    cursor: pointer;
+                                    width: 30px;
+                                    height: 30px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                ">×</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="color: #FFB200; margin-bottom: 0.5rem;">📋 Basic Information</h3>
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
+                                <div><strong>Contract ID:</strong> ${userContract.contractId}</div>
+                                <div><strong>Freelancer:</strong> ${userContract.freelancerEmail}</div>
+                                <div><strong>Email:</strong> ${userContract.freelancerEmail}</div>
+                                <div><strong>Role:</strong> ${userContract.role}</div>
+                                <div><strong>Rate:</strong> ${userContract.rate}</div>
+                                <div><strong>Location:</strong> ${userContract.location}</div>
+                                <div><strong>Contract Date:</strong> ${userContract.contractDate || 'Not specified'}</div>
+                            </div>
+                        </div>
+                        
+                        ${userContract.jobId && userContract.jobId !== 'legacy-job' ? `
+                        <h3 style="color: #FFB200; margin-bottom: 0.5rem;">🎯 Job Information</h3>
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <div style="font-size: 0.9rem;">
+                                <div><strong>Job ID:</strong> ${userContract.jobId}</div>
+                                <div><strong>Job Role:</strong> ${userContract.jobRole || userContract.role}</div>
+                                <div><strong>Job Description:</strong> ${userContract.jobDescription || 'Not specified'}</div>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <h3 style="color: #FFB200; margin-bottom: 0.5rem;">📁 File Information</h3>
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <div style="font-size: 0.9rem;">
+                                <div><strong>File Name:</strong> ${userContract.fileName}</div>
+                                <div><strong>File Size:</strong> ${(userContract.fileSize / 1024).toFixed(1)} KB</div>
+                                <div><strong>Upload Date:</strong> ${new Date(userContract.uploadDate).toLocaleString()}</div>
+                                <div><strong>Status:</strong> <span style="color: #22c55e;">${userContract.status}</span></div>
+                            </div>
+                        </div>
+                        
+                        ${userContract.notes ? `
+                        <h3 style="color: #FFB200; margin-bottom: 0.5rem;">📝 Notes</h3>
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                            <div style="font-size: 0.9rem;">${userContract.notes}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            modal.innerHTML = details;
+            document.body.appendChild(modal);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeContractDetailsModal();
+                }
+            });
+        }
+        
+        function closeContractDetailsModal() {
+            const modal = document.getElementById('contractDetailsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
         }
 
         // Make functions globally accessible
@@ -2603,13 +2682,14 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
                 return false;
             }
             
-            // Check if user exists in current users data
-            const userExists = Object.values(users).some(u => 
-                u.profile?.email?.toLowerCase() === user.email.toLowerCase()
+            // Check if user exists in current users data (users is now an array)
+            const userExists = users.some(u => 
+                u.email?.toLowerCase() === user.email.toLowerCase()
             );
             
             if (!userExists) {
                 console.log('❌ User session invalid - user no longer exists:', user.email);
+                console.log('🔍 Available users:', users.map(u => ({ name: u.name, email: u.email })));
                 return false;
             }
             
@@ -2637,8 +2717,8 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
                 }
                 
                 // Find updated user data
-                const updatedUser = Object.values(users).find(u => 
-                    u.profile?.email?.toLowerCase() === currentUser.email.toLowerCase()
+                const updatedUser = users.find(u => 
+                    u.email?.toLowerCase() === currentUser.email.toLowerCase()
                 );
                 if (updatedUser) {
                     currentUser = updatedUser;
