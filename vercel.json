@@ -6,6 +6,9 @@
     },
     "api/github/info.js": {
       "maxDuration": 30
+    },
+    "api/users.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

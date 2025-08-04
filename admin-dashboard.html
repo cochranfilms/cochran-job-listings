@@ -77,8 +77,7 @@
         let uploadedContracts = [];
         let contractsAnalytics = {};
         let performanceReviews = {};
-        let projectStatus = {};
-        let freelancers = [];
+        let users = {};
         let jobs = [];
 
         // EmailJS Configuration for Job Acceptance
@@ -169,7 +168,7 @@
             document.getElementById('adminInterface').style.display = 'block';
             
             await loadJobs();
-            await loadFreelancers();
+            await loadUsers();
             await loadUploadedContracts();
             await loadProjectStatus();
             await loadPerformanceReviews();
@@ -203,8 +202,8 @@
             window.addEventListener('message', function(event) {
                 if (event.data.type === 'paymentMethodUpdated') {
                     console.log('🔄 Payment method updated by user:', event.data.email, event.data.paymentMethod);
-                    // Refresh freelancer data to show updated payment methods
-                    loadFreelancers();
+                    // Refresh user data to show updated payment methods
+                    loadUsers();
                 }
             });
         });
@@ -715,62 +714,41 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         
         let editingFreelancerIndex = -1;
 
-        // Load freelancers from freelancers.json and localStorage
-        async function loadFreelancers() {
-            console.log('🔄 Loading freelancers...');
+        // Load users from users.json and localStorage
+        async function loadUsers() {
+            console.log('🔄 Loading users...');
             
-            // First, try to load from freelancers API
+            // First, try to load from users API
             try {
-                const response = await fetch('/api/freelancers');
+                const response = await fetch('/api/users');
                 if (response.ok) {
                     const jsonData = await response.json();
-                    const approvedFreelancers = jsonData.approvedFreelancers || {};
+                    users = jsonData.users || {};
                     
-                    // Convert the object format to array format for the admin dashboard
-                    freelancers = Object.entries(approvedFreelancers).map(([name, data]) => ({
-                        name: name,
-                        email: data.email,
-                        password: data.password,
-                        role: data.role,
-                        location: data.location,
-                        projectStart: data.projectStart,
-                        rate: data.rate,
-                        approvedDate: data.approvedDate,
-                        contractStatus: data.contractStatus || 'pending',
-                        contractSignedDate: data.contractSignedDate || null,
-                        contractUploadedDate: data.contractUploadedDate || null,
-                        contractId: data.contractId || null,
-                        jobs: data.jobs || [],
-                        primaryJob: data.primaryJob || null,
-                        paymentMethod: data.paymentMethod || null
-                    }));
-                    
-                    console.log('📖 Loaded', freelancers.length, 'freelancers from API');
+                    console.log('📖 Loaded', Object.keys(users).length, 'users from API');
                     
                     // Update localStorage to sync with GitHub data
-                    localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                    localStorage.setItem('users', JSON.stringify(users));
                     
                 } else {
-                    console.warn('⚠️ Could not load freelancers.json, trying localStorage');
-                    freelancers = JSON.parse(localStorage.getItem('freelancers') || '[]');
-                    console.log('📝 Loaded', freelancers.length, 'freelancers from localStorage');
+                    console.warn('⚠️ Could not load users.json, trying localStorage');
+                    users = JSON.parse(localStorage.getItem('users') || '{}');
+                    console.log('📝 Loaded', Object.keys(users).length, 'users from localStorage');
                 }
             } catch (error) {
-                console.warn('⚠️ Error loading freelancers.json:', error);
-                freelancers = JSON.parse(localStorage.getItem('freelancers') || '[]');
-                console.log('📝 Loaded', freelancers.length, 'freelancers from localStorage (fallback)');
+                console.warn('⚠️ Error loading users.json:', error);
+                users = JSON.parse(localStorage.getItem('users') || '{}');
+                console.log('📝 Loaded', Object.keys(users).length, 'users from localStorage (fallback)');
             }
             
-
-            
-            displayFreelancers();
-            console.log('✅ Total freelancers loaded:', freelancers.length);
+            displayUsers();
+            console.log('✅ Total users loaded:', Object.keys(users).length);
             
             // Load and populate dropdown options
             await loadDropdownOptions();
             
-            // Populate freelancer dropdowns
-            populateFreelancerDropdowns();
+            // Populate user dropdowns
+            populateUserDropdowns();
             
             // Show payment method summary
             displayPaymentMethodSummary();
@@ -779,41 +757,41 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             checkPerformanceReviewAlerts();
             
             // Show status in the interface
-            const statusElement = document.getElementById('freelancerStatus');
+            const statusElement = document.getElementById('userStatus');
             if (statusElement) {
-                statusElement.textContent = `Loaded ${freelancers.length} freelancers from ${freelancers.length > 0 ? 'freelancers.json' : 'localStorage'}`;
+                statusElement.textContent = `Loaded ${Object.keys(users).length} users from ${Object.keys(users).length > 0 ? 'users.json' : 'localStorage'}`;
             }
         }
         
 
 
-        // Populate freelancer dropdowns
-        function populateFreelancerDropdowns() {
-            // Populate contract upload freelancer dropdown
-            const uploadFreelancerSelect = document.getElementById('uploadFreelancerName');
-            if (uploadFreelancerSelect) {
-                uploadFreelancerSelect.innerHTML = '<option value="">Select a freelancer...</option>';
-                freelancers.forEach(freelancer => {
+        // Populate user dropdowns
+        function populateUserDropdowns() {
+            // Populate contract upload user dropdown
+            const uploadUserSelect = document.getElementById('uploadFreelancerName');
+            if (uploadUserSelect) {
+                uploadUserSelect.innerHTML = '<option value="">Select a user...</option>';
+                Object.keys(users).forEach(userName => {
                     const option = document.createElement('option');
-                    option.value = freelancer.name;
-                    option.textContent = freelancer.name;
-                    uploadFreelancerSelect.appendChild(option);
+                    option.value = userName;
+                    option.textContent = userName;
+                    uploadUserSelect.appendChild(option);
                 });
             }
             
-            // Populate job assignment freelancer dropdown
+            // Populate job assignment user dropdown
             const jobAssignmentSelect = document.getElementById('jobAssignmentFreelancer');
             if (jobAssignmentSelect) {
-                jobAssignmentSelect.innerHTML = '<option value="">Choose a freelancer...</option>';
-                freelancers.forEach(freelancer => {
+                jobAssignmentSelect.innerHTML = '<option value="">Choose a user...</option>';
+                Object.keys(users).forEach(userName => {
                     const option = document.createElement('option');
-                    option.value = freelancer.name;
-                    option.textContent = freelancer.name;
+                    option.value = userName;
+                    option.textContent = userName;
                     jobAssignmentSelect.appendChild(option);
                 });
             }
             
-            console.log('👥 Populated freelancer dropdowns with', freelancers.length, 'options');
+            console.log('👥 Populated user dropdowns with', Object.keys(users).length, 'options');
         }
 
         // Load dropdown options from API or use defaults
@@ -1495,47 +1473,47 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             return false;
         }
 
-        // Display freelancers
-        function displayFreelancers() {
+        // Display users
+        function displayUsers() {
             const container = document.getElementById('contractsList');
             
-            if (freelancers.length === 0) {
+            if (Object.keys(users).length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
-                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">👥 No Freelancers Added Yet</h3>
-                        <p>Add freelancers using the form above to manage contracts</p>
+                        <h3 style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">👥 No Users Added Yet</h3>
+                        <p>Add users using the form above to manage contracts</p>
                     </div>
                 `;
                 return;
             }
             
-            const freelancersHTML = freelancers.map((freelancer, index) => `
+            const usersHTML = Object.entries(users).map(([userName, userData]) => `
                 <div class="item-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>${freelancer.name}</h3>
-                                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <span style="background: ${freelancer.contractStatus === 'uploaded' ? '#22c55e' : freelancer.contractStatus === 'signed' ? '#f59e0b' : '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
-                                    ${freelancer.contractStatus === 'uploaded' ? 'Contract Complete' : freelancer.contractStatus === 'signed' ? 'Contract Signed' : 'Pending Approval'}
-                                </span>
-                                <span style="background: ${freelancer.password ? '#22c55e' : '#f59e0b'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
-                                    ${freelancer.password ? '🔐 Password Set' : '⏳ Pending Password'}
-                                </span>
-                                <button onclick="showProjectStatusManager('${freelancer.name}')" style="background: #3b82f6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
-                                    📊 Project Status
-                                </button>
-                                <button onclick="showJobAssignmentModal('${freelancer.name}')" style="background: #22c55e; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
-                                    🎯 Assign Jobs
-                                </button>
-                                <button onclick="downloadFreelancerContract('${freelancer.name}')" style="background: #8b5cf6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
-                                    📄 Download Contract
-                                </button>
-                                ${shouldShowPerformanceReview(freelancer) ? `
-                                <button onclick="showPerformanceReviewModal('${freelancer.name}')" style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
-                                    ⭐ Performance Review
-                                </button>
-                                ` : ''}
-                            ${!freelancer.approvedDate ? `
-                                <button onclick="approveFreelancer(${index})" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                        <h3>${userName}</h3>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span style="background: ${userData.contract?.contractStatus === 'uploaded' ? '#22c55e' : userData.contract?.contractStatus === 'signed' ? '#f59e0b' : '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                ${userData.contract?.contractStatus === 'uploaded' ? 'Contract Complete' : userData.contract?.contractStatus === 'signed' ? 'Contract Signed' : 'Pending Approval'}
+                            </span>
+                            <span style="background: ${userData.profile?.password ? '#22c55e' : '#f59e0b'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                ${userData.profile?.password ? '🔐 Password Set' : '⏳ Pending Password'}
+                            </span>
+                            <button onclick="showProjectStatusManager('${userName}')" style="background: #3b82f6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                                📊 Project Status
+                            </button>
+                            <button onclick="showJobAssignmentModal('${userName}')" style="background: #22c55e; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                                🎯 Assign Jobs
+                            </button>
+                            <button onclick="downloadUserContract('${userName}')" style="background: #8b5cf6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                                📄 Download Contract
+                            </button>
+                            ${shouldShowPerformanceReview(userData) ? `
+                            <button onclick="showPerformanceReviewModal('${userName}')" style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                                ⭐ Performance Review
+                            </button>
+                            ` : ''}
+                            ${!userData.profile?.approvedDate ? `
+                                <button onclick="approveUser('${userName}')" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                     ✅ Approve
                                 </button>
                             ` : ''}
@@ -1543,24 +1521,24 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     </div>
                     
                     <div class="item-meta">
-                        <span>📧 ${freelancer.email}</span>
-                        <span>🎯 ${freelancer.role}</span>
-                        <span>💰 ${freelancer.rate}</span>
-                        <span>📍 ${freelancer.location}</span>
+                        <span>📧 ${userData.profile?.email || 'No email'}</span>
+                        <span>🎯 ${userData.profile?.role || 'No role'}</span>
+                        <span>💰 ${userData.profile?.rate || 'No rate'}</span>
+                        <span>📍 ${userData.profile?.location || 'No location'}</span>
                     </div>
                     
                     <!-- Payment Method Section -->
                     <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                             <strong style="color: #FFB200;">💳 Payment Method</strong>
-                            ${freelancer.paymentMethod ? 
-                                `<span style="background: rgba(255,178,0,0.3); color: #FFB200; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">${freelancer.paymentMethod.toUpperCase()}</span>` : 
+                            ${userData.paymentMethod ? 
+                                `<span style="background: rgba(255,178,0,0.3); color: #FFB200; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">${userData.paymentMethod.toUpperCase()}</span>` : 
                                 `<span style="background: rgba(255,0,0,0.2); color: #ff6b6b; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">NOT SET</span>`
                             }
                         </div>
                         <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8);">
-                            ${freelancer.paymentMethod ? 
-                                `User has selected <strong>${freelancer.paymentMethod.toUpperCase()}</strong> as their preferred payment method.` : 
+                            ${userData.paymentMethod ? 
+                                `User has selected <strong>${userData.paymentMethod.toUpperCase()}</strong> as their preferred payment method.` : 
                                 `User has not yet selected a payment method. They can do this in their portal.`
                             }
                         </div>
@@ -1568,20 +1546,20 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     
                     <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
-                            <div><strong>Project Start:</strong><br>${freelancer.projectStart}</div>
-                            <div><strong>Approved Date:</strong><br>${freelancer.approvedDate || 'Not approved yet'}</div>
+                            <div><strong>Project Start:</strong><br>${userData.profile?.projectStart || 'Not set'}</div>
+                            <div><strong>Approved Date:</strong><br>${userData.profile?.approvedDate || 'Not approved yet'}</div>
                         </div>
-                        ${freelancer.jobs && freelancer.jobs.length > 0 ? `
+                        ${userData.jobs && Object.keys(userData.jobs).length > 0 ? `
                             <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,178,0,0.3);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                    <strong style="color: #22c55e;">🎯 Assigned Jobs (${freelancer.jobs.length})</strong>
-                                    ${freelancer.primaryJob ? `<span style="background: #22c55e; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Primary Job</span>` : ''}
+                                    <strong style="color: #22c55e;">🎯 Assigned Jobs (${Object.keys(userData.jobs).length})</strong>
+                                    ${userData.primaryJob ? `<span style="background: #22c55e; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Primary Job</span>` : ''}
                                 </div>
                                 <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8);">
-                                    ${freelancer.jobs.slice(0, 2).map(job => `
-                                        <div style="margin-bottom: 0.25rem;">• ${job.role || 'No role'} - ${job.status || 'No status'} (${job.id})</div>
+                                    ${Object.values(userData.jobs).slice(0, 2).map(job => `
+                                        <div style="margin-bottom: 0.25rem;">• ${job.role || 'No role'} - ${job.projectStatus || 'No status'} (${job.id})</div>
                                     `).join('')}
-                                    ${freelancer.jobs.length > 2 ? `<div style="font-style: italic; color: rgba(255,255,255,0.6);">... and ${freelancer.jobs.length - 2} more</div>` : ''}
+                                    ${Object.keys(userData.jobs).length > 2 ? `<div style="font-style: italic; color: rgba(255,255,255,0.6);">... and ${Object.keys(userData.jobs).length - 2} more</div>` : ''}
                                 </div>
                             </div>
                         ` : ''}
@@ -1591,10 +1569,10 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255,178,0,0.3);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                             <strong style="color: #FFB200;">⭐ Performance Review</strong>
-                            ${getPerformanceReviewStatus(freelancer)}
+                            ${getPerformanceReviewStatus(userData)}
                         </div>
                         <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8);">
-                            ${getPerformanceReviewSummary(freelancer)}
+                            ${getPerformanceReviewSummary(userData)}
                         </div>
                         ${getPerformanceReviewButton(freelancer)}
                     </div>
@@ -1828,7 +1806,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 }
             }
             
-            await loadFreelancers();
+            await loadUsers();
         }
 
         // Clear contract form
@@ -2501,71 +2479,62 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             }
         }
         
-        // Update project status on GitHub
-        async function updateProjectStatusOnGitHub() {
+        // Update users on GitHub
+        async function updateUsersOnGitHub() {
             try {
                 const exportData = {
-                    projectStatus: projectStatus,
+                    users: users,
                     statusOptions: {
                         projectStatus: ["upcoming", "in-progress", "completed", "cancelled"],
                         paymentStatus: ["pending", "processing", "paid", "overdue"]
                     },
                     lastUpdated: new Date().toISOString().split('T')[0],
-                    totalProjects: Object.keys(projectStatus).length
+                    totalUsers: Object.keys(users).length
                 };
                 
-                await updateGitHubFile('project-status.json', JSON.stringify(exportData, null, 2), `Update project-status.json - ${new Date().toLocaleString()}`);
-                console.log('✅ project-status.json updated on GitHub');
+                await updateGitHubFile('users.json', JSON.stringify(exportData, null, 2), `Update users.json - ${new Date().toLocaleString()}`);
+                console.log('✅ users.json updated on GitHub');
                 
                 // Show success message
-                showUpdateStatus('✅ project-status.json updated on GitHub successfully!', 'success');
+                showUpdateStatus('✅ users.json updated on GitHub successfully!', 'success');
                 
             } catch (error) {
-                console.error('❌ Error updating project-status.json:', error);
-                showUpdateStatus(`❌ Error updating project-status.json: ${error.message}`, 'error');
+                console.error('❌ Error updating users.json:', error);
+                showUpdateStatus(`❌ Error updating users.json: ${error.message}`, 'error');
             }
         }
         
         // Update project status for a specific job
-        function updateProjectStatus(freelancerName, jobId, newStatus, paymentStatus = null) {
-            if (!projectStatus[freelancerName]) {
-                projectStatus[freelancerName] = { jobs: {} };
+        function updateProjectStatus(userName, jobId, newStatus, paymentStatus = null) {
+            if (!users[userName]) {
+                users[userName] = {
+                    profile: {},
+                    contract: {},
+                    jobs: {},
+                    paymentMethod: null
+                };
             }
             
-            if (!projectStatus[freelancerName].jobs[jobId]) {
+            if (!users[userName].jobs) {
+                users[userName].jobs = {};
+            }
+            
+            if (!users[userName].jobs[jobId]) {
                 // Create job entry if it doesn't exist
-                const freelancer = freelancers.find(f => f.name === freelancerName);
-                if (freelancer) {
-                    // First try to find job in freelancer's jobs array
-                    let job = freelancer.jobs.find(j => j.id === jobId);
+                const userData = users[userName];
+                if (userData) {
+                    // Create a job from user's primary data
+                    const job = {
+                        id: jobId,
+                        role: userData.profile?.role || 'General',
+                        location: userData.profile?.location || 'Not specified',
+                        projectStart: userData.profile?.projectStart || 'Not specified',
+                        rate: userData.profile?.rate || 'Not specified',
+                        projectType: (userData.profile?.role || 'General') + ' Project',
+                        description: `Primary assignment for ${userName}`
+                    };
                     
-                    // If not found in jobs array, create a job from freelancer's primary data
-                    if (!job && freelancer.primaryJob) {
-                        job = {
-                            id: freelancer.primaryJob,
-                            role: freelancer.role,
-                            location: freelancer.location,
-                            projectStart: freelancer.projectStart,
-                            rate: freelancer.rate,
-                            projectType: freelancer.role + ' Project',
-                            description: `Primary assignment for ${freelancerName}`
-                        };
-                    }
-                    
-                    // If still no job, create a default job entry
-                    if (!job) {
-                        job = {
-                            id: `job-${freelancerName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
-                            role: freelancer.role,
-                            location: freelancer.location,
-                            projectStart: freelancer.projectStart,
-                            rate: freelancer.rate,
-                            projectType: freelancer.role + ' Project',
-                            description: `Primary assignment for ${freelancerName}`
-                        };
-                    }
-                    
-                    projectStatus[freelancerName].jobs[jobId] = {
+                    users[userName].jobs[jobId] = {
                         id: job.id,
                         role: job.role,
                         location: job.location,
@@ -2581,24 +2550,24 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 }
             } else {
                 // Update existing job
-                projectStatus[freelancerName].jobs[jobId].projectStatus = newStatus;
+                users[userName].jobs[jobId].projectStatus = newStatus;
                 if (paymentStatus) {
-                    projectStatus[freelancerName].jobs[jobId].paymentStatus = paymentStatus;
+                    users[userName].jobs[jobId].paymentStatus = paymentStatus;
                 }
                 
                 if (newStatus === 'completed') {
-                    projectStatus[freelancerName].jobs[jobId].completionDate = new Date().toISOString().split('T')[0];
+                    users[userName].jobs[jobId].completionDate = new Date().toISOString().split('T')[0];
                 }
                 
                 if (paymentStatus === 'paid') {
-                    projectStatus[freelancerName].jobs[jobId].paymentDate = new Date().toISOString().split('T')[0];
+                    users[userName].jobs[jobId].paymentDate = new Date().toISOString().split('T')[0];
                 }
             }
             
             // Update GitHub
-            updateProjectStatusOnGitHub();
+            updateUsersOnGitHub();
             
-            console.log(`✅ Updated project status for ${freelancerName} - ${jobId}: ${newStatus}`);
+            console.log(`✅ Updated project status for ${userName} - ${jobId}: ${newStatus}`);
         }
 
         // ==================== JOB ASSIGNMENT & PAYMENT MANAGEMENT ====================
