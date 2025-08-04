@@ -398,14 +398,26 @@
             const tabs = document.querySelectorAll('.tab-content');
             const btns = document.querySelectorAll('.tab-btn');
             
+            // Remove active class from all tabs and buttons
             tabs.forEach(tab => tab.classList.remove('active'));
             btns.forEach(btn => btn.classList.remove('active'));
             
             if (tabName === 'firebase') {
+                // For Firebase tab, make sure the firebase-tab is active
+                const firebaseTab = document.getElementById('firebase-tab');
+                if (firebaseTab) {
+                    firebaseTab.classList.add('active');
+                }
                 showFirebaseManagement();
             } else {
-                document.getElementById(tabName + '-tab').classList.add('active');
+                // For other tabs, activate the specific tab
+                const targetTab = document.getElementById(tabName + '-tab');
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
             }
+            
+            // Add active class to the clicked button
             event.target.classList.add('active');
         }
 
@@ -5118,6 +5130,66 @@
             background: rgba(255, 178, 0, 0.3);
             border-color: #FFB200;
             color: white;
+        }
+        
+        /* Firebase Management Styles */
+        .firebase-management {
+            display: grid;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .info-card, .action-card {
+            background: rgba(0,0,0,0.4);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,178,0,0.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .info-card h3, .action-card h3 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-card p, .action-card p {
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        
+        .info-card ul {
+            color: rgba(255,255,255,0.8);
+            padding-left: 1.5rem;
+        }
+        
+        .info-card li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .action-card button {
+            background: linear-gradient(135deg, #FFB200, #FF8C00);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .action-card button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,178,0,0.3);
         }
         
         /* Tab Content */
