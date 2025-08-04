@@ -797,8 +797,17 @@
         }
 
         // Load user-specific data
-        function loadUserData() {
+        async function loadUserData() {
             if (!currentUser) return;
+
+            // Refresh data from server to get latest updates
+            await loadUsersData();
+            
+            // Find the current user with updated data
+            const updatedUser = users.find(u => u.email === currentUser.email);
+            if (updatedUser) {
+                currentUser = updatedUser;
+            }
 
             // Update welcome message
             document.getElementById('userName').textContent = currentUser.name;
@@ -807,6 +816,15 @@
             displayUserInfo();
             displayUserContracts();
             displayUserJobs();
+        }
+
+        // Refresh user data manually
+        async function refreshUserData() {
+            if (!currentUser) return;
+            
+            showNotification('🔄 Refreshing data...', 'info');
+            await loadUserData();
+            showNotification('✅ Data refreshed successfully!', 'success');
         }
 
         // Display user information
@@ -2074,6 +2092,7 @@
                     link.click();
                     document.body.removeChild(link);
                     console.log('📄 Downloaded contract from GitHub:', userContract.fileName);
+                    showNotification('✅ Contract downloaded successfully!', 'success');
                     return;
                 }
                 
@@ -4308,6 +4327,9 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
     <div id="userPortal" class="user-portal">
         <div class="portal-header">
             <div style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                <button class="refresh-btn" onclick="refreshUserData()" title="Refresh data" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); padding: 0.5rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
                 <div class="notification-container">
                     <button class="notification-bell" onclick="toggleNotifications()" id="notificationBell">
                         <i class="fas fa-bell"></i>

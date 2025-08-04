@@ -903,9 +903,9 @@
                 
                 // Compact information box
                 doc.setFillColor(248, 249, 250);
-                doc.rect(20, 60, 170, 35, 'F');
+                doc.rect(20, 60, 170, 30, 'F');
                 doc.setDrawColor(200, 200, 200);
-                doc.rect(20, 60, 170, 35, 'S');
+                doc.rect(20, 60, 170, 30, 'S');
                 
                 doc.setFontSize(9);
                 doc.setTextColor(0, 0, 0);
@@ -927,17 +927,17 @@
                 // Left column
                 leftColumn.forEach((info, index) => {
                     doc.setFont('helvetica', 'bold');
-                    doc.text(info.label, 25, 70 + (index * 8));
+                    doc.text(info.label, 25, 68 + (index * 7));
                     doc.setFont('helvetica', 'normal');
-                    doc.text(info.value, 25 + 25, 70 + (index * 8));
+                    doc.text(info.value, 25 + 25, 68 + (index * 7));
                 });
                 
                 // Right column
                 rightColumn.forEach((info, index) => {
                     doc.setFont('helvetica', 'bold');
-                    doc.text(info.label, 110, 70 + (index * 8));
+                    doc.text(info.label, 110, 68 + (index * 7));
                     doc.setFont('helvetica', 'normal');
-                    doc.text(info.value, 110 + 25, 70 + (index * 8));
+                    doc.text(info.value, 110 + 25, 68 + (index * 7));
                 });
                 
                 // ==================== COMPACT CONTRACT TERMS ====================
@@ -945,7 +945,7 @@
                 doc.setFontSize(12);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('CONTRACT TERMS & CONDITIONS', 20, 110);
+                doc.text('CONTRACT TERMS & CONDITIONS', 20, 105);
                 
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
