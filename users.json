@@ -27,14 +27,14 @@
           "projectType": "Editor Project",
           "description": "Primary assignment for A Dog",
           "projectStatus": "in-progress",
-          "paymentStatus": "pending",
+          "paymentStatus": "paid",
           "completionDate": null,
           "paymentDate": null
         }
       },
       "primaryJob": "job-a-dog-1754300256758",
       "paymentMethod": "zelle",
-      "paymentStatus": "configured"
+      "paymentStatus": "paid"
     }
   },
   "statusOptions": {
