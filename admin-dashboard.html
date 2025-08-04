@@ -763,7 +763,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             checkPerformanceReviewAlerts();
             
             // Show status in the interface
-            const statusElement = document.getElementById('userStatus');
+            const statusElement = document.getElementById('freelancerStatus');
             if (statusElement) {
                 statusElement.textContent = `Loaded ${Object.keys(users).length} users from ${Object.keys(users).length > 0 ? 'users.json' : 'localStorage'}`;
             }
@@ -2762,15 +2762,15 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
 
         // Show job assignment modal
-        function showJobAssignmentModal(freelancerName) {
-            const freelancer = freelancers.find(f => f.name === freelancerName);
-            if (!freelancer) {
-                showNotification('Freelancer not found', 'error');
+        function showJobAssignmentModal(userName) {
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
                 return;
             }
 
             // Get available jobs from jobs-data.json
-            const availableJobs = jobs.filter(job => !freelancer.jobs.some(userJob => userJob.id === job.id));
+            const availableJobs = jobs.filter(job => !userData.jobs || !Object.values(userData.jobs).some(userJob => userJob.id === job.id));
             
             let jobsHTML = '';
             if (availableJobs.length > 0) {
@@ -2779,7 +2779,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                         <h4 style="color: #FFB200; margin-bottom: 0.5rem;">${job.title}</h4>
                         <p style="color: rgba(255,255,255,0.8); margin-bottom: 0.5rem;">${job.location}</p>
                         <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">${job.eventDate}</p>
-                        <button onclick="assignJobToUser('${freelancerName}', '${job.id}')" 
+                        <button onclick="assignJobToUser('${userName}', '${job.id}')" 
                                 style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">
                             <i class="fas fa-plus"></i> Assign Job
                         </button>
@@ -2806,7 +2806,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             modal.innerHTML = `
                 <div style="background: #1a1a1a; padding: 2rem; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,178,0,0.3);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-briefcase"></i> Assign Jobs to ${freelancerName}</h2>
+                        <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-briefcase"></i> Assign Jobs to ${userName}</h2>
                         <button onclick="closeModal(this)" 
                                 style="background: none; border: none; color: #FFB200; font-size: 1.5rem; cursor: pointer;">×</button>
                     </div>
@@ -2821,18 +2821,18 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                             <div>
                                 <label style="color: #FFB200; font-weight: bold;">Payment Method:</label>
-                                <select id="paymentMethod_${freelancerName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
+                                <select id="paymentMethod_${userName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
                                     <option value="">Select payment method</option>
-                                    <option value="cash" ${freelancer.paymentMethod === 'cash' ? 'selected' : ''}>Cash</option>
-                                    <option value="check" ${freelancer.paymentMethod === 'check' ? 'selected' : ''}>Check</option>
-                                    <option value="zelle" ${freelancer.paymentMethod === 'zelle' ? 'selected' : ''}>Zelle</option>
-                                    <option value="paypal" ${freelancer.paymentMethod === 'paypal' ? 'selected' : ''}>PayPal</option>
-                                    <option value="invoice" ${freelancer.paymentMethod === 'invoice' ? 'selected' : ''}>Invoice Request</option>
+                                    <option value="cash" ${userData.paymentMethod === 'cash' ? 'selected' : ''}>Cash</option>
+                                    <option value="check" ${userData.paymentMethod === 'check' ? 'selected' : ''}>Check</option>
+                                    <option value="zelle" ${userData.paymentMethod === 'zelle' ? 'selected' : ''}>Zelle</option>
+                                    <option value="paypal" ${userData.paymentMethod === 'paypal' ? 'selected' : ''}>PayPal</option>
+                                    <option value="invoice" ${userData.paymentMethod === 'invoice' ? 'selected' : ''}>Invoice Request</option>
                                 </select>
                             </div>
                             <div>
                                 <label style="color: #FFB200; font-weight: bold;">Payment Status:</label>
-                                <select id="paymentStatus_${freelancerName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
+                                <select id="paymentStatus_${userName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
                                     <option value="pending">Pending</option>
                                     <option value="processing">Processing</option>
                                     <option value="paid">Paid</option>
@@ -2840,7 +2840,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                                 </select>
                             </div>
                         </div>
-                        <button onclick="updatePaymentSettings('${freelancerName}')" 
+                        <button onclick="updatePaymentSettings('${userName}')" 
                                 style="background: #FFB200; color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
                             <i class="fas fa-save"></i> Update Payment Settings
                         </button>
@@ -2852,12 +2852,12 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
 
         // Assign job to user
-        function assignJobToUser(freelancerName, jobId) {
-            const freelancer = freelancers.find(f => f.name === freelancerName);
+        function assignJobToUser(userName, jobId) {
+            const userData = users[userName];
             const job = jobs.find(j => j.id === jobId);
             
-            if (!freelancer || !job) {
-                showNotification('Freelancer or job not found', 'error');
+            if (!userData || !job) {
+                showNotification('User or job not found', 'error');
                 return;
             }
 
@@ -2942,39 +2942,39 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
         
         // Show project status manager modal
-        function showProjectStatusManager(freelancerName) {
-            const freelancer = freelancers.find(f => f.name === freelancerName);
-            if (!freelancer) {
-                showNotification('Freelancer not found', 'error');
+        function showProjectStatusManager(userName) {
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
                 return;
             }
             
-            const userProjects = projectStatus[freelancerName] || { jobs: {} };
+            const userProjects = projectStatus[userName] || { jobs: {} };
             let jobs = Object.values(userProjects.jobs);
             
-            // If no jobs in project status, create a default job from freelancer data
+            // If no jobs in project status, create a default job from user data
             if (jobs.length === 0) {
-                const defaultJobId = freelancer.primaryJob || `job-${freelancerName.toLowerCase().replace(/\s+/g, '-')}-default`;
+                const defaultJobId = userData.primaryJob || `job-${userName.toLowerCase().replace(/\s+/g, '-')}-default`;
                 const defaultJob = {
                     id: defaultJobId,
-                    role: freelancer.role,
-                    location: freelancer.location,
-                    projectStart: freelancer.projectStart,
-                    rate: freelancer.rate,
+                    role: userData.profile?.role || 'No role',
+                    location: userData.profile?.location || 'No location',
+                    projectStart: userData.profile?.projectStart || 'Not set',
+                    rate: userData.profile?.rate || 'No rate',
                     projectStatus: 'upcoming',
                     paymentStatus: 'pending',
-                    projectType: freelancer.role + ' Project',
-                    description: `Primary assignment for ${freelancerName}`
+                    projectType: (userData.profile?.role || 'No role') + ' Project',
+                    description: `Primary assignment for ${userName}`
                 };
                 
                 // Add to project status
-                if (!projectStatus[freelancerName]) {
-                    projectStatus[freelancerName] = { jobs: {} };
+                if (!projectStatus[userName]) {
+                    projectStatus[userName] = { jobs: {} };
                 }
-                projectStatus[freelancerName].jobs[defaultJobId] = defaultJob;
+                projectStatus[userName].jobs[defaultJobId] = defaultJob;
                 jobs = [defaultJob];
                 
-                console.log(`📋 Created default job for ${freelancerName}:`, defaultJob);
+                console.log(`📋 Created default job for ${userName}:`, defaultJob);
             }
             
             let jobsHTML = '';
@@ -3003,7 +3003,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                                 </select>
                             </div>
                         </div>
-                        <button onclick="updateJobStatus('${freelancerName}', '${job.id}')" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">
+                        <button onclick="updateJobStatus('${userName}', '${job.id}')" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">
                             Update Status
                         </button>
                     </div>
