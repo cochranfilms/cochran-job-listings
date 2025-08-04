@@ -708,7 +708,7 @@
         function getUserContractStatus(userEmail, jobId = null) {
             // Find ALL contracts for this user
             let userContracts = uploadedContracts.filter(contract => 
-                contract.freelancerEmail.toLowerCase() === userEmail.toLowerCase()
+                contract.freelancerEmail && contract.freelancerEmail.toLowerCase() === userEmail.toLowerCase()
             );
             
             if (userContracts.length > 0) {
