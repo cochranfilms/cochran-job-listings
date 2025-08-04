@@ -3,7 +3,7 @@
     "Test Final": {
       "profile": {
         "email": "dedejackson727@gmail.com",
-        "password": null,
+        "password": "test1234",
         "role": "Videographer",
         "location": "Miami, FL",
         "projectStart": "2025-11-11T20:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 5:01:11 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754298071313-548X3"
       },
       "jobs": {
         "job-test-final-1754298013800": {
