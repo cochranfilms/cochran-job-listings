@@ -354,9 +354,6 @@
                     
                     for (const { index, contract } of selectedContracts) {
                         try {
-                            // Delete PDF file from GitHub
-                            await deleteContractPDFFromGitHub(contract);
-                            
                             // Remove from local array (in reverse order to maintain indices)
                             uploadedContracts.splice(index, 1);
                             
@@ -367,8 +364,7 @@
                         }
                     }
                     
-                    // Update the JSON file on GitHub
-                    await updateUploadedContractsOnGitHub();
+
                     
                     displayUploadedContracts();
                     updateContractAnalytics();
@@ -501,19 +497,13 @@
             const contract = uploadedContracts[index];
             if (confirm(`Are you sure you want to delete the contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis will delete both the contract data AND the PDF file from GitHub.\n\nThis action cannot be undone.`)) {
                 try {
-                    // First, delete the PDF file from GitHub
-                    await deleteContractPDFFromGitHub(contract);
-                    
-                    // Then remove from local array
+                    // Remove from local array
                     uploadedContracts.splice(index, 1);
-                    
-                    // Update the JSON file on GitHub
-                    await updateUploadedContractsOnGitHub();
                     
                     displayUploadedContracts();
                     updateContractAnalytics();
                     
-                    showNotification(`✅ Contract for ${contract.freelancerName} deleted successfully!\n\nBoth contract data and PDF file have been removed from GitHub.`, 'success');
+                    showNotification(`✅ Contract for ${contract.freelancerName} deleted successfully!`, 'success');
                     
                 } catch (error) {
                     console.error('❌ Error deleting contract:', error);
@@ -2374,146 +2364,9 @@
             }
         }
 
-        // ==================== GITHUB API INTEGRATION ====================
 
-        // Update JSON file on GitHub via server API
-        async function updateGitHubFile(filename, content, commitMessage, retryCount = 0) {
-            try {
-                console.log(`🔄 Updating ${filename} on GitHub via server... (attempt ${retryCount + 1})`);
-                
-                // First, get the current file to retrieve its SHA (required for updates)
-                let currentSha = null;
-                try {
-                    console.log(`🔍 Getting current SHA for ${filename}...`);
-                    const getResponse = await fetch(`/api/github/file/${filename}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (getResponse.ok) {
-                        const currentFile = await getResponse.json();
-                        currentSha = currentFile.sha;
-                        console.log(`✅ Retrieved current SHA: ${currentSha.substring(0, 7)}`);
-                    } else if (getResponse.status === 404) {
-                        console.log(`📄 File ${filename} doesn't exist yet, creating new file`);
-                        // File doesn't exist, so we don't need SHA for creation
-                    } else {
-                        console.warn(`⚠️ Could not get current SHA for ${filename}, status: ${getResponse.status}`);
-                    }
-                } catch (shaError) {
-                    console.warn(`⚠️ Error getting SHA for ${filename}:`, shaError);
-                    // Continue without SHA - might be a new file
-                }
-                
-                // Now update the file
-                const requestBody = {
-                    content: content,
-                    message: commitMessage
-                };
-                
-                // Include SHA if we have it (for existing files)
-                if (currentSha) {
-                    requestBody.sha = currentSha;
-                    console.log(`🔗 Including SHA in update request`);
-                }
-                
-                const response = await fetch(`/api/github/file/${filename}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log(`✅ File updated successfully:`, result.commit.sha);
-                    return result;
-                } else {
-                    const error = await response.json();
-                    throw new Error(`Server API error: ${error.error}`);
-                }
-            } catch (error) {
-                console.error(`❌ Error updating ${filename}:`, error);
-                
-                // Retry logic for token/network issues
-                if (retryCount < 2 && (error.message.includes('token') || error.message.includes('network') || error.message.includes('500'))) {
-                    console.log(`🔄 Retrying in 2 seconds... (attempt ${retryCount + 1})`);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    return updateGitHubFile(filename, content, commitMessage, retryCount + 1);
-                }
-                
-                throw error;
-            }
-        }
 
-        // Update freelancers.json on GitHub
-        async function updateFreelancersOnGitHub() {
-            try {
-                const exportData = {
-                    approvedFreelancers: freelancers.reduce((acc, freelancer) => {
-                        acc[freelancer.name] = {
-                            email: freelancer.email,
-                            password: freelancer.password,
-                            contractUrl: freelancer.contractUrl || "contract.html",
-                            role: freelancer.role,
-                            location: freelancer.location,
-                            projectStart: freelancer.projectStart,
-                            rate: freelancer.rate,
-                            approvedDate: freelancer.approvedDate,
-                            contractStatus: freelancer.contractStatus || 'pending',
-                            contractSignedDate: freelancer.contractSignedDate,
-                            contractUploadedDate: freelancer.contractUploadedDate,
-                            contractId: freelancer.contractId,
-                            jobs: freelancer.jobs || [],
-                            primaryJob: freelancer.primaryJob,
-                            paymentMethod: freelancer.paymentMethod || null,
-                            paymentStatus: freelancer.paymentStatus || 'pending'
-                        };
-                        return acc;
-                    }, {}),
-                    lastUpdated: new Date().toISOString().split('T')[0],
-                    totalFreelancers: freelancers.length
-                };
-                
-                await updateGitHubFile('freelancers.json', JSON.stringify(exportData, null, 2), `Update freelancers.json - ${new Date().toLocaleString()}`);
-                console.log('✅ Freelancers.json updated on GitHub');
-                
-                // Show success message
-                showUpdateStatus('✅ freelancers.json updated on GitHub successfully!', 'success');
-                
-            } catch (error) {
-                console.error('❌ Error updating freelancers.json:', error);
-                showUpdateStatus(`❌ Error updating freelancers.json: ${error.message}`, 'error');
-            }
-        }
 
-        // Update jobs-data.json on GitHub
-        async function updateJobsOnGitHub() {
-            try {
-                console.log('📊 Jobs in admin dashboard:', jobs.length);
-                console.log('📊 Jobs to upload:', jobs.map(j => j.title));
-
-                // Use ONLY the jobs from admin dashboard (no merging with existing)
-                const exportData = {
-                    jobs: jobs,
-                    lastUpdated: new Date().toISOString().split('T')[0],
-                    totalJobs: jobs.length
-                };
-                
-                await updateGitHubFile('jobs-data.json', JSON.stringify(exportData, null, 2), `Update jobs-data.json - ${new Date().toLocaleString()}`);
-                console.log('✅ jobs-data.json updated on GitHub with', jobs.length, 'total jobs');
-                
-                // Show success message
-                showUpdateStatus(`✅ jobs-data.json updated on GitHub successfully! (${jobs.length} total jobs)`, 'success');
-                
-            } catch (error) {
-                console.error('❌ Error updating jobs-data.json:', error);
-                showUpdateStatus(`❌ Error updating jobs-data.json: ${error.message}`, 'error');
-            }
-        }
         
 
 
@@ -2546,218 +2399,13 @@
 
 
 
-        // Show token manager modal
-        function showTokenManager() {
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.8);
-                z-index: 10000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            `;
-            
-            modal.innerHTML = `
-                <div style="
-                    background: white;
-                    padding: 2rem;
-                    border-radius: 12px;
-                    max-width: 500px;
-                    width: 100%;
-                    position: relative;
-                ">
-                    <button onclick="this.closest('div[style*=\'position: fixed\']').remove()" 
-                            style="
-                                position: absolute;
-                                top: 1rem;
-                                right: 1rem;
-                                background: #ef4444;
-                                color: white;
-                                border: none;
-                                padding: 0.5rem;
-                                border-radius: 50%;
-                                cursor: pointer;
-                                width: 30px;
-                                height: 30px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            ">×</button>
-                    
-                    <h3 style="color: #FFB200; margin-bottom: 1rem;">🔐 GitHub Token Management</h3>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Current Token Status:</label>
-                        <div style="padding: 0.5rem; background: #f8f9fa; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
-                            ${getGitHubToken() ? '✅ Token is set' : '❌ No token found'}
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New GitHub Token:</label>
-                        <input type="password" id="newGitHubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" 
-                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
-                        <small style="color: #666; font-size: 0.8rem;">
-                            Get your token from <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings</a>
-                        </small>
-                    </div>
-                    
-                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                        <button onclick="updateGitHubToken()" style="
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            color: white;
-                            border: none;
-                            padding: 0.75rem 1.5rem;
-                            border-radius: 6px;
-                            cursor: pointer;
-                            font-weight: 600;
-                        ">Update Token</button>
-                        
-                        <button onclick="clearGitHubToken()" style="
-                            background: linear-gradient(135deg, #ef4444, #dc2626);
-                            color: white;
-                            border: none;
-                            padding: 0.75rem 1.5rem;
-                            border-radius: 6px;
-                            cursor: pointer;
-                            font-weight: 600;
-                        ">Clear Token</button>
-                    </div>
-                    
-                    <div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
-                        <strong>🔒 Security Note:</strong>
-                        <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
-                            <li>Tokens are stored securely in your browser's localStorage</li>
-                            <li>Never share your token or commit it to repositories</li>
-                            <li>Rotate your token regularly for security</li>
-                        </ul>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-        }
 
-        // Update GitHub token
-        function updateGitHubToken() {
-            const newToken = document.getElementById('newGitHubToken').value.trim();
-            if (!newToken) {
-                showNotification('Please enter a valid GitHub token', 'error');
-                return;
-            }
-            
-            setGitHubToken(newToken);
-            showNotification('✅ GitHub token updated successfully!', 'success');
-            
-            // Close modal
-            document.querySelector('div[style*="position: fixed"]').remove();
-        }
 
-        // Clear GitHub token
-        function clearGitHubToken() {
-            if (confirm('Are you sure you want to clear the GitHub token? This will disable automatic updates.')) {
-                localStorage.removeItem('github_token');
-                showNotification('✅ GitHub token cleared successfully!', 'success');
-                
-                // Close modal
-                document.querySelector('div[style*="position: fixed"]').remove();
-            }
-        }
 
-        // Update uploaded-contracts.json on GitHub
-        async function updateUploadedContractsOnGitHub() {
-            try {
-                const exportData = {
-                    exportDate: new Date().toISOString(),
-                    totalContracts: uploadedContracts.length,
-                    contracts: uploadedContracts.map(contract => ({
-                        contractId: contract.contractId,
-                        freelancerName: contract.freelancerName,
-                        freelancerEmail: contract.freelancerEmail,
-                        role: contract.role,
-                        rate: contract.rate,
-                        location: contract.location,
-                        contractDate: contract.contractDate,
-                        notes: contract.notes,
-                        fileName: contract.fileName,
-                        fileSize: contract.fileSize,
-                        uploadDate: contract.uploadDate,
-                        uploadTimestamp: contract.uploadTimestamp,
-                        status: contract.status
-                    }))
-                };
-                
-                await updateGitHubFile('uploaded-contracts.json', JSON.stringify(exportData, null, 2), `Update uploaded-contracts.json - ${new Date().toLocaleString()}`);
-                console.log('✅ uploaded-contracts.json updated on GitHub');
-                
-                // Show success message
-                showUpdateStatus('✅ uploaded-contracts.json updated on GitHub successfully!', 'success');
-                
-            } catch (error) {
-                console.error('❌ Error updating uploaded-contracts.json:', error);
-                showUpdateStatus(`❌ Error updating uploaded-contracts.json: ${error.message}`, 'error');
-            }
-        }
 
-        // Delete contract PDF file from GitHub
-        async function deleteContractPDFFromGitHub(contract) {
-            try {
-                console.log(`🗑️ Deleting contract PDF for ${contract.freelancerName}...`);
-                
-                // First, get the current file to retrieve its SHA (required for deletion)
-                const filename = `contracts/${contract.contractId}.pdf`;
-                console.log(`🔍 Getting current SHA for ${filename}...`);
-                
-                const getResponse = await fetch(`/api/github/file/${encodeURIComponent(filename)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (getResponse.ok) {
-                    const currentFile = await getResponse.json();
-                    const currentSha = currentFile.sha;
-                    console.log(`✅ Retrieved current SHA: ${currentSha.substring(0, 7)}`);
-                    
-                    // Now delete the file
-                    const deleteResponse = await fetch(`/api/github/file/${encodeURIComponent(filename)}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: `Delete contract PDF: ${contract.contractId} - ${contract.freelancerName}`,
-                            sha: currentSha
-                        })
-                    });
-                    
-                    if (deleteResponse.ok) {
-                        const result = await deleteResponse.json();
-                        console.log(`✅ Contract PDF deleted successfully: ${result.commit.sha.substring(0, 7)}`);
-                        return result;
-                    } else {
-                        const error = await deleteResponse.json();
-                        throw new Error(`Server API error: ${error.error}`);
-                    }
-                } else if (getResponse.status === 404) {
-                    console.log(`📄 Contract PDF ${filename} doesn't exist on GitHub, skipping deletion`);
-                    return { message: 'File not found, skipping deletion' };
-                } else {
-                    const error = await getResponse.json();
-                    throw new Error(`Could not get file SHA: ${error.error}`);
-                }
-                
-            } catch (error) {
-                console.error(`❌ Error deleting contract PDF:`, error);
-                throw error;
-            }
-        }
+
+
+
 
         // ==================== PROJECT STATUS MANAGEMENT ====================
         
@@ -2809,31 +2457,7 @@
             }
         }
 
-        // Update performance reviews on GitHub
-        async function updatePerformanceReviewsOnGitHub() {
-            try {
-                const exportData = {
-                    performanceReviews: performanceReviews,
-                    reviewOptions: {
-                        rating: [1, 2, 3, 4, 5],
-                        categories: ["Professionalism", "Quality", "Communication", "Reliability", "Overall Performance"],
-                        status: ["pending", "completed", "overdue"]
-                    },
-                    lastUpdated: new Date().toISOString().split('T')[0],
-                    totalReviews: Object.keys(performanceReviews).length
-                };
-                
-                await updateGitHubFile('performance.json', JSON.stringify(exportData, null, 2), `Update performance.json - ${new Date().toLocaleString()}`);
-                console.log('✅ performance.json updated on GitHub');
-                
-                // Show success message
-                showUpdateStatus('✅ performance.json updated on GitHub successfully!', 'success');
-                
-            } catch (error) {
-                console.error('❌ Error updating performance.json:', error);
-                showUpdateStatus(`❌ Error updating performance.json: ${error.message}`, 'error');
-            }
-        }
+
 
         // Load project status from users data (no longer needed as separate file)
         async function loadProjectStatus() {
@@ -2841,36 +2465,7 @@
             console.log('✅ Project status loaded from users data');
         }
         
-        // Update users on GitHub
-        async function updateUsersOnGitHub() {
-            try {
-                console.log('🔄 Starting GitHub update for users.json...');
-                console.log('📊 Current users data:', users);
-                
-                const exportData = {
-                    users: users,
-                    statusOptions: {
-                        projectStatus: ["upcoming", "in-progress", "completed", "cancelled"],
-                        paymentStatus: ["pending", "processing", "paid", "overdue"]
-                    },
-                    lastUpdated: new Date().toISOString().split('T')[0],
-                    totalUsers: Object.keys(users).length
-                };
-                
-                console.log('📝 Export data prepared:', exportData);
-                
-                await updateGitHubFile('users.json', JSON.stringify(exportData, null, 2), `Update users.json - ${new Date().toLocaleString()}`);
-                console.log('✅ users.json updated on GitHub');
-                
-                // Show success message
-                showUpdateStatus('✅ users.json updated on GitHub successfully!', 'success');
-                
-            } catch (error) {
-                console.error('❌ Error updating users.json:', error);
-                showUpdateStatus(`❌ Error updating users.json: ${error.message}`, 'error');
-                throw error; // Re-throw so calling function can handle it
-            }
-        }
+
         
         // Update project status for a specific job
         async function updateProjectStatus(userName, jobId, newStatus, paymentStatus = null) {
@@ -5679,13 +5274,7 @@
                 </div>
             </div>
 
-            <div class="export-section">
-                <h2>GitHub Integration</h2>
-                <p>Manage your GitHub token for automatic updates:</p>
-                <button class="btn" onclick="showTokenManager()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
-                    <i class="fas fa-key"></i> Manage GitHub Token
-                </button>
-            </div>
+
 
             <!-- Dropdown Options Management Section -->
             <div class="form-section">
