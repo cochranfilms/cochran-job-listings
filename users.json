@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Thing Four": {
+      "profile": {
+        "email": "clc.collective2025@gmail.com",
+        "password": null,
+        "role": "Videographer",
+        "location": "Miami, FL",
+        "projectStart": "2026-04-01T19:00",
+        "rate": "$75/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-thing-four-1754337497901": {
+          "id": "job-thing-four-1754337497901",
+          "role": "Videographer",
+          "location": "Miami, FL",
+          "projectStart": "2026-04-01T19:00",
+          "rate": "$75/hour",
+          "projectType": "Videographer Project",
+          "description": "Primary assignment for Thing Four",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "completionDate": null,
+          "paymentDate": null
+        }
+      },
+      "primaryJob": "job-thing-four-1754337497901",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +51,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 0
+  "totalUsers": 1
 }
