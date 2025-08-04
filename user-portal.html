@@ -21,6 +21,30 @@
         let uploadedContracts = [];
         let projectStatus = [];
         let jobsData = [];
+        let performanceReviews = [];
+
+        // Load performance reviews from JSON file
+        async function loadPerformanceReviews() {
+            try {
+                const response = await fetch('performance.json');
+                if (response.ok) {
+                    const jsonData = await response.json();
+                    performanceReviews = jsonData.performanceReviews || {};
+                    console.log('✅ Performance reviews loaded from JSON file:', Object.keys(performanceReviews).length, 'reviews');
+                } else {
+                    console.warn('⚠️ Could not load performance.json, using empty object');
+                    performanceReviews = {};
+                }
+            } catch (error) {
+                console.error('❌ Error loading performance reviews:', error);
+                performanceReviews = {};
+            }
+        }
+
+        // Get user's performance review
+        function getUserPerformanceReview(userEmail) {
+            return performanceReviews[userEmail] || null;
+        }
 
         // Load freelancer data from JSON file
         async function loadFreelancerData() {
@@ -644,7 +668,8 @@
                 loadUploadedContracts(),
                 loadFreelancerData(),
                 loadProjectStatus(),
-                loadJobsData()
+                loadJobsData(),
+                loadPerformanceReviews()
             ]).then(() => {
                 console.log('✅ Timeline data refreshed from all JSON sources');
                 
@@ -1131,14 +1156,14 @@
                 },
                 {
                     id: 'contract',
-                    title: 'Contract Signing',
-                    description: contractSigned ? 'Contract successfully signed ✅' : 'Sign your freelance agreement',
-                    icon: 'fas fa-signature',
+                    title: 'Contract & Payment Setup',
+                    description: contractSigned ? 'Contract & payment setup complete ✅' : 'Setup contract and payment method',
+                    icon: 'fas fa-file-contract',
                     status: contractSigned ? 'completed' : 'current',
                     date: userContract ? new Date(userContract.signedDate) : (currentUser.contractSignedDate ? new Date(currentUser.contractSignedDate) : null),
                     details: contractSigned ? 
-                        '✅ Your contract has been digitally signed and processed. All terms are now in effect. Thank you for completing this step!' : 
-                        'Please review and sign your freelance contract to proceed with the project. This is a required step before project preparation can begin.',
+                        '✅ Your contract has been signed and payment method configured. All terms are now in effect.' : 
+                        'Please review and sign your freelance contract and configure your payment method.',
                     action: contractSigned ? null : {
                         text: 'View Contract Status',
                         onclick: 'switchPortalTab("jobs")',
@@ -1146,53 +1171,51 @@
                     }
                 },
                 {
-                    id: 'preparation',
-                    title: 'Project Preparation',
-                    description: contractSigned ? 'Prepare for your project' : 'Awaiting contract signature',
-                    icon: 'fas fa-clipboard-list',
+                    id: 'milestones',
+                    title: 'Project Milestones',
+                    description: contractSigned ? (projectStatus === 'upcoming' ? 'Project milestones in progress' : projectStatus === 'completed' ? 'All milestones completed' : 'Awaiting project start') : 'Awaiting contract signature',
+                    icon: 'fas fa-flag-checkered',
                     status: contractSigned ? (projectStatus === 'upcoming' ? 'current' : projectStatus === 'completed' ? 'completed' : 'pending') : 'pending',
-                    date: null,
+                    date: projectStartDate,
                     details: contractSigned ? 
-                        'Review project requirements, prepare equipment, and confirm your availability.' : 
+                        'Track your project milestones and deliverables. Complete each milestone to ensure project success.' : 
                         'This phase will begin once your contract is signed.',
                     checklist: contractSigned ? [
-                        'Review project requirements and location details',
-                        'Prepare and check all necessary equipment',
-                        'Confirm transportation and arrival plans',
-                        'Review Cochran Films brand guidelines',
-                        'Prepare professional attire (all black required)'
+                        'Review project requirements and deliverables',
+                        'Complete pre-project checklist',
+                        'Attend project briefing (if scheduled)',
+                        'Prepare equipment and materials',
+                        'Confirm project timeline and milestones'
                     ] : null
                 },
                 {
-                    id: 'project',
-                    title: 'Project Execution',
-                    description: projectStartDate ? `Starts ${selectedJob?.projectStart}` : 'Project start date TBD',
-                    icon: 'fas fa-play-circle',
-                    status: projectStatus === 'in-progress' ? 'current' : (projectStatus === 'completed' ? 'completed' : 'pending'),
-                    date: projectStartDate,
-                    details: projectStatus === 'in-progress' ? 
-                        'Your project is currently in progress. Follow all guidelines and maintain professional standards.' :
-                        projectStatus === 'completed' ? 
-                        'Project completed successfully! Thank you for your excellent work.' :
-                        `Your project is scheduled to begin on ${selectedJob?.projectStart}.`,
-                    requirements: projectStatus !== 'completed' ? [
-                        'Arrive 15 minutes before start time',
-                        'Bring valid ID and signed contract',
-                        'Wear all black professional attire',
-                        'Use provided Cochran Films branded gear',
-                        'Maintain professional demeanor at all times'
-                    ] : null
-                },
-                {
-                    id: 'completion',
-                    title: 'Project Completion & Payment',
-                    description: projectStatus === 'completed' ? `Project completed - ${paymentStatus} payment` : 'Payment within 24 hours of completion',
-                    icon: 'fas fa-money-bill-wave',
-                    status: projectStatus === 'completed' ? 'completed' : 'pending',
-                    date: projectStatus === 'completed' ? (projectData?.completionDate ? new Date(projectData.completionDate) : new Date()) : null,
+                    id: 'payment',
+                    title: 'Payment Processing',
+                    description: projectStatus === 'completed' ? `Payment ${paymentStatus}` : 'Payment processing after completion',
+                    icon: 'fas fa-credit-card',
+                    status: projectStatus === 'completed' ? (paymentStatus === 'paid' ? 'completed' : 'current') : 'pending',
+                    date: projectStatus === 'completed' ? (projectData?.paymentDate ? new Date(projectData.paymentDate) : null) : null,
                     details: projectStatus === 'completed' ? 
-                        `✅ Project completed successfully! Payment status: ${paymentStatus}. Payment of ${selectedJob?.rate || currentUser.rate} has been processed.` :
+                        (paymentStatus === 'paid' ? 
+                        `✅ Payment of ${selectedJob?.rate || currentUser.rate} has been processed successfully.` :
+                        `Payment of ${selectedJob?.rate || currentUser.rate} is being processed. You will receive payment within 24 hours.`) :
                         `You will receive payment of ${selectedJob?.rate || currentUser.rate} within 24 hours of project completion.`
+                },
+                {
+                    id: 'performance',
+                    title: 'Performance Review',
+                    description: paymentStatus === 'paid' ? 'Performance review available' : 'Review available after payment',
+                    icon: 'fas fa-star',
+                    status: paymentStatus === 'paid' ? 'current' : 'pending',
+                    date: null,
+                    details: paymentStatus === 'paid' ? 
+                        'Your performance review is now available. This helps us improve our collaboration and your future opportunities.' :
+                        'Performance review will be available after payment processing is complete.',
+                    action: paymentStatus === 'paid' ? {
+                        text: 'View Performance Review',
+                        onclick: 'viewPerformanceReview()',
+                        icon: 'fas fa-star'
+                    } : null
                 }
             ];
             
@@ -1212,13 +1235,88 @@
             const completedSteps = timeline.filter(step => step.status === 'completed').length;
             const currentSteps = timeline.filter(step => step.status === 'current').length;
             
-            // Each step is worth 20% (5 total steps)
+            // Each step is worth 20% (5 total steps: Application=20%, Contract=40%, Milestones=60%, Payment=80%, Performance=100%)
             const baseProgress = completedSteps * 20;
             
             // If there's a current step, add 50% of its value (10% for partial progress)
             const partialProgress = currentSteps > 0 ? 10 : 0;
             
             return Math.min(100, baseProgress + partialProgress);
+        }
+
+        // View performance review
+        function viewPerformanceReview() {
+            const userReview = getUserPerformanceReview(currentUser.email);
+            
+            if (!userReview) {
+                alert('No performance review available yet. Please check back later.');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            const reviewDate = userReview.reviewDate ? new Date(userReview.reviewDate).toLocaleDateString() : 'N/A';
+            const overallRating = userReview.overallRating || 'N/A';
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a1a; padding: 2rem; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,178,0,0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-star"></i> Performance Review</h2>
+                        <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" 
+                                style="background: none; border: none; color: #FFB200; font-size: 1.5rem; cursor: pointer;">×</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Review Details</h4>
+                            <div style="color: rgba(255,255,255,0.9);">
+                                <div><strong>Review Date:</strong> ${reviewDate}</div>
+                                <div><strong>Overall Rating:</strong> ${overallRating}/5</div>
+                                <div><strong>Status:</strong> ${userReview.status || 'completed'}</div>
+                            </div>
+                        </div>
+                        
+                        ${userReview.comments ? `
+                        <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Admin Comments</h4>
+                            <p style="color: rgba(255,255,255,0.9); line-height: 1.6;">${userReview.comments}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${userReview.categories ? `
+                        <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px;">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Category Ratings</h4>
+                            ${Object.entries(userReview.categories).map(([category, rating]) => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <span style="color: rgba(255,255,255,0.9);">${category}:</span>
+                                    <span style="color: #FFB200; font-weight: bold;">${rating}/5</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,178,0,0.2);">
+                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; text-align: center;">
+                            <i class="fas fa-info-circle"></i> This review helps us improve our collaboration and your future opportunities.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
         }
 
         // Toggle timeline details
