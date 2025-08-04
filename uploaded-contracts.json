@@ -1,19 +1,5 @@
 {
-  "exportDate": "2025-08-04T08:55:57.727Z",
-  "totalContracts": 1,
-  "contracts": [
-    {
-      "contractId": "CF-1754286223831-CLLKM",
-      "freelancerName": "Dede Jackson",
-      "role": "Contractor",
-      "rate": "Not specified",
-      "location": "Atlanta Area",
-      "contractDate": "2025-08-04",
-      "notes": "Automatically uploaded via contract signing",
-      "fileName": "CF-1754286223831-CLLKM.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T05:43:49.052Z",
-      "status": "uploaded"
-    }
-  ]
+  "exportDate": "2025-08-04T08:57:17.368Z",
+  "totalContracts": 0,
+  "contracts": []
 }
