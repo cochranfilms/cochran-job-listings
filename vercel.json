@@ -9,6 +9,9 @@
     },
     "api/users.js": {
       "maxDuration": 30
+    },
+    "api/performance.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
