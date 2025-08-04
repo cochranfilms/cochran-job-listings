@@ -27,14 +27,14 @@
           "projectType": "Editor Project",
           "description": "Primary assignment for Testing Another",
           "projectStatus": "completed",
-          "paymentStatus": "pending",
+          "paymentStatus": "paid",
           "completionDate": null,
           "paymentDate": null
         }
       },
       "primaryJob": "job-testing-another-1754286918018",
       "paymentMethod": "zelle",
-      "paymentStatus": "configured"
+      "paymentStatus": "paid"
     }
   },
   "statusOptions": {
