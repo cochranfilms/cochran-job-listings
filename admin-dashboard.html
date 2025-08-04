@@ -2478,7 +2478,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     }))
                 };
                 
-                await updateGitHubFile('uploaded-contracts.json', exportData, `Update uploaded-contracts.json - ${new Date().toLocaleString()}`);
+                await updateGitHubFile('uploaded-contracts.json', JSON.stringify(exportData, null, 2), `Update uploaded-contracts.json - ${new Date().toLocaleString()}`);
                 console.log('✅ uploaded-contracts.json updated on GitHub');
                 
                 // Show success message
