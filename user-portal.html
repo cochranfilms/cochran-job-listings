@@ -46,6 +46,166 @@
             return performanceReviews[userEmail] || null;
         }
 
+        // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
+        
+        // Enhanced notification system to replace all alert() calls
+        function showNotification(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            const icon = getNotificationIcon(type);
+            const colors = getNotificationColors(type);
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                background: ${colors.background};
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                border: 1px solid ${colors.border};
+                max-width: 400px;
+                min-width: 300px;
+                backdrop-filter: blur(10px);
+                transform: translateX(100%);
+                transition: transform 0.3s ease-out;
+                font-family: 'Inter', sans-serif;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <div style="font-size: 1.2rem; margin-top: 2px;">${icon}</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            ${type.toUpperCase()}
+                        </div>
+                        <div style="font-size: 0.95rem; line-height: 1.4;">
+                            ${message}
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="
+                                background: rgba(255,255,255,0.2);
+                                color: white;
+                                border: none;
+                                padding: 4px;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 24px;
+                                height: 24px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 14px;
+                                margin-left: 8px;
+                                transition: background 0.2s;
+                            "
+                            onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                            onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        ×
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto-remove after duration
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, duration);
+        }
+        
+        function getNotificationIcon(type) {
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️',
+                loading: '🔄',
+                contract: '📄',
+                payment: '💰',
+                performance: '⭐',
+                github: '🐙',
+                email: '📧',
+                job: '🎯',
+                freelancer: '👤'
+            };
+            return icons[type] || icons.info;
+        }
+        
+        function getNotificationColors(type) {
+            const colors = {
+                success: {
+                    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                    border: 'rgba(34, 197, 94, 0.3)'
+                },
+                error: {
+                    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                    border: 'rgba(239, 68, 68, 0.3)'
+                },
+                warning: {
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                    border: 'rgba(245, 158, 11, 0.3)'
+                },
+                info: {
+                    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                    border: 'rgba(59, 130, 246, 0.3)'
+                },
+                loading: {
+                    background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                    border: 'rgba(139, 92, 246, 0.3)'
+                },
+                contract: {
+                    background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                    border: 'rgba(6, 182, 212, 0.3)'
+                },
+                payment: {
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    border: 'rgba(16, 185, 129, 0.3)'
+                },
+                performance: {
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                    border: 'rgba(245, 158, 11, 0.3)'
+                },
+                github: {
+                    background: 'linear-gradient(135deg, #333, #24292e)',
+                    border: 'rgba(51, 51, 51, 0.3)'
+                },
+                email: {
+                    background: 'linear-gradient(135deg, #ec4899, #db2777)',
+                    border: 'rgba(236, 72, 153, 0.3)'
+                },
+                job: {
+                    background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                    border: 'rgba(139, 92, 246, 0.3)'
+                },
+                freelancer: {
+                    background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                    border: 'rgba(6, 182, 212, 0.3)'
+                }
+            };
+            return colors[type] || colors.info;
+        }
+        
+        // Replace all alert() calls with professional notifications
+        function showAlert(message, type = 'info') {
+            showNotification(message, type);
+        }
+
         // Load freelancer data from JSON file
         async function loadFreelancerData() {
             try {
@@ -1249,7 +1409,7 @@
             const userReview = getUserPerformanceReview(currentUser.email);
             
             if (!userReview) {
-                alert('No performance review available yet. Please check back later.');
+                showNotification('No performance review available yet. Please check back later.', 'warning');
                 return;
             }
             
@@ -1374,7 +1534,7 @@
         async function updatePaymentMethod() {
             const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
             if (!selectedMethod) {
-                alert('Please select a payment method');
+                showNotification('Please select a payment method', 'warning');
                 return;
             }
             
@@ -1390,10 +1550,10 @@
                 // Update freelancers.json on GitHub
                 try {
                     await updateFreelancerPaymentMethod(currentUser.email, paymentMethod);
-                    alert(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`);
+                    showNotification(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`, 'success');
                 } catch (error) {
                     console.error('❌ Error updating payment method:', error);
-                    alert(`⚠️ Payment method saved locally but there was an issue notifying the admin team. Please try again later.`);
+                    showNotification(`⚠️ Payment method saved locally but there was an issue notifying the admin team. Please try again later.`, 'warning');
                 }
                 
                 // Refresh user data display
@@ -1623,9 +1783,9 @@
             if (userContracts.length === 0) {
                 // If no uploaded contract, check if contract is signed but not uploaded
                 if (currentUser.contractStatus === 'signed') {
-                    alert('✅ Your contract has been signed and is being processed by admin. You will be able to download it once it\'s uploaded.');
+                    showNotification('✅ Your contract has been signed and is being processed by admin. You will be able to download it once it\'s uploaded.', 'success');
                 } else {
-                    alert('❌ No contract found for your account. Please sign your contract first.');
+                    showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
                 }
                 return;
             }
@@ -1817,11 +1977,11 @@
                     }
                 }
                 
-                alert('❌ Contract file not available. Please contact admin.');
+                showNotification('❌ Contract file not available. Please contact admin.', 'error');
                 
             } catch (error) {
                 console.error('❌ Error downloading contract:', error);
-                alert('❌ Error downloading contract. Please try again or contact admin.');
+                showNotification('❌ Error downloading contract. Please try again or contact admin.', 'error');
             }
         }
 
@@ -1840,10 +2000,10 @@
             if (!userContract) {
                 // If no uploaded contract, check if contract is signed but not uploaded
                 if (currentUser.contractStatus === 'signed') {
-                    alert('✅ Your contract has been signed and is being processed by admin. You will be able to view details once it\'s uploaded.');
-                } else {
-                    alert('❌ No contract found for your account. Please sign your contract first.');
-                }
+                    showNotification('✅ Your contract has been signed and is being processed by admin. You will be able to view details once it\'s uploaded.', 'success');
+                                  } else {
+                      showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
+                  }
                 return;
             }
             
@@ -1875,7 +2035,7 @@ Status: ${userContract.status}
 ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             `.trim();
             
-            alert(details);
+            showNotification(details, 'info');
         }
 
         // Make functions globally accessible

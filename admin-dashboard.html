@@ -326,7 +326,7 @@
         function downloadUploadedContract(index) {
             const contract = uploadedContracts[index];
             if (!contract || !contract.fileData) {
-                alert('❌ Contract file not found.');
+                showNotification('❌ Contract file not found.', 'error');
                 return;
             }
             
@@ -367,7 +367,7 @@ Status: ${contract.status}
 ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             `.trim();
             
-            alert(details);
+            showNotification(details, 'info');
         }
 
         // Delete uploaded contract
@@ -387,7 +387,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         // Export contract list
         function exportContractList() {
             if (uploadedContracts.length === 0) {
-                alert('No contracts to export.');
+                showNotification('No contracts to export.', 'warning');
                 return;
             }
             
@@ -416,7 +416,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         // Export uploaded contracts for user portal access
         function exportUploadedContractsForPortal() {
             if (uploadedContracts.length === 0) {
-                alert('No uploaded contracts to export.');
+                showNotification('No uploaded contracts to export.', 'warning');
                 return;
             }
             
@@ -437,7 +437,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             URL.revokeObjectURL(url);
             
             console.log('📦 Uploaded contracts exported for user portal');
-            alert('✅ Uploaded contracts exported as uploaded-contracts.json\n\nUpload this file to your server so users can access their signed contracts!');
+            showNotification('✅ Uploaded contracts exported as uploaded-contracts.json\n\nUpload this file to your server so users can access their signed contracts!', 'success');
         }
 
         // Update contract analytics
@@ -515,7 +515,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     }, 1000);
                 } else {
                     console.warn('⚠️ Freelancer not found in local array for email:', email);
-                    alert(`⚠️ Note: Freelancer ${email} not found in local database.\n\nConsider adding them to the freelancer list first, then re-uploading the contract.`);
+                    showNotification(`⚠️ Note: Freelancer ${email} not found in local database.\n\nConsider adding them to the freelancer list first, then re-uploading the contract.`, 'warning');
                 }
             } catch (error) {
                 console.error('❌ Error updating freelancer contract status:', error);
@@ -621,7 +621,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             };
 
             if (!jobData.title.trim()) {
-                alert('Job title is required');
+                showNotification('Job title is required', 'error');
                 return;
             }
 
@@ -640,7 +640,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             
             displayJobs();
             clearJobForm();
-            alert('Job saved successfully and updated on GitHub!');
+            showNotification('Job saved successfully and updated on GitHub!', 'success');
         }
 
         // Edit job
@@ -666,7 +666,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 await updateJobsOnGitHub();
                 
                 displayJobs();
-                alert('Job deleted successfully and updated on GitHub!');
+                showNotification('Job deleted successfully and updated on GitHub!', 'success');
             }
         }
 
@@ -915,7 +915,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             const value = input.value.trim();
             
             if (!value) {
-                alert('Please enter a value to add.');
+                showNotification('Please enter a value to add.', 'error');
                 return;
             }
             
@@ -924,7 +924,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             }
             
             if (window.dropdownOptions[category].includes(value)) {
-                alert('This option already exists.');
+                showNotification('This option already exists.', 'warning');
                 return;
             }
             
@@ -1034,7 +1034,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         // Save dropdown options to GitHub API
         async function saveDropdownOptions() {
             if (!window.dropdownOptions) {
-                alert('❌ No dropdown options to save.');
+                showNotification('❌ No dropdown options to save.', 'error');
                 return;
             }
             
@@ -1067,14 +1067,14 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 
                 if (updateResponse.ok) {
                     console.log('✅ Successfully saved dropdown options to GitHub');
-                    alert('✅ Dropdown options saved successfully to GitHub!');
+                    showNotification('✅ Dropdown options saved successfully to GitHub!', 'success');
                 } else {
                     const errorData = await updateResponse.json();
                     throw new Error(`GitHub API error: ${errorData.error || 'Unknown error'}`);
                 }
             } catch (error) {
                 console.error('❌ Error saving dropdown options:', error);
-                alert(`❌ Failed to save dropdown options: ${error.message}`);
+                showNotification(`❌ Failed to save dropdown options: ${error.message}`, 'error');
             }
         }
         
@@ -1329,13 +1329,13 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function viewPerformanceReviewDetails(freelancerName) {
             const freelancer = freelancers.find(f => f.name === freelancerName);
             if (!freelancer) {
-                alert('Freelancer not found');
+                showNotification('Freelancer not found', 'error');
                 return;
             }
 
             const existingReview = performanceReviews[freelancer.email];
             if (!existingReview) {
-                alert('No performance review found');
+                showNotification('No performance review found', 'warning');
                 return;
             }
 
@@ -1424,7 +1424,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function downloadFreelancerContract(freelancerName) {
             const freelancer = freelancers.find(f => f.name === freelancerName);
             if (!freelancer) {
-                alert('Freelancer not found');
+                showNotification('Freelancer not found', 'error');
                 return;
             }
 
@@ -1647,7 +1647,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             };
 
             if (!freelancerData.name.trim() || !freelancerData.email.trim() || !freelancerData.role.trim()) {
-                alert('Name, email, and role are required');
+                showNotification('Name, email, and role are required', 'error');
                 return;
             }
 
@@ -1664,7 +1664,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 
                 freelancers[editingFreelancerIndex] = freelancerData;
                 editingFreelancerIndex = -1;
-                alert('Freelancer updated successfully!');
+                showNotification('Freelancer updated successfully!', 'success');
             } else {
                 // Set default values for new freelancers
                 freelancerData.contractUrl = "contract.html";
@@ -1731,17 +1731,17 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     
                     // Show success message
                     setTimeout(() => {
-                        alert(`🎉 Freelancer approved and email sent!\n\n📧 Email sent to: ${freelancerData.email}\n📄 Contract ID: ${contractId}\n\n✅ The freelancer will receive the job acceptance email with contract signing instructions.`);
+                        showNotification(`🎉 Freelancer approved and email sent!\n\n📧 Email sent to: ${freelancerData.email}\n📄 Contract ID: ${contractId}\n\n✅ The freelancer will receive the job acceptance email with contract signing instructions.`, 'success');
                     }, 1000);
                     
                 } else {
                     console.warn('⚠️ EmailJS not available, skipping email send');
-                    alert('✅ Freelancer saved successfully!\n\n⚠️ EmailJS not configured - please set up EmailJS to send automatic job acceptance emails.');
+                    showNotification('✅ Freelancer saved successfully!\n\n⚠️ EmailJS not configured - please set up EmailJS to send automatic job acceptance emails.', 'warning');
                 }
                 
             } catch (error) {
                 console.error('❌ Error sending job acceptance email:', error);
-                alert('✅ Freelancer saved successfully!\n\n⚠️ Email sending failed. Please check EmailJS configuration.');
+                showNotification('✅ Freelancer saved successfully!\n\n⚠️ Email sending failed. Please check EmailJS configuration.', 'warning');
             }
         }
 
@@ -1791,10 +1791,10 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     await updateFreelancersOnGitHub();
                     
                     displayFreelancers();
-                    alert('Freelancer deleted successfully and freelancers.json updated on GitHub!');
+                    showNotification('Freelancer deleted successfully and freelancers.json updated on GitHub!', 'success');
                 } catch (error) {
                     console.error('❌ Error deleting freelancer:', error);
-                    alert(`Error deleting freelancer: ${error.message}. The freelancer was removed locally but the GitHub update failed.`);
+                    showNotification(`Error deleting freelancer: ${error.message}. The freelancer was removed locally but the GitHub update failed.`, 'error');
                     displayFreelancers(); // Still update the display
                 }
             }
@@ -1898,7 +1898,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function addJobToFreelancer() {
             const freelancerIndex = document.getElementById('jobAssignmentFreelancer').value;
             if (freelancerIndex === '') {
-                alert('Please select a freelancer first.');
+                showNotification('Please select a freelancer first.', 'warning');
                 return;
             }
             
@@ -1933,7 +1933,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             };
             
             if (!jobData.id.trim()) {
-                alert('Job ID is required.');
+                showNotification('Job ID is required.', 'error');
                 return;
             }
             
@@ -1969,7 +1969,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             // Clear form
             document.getElementById('jobAssignmentForm').reset();
             
-            alert(`✅ Job "${jobData.id}" added to ${freelancer.name}!`);
+            showNotification(`✅ Job "${jobData.id}" added to ${freelancer.name}!`, 'success');
         }
 
         // Remove job from freelancer
@@ -1992,7 +1992,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 displayFreelancers();
                 handleFreelancerSelection();
                 
-                alert(`✅ Job "${job.id}" removed from ${freelancer.name}!`);
+                showNotification(`✅ Job "${job.id}" removed from ${freelancer.name}!`, 'success');
             }
         }
 
@@ -2021,7 +2021,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function parseEmailData() {
             const emailText = document.getElementById('quickImportData').value;
             if (!emailText.trim()) {
-                alert('Please paste the contract data from your email first.');
+                showNotification('Please paste the contract data from your email first.', 'warning');
                 return;
             }
 
@@ -2090,13 +2090,13 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             // Show success message
             const filledFields = Object.values(data).filter(v => v).length;
             if (filledFields > 0) {
-                alert(`✅ Auto-filled ${filledFields} fields! Now upload your PDF file.`);
+                showNotification(`✅ Auto-filled ${filledFields} fields! Now upload your PDF file.`, 'success');
                 
                 // Scroll to the form
                 document.getElementById('contractDetailsForm').style.display = 'block';
                 document.getElementById('contractDetailsForm').scrollIntoView({ behavior: 'smooth' });
             } else {
-                alert('❌ Could not extract contract data. Please check the format and try again.');
+                showNotification('❌ Could not extract contract data. Please check the format and try again.', 'error');
             }
         }
 
@@ -2371,12 +2371,12 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function updateGitHubToken() {
             const newToken = document.getElementById('newGitHubToken').value.trim();
             if (!newToken) {
-                alert('Please enter a valid GitHub token');
+                showNotification('Please enter a valid GitHub token', 'error');
                 return;
             }
             
             setGitHubToken(newToken);
-            alert('✅ GitHub token updated successfully!');
+            showNotification('✅ GitHub token updated successfully!', 'success');
             
             // Close modal
             document.querySelector('div[style*="position: fixed"]').remove();
@@ -2386,7 +2386,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function clearGitHubToken() {
             if (confirm('Are you sure you want to clear the GitHub token? This will disable automatic updates.')) {
                 localStorage.removeItem('github_token');
-                alert('✅ GitHub token cleared successfully!');
+                showNotification('✅ GitHub token cleared successfully!', 'success');
                 
                 // Close modal
                 document.querySelector('div[style*="position: fixed"]').remove();
@@ -2598,7 +2598,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function showPerformanceReviewModal(freelancerName) {
             const freelancer = freelancers.find(f => f.name === freelancerName);
             if (!freelancer) {
-                alert('Freelancer not found');
+                showNotification('Freelancer not found', 'error');
                 return;
             }
 
@@ -2759,7 +2759,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function showJobAssignmentModal(freelancerName) {
             const freelancer = freelancers.find(f => f.name === freelancerName);
             if (!freelancer) {
-                alert('Freelancer not found');
+                showNotification('Freelancer not found', 'error');
                 return;
             }
 
@@ -2851,7 +2851,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             const job = jobs.find(j => j.id === jobId);
             
             if (!freelancer || !job) {
-                alert('Freelancer or job not found');
+                showNotification('Freelancer or job not found', 'error');
                 return;
             }
 
@@ -2894,7 +2894,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             updateFreelancersOnGitHub();
             updateProjectStatusOnGitHub();
             
-            alert(`✅ Job "${job.title}" assigned to ${freelancerName} successfully!`);
+            showNotification(`✅ Job "${job.title}" assigned to ${freelancerName} successfully!`, 'success');
             
             // Close modal
             document.querySelector('div[style*="position: fixed"]').remove();
@@ -2904,7 +2904,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         function updatePaymentSettings(freelancerName) {
             const freelancer = freelancers.find(f => f.name === freelancerName);
             if (!freelancer) {
-                alert('Freelancer not found');
+                showNotification('Freelancer not found', 'error');
                 return;
             }
             
@@ -2912,7 +2912,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             const paymentStatus = document.getElementById(`paymentStatus_${freelancerName}`).value;
             
             if (!paymentMethod) {
-                alert('Please select a payment method');
+                showNotification('Please select a payment method', 'warning');
                 return;
             }
             
@@ -2932,14 +2932,14 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             updateFreelancersOnGitHub();
             updateProjectStatusOnGitHub();
             
-            alert(`✅ Payment settings updated for ${freelancerName}!\nMethod: ${paymentMethod}\nStatus: ${paymentStatus}`);
+            showNotification(`✅ Payment settings updated for ${freelancerName}!\nMethod: ${paymentMethod}\nStatus: ${paymentStatus}`, 'success');
         }
         
         // Show project status manager modal
         function showProjectStatusManager(freelancerName) {
             const freelancer = freelancers.find(f => f.name === freelancerName);
             if (!freelancer) {
-                alert('Freelancer not found');
+                showNotification('Freelancer not found', 'error');
                 return;
             }
             
@@ -3063,7 +3063,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             const paymentStatusSelect = document.getElementById(`paymentStatus_${jobId}`);
             
             if (!projectStatusSelect || !paymentStatusSelect) {
-                alert('Status elements not found');
+                showNotification('Status elements not found', 'error');
                 return;
             }
             
@@ -3075,7 +3075,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             // Close modal
             document.querySelector('div[style*="position: fixed"]').remove();
             
-            alert(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}\nPayment: ${newPaymentStatus}`);
+            showNotification(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}\nPayment: ${newPaymentStatus}`, 'success');
         }
         
         // ==================== AUTOMATIC JSON GENERATION ====================
@@ -3089,6 +3089,171 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 showAdminInterface();
             }
         });
+
+        // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
+        
+        // Enhanced notification system to replace all alert() calls
+        function showNotification(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            const icon = getNotificationIcon(type);
+            const colors = getNotificationColors(type);
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                background: ${colors.background};
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                border: 1px solid ${colors.border};
+                max-width: 400px;
+                min-width: 300px;
+                backdrop-filter: blur(10px);
+                transform: translateX(100%);
+                transition: transform 0.3s ease-out;
+                font-family: 'Poppins', sans-serif;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <div style="font-size: 1.2rem; margin-top: 2px;">${icon}</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            ${type.toUpperCase()}
+                        </div>
+                        <div style="font-size: 0.95rem; line-height: 1.4;">
+                            ${message}
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="
+                                background: rgba(255,255,255,0.2);
+                                color: white;
+                                border: none;
+                                padding: 4px;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 24px;
+                                height: 24px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 14px;
+                                margin-left: 8px;
+                                transition: background 0.2s;
+                            "
+                            onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                            onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        ×
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto-remove after duration
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, duration);
+        }
+        
+        function getNotificationIcon(type) {
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️',
+                loading: '🔄',
+                contract: '📄',
+                payment: '💰',
+                performance: '⭐',
+                github: '🐙',
+                email: '📧',
+                job: '🎯',
+                freelancer: '👤'
+            };
+            return icons[type] || icons.info;
+        }
+        
+        function getNotificationColors(type) {
+            const colors = {
+                success: {
+                    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                    border: 'rgba(34, 197, 94, 0.3)'
+                },
+                error: {
+                    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                    border: 'rgba(239, 68, 68, 0.3)'
+                },
+                warning: {
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                    border: 'rgba(245, 158, 11, 0.3)'
+                },
+                info: {
+                    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                    border: 'rgba(59, 130, 246, 0.3)'
+                },
+                loading: {
+                    background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                    border: 'rgba(139, 92, 246, 0.3)'
+                },
+                contract: {
+                    background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                    border: 'rgba(6, 182, 212, 0.3)'
+                },
+                payment: {
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    border: 'rgba(16, 185, 129, 0.3)'
+                },
+                performance: {
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                    border: 'rgba(245, 158, 11, 0.3)'
+                },
+                github: {
+                    background: 'linear-gradient(135deg, #333, #24292e)',
+                    border: 'rgba(51, 51, 51, 0.3)'
+                },
+                email: {
+                    background: 'linear-gradient(135deg, #ec4899, #db2777)',
+                    border: 'rgba(236, 72, 153, 0.3)'
+                },
+                job: {
+                    background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                    border: 'rgba(139, 92, 246, 0.3)'
+                },
+                freelancer: {
+                    background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                    border: 'rgba(6, 182, 212, 0.3)'
+                }
+            };
+            return colors[type] || colors.info;
+        }
+        
+        // Enhanced showUpdateStatus function (backward compatibility)
+        function showUpdateStatus(message, type) {
+            showNotification(message, type);
+        }
+        
+        // Replace all alert() calls with professional notifications
+        function showAlert(message, type = 'info') {
+            showNotification(message, type);
+        }
     </script>
     
     <style>
