@@ -170,7 +170,6 @@
             await loadJobs();
             await loadUsers();
             await loadUploadedContracts();
-            await loadProjectStatus();
             await loadPerformanceReviews();
         }
 
@@ -494,37 +493,40 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             `;
         }
 
-        // Update freelancer contract status when contract is uploaded
-        function updateFreelancerContractStatus(email, contractId, contractDate) {
+        // Update user contract status when contract is uploaded
+        function updateUserContractStatus(email, contractId, contractDate) {
             try {
-                // Find and update the freelancer in the local array
-                const freelancerIndex = freelancers.findIndex(f => f.email.toLowerCase() === email.toLowerCase());
-                if (freelancerIndex >= 0) {
-                    freelancers[freelancerIndex].contractStatus = 'uploaded';
-                    freelancers[freelancerIndex].contractId = contractId;
-                    freelancers[freelancerIndex].contractUploadedDate = contractDate;
-                    freelancers[freelancerIndex].contractSignedDate = contractDate; // Assume signed same day for now
+                // Find and update the user in the users object
+                const userName = Object.keys(users).find(name => 
+                    users[name].profile?.email?.toLowerCase() === email.toLowerCase()
+                );
+                
+                if (userName) {
+                    users[userName].contract.contractStatus = 'uploaded';
+                    users[userName].contract.contractId = contractId;
+                    users[userName].contract.contractUploadedDate = contractDate;
+                    users[userName].contract.contractSignedDate = contractDate; // Assume signed same day for now
                     
-                    // Save updated freelancers array
-                    localStorage.setItem('freelancers', JSON.stringify(freelancers));
+                    // Save updated users object
+                    localStorage.setItem('users', JSON.stringify(users));
                     
-                    console.log('✅ Updated freelancer contract status:', freelancers[freelancerIndex]);
+                    console.log('✅ Updated user contract status:', users[userName]);
                     
-                    // Refresh freelancer list display
-                    displayFreelancers();
+                    // Refresh user list display
+                    displayUsers();
                     
                     // Show notification to export updated data
                     setTimeout(() => {
-                        if (confirm('📋 Freelancer contract status updated!\n\nWould you like to export the updated freelancers.json file now?\n\nThis will ensure the user portal reflects the signed contract status.')) {
-                            exportContractData();
+                        if (confirm('📋 User contract status updated!\n\nWould you like to export the updated users.json file now?\n\nThis will ensure the user portal reflects the signed contract status.')) {
+                            updateUsersOnGitHub();
                         }
                     }, 1000);
                 } else {
-                    console.warn('⚠️ Freelancer not found in local array for email:', email);
-                    showNotification(`⚠️ Note: Freelancer ${email} not found in local database.\n\nConsider adding them to the freelancer list first, then re-uploading the contract.`, 'warning');
+                    console.warn('⚠️ User not found in local array for email:', email);
+                    showNotification(`⚠️ Note: User ${email} not found in local database.\n\nConsider adding them to the user list first, then re-uploading the contract.`, 'warning');
                 }
             } catch (error) {
-                console.error('❌ Error updating freelancer contract status:', error);
+                console.error('❌ Error updating user contract status:', error);
             }
         }
 
@@ -1221,8 +1223,8 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
 
         // Get performance review status badge
-        function getPerformanceReviewStatus(freelancer) {
-            const existingReview = performanceReviews[freelancer.email];
+        function getPerformanceReviewStatus(userData) {
+            const existingReview = performanceReviews[userData.profile?.email];
             
             if (existingReview) {
                 const statusColor = existingReview.status === 'completed' ? '#22c55e' : 
@@ -1234,8 +1236,8 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
 
         // Get performance review summary
-        function getPerformanceReviewSummary(freelancer) {
-            const existingReview = performanceReviews[freelancer.email];
+        function getPerformanceReviewSummary(userData) {
+            const existingReview = performanceReviews[userData.profile?.email];
             
             if (existingReview) {
                 const reviewDate = existingReview.reviewDate ? new Date(existingReview.reviewDate).toLocaleDateString() : 'N/A';
@@ -1252,8 +1254,8 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 `;
             } else {
                 // Check if they have completed paid projects
-                const hasCompletedProjects = projectStatus[freelancer.name] && 
-                    Object.values(projectStatus[freelancer.name].jobs || {}).some(job => 
+                const hasCompletedProjects = userData.jobs && 
+                    Object.values(userData.jobs || {}).some(job => 
                         job.projectStatus === 'completed' && job.paymentStatus === 'paid'
                     );
                 
@@ -1266,17 +1268,17 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
 
         // Get performance review button
-        function getPerformanceReviewButton(freelancer) {
-            const existingReview = performanceReviews[freelancer.email];
+        function getPerformanceReviewButton(userData) {
+            const existingReview = performanceReviews[userData.profile?.email];
             
             if (existingReview) {
                 return `
                     <div style="margin-top: 0.5rem;">
-                        <button onclick="showPerformanceReviewModal('${freelancer.name}')" 
+                        <button onclick="showPerformanceReviewModal('${userData.name || 'Unknown'}')" 
                                 style="background: #FFB200; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem;">
                             <i class="fas fa-edit"></i> Edit Review
                         </button>
-                        <button onclick="viewPerformanceReviewDetails('${freelancer.name}')" 
+                        <button onclick="viewPerformanceReviewDetails('${userData.name || 'Unknown'}')" 
                                 style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-left: 0.5rem;">
                             <i class="fas fa-eye"></i> View Details
                         </button>
@@ -1284,15 +1286,15 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 `;
             } else {
                 // Check if they have completed paid projects
-                const hasCompletedProjects = projectStatus[freelancer.name] && 
-                    Object.values(projectStatus[freelancer.name].jobs || {}).some(job => 
+                const hasCompletedProjects = userData.jobs && 
+                    Object.values(userData.jobs || {}).some(job => 
                         job.projectStatus === 'completed' && job.paymentStatus === 'paid'
                     );
                 
                 if (hasCompletedProjects) {
                     return `
                         <div style="margin-top: 0.5rem;">
-                            <button onclick="showPerformanceReviewModal('${freelancer.name}')" 
+                            <button onclick="showPerformanceReviewModal('${userData.name || 'Unknown'}')" 
                                     style="background: #f59e0b; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem;">
                                 <i class="fas fa-star"></i> Create Review
                             </button>
@@ -1311,10 +1313,10 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
 
         // View performance review details
-        function viewPerformanceReviewDetails(freelancerName) {
-            const freelancer = freelancers.find(f => f.name === freelancerName);
-            if (!freelancer) {
-                showNotification('Freelancer not found', 'error');
+        function viewPerformanceReviewDetails(userName) {
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
                 return;
             }
 
@@ -1405,33 +1407,33 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             document.body.appendChild(modal);
         }
 
-        // Download freelancer contract
-        function downloadFreelancerContract(freelancerName) {
-            const freelancer = freelancers.find(f => f.name === freelancerName);
-            if (!freelancer) {
-                showNotification('Freelancer not found', 'error');
+        // Download user contract
+        function downloadUserContract(userName) {
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
                 return;
             }
 
             // Check if contract exists in uploaded contracts
             const userContract = uploadedContracts.find(contract => 
-                contract.freelancerName === freelancerName || 
-                contract.freelancerEmail === freelancer.email
+                contract.freelancerName === userName || 
+                contract.freelancerEmail === userData.profile?.email
             );
 
             if (userContract && userContract.contractUrl) {
                 // If we have a contract URL, download it
                 const link = document.createElement('a');
                 link.href = userContract.contractUrl;
-                link.download = `${freelancerName.replace(/\s+/g, '_')}_Contract.pdf`;
+                link.download = `${userName.replace(/\s+/g, '_')}_Contract.pdf`;
                 link.target = '_blank';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                console.log('✅ Contract downloaded for:', freelancerName);
+                console.log('✅ Contract downloaded for:', userName);
             } else {
                 // Check if contract exists in the contracts directory using contract ID format
-                const contractId = freelancer.contractId;
+                const contractId = userData.contract?.contractId;
                 if (contractId) {
                     const contractFileName = `${contractId}.pdf`;
                     const contractUrl = `contracts/${contractFileName}`;
@@ -1446,27 +1448,27 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     document.body.removeChild(link);
                     
                     // Show status message
-                    showUpdateStatus(`📄 Downloading contract ${contractId} for ${freelancerName}`, 'info');
-                    console.log('📄 Contract download attempted for:', freelancerName, 'with ID:', contractId);
+                    showUpdateStatus(`📄 Downloading contract ${contractId} for ${userName}`, 'info');
+                    console.log('📄 Contract download attempted for:', userName, 'with ID:', contractId);
                 } else {
                     // No contract ID found, show error
-                    showUpdateStatus(`❌ No contract ID found for ${freelancerName}`, 'error');
-                    console.log('❌ No contract ID found for:', freelancerName);
+                    showUpdateStatus(`❌ No contract ID found for ${userName}`, 'error');
+                    console.log('❌ No contract ID found for:', userName);
                 }
             }
         }
 
-        // Check if performance review should be shown for a freelancer
-        function shouldShowPerformanceReview(freelancer) {
-            // Check if freelancer has completed projects with paid status
-            if (projectStatus[freelancer.name] && projectStatus[freelancer.name].jobs) {
-                const completedJobs = Object.values(projectStatus[freelancer.name].jobs).filter(job => 
+        // Check if performance review should be shown for a user
+        function shouldShowPerformanceReview(userData) {
+            // Check if user has completed projects with paid status
+            if (userData.jobs && Object.keys(userData.jobs).length > 0) {
+                const completedJobs = Object.values(userData.jobs).filter(job => 
                     job.projectStatus === 'completed' && job.paymentStatus === 'paid'
                 );
                 
                 // Show if there are completed paid jobs and no performance review exists
                 if (completedJobs.length > 0) {
-                    const existingReview = performanceReviews[freelancer.email];
+                    const existingReview = performanceReviews[userData.profile?.email];
                     return !existingReview || existingReview.status === 'pending';
                 }
             }
@@ -1574,7 +1576,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                         <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8);">
                             ${getPerformanceReviewSummary(userData)}
                         </div>
-                        ${getPerformanceReviewButton(freelancer)}
+                        ${getPerformanceReviewButton(userData)}
                     </div>
                     
                     <div class="actions">
@@ -2461,22 +2463,10 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             }
         }
 
-        // Load project status from JSON file
+        // Load project status from users data (no longer needed as separate file)
         async function loadProjectStatus() {
-            try {
-                const response = await fetch('project-status.json');
-                if (response.ok) {
-                    const jsonData = await response.json();
-                    projectStatus = jsonData.projectStatus || {};
-                    console.log('✅ Project status loaded from JSON file:', Object.keys(projectStatus).length, 'freelancers');
-                } else {
-                    console.warn('⚠️ Could not load project-status.json, using empty object');
-                    projectStatus = {};
-                }
-            } catch (error) {
-                console.error('❌ Error loading project status:', error);
-                projectStatus = {};
-            }
+            // Project status is now part of the users data structure
+            console.log('✅ Project status loaded from users data');
         }
         
         // Update users on GitHub
@@ -2573,14 +2563,14 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         // ==================== JOB ASSIGNMENT & PAYMENT MANAGEMENT ====================
         
         // Show performance review modal
-        function showPerformanceReviewModal(freelancerName) {
-            const freelancer = freelancers.find(f => f.name === freelancerName);
-            if (!freelancer) {
-                showNotification('Freelancer not found', 'error');
+        function showPerformanceReviewModal(userName) {
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
                 return;
             }
 
-            const existingReview = performanceReviews[freelancer.email];
+            const existingReview = performanceReviews[userData.profile?.email];
             const reviewDate = new Date().toISOString().split('T')[0];
             
             const modal = document.createElement('div');
@@ -2600,7 +2590,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             modal.innerHTML = `
                 <div style="background: #1a1a1a; padding: 2rem; border-radius: 16px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,178,0,0.3);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-star"></i> Performance Review for ${freelancer.name}</h2>
+                        <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-star"></i> Performance Review for ${userName}</h2>
                         <button onclick="closeModal(this)" 
                                 style="background: none; border: none; color: #FFB200; font-size: 1.5rem; cursor: pointer;">×</button>
                     </div>
