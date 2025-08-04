@@ -1,50 +1,19 @@
 {
-  "uploadedContracts": [
-    {
-      "contractId": "CF-1754276968364-P766Y",
-      "freelancerName": "Test User",
-      "freelancerEmail": "codylcochran89@gmail.com",
-      "role": "Videographer",
-      "rate": "$50/hour",
-      "location": "Los Angeles, CA",
-      "fileName": "CF-1754276968364-P766Y.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T03:09:40.084Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754276968364-P766Y.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-03",
-      "signedDate": "2025-08-03"
-    },
-    {
-      "contractId": "CF-1754285322366-P8MCK",
-      "freelancerName": "Test Sack",
-      "role": "Contractor",
-      "rate": "Not specified",
-      "location": "Atlanta Area",
-      "fileName": "CF-1754285322366-P8MCK.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T05:28:47.697Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754285322366-P8MCK.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
-    },
+  "exportDate": "2025-08-04T08:45:31.323Z",
+  "totalContracts": 4,
+  "contracts": [
     {
       "contractId": "CF-1754285962387-2JGYM",
       "freelancerName": "Testing Again",
       "role": "Contractor",
       "rate": "Not specified",
       "location": "Atlanta Area",
+      "contractDate": "2025-08-04",
+      "notes": "Automatically uploaded via contract signing",
       "fileName": "CF-1754285962387-2JGYM.pdf",
       "fileSize": 0,
       "uploadDate": "2025-08-04T05:39:27.615Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754285962387-2JGYM.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
+      "status": "uploaded"
     },
     {
       "contractId": "CF-1754286223831-CLLKM",
@@ -52,14 +21,12 @@
       "role": "Contractor",
       "rate": "Not specified",
       "location": "Atlanta Area",
+      "contractDate": "2025-08-04",
+      "notes": "Automatically uploaded via contract signing",
       "fileName": "CF-1754286223831-CLLKM.pdf",
       "fileSize": 0,
       "uploadDate": "2025-08-04T05:43:49.052Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754286223831-CLLKM.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
+      "status": "uploaded"
     },
     {
       "contractId": "CF-1754286996882-AJ0OM",
@@ -68,14 +35,12 @@
       "role": "Editor",
       "rate": "$50/hour",
       "location": "Miami, FL",
+      "contractDate": "2025-08-04",
+      "notes": "Automatically uploaded via contract signing",
       "fileName": "CF-1754286996882-AJ0OM.pdf",
       "fileSize": 0,
       "uploadDate": "2025-08-04T05:56:48.810Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754286996882-AJ0OM.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
+      "status": "uploaded"
     },
     {
       "contractId": "CF-1754296164959-6MNPE",
@@ -84,16 +49,12 @@
       "role": "Assistant",
       "rate": "$150/hour",
       "location": "Atlanta, GA",
+      "contractDate": "2025-08-04",
+      "notes": "Automatically uploaded via contract signing",
       "fileName": "CF-1754296164959-6MNPE.pdf",
       "fileSize": 0,
       "uploadDate": "2025-08-04T08:29:36.685Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754296164959-6MNPE.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
+      "status": "uploaded"
     }
-  ],
-  "lastUpdated": "2025-08-04T08:29:36.685Z",
-  "totalContracts": 6
+  ]
 }

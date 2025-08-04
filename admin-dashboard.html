@@ -1323,7 +1323,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 return;
             }
 
-            const existingReview = performanceReviews[freelancer.email];
+            const existingReview = performanceReviews[userData.profile?.email];
             if (!existingReview) {
                 showNotification('No performance review found', 'warning');
                 return;
@@ -1358,8 +1358,8 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                         <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
                             <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Review Information</h4>
                             <div style="color: rgba(255,255,255,0.9);">
-                                <div><strong>Freelancer:</strong> ${freelancer.name}</div>
-                                <div><strong>Email:</strong> ${freelancer.email}</div>
+                                <div><strong>Freelancer:</strong> ${userName}</div>
+                                <div><strong>Email:</strong> ${userData.profile?.email || 'N/A'}</div>
                                 <div><strong>Review Date:</strong> ${reviewDate}</div>
                                 <div><strong>Overall Rating:</strong> ${overallRating}/5</div>
                                 <div><strong>Status:</strong> ${existingReview.status || 'completed'}</div>
@@ -1395,7 +1395,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     </div>
                     
                     <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button onclick="showPerformanceReviewModal('${freelancer.name}'); this.closest('div[style*=\"position: fixed\"]').remove();" 
+                        <button onclick="showPerformanceReviewModal('${userName}'); this.closest('div[style*=\"position: fixed\"]').remove();" 
                                 style="background: #FFB200; color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
                             <i class="fas fa-edit"></i> Edit Review
                         </button>
@@ -2761,7 +2761,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             const form = modal.querySelector('#performanceReviewForm');
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                savePerformanceReview(freelancer.email, form);
+                savePerformanceReview(userData.profile?.email, form);
             });
         }
 
@@ -2801,7 +2801,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             closeModal(form);
             
             // Refresh display
-            displayFreelancers();
+            displayUsers();
             
             // Show notification
             notifyJSONUpdate('performance.json', 'created', `for ${userEmail}`);
