@@ -913,45 +913,54 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             });
         }
         
-        // Populate job assignment dropdowns
+        // Populate all dropdowns from dropdown options
         function populateJobAssignmentDropdowns() {
             if (!window.dropdownOptions) return;
             
-            // Populate role dropdown
-            const roleSelect = document.getElementById('jobRole');
-            if (roleSelect) {
-                roleSelect.innerHTML = '<option value="">Select a role...</option>';
-                window.dropdownOptions.roles.forEach(role => {
-                    const option = document.createElement('option');
-                    option.value = role;
-                    option.textContent = role;
-                    roleSelect.appendChild(option);
-                });
-            }
+            // Populate role dropdowns
+            const roleSelects = ['jobRole', 'freelancerRole'];
+            roleSelects.forEach(selectId => {
+                const roleSelect = document.getElementById(selectId);
+                if (roleSelect) {
+                    roleSelect.innerHTML = '<option value="">Select a role...</option>';
+                    window.dropdownOptions.roles.forEach(role => {
+                        const option = document.createElement('option');
+                        option.value = role;
+                        option.textContent = role;
+                        roleSelect.appendChild(option);
+                    });
+                }
+            });
             
-            // Populate location dropdown
-            const locationSelect = document.getElementById('assignmentJobLocation');
-            if (locationSelect) {
-                locationSelect.innerHTML = '<option value="">Select a location...</option>';
-                window.dropdownOptions.locations.forEach(location => {
-                    const option = document.createElement('option');
-                    option.value = location;
-                    option.textContent = location;
-                    locationSelect.appendChild(option);
-                });
-            }
+            // Populate location dropdowns
+            const locationSelects = ['assignmentJobLocation', 'freelancerLocation', 'jobLocation'];
+            locationSelects.forEach(selectId => {
+                const locationSelect = document.getElementById(selectId);
+                if (locationSelect) {
+                    locationSelect.innerHTML = '<option value="">Select a location...</option>';
+                    window.dropdownOptions.locations.forEach(location => {
+                        const option = document.createElement('option');
+                        option.value = location;
+                        option.textContent = location;
+                        locationSelect.appendChild(option);
+                    });
+                }
+            });
             
-            // Populate rate dropdown
-            const rateSelect = document.getElementById('assignmentJobRate');
-            if (rateSelect) {
-                rateSelect.innerHTML = '<option value="">Select a rate...</option>';
-                window.dropdownOptions.rates.forEach(rate => {
-                    const option = document.createElement('option');
-                    option.value = rate;
-                    option.textContent = rate;
-                    rateSelect.appendChild(option);
-                });
-            }
+            // Populate rate dropdowns
+            const rateSelects = ['assignmentJobRate', 'freelancerRate', 'jobPay'];
+            rateSelects.forEach(selectId => {
+                const rateSelect = document.getElementById(selectId);
+                if (rateSelect) {
+                    rateSelect.innerHTML = '<option value="">Select a rate...</option>';
+                    window.dropdownOptions.rates.forEach(rate => {
+                        const option = document.createElement('option');
+                        option.value = rate;
+                        option.textContent = rate;
+                        rateSelect.appendChild(option);
+                    });
+                }
+            });
             
             // Populate project type dropdown
             const projectTypeSelect = document.getElementById('assignmentJobProjectType');
@@ -3074,7 +3083,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     <span>📋</span> Job Listings
                 </button>
                 <button class="tab-btn" onclick="switchTab('contracts')">
-                    <span>🔐</span> Contract Management
+                    <span>👥</span> Creator Management
                 </button>
                 <button class="tab-btn" onclick="switchTab('signed')">
                     <span>✍️</span> Signed Contracts
@@ -3105,15 +3114,19 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     </div>
                     <div class="form-group">
                         <label for="jobDate">Event Date</label>
-                        <input type="date" id="jobDate" name="date">
+                        <input type="datetime-local" id="jobDate" name="date">
                     </div>
                     <div class="form-group">
                         <label for="jobLocation">Location</label>
-                        <input type="text" id="jobLocation" name="location" value="Atlanta Area">
+                        <select id="jobLocation" name="location" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                            <option value="">Select a location...</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="jobPay">Pay Rate</label>
-                        <input type="text" id="jobPay" name="pay" placeholder="$150/day">
+                        <select id="jobPay" name="pay" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                            <option value="">Select a rate...</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="jobDescription">Description</label>
@@ -3148,46 +3161,47 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         <!-- Contracts Tab -->
         <div id="contracts-tab" class="tab-content">
             <div class="form-section">
-                <h2>🔐 How Contract Management Works</h2>
+                <h2>👥 How Creator Management Works</h2>
                 <div class="workflow-info">
-                    <p><strong>✨ Streamlined Automated Workflow:</strong></p>
+                    <p><strong>🚀 Fully Automated Creator Management:</strong></p>
                     <ol>
-                        <li><strong>Add Freelancers</strong> → Add freelancer details (no password needed)</li>
-                        <li><strong>Auto-Job Creation</strong> → Primary job automatically created from freelancer details</li>
-                        <li><strong>Auto-Approval</strong> → When you save a new freelancer, they automatically receive a job acceptance email</li>
-                        <li><strong>Manual Approval</strong> → For existing freelancers, click the "✅ Approve" button to send job acceptance email</li>
-                        <li><strong>Additional Jobs</strong> → Assign extra jobs to freelancers (optional)</li>
-                        <li><strong>Contract Signing</strong> → Freelancers sign contracts directly on contract.html and set their own password</li>
+                        <li><strong>Add Creators</strong> → Use dropdown selectors for all fields (roles, locations, rates, dates)</li>
+                        <li><strong>Auto-Job Creation</strong> → Primary job automatically created from creator details</li>
+                        <li><strong>Auto-Approval</strong> → When you save a new creator, they automatically receive a job acceptance email</li>
+                        <li><strong>Manual Approval</strong> → For existing creators, click the "✅ Approve" button to send job acceptance email</li>
+                        <li><strong>Additional Jobs</strong> → Assign extra jobs to creators using managed dropdown options</li>
+                        <li><strong>Contract Signing</strong> → Creators sign contracts directly on contract.html and set their own password</li>
                         <li><strong>Automatic Updates</strong> → Password and contract status automatically update in freelancers.json</li>
                         <li><strong>Email Notifications</strong> → You get instant email alerts when contracts are signed</li>
                         <li><strong>Real-time Dashboard</strong> → See password status and contract progress in real-time</li>
+                        <li><strong>Managed Options</strong> → All dropdown options are managed through the dropdown management system</li>
                     </ol>
                     <p><strong>📧 Email Setup:</strong> Configure EmailJS credentials in contract.html to receive signing notifications.</p>
-                    <p><strong>🎯 Benefits:</strong> No password conflicts! Freelancers set their own passwords during contract signing, and everything updates automatically.</p>
+                    <p><strong>🎯 Benefits:</strong> No password conflicts! Creators set their own passwords during contract signing, and everything updates automatically with managed dropdown options.</p>
                 </div>
                 
-                <h2>Add/Edit Freelancer</h2>
+                <h2>Add/Edit Creator</h2>
                 <form id="contractForm">
                     <div class="form-group">
                         <label for="freelancerName">Full Name *</label>
-                        <input type="text" id="freelancerName" name="name" placeholder="Enter freelancer's full name" required>
+                        <input type="text" id="freelancerName" name="name" placeholder="Enter creator's full name" required>
                     </div>
                     <div class="form-group">
                         <label for="freelancerEmail">Email Address *</label>
-                        <input type="email" id="freelancerEmail" name="email" placeholder="Enter freelancer's email address" required>
+                        <input type="email" id="freelancerEmail" name="email" placeholder="Enter creator's email address" required>
                     </div>
                     <div class="form-group">
                         <label for="freelancerPassword" style="color: rgba(255,255,255,0.6);">Portal Password</label>
-                        <input type="text" id="freelancerPassword" name="password" placeholder="Password will be set by freelancer during contract signing" readonly style="background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);">
+                        <input type="text" id="freelancerPassword" name="password" placeholder="Password will be set by creator during contract signing" readonly style="background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);">
                         <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
-                            🔄 Password will be set automatically when freelancer signs their contract
+                            🔄 Password will be set automatically when creator signs their contract
                         </small>
                     </div>
                     <div class="form-group">
                         <label for="contractUrl">Contract URL *</label>
                         <input type="text" id="contractUrl" name="contractUrl" placeholder="contract.html" value="contract.html" readonly style="background: rgba(255,255,255,0.1);">
                         <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
-                            📝 All freelancers use the same contract.html portal. No individual files needed!
+                            📝 All creators use the same contract.html portal. No individual files needed!
                         </small>
                     </div>
                     <div class="form-group">
@@ -3222,9 +3236,9 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     </div>
                     <div class="form-group">
                         <label for="projectStart">Project Start Date & Time</label>
-                        <input type="text" id="projectStart" name="projectStart" placeholder="e.g., November 8, 2025 at 3:15 PM" value="TBD" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
+                        <input type="datetime-local" id="projectStart" name="projectStart" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
                         <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
-                            📅 Keep as text input for flexibility with specific dates
+                            📅 Select date and time for project start
                         </small>
                     </div>
                     <div class="form-group">
@@ -3244,7 +3258,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     </div>
                     <div class="form-group">
                         <label for="approvedDate">Approved Date</label>
-                        <input type="date" id="approvedDate" name="approvedDate">
+                        <input type="date" id="approvedDate" name="approvedDate" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
                     </div>
                     <button type="submit" class="btn">Save Freelancer</button>
                     <button type="button" class="btn" onclick="clearContractForm()">Clear Form</button>
@@ -3252,11 +3266,11 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             </div>
 
             <div class="list-section">
-                <h2>Current Freelancers</h2>
+                <h2>Current Creators</h2>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <div>
-                        <p style="color: rgba(255,255,255,0.7); margin: 0;">Manage your freelancer contracts and assignments</p>
-                        <p id="freelancerStatus" style="color: #22c55e; margin: 0.25rem 0 0 0; font-size: 0.9rem;">Loading freelancers...</p>
+                        <p style="color: rgba(255,255,255,0.7); margin: 0;">Manage your creator contracts and assignments</p>
+                        <p id="freelancerStatus" style="color: #22c55e; margin: 0.25rem 0 0 0; font-size: 0.9rem;">Loading creators...</p>
                     </div>
                     <button class="btn" onclick="refreshFreelancers()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
                         <i class="fas fa-sync-alt"></i> Refresh Data
@@ -3267,16 +3281,16 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
 
             <!-- Job Assignment Section -->
             <div class="form-section">
-                <h2>🎯 Assign Additional Jobs to Freelancers</h2>
+                <h2>🎯 Assign Additional Jobs to Creators</h2>
                 <div class="workflow-info">
-                    <p><strong>Additional Job Assignment:</strong> Assign extra jobs to freelancers. The primary job is automatically created from the freelancer details when you save them.</p>
+                    <p><strong>Additional Job Assignment:</strong> Assign extra jobs to creators using managed dropdown options. The primary job is automatically created from the creator details when you save them.</p>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                     <div>
-                        <h3 style="color: #FFB200; margin-bottom: 1rem;">Select Freelancer</h3>
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">Select Creator</h3>
                         <select id="jobAssignmentFreelancer" style="margin-bottom: 1rem;">
-                            <option value="">Choose a freelancer...</option>
+                            <option value="">Choose a creator...</option>
                         </select>
                         
                         <div id="freelancerJobInfo" style="display: none; background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,178,0,0.3); margin-bottom: 1rem;">
@@ -3357,7 +3371,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             <div class="form-section">
                 <h2>⚙️ Manage Dropdown Options</h2>
                 <div class="workflow-info">
-                    <p><strong>Dropdown Management:</strong> Add and manage options for dropdown selectors throughout the admin dashboard. This makes data entry faster and more consistent.</p>
+                    <p><strong>Dropdown Management:</strong> Add and manage options for dropdown selectors throughout the admin dashboard. These options are automatically loaded from dropdown-options.json and saved to GitHub for persistence across sessions.</p>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
@@ -3449,52 +3463,35 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 </div>
                 
                 <div style="background: rgba(34, 197, 94, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3);">
-                    <h3 style="color: #22c55e; margin-bottom: 0.5rem;">✨ New Workflow Benefits:</h3>
+                    <h3 style="color: #22c55e; margin-bottom: 0.5rem;">🚀 Automated Workflow Benefits:</h3>
                     <ul style="color: rgba(255,255,255,0.9); margin: 0;">
                         <li>✅ No more individual HTML file generation</li>
                         <li>✅ Automatic email notifications when contracts are signed</li>
                         <li>✅ Digital signature validation and verification</li>
-                        <li>✅ Instant signed PDF downloads for freelancers</li>
+                        <li>✅ Instant signed PDF downloads for creators</li>
                         <li>✅ Single contract.html portal handles everything</li>
+                        <li>✅ Managed dropdown options for consistent data entry</li>
+                        <li>✅ Persistent storage via GitHub API</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Signed Contracts Tab -->
+        <!-- Creator Management Tab -->
         <div id="signed-tab" class="tab-content">
             <div class="form-section">
-                <h2>✍️ Signed Contracts Management</h2>
+                <h2>👥 Creator Management</h2>
                 <div class="workflow-info">
-                    <p><strong>📋 Simple Workflow:</strong></p>
+                    <p><strong>📋 Automated Workflow:</strong></p>
                     <ol>
                         <li><strong>Freelancers Sign:</strong> They sign contracts via contract.html and receive email confirmations</li>
                         <li><strong>You Receive Email:</strong> Get detailed email notifications with all contract info</li>
-                        <li><strong>Manual Upload:</strong> Upload the signed PDFs here for organized storage</li>
-                        <li><strong>Easy Management:</strong> View, organize, and download all uploaded contracts</li>
+                        <li><strong>Automatic Storage:</strong> Signed PDFs are automatically stored and organized</li>
+                        <li><strong>Easy Management:</strong> View, organize, and download all signed contracts</li>
                     </ol>
-                    <p><strong>💡 Benefits:</strong> Simple, reliable workflow with email notifications and organized PDF storage.</p>
+                    <p><strong>💡 Benefits:</strong> Fully automated workflow with email notifications and organized PDF storage.</p>
                 </div>
-                </div>
-                
-            <!-- PDF Upload Section -->
-            <div class="form-section">
-                <h2>📤 Upload Signed Contract PDF</h2>
-                
-                <!-- Quick Import Section -->
-                <div style="background: rgba(34, 197, 94, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3); margin-bottom: 2rem;">
-                    <h3 style="color: #22c55e; margin-bottom: 1rem;">⚡ Quick Import from Email</h3>
-                    <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem; font-size: 0.9rem;">
-                        Copy contract data from your admin notification email and paste it here to auto-fill the form:
-                    </p>
-                    <textarea id="quickImportData" placeholder="Paste contract data from admin email here (e.g., Freelancer: John Doe, Email: john@example.com, Role: Videographer...)" style="width: 100%; height: 80px; margin-bottom: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(34, 197, 94, 0.5); color: #fff; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem;"></textarea>
-                    <button class="btn" onclick="parseEmailData()" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
-                        <i class="fas fa-magic"></i> Auto-Fill from Email Data
-                    </button>
-                </div>
-                
-                <!-- Manual upload functionality removed - contracts are now automatically uploaded via contract signing -->
-                </div>
+            </div>
 
             <div class="list-section">
                 <h2>📁 Uploaded Contracts</h2>
