@@ -1,13 +1,13 @@
 {
   "users": {
-    "Erica Jack": {
+    "Testical Sack": {
       "profile": {
-        "email": "dedejackson727@gmail.com",
+        "email": "codylcochran89@gmail.com",
         "password": null,
-        "role": "Assistant",
-        "location": "New York, NY",
-        "projectStart": "2025-11-21T20:00",
-        "rate": "$125/hour",
+        "role": "Editor",
+        "location": "Miami, FL",
+        "projectStart": "2025-12-24T10:00",
+        "rate": "$100/hour",
         "approvedDate": "2025-08-03"
       },
       "contract": {
@@ -18,21 +18,21 @@
         "contractId": null
       },
       "jobs": {
-        "job-erica-jack-1754284085462": {
-          "id": "job-erica-jack-1754284085462",
-          "role": "Assistant",
-          "location": "New York, NY",
-          "projectStart": "2025-11-21T20:00",
-          "rate": "$125/hour",
-          "projectType": "Assistant Project",
-          "description": "Primary assignment for Erica Jack",
+        "job-testical-sack-1754284660109": {
+          "id": "job-testical-sack-1754284660109",
+          "role": "Editor",
+          "location": "Miami, FL",
+          "projectStart": "2025-12-24T10:00",
+          "rate": "$100/hour",
+          "projectType": "Editor Project",
+          "description": "Primary assignment for Testical Sack",
           "projectStatus": "upcoming",
           "paymentStatus": "pending",
           "completionDate": null,
           "paymentDate": null
         }
       },
-      "primaryJob": "job-erica-jack-1754284085462",
+      "primaryJob": "job-testical-sack-1754284660109",
       "paymentMethod": null
     }
   },
