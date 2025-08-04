@@ -2858,34 +2858,9 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                         ${jobsHTML}
                     </div>
                     
-                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,178,0,0.2);">
-                        <h3 style="color: #FFB200; margin-bottom: 1rem;">Payment Method Setup:</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                            <div>
-                                <label style="color: #FFB200; font-weight: bold;">Payment Method:</label>
-                                <select id="paymentMethod_${userName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
-                                    <option value="">Select payment method</option>
-                                    <option value="cash" ${userData.paymentMethod === 'cash' ? 'selected' : ''}>Cash</option>
-                                    <option value="check" ${userData.paymentMethod === 'check' ? 'selected' : ''}>Check</option>
-                                    <option value="zelle" ${userData.paymentMethod === 'zelle' ? 'selected' : ''}>Zelle</option>
-                                    <option value="paypal" ${userData.paymentMethod === 'paypal' ? 'selected' : ''}>PayPal</option>
-                                    <option value="invoice" ${userData.paymentMethod === 'invoice' ? 'selected' : ''}>Invoice Request</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style="color: #FFB200; font-weight: bold;">Payment Status:</label>
-                                <select id="paymentStatus_${userName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
-                                    <option value="pending">Pending</option>
-                                    <option value="processing">Processing</option>
-                                    <option value="paid">Paid</option>
-                                    <option value="overdue">Overdue</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button onclick="updatePaymentSettings('${userName}')" 
-                                style="background: #FFB200; color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            <i class="fas fa-save"></i> Update Payment Settings
-                        </button>
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">Available Jobs:</h3>
+                        ${jobsHTML}
                     </div>
                 </div>
             `;
@@ -2949,38 +2924,43 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
 
         // Update payment settings
-        function updatePaymentSettings(freelancerName) {
-            const freelancer = freelancers.find(f => f.name === freelancerName);
-            if (!freelancer) {
-                showNotification('Freelancer not found', 'error');
+        async function updatePaymentSettings(userName) {
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
                 return;
             }
             
-            const paymentMethod = document.getElementById(`paymentMethod_${freelancerName}`).value;
-            const paymentStatus = document.getElementById(`paymentStatus_${freelancerName}`).value;
+            const paymentMethod = document.getElementById(`paymentMethod_${userName}`).value;
+            const paymentStatus = document.getElementById(`paymentStatus_${userName}`).value;
             
             if (!paymentMethod) {
                 showNotification('Please select a payment method', 'warning');
                 return;
             }
             
-            // Update freelancer's payment settings
-            freelancer.paymentMethod = paymentMethod;
-            freelancer.paymentStatus = paymentStatus;
+            // Update user's payment settings
+            userData.paymentMethod = paymentMethod;
+            userData.paymentStatus = paymentStatus;
             
-            // Update all jobs for this freelancer
-            if (projectStatus[freelancerName] && projectStatus[freelancerName].jobs) {
-                Object.values(projectStatus[freelancerName].jobs).forEach(job => {
+            // Update all jobs for this user
+            if (userData.jobs) {
+                Object.values(userData.jobs).forEach(job => {
                     job.paymentStatus = paymentStatus;
                     job.paymentMethod = paymentMethod;
                 });
             }
             
-            // Update GitHub
-            updateFreelancersOnGitHub();
-            updateProjectStatusOnGitHub();
+            // Save to localStorage
+            localStorage.setItem('users', JSON.stringify(users));
             
-            showNotification(`✅ Payment settings updated for ${freelancerName}!\nMethod: ${paymentMethod}\nStatus: ${paymentStatus}`, 'success');
+            // Update GitHub
+            await updateUsersOnGitHub();
+            
+            showNotification(`✅ Payment settings updated for ${userName}!\nMethod: ${paymentMethod}\nStatus: ${paymentStatus}`, 'success');
+            
+            // Refresh the display
+            displayUsers();
         }
         
         // Show project status manager modal
@@ -2991,12 +2971,13 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 return;
             }
             
-            const userProjects = projectStatus[userName] || { jobs: {} };
-            let jobs = Object.values(userProjects.jobs);
-            
-            // If no jobs in project status, create a default job from user data
-            if (jobs.length === 0) {
-                const defaultJobId = userData.primaryJob || `job-${userName.toLowerCase().replace(/\s+/g, '-')}-default`;
+            // Get jobs from the new users structure
+            let jobs = [];
+            if (userData.jobs && Object.keys(userData.jobs).length > 0) {
+                jobs = Object.values(userData.jobs);
+            } else {
+                // If no jobs, create a default job from user data
+                const defaultJobId = `job-${userName.toLowerCase().replace(/\s+/g, '-')}-default`;
                 const defaultJob = {
                     id: defaultJobId,
                     role: userData.profile?.role || 'No role',
@@ -3009,11 +2990,11 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     description: `Primary assignment for ${userName}`
                 };
                 
-                // Add to project status
-                if (!projectStatus[userName]) {
-                    projectStatus[userName] = { jobs: {} };
+                // Add to user's jobs
+                if (!userData.jobs) {
+                    userData.jobs = {};
                 }
-                projectStatus[userName].jobs[defaultJobId] = defaultJob;
+                userData.jobs[defaultJobId] = defaultJob;
                 jobs = [defaultJob];
                 
                 console.log(`📋 Created default job for ${userName}:`, defaultJob);
@@ -3099,6 +3080,36 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     <h3 style="color: #FFB200; margin-bottom: 1rem;">📊 Project Status Manager</h3>
                     <h4 style="color: white; margin-bottom: 1rem;">${freelancerName}</h4>
                     ${jobsHTML}
+                    
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,178,0,0.2);">
+                        <h3 style="color: #FFB200; margin-bottom: 1rem;">Payment Method Setup:</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="color: #FFB200; font-weight: bold;">Payment Method:</label>
+                                <select id="paymentMethod_${freelancerName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
+                                    <option value="">Select payment method</option>
+                                    <option value="cash" ${userData?.paymentMethod === 'cash' ? 'selected' : ''}>Cash</option>
+                                    <option value="check" ${userData?.paymentMethod === 'check' ? 'selected' : ''}>Check</option>
+                                    <option value="zelle" ${userData?.paymentMethod === 'zelle' ? 'selected' : ''}>Zelle</option>
+                                    <option value="paypal" ${userData?.paymentMethod === 'paypal' ? 'selected' : ''}>PayPal</option>
+                                    <option value="invoice" ${userData?.paymentMethod === 'invoice' ? 'selected' : ''}>Invoice Request</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color: #FFB200; font-weight: bold;">Payment Status:</label>
+                                <select id="paymentStatus_${freelancerName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="overdue">Overdue</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="updatePaymentSettings('${freelancerName}')" 
+                                style="background: #FFB200; color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            <i class="fas fa-save"></i> Update Payment Settings
+                        </button>
+                    </div>
                 </div>
             `;
             
@@ -3106,7 +3117,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
         
         // Update job status from modal
-        function updateJobStatus(freelancerName, jobId) {
+        async function updateJobStatus(freelancerName, jobId) {
             const projectStatusSelect = document.getElementById(`projectStatus_${jobId}`);
             const paymentStatusSelect = document.getElementById(`paymentStatus_${jobId}`);
             
@@ -3118,12 +3129,27 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             const newProjectStatus = projectStatusSelect.value;
             const newPaymentStatus = paymentStatusSelect.value;
             
-            updateProjectStatus(freelancerName, jobId, newProjectStatus, newPaymentStatus);
-            
-            // Close modal
-            document.querySelector('div[style*="position: fixed"]').remove();
-            
-            showNotification(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}\nPayment: ${newPaymentStatus}`, 'success');
+            // Update the job in the user's jobs
+            if (users[freelancerName] && users[freelancerName].jobs && users[freelancerName].jobs[jobId]) {
+                users[freelancerName].jobs[jobId].projectStatus = newProjectStatus;
+                users[freelancerName].jobs[jobId].paymentStatus = newPaymentStatus;
+                
+                // Save to localStorage
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                // Update GitHub
+                await updateUsersOnGitHub();
+                
+                // Close modal
+                document.querySelector('div[style*="position: fixed"]').remove();
+                
+                showNotification(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}\nPayment: ${newPaymentStatus}`, 'success');
+                
+                // Refresh the display
+                displayUsers();
+            } else {
+                showNotification('Job not found in user data', 'error');
+            }
         }
         
         // ==================== AUTOMATIC JSON GENERATION ====================
