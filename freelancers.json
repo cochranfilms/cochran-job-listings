@@ -14,8 +14,36 @@
       "contractId": null,
       "jobs": [],
       "primaryJob": null
+    },
+    "Erica Jackson": {
+      "email": "dedejackson727@gmail.com",
+      "password": "Hello1234",
+      "contractUrl": "contract.html",
+      "role": "Photographer",
+      "location": "Atlanta, GA",
+      "projectStart": "2025-10-22T19:10",
+      "rate": "$125/hour",
+      "approvedDate": "2025-08-03",
+      "contractStatus": "signed",
+      "contractSignedDate": "8/3/2025, 8:32:10 PM",
+      "contractUploadedDate": null,
+      "contractId": "CF-1754267530379-1PU28",
+      "jobs": [
+        {
+          "id": "job-erica-jackson-1754267473803",
+          "role": "Photographer",
+          "location": "Atlanta, GA",
+          "projectStart": "2025-10-22T19:10",
+          "rate": "$125/hour",
+          "status": "upcoming",
+          "projectType": "Photographer Project",
+          "description": "Primary assignment for Erica Jackson"
+        }
+      ],
+      "primaryJob": "job-erica-jackson-1754267473803",
+      "paymentMethod": "check"
     }
   },
   "lastUpdated": "2025-08-04",
-  "totalFreelancers": 1
+  "totalFreelancers": 2
 }

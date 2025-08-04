@@ -1,6 +1,6 @@
 {
-  "exportDate": "2025-08-03T20:37:47.874Z",
-  "totalContracts": 6,
+  "exportDate": "2025-08-04T00:32:22.271Z",
+  "totalContracts": 7,
   "contracts": [
     {
       "contractId": "CF-UPLOAD-1754184793435-QBJ5D",
@@ -95,6 +95,22 @@
       "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754253455924-4AAVL.pdf",
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-02",
+      "signedDate": "2025-08-03"
+    },
+    {
+      "contractId": "CF-1754267530379-1PU28",
+      "freelancerName": "Erica Jackson",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Photographer",
+      "rate": "$125/hour",
+      "location": "Atlanta, GA",
+      "fileName": "CF-1754267530379-1PU28.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T00:32:22.271Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754267530379-1PU28.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-03",
       "signedDate": "2025-08-03"
     }
   ]
