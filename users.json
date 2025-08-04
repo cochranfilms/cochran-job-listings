@@ -1,41 +1,5 @@
 {
-  "users": {
-    "Test Sack": {
-      "profile": {
-        "email": "codylcochran89@gmail.com",
-        "password": null,
-        "role": "Assistant",
-        "location": "Atlanta, GA",
-        "projectStart": "2025-10-10T19:00",
-        "rate": "$75/hour",
-        "approvedDate": "2025-08-04"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
-        "contractUploadedDate": null,
-        "contractId": null
-      },
-      "jobs": {
-        "job-test-sack-1754285268270": {
-          "id": "job-test-sack-1754285268270",
-          "role": "Assistant",
-          "location": "Atlanta, GA",
-          "projectStart": "2025-10-10T19:00",
-          "rate": "$75/hour",
-          "projectType": "Assistant Project",
-          "description": "Primary assignment for Test Sack",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "completionDate": null,
-          "paymentDate": null
-        }
-      },
-      "primaryJob": "job-test-sack-1754285268270",
-      "paymentMethod": null
-    }
-  },
+  "users": {},
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -51,5 +15,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 1
+  "totalUsers": 0
 }
