@@ -33,7 +33,8 @@
         }
       },
       "primaryJob": "job-test-final-1754298013800",
-      "paymentMethod": null
+      "paymentMethod": "paypal",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
