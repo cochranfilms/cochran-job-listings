@@ -3,7 +3,7 @@
     "Thing One": {
       "profile": {
         "email": "codylcochran89@gmail.com",
-        "password": null,
+        "password": "1234test",
         "role": "Assistant",
         "location": "Chicago, IL",
         "projectStart": "2025-10-10T20:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 9:04:02 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754312642352-37F45"
       },
       "jobs": {
         "job-thing-one-1754312549721": {
