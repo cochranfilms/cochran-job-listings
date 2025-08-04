@@ -33,7 +33,8 @@
         }
       },
       "primaryJob": "job-a-dog-1754300256758",
-      "paymentMethod": null
+      "paymentMethod": "check",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
