@@ -3,7 +3,7 @@
     "Testing Another": {
       "profile": {
         "email": "codylcochran89@gmail.com",
-        "password": null,
+        "password": "Test1234",
         "role": "Editor",
         "location": "Miami, FL",
         "projectStart": "2026-03-03T19:13",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 1:56:36 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754286996882-AJ0OM"
       },
       "jobs": {
         "job-testing-another-1754286918018": {
