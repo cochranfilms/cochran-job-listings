@@ -69,6 +69,9 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Performance Data Script -->
+    <script src="performance-data.js"></script>
+    
     <!-- EmailJS for automated job acceptance emails -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
@@ -2575,21 +2578,50 @@
 
         // ==================== PROJECT STATUS MANAGEMENT ====================
         
-        // Load performance reviews from JSON file
+        // Load performance reviews from JSON file with fallbacks
         async function loadPerformanceReviews() {
             try {
+                console.log('🔄 Loading performance reviews...');
+                
+                // Try API endpoint first
+                try {
+                    const apiResponse = await fetch('/api/performance');
+                    if (apiResponse.ok) {
+                        const apiData = await apiResponse.json();
+                        performanceReviews = apiData.performanceReviews || {};
+                        console.log('✅ Performance reviews loaded from API:', Object.keys(performanceReviews).length, 'reviews');
+                        return;
+                    }
+                } catch (apiError) {
+                    console.warn('⚠️ API endpoint failed, trying direct JSON file...');
+                }
+                
+                // Try direct JSON file
                 const response = await fetch('performance.json');
                 if (response.ok) {
                     const jsonData = await response.json();
                     performanceReviews = jsonData.performanceReviews || {};
                     console.log('✅ Performance reviews loaded from JSON file:', Object.keys(performanceReviews).length, 'reviews');
                 } else {
-                    console.warn('⚠️ Could not load performance.json, using empty object');
-                    performanceReviews = {};
+                    console.warn('⚠️ Could not load performance.json, trying embedded data...');
+                    // Try embedded data as fallback
+                    if (window.performanceData && window.performanceData.performanceReviews) {
+                        performanceReviews = window.performanceData.performanceReviews;
+                        console.log('✅ Performance reviews loaded from embedded data:', Object.keys(performanceReviews).length, 'reviews');
+                    } else {
+                        console.warn('⚠️ No fallback data available, using empty object');
+                        performanceReviews = {};
+                    }
                 }
             } catch (error) {
                 console.error('❌ Error loading performance reviews:', error);
-                performanceReviews = {};
+                // Try embedded data as final fallback
+                if (window.performanceData && window.performanceData.performanceReviews) {
+                    performanceReviews = window.performanceData.performanceReviews;
+                    console.log('✅ Performance reviews loaded from embedded data:', Object.keys(performanceReviews).length, 'reviews');
+                } else {
+                    performanceReviews = {};
+                }
             }
         }
 
@@ -3345,21 +3377,7 @@
         
 
         
-        // Load performance reviews from API
-        async function loadPerformanceReviews() {
-            try {
-                const response = await fetch('/api/performance');
-                if (response.ok) {
-                    const data = await response.json();
-                    performanceReviews = data.performanceReviews || {};
-                    console.log('✅ Loaded performance reviews:', Object.keys(performanceReviews));
-                } else {
-                    console.error('❌ Failed to load performance reviews:', response.status);
-                }
-            } catch (error) {
-                console.error('❌ Error loading performance reviews:', error);
-            }
-        }
+
         
         // Create new performance review
         function createNewPerformanceReview() {
