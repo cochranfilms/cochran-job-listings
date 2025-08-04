@@ -27,14 +27,14 @@
           "projectType": "Videographer Project",
           "description": "Primary assignment for Test Final",
           "projectStatus": "completed",
-          "paymentStatus": "pending",
+          "paymentStatus": "paid",
           "completionDate": null,
           "paymentDate": null
         }
       },
       "primaryJob": "job-test-final-1754298013800",
       "paymentMethod": "paypal",
-      "paymentStatus": "configured"
+      "paymentStatus": "paid"
     }
   },
   "statusOptions": {
