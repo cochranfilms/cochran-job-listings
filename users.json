@@ -33,7 +33,8 @@
         }
       },
       "primaryJob": "job-testing-another-1754286918018",
-      "paymentMethod": null
+      "paymentMethod": "zelle",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
