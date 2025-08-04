@@ -1932,10 +1932,14 @@
                 
                 // Load current uploaded-contracts.json
                 const response = await fetch('uploaded-contracts.json');
-                let uploadedContractsData = { contracts: [], exportDate: new Date().toISOString(), totalContracts: 0 };
+                let uploadedContractsData = { uploadedContracts: [], lastUpdated: new Date().toISOString(), totalContracts: 0 };
                 
                 if (response.ok) {
                     uploadedContractsData = await response.json();
+                    // Ensure the structure is correct
+                    if (!uploadedContractsData.uploadedContracts) {
+                        uploadedContractsData.uploadedContracts = [];
+                    }
                 }
                 
                 // Create new contract entry
@@ -1956,10 +1960,10 @@
                     signedDate: contractData.signatureDate
                 };
                 
-                // Add to contracts array
-                uploadedContractsData.contracts.push(newContract);
-                uploadedContractsData.totalContracts = uploadedContractsData.contracts.length;
-                uploadedContractsData.exportDate = new Date().toISOString();
+                // Add to uploadedContracts array
+                uploadedContractsData.uploadedContracts.push(newContract);
+                uploadedContractsData.totalContracts = uploadedContractsData.uploadedContracts.length;
+                uploadedContractsData.lastUpdated = new Date().toISOString();
                 
                 // Update uploaded-contracts.json on GitHub
                 await updateGitHubFile('uploaded-contracts.json', JSON.stringify(uploadedContractsData, null, 2), `Add signed contract: ${contractData.contractId} - ${contractData.freelancerName}`);
