@@ -564,17 +564,9 @@
                 // Update users data with contract information from uploaded-contracts.json
                 users.forEach(user => {
                     // Find ALL contracts for this user
-                    const userContracts = uploadedContracts.filter(contract => {
-                        const contractEmail = contract.freelancerEmail;
-                        const userEmail = user.email;
-                        
-                        if (!contractEmail || !userEmail) {
-                            console.log(`⚠️ Missing email data - Contract email: ${contractEmail}, User email: ${userEmail}`);
-                            return false;
-                        }
-                        
-                        return contractEmail.toLowerCase() === userEmail.toLowerCase();
-                    });
+                    const userContracts = uploadedContracts.filter(contract => 
+                        contract.freelancerEmail.toLowerCase() === user.email.toLowerCase()
+                    );
                     
                     if (userContracts.length > 0) {
                         // Sort by upload date to get the most recent contract
@@ -821,8 +813,8 @@
         function displayUserInfo() {
             const container = document.getElementById('userInfo');
             
-            // Get all jobs for this user from the jobs object (convert to array)
-            const userJobs = currentUser.jobs ? Object.values(currentUser.jobs) : [];
+            // Get all jobs for this user from the jobs array
+            const userJobs = currentUser.jobs || [];
             const primaryJobId = currentUser.primaryJob;
             
             // Fix timezone issues with approved date
@@ -1197,12 +1189,11 @@
             };
 
             // Add job selector if user has multiple jobs
-            const userJobsArray = currentUser.jobs ? Object.values(currentUser.jobs) : [];
-            const jobSelectorHTML = userJobsArray.length > 1 ? `
+            const jobSelectorHTML = currentUser.jobs && currentUser.jobs.length > 1 ? `
                 <div class="job-selector-header">
                     <h3>Select Job to View Timeline:</h3>
                     <div class="job-tabs">
-                        ${userJobsArray.map((job, index) => `
+                        ${currentUser.jobs.map((job, index) => `
                             <button class="job-tab ${index === selectedJobIndex ? 'active' : ''}" 
                                     onclick="selectJob(${index}, '${job.id}')">
                                 <i class="fas fa-${getJobIcon(job.projectType)}"></i>
