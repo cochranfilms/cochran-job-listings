@@ -1528,18 +1528,16 @@
                     id: 'payment',
                     title: 'Payment Processing',
                     description: (() => {
-                        if (projectStatus !== 'completed') return 'Payment processing after completion';
                         switch (paymentStatus) {
                             case 'pending': return 'Payment pending ⏳';
                             case 'processing': return 'Payment processing 🔄';
                             case 'paid': return 'Payment completed ✅';
                             case 'overdue': return 'Payment overdue ⚠️';
-                            default: return 'Payment status unknown';
+                            default: return 'Payment processing after completion';
                         }
                     })(),
                     icon: 'fas fa-credit-card',
                     status: (() => {
-                        if (projectStatus !== 'completed') return 'pending';
                         switch (paymentStatus) {
                             case 'pending': return 'current';
                             case 'processing': return 'current';
@@ -1549,16 +1547,12 @@
                         }
                     })(),
                     date: (() => {
-                        if (projectStatus === 'completed' && userJob?.paymentDate) {
+                        if (userJob?.paymentDate) {
                             return new Date(userJob.paymentDate);
                         }
                         return null;
                     })(),
                     details: (() => {
-                        if (projectStatus !== 'completed') {
-                            return `You will receive payment of ${selectedJob?.rate || currentUser.rate} within 24 hours of project completion.`;
-                        }
-                        
                         switch (paymentStatus) {
                             case 'pending': 
                                 return `⏳ Payment of ${selectedJob?.rate || currentUser.rate} is pending. Payment will be processed within 24 hours of project completion.`;
@@ -1569,7 +1563,7 @@
                             case 'overdue': 
                                 return `⚠️ Payment of ${selectedJob?.rate || currentUser.rate} is overdue. Please contact admin for assistance.`;
                             default: 
-                                return `Payment of ${selectedJob?.rate || currentUser.rate} status is being updated.`;
+                                return `You will receive payment of ${selectedJob?.rate || currentUser.rate} within 24 hours of project completion.`;
                         }
                     })()
                 },
