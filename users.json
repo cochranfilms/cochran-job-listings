@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Testing Again": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "password": null,
+        "role": "Director",
+        "location": "Chicago, IL",
+        "projectStart": "2026-04-13T14:20",
+        "rate": "$100/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-testing-again-1754285926708": {
+          "id": "job-testing-again-1754285926708",
+          "role": "Director",
+          "location": "Chicago, IL",
+          "projectStart": "2026-04-13T14:20",
+          "rate": "$100/hour",
+          "projectType": "Director Project",
+          "description": "Primary assignment for Testing Again",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "completionDate": null,
+          "paymentDate": null
+        }
+      },
+      "primaryJob": "job-testing-again-1754285926708",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +51,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 0
+  "totalUsers": 1
 }
