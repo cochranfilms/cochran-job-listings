@@ -373,27 +373,29 @@
                                 paymentMethod: user.paymentMethod || null,
                                 paymentStatus: user.paymentStatus || 'pending',
                                 // Handle both old single job format and new multiple jobs format
-                                jobs: user.jobs || [{
-                                    id: 'legacy-job',
-                                    role: user.profile?.role,
-                                    location: user.profile?.location,
-                                    projectStart: user.profile?.projectStart,
-                                    rate: user.profile?.rate,
-                                    status: 'upcoming',
-                                    projectType: 'Legacy Job',
-                                    description: `${user.profile?.role} position`
-                                }],
+                                jobs: user.jobs || {
+                                    'legacy-job': {
+                                        id: 'legacy-job',
+                                        role: user.profile?.role,
+                                        location: user.profile?.location,
+                                        projectStart: user.profile?.projectStart,
+                                        rate: user.profile?.rate,
+                                        status: 'upcoming',
+                                        projectType: 'Legacy Job',
+                                        description: `${user.profile?.role} position`
+                                    }
+                                },
                                 primaryJob: user.primaryJob || 'legacy-job'
                             }));
                             
                             console.log('✅ Users data loaded from JSON file:', users.length, 'users');
-                            console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
-                                name: u.name, 
-                                email: u.email, 
-                                jobCount: u.jobs.length,
-                                contractStatus: u.contractStatus,
-                                contractId: u.contractId
-                            })));
+                                            console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
+                    name: u.name, 
+                    email: u.email, 
+                    jobCount: Object.keys(u.jobs || {}).length,
+                    contractStatus: u.contractStatus,
+                    contractId: u.contractId
+                })));
                             
                             // Now merge with uploaded contracts data to get the most up-to-date contract information
                             await mergeUsersDataWithUploadedContracts();
@@ -428,16 +430,18 @@
                                 // PAYMENT FIELDS - CRITICAL!
                                 paymentMethod: user.paymentMethod || null,
                                 paymentStatus: user.paymentStatus || 'pending',
-                                jobs: user.jobs || [{
-                                    id: 'legacy-job',
-                                    role: user.profile?.role,
-                                    location: user.profile?.location,
-                                    projectStart: user.profile?.projectStart,
-                                    rate: user.profile?.rate,
-                                    status: 'upcoming',
-                                    projectType: 'Legacy Job',
-                                    description: `${user.profile?.role} position`
-                                }],
+                                jobs: user.jobs || {
+                                    'legacy-job': {
+                                        id: 'legacy-job',
+                                        role: user.profile?.role,
+                                        location: user.profile?.location,
+                                        projectStart: user.profile?.projectStart,
+                                        rate: user.profile?.rate,
+                                        status: 'upcoming',
+                                        projectType: 'Legacy Job',
+                                        description: `${user.profile?.role} position`
+                                    }
+                                },
                                 primaryJob: user.primaryJob || 'legacy-job'
                             }));
                         }
@@ -454,16 +458,18 @@
                                 contractSignedDate: null,
                                 contractUploadedDate: null,
                                 contractId: null,
-                                jobs: [{
-                                    id: 'job-francisco-001',
-                                    role: "Backdrop Photographer",
-                                    location: "6695 Church Street, Douglasville, GA 30134",
-                                    projectStart: "November 8, 2025 at 3:15 PM",
-                                    rate: "$400.00 USD (Flat)",
-                                    status: 'upcoming',
-                                    projectType: 'Photography',
-                                    description: 'Backdrop photography for corporate event'
-                                }],
+                                jobs: {
+                                    'job-francisco-001': {
+                                        id: 'job-francisco-001',
+                                        role: "Backdrop Photographer",
+                                        location: "6695 Church Street, Douglasville, GA 30134",
+                                        projectStart: "November 8, 2025 at 3:15 PM",
+                                        rate: "$400.00 USD (Flat)",
+                                        status: 'upcoming',
+                                        projectType: 'Photography',
+                                        description: 'Backdrop photography for corporate event'
+                                    }
+                                },
                                 primaryJob: 'job-francisco-001'
                             },
                             {
@@ -476,16 +482,18 @@
                                 contractSignedDate: null,
                                 contractUploadedDate: null,
                                 contractId: null,
-                                jobs: [{
-                                    id: 'job-cody-001',
-                                    role: "Full Stack Designer",
-                                    location: "Douglasville, GA",
-                                    projectStart: "TBD",
-                                    rate: "$900.00 USD (Flat)",
-                                    status: 'upcoming',
-                                    projectType: 'Design',
-                                    description: 'Full stack design work'
-                                }],
+                                jobs: {
+                                    'job-cody-001': {
+                                        id: 'job-cody-001',
+                                        role: "Full Stack Designer",
+                                        location: "Douglasville, GA",
+                                        projectStart: "TBD",
+                                        rate: "$900.00 USD (Flat)",
+                                        status: 'upcoming',
+                                        projectType: 'Design',
+                                        description: 'Full stack design work'
+                                    }
+                                },
                                 primaryJob: 'job-cody-001'
                             },
                             {
@@ -498,16 +506,18 @@
                                 contractSignedDate: null,
                                 contractUploadedDate: null,
                                 contractId: null,
-                                jobs: [{
-                                    id: 'job-bigpharma-001',
-                                    role: "Corporate Videographer",
-                                    location: "Atlanta, GA",
-                                    projectStart: "December 15th, 2025 at 9:00am",
-                                    rate: "$500.00 USD (Flat)",
-                                    status: 'upcoming',
-                                    projectType: 'Corporate Video',
-                                    description: 'Professional corporate video production for pharmaceutical company'
-                                }],
+                                jobs: {
+                                    'job-bigpharma-001': {
+                                        id: 'job-bigpharma-001',
+                                        role: "Corporate Videographer",
+                                        location: "Atlanta, GA",
+                                        projectStart: "December 15th, 2025 at 9:00am",
+                                        rate: "$500.00 USD (Flat)",
+                                        status: 'upcoming',
+                                        projectType: 'Corporate Video',
+                                        description: 'Professional corporate video production for pharmaceutical company'
+                                    }
+                                },
                                 primaryJob: 'job-bigpharma-001'
                             },
                             {
@@ -520,16 +530,18 @@
                                 contractSignedDate: null,
                                 contractUploadedDate: null,
                                 contractId: null,
-                                jobs: [{
-                                    id: 'job-hannah-001',
-                                    role: "Backdrop Photographer",
-                                    location: "6700 Church Street, Douglasville, GA,  30134",
-                                    projectStart: "October 24, 2025 at 3:15 PM",
-                                    rate: "$300 + Tip",
-                                    status: 'upcoming',
-                                    projectType: 'Photography',
-                                    description: 'Backdrop photography session'
-                                }],
+                                jobs: {
+                                    'job-hannah-001': {
+                                        id: 'job-hannah-001',
+                                        role: "Backdrop Photographer",
+                                        location: "6700 Church Street, Douglasville, GA,  30134",
+                                        projectStart: "October 24, 2025 at 3:15 PM",
+                                        rate: "$300 + Tip",
+                                        status: 'upcoming',
+                                        projectType: 'Photography',
+                                        description: 'Backdrop photography session'
+                                    }
+                                },
                                 primaryJob: 'job-hannah-001'
                             }
                         ];
@@ -538,7 +550,7 @@
                 
                 users = data;
                 console.log('✅ Users data loaded from localStorage/fallback:', users.length, 'users');
-                console.log('🔍 Available users:', users.map(u => ({ name: u.name, email: u.email, jobCount: u.jobs?.length || 0 })));
+                console.log('🔍 Available users:', users.map(u => ({ name: u.name, email: u.email, jobCount: Object.keys(u.jobs || {}).length })));
                 
                 // Also merge with uploaded contracts for fallback data
                 await mergeUsersDataWithUploadedContracts();
@@ -995,10 +1007,21 @@
         
         // Get the currently selected job
         function getSelectedJob() {
+            console.log('🔍 Debugging getSelectedJob:');
+            console.log('Current user:', currentUser);
+            console.log('Current user jobs:', currentUser?.jobs);
+            console.log('Selected job index:', selectedJobIndex);
+            
             if (!currentUser || !currentUser.jobs) {
+                console.log('❌ No current user or jobs');
                 return null;
             }
             const userJobsArray = Object.values(currentUser.jobs);
+            console.log('User jobs array:', userJobsArray);
+            console.log('Selected job index:', selectedJobIndex);
+            console.log('Job at selected index:', userJobsArray[selectedJobIndex]);
+            console.log('First job:', userJobsArray[0]);
+            
             return userJobsArray[selectedJobIndex] || userJobsArray[0];
         }
 
@@ -1128,9 +1151,17 @@
         function displayJobsWithStatus() {
             const container = document.getElementById('userJobs');
             
+            console.log('🔍 Debugging displayJobsWithStatus:');
+            console.log('Current user:', currentUser);
+            console.log('Current user jobs:', currentUser?.jobs);
+            console.log('Selected job index:', selectedJobIndex);
+            
             // Get the selected job or fall back to primary job
             const selectedJob = getSelectedJob();
+            console.log('Selected job:', selectedJob);
+            
             if (!selectedJob) {
+                console.log('❌ No selected job found');
                 container.innerHTML = `
                     <div class="empty-state">
                         <h3>📋 No Jobs Available</h3>
@@ -1517,8 +1548,8 @@
                         }
                     })(),
                     date: (() => {
-                        if (projectStatus === 'completed' && projectData?.paymentDate) {
-                            return new Date(projectData.paymentDate);
+                        if (projectStatus === 'completed' && userJob?.paymentDate) {
+                            return new Date(userJob.paymentDate);
                         }
                         return null;
                     })(),
@@ -1533,7 +1564,7 @@
                             case 'processing': 
                                 return `🔄 Payment of ${selectedJob?.rate || currentUser.rate} is being processed. You will receive payment within 24 hours.`;
                             case 'paid': 
-                                return `✅ Payment of ${selectedJob?.rate || currentUser.rate} has been processed successfully on ${projectData?.paymentDate ? new Date(projectData.paymentDate).toLocaleDateString() : 'recent date'}.`;
+                                return `✅ Payment of ${selectedJob?.rate || currentUser.rate} has been processed successfully on ${userJob?.paymentDate ? new Date(userJob.paymentDate).toLocaleDateString() : 'recent date'}.`;
                             case 'overdue': 
                                 return `⚠️ Payment of ${selectedJob?.rate || currentUser.rate} is overdue. Please contact admin for assistance.`;
                             default: 
