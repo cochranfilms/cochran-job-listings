@@ -1,9 +1,14 @@
 {
   "performanceReviews": {},
   "reviewOptions": {
-    "rating": [1, 2, 3, 4, 5],
-    "categories": ["Professionalism", "Quality", "Communication", "Reliability", "Overall Performance"],
-    "status": ["pending", "completed", "overdue"]
+    "ratings": [1, 2, 3, 4, 5],
+    "categories": [
+      "Communication",
+      "Quality",
+      "Timeliness",
+      "Professionalism",
+      "Collaboration"
+    ]
   },
   "lastUpdated": "2025-01-27",
   "totalReviews": 0
