@@ -1,41 +1,5 @@
 {
-  "users": {
-    "Thing Three": {
-      "profile": {
-        "email": "codylcochran87@gmail.com",
-        "password": "test54321",
-        "role": "Editor",
-        "location": "Miami, FL",
-        "projectStart": "2026-04-04T19:00",
-        "rate": "$50/hour",
-        "approvedDate": "2025-08-04"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/4/2025, 10:09:04 AM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754316544169-8D3OA"
-      },
-      "jobs": {
-        "job-thing-three-1754316497372": {
-          "id": "job-thing-three-1754316497372",
-          "role": "Editor",
-          "location": "Miami, FL",
-          "projectStart": "2026-04-04T19:00",
-          "rate": "$50/hour",
-          "projectType": "Editor Project",
-          "description": "Primary assignment for Thing Three",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "completionDate": null,
-          "paymentDate": null
-        }
-      },
-      "primaryJob": "job-thing-three-1754316497372",
-      "paymentMethod": null
-    }
-  },
+  "users": {},
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -51,5 +15,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 1
+  "totalUsers": 0
 }
