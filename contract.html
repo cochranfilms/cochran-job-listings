@@ -858,7 +858,7 @@
         
         // ==================== PDF GENERATION & GITHUB UPLOAD ====================
         
-        // Generate PDF contract content
+        // Generate professional PDF contract content
         function generateContractPDF(contractData) {
             try {
                 console.log('📄 Starting PDF generation for contract:', contractData.contractId);
@@ -870,81 +870,209 @@
                 
                 const doc = new jsPDF();
                 
-                // Set up fonts and styling
-                doc.setFont('helvetica');
-                doc.setFontSize(12);
+                // ==================== PAGE 1: HEADER & COMPANY INFO ====================
                 
-                // Header
-                doc.setFontSize(20);
+                // Professional header with logo placeholder and branding
+                doc.setFillColor(255, 178, 0); // Gold background
+                doc.rect(0, 0, 210, 40, 'F');
+                
+                // Company name in header
+                doc.setFontSize(24);
                 doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
                 doc.text('COCHRAN FILMS', 105, 20, { align: 'center' });
-                doc.setFontSize(16);
-                doc.text('FREELANCER CONTRACT', 105, 35, { align: 'center' });
                 
-                // Contract ID
+                // Subtitle
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Professional Media Production', 105, 30, { align: 'center' });
+                
+                // Contract title
+                doc.setFontSize(18);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('FREELANCE CONTRACT AGREEMENT', 105, 55, { align: 'center' });
+                
+                // Contract metadata
                 doc.setFontSize(10);
                 doc.setTextColor(100, 100, 100);
-                doc.text(`Contract ID: ${contractData.contractId}`, 20, 50);
-                doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 55);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Contract ID: ${contractData.contractId}`, 20, 70);
+                doc.text(`Effective Date: ${contractData.effectiveDate}`, 20, 75);
+                doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 80);
                 
-                // Freelancer Information
-                doc.setFontSize(12);
+                // ==================== CONTRACTOR INFORMATION SECTION ====================
+                
+                doc.setFontSize(14);
                 doc.setTextColor(0, 0, 0);
-                doc.text('FREELANCER INFORMATION:', 20, 75);
-                doc.setFontSize(10);
-                doc.text(`Name: ${contractData.freelancerName}`, 25, 85);
-                doc.text(`Email: ${contractData.freelancerEmail}`, 25, 92);
-                doc.text(`Role: ${contractData.role}`, 25, 99);
-                doc.text(`Location: ${contractData.location}`, 25, 106);
-                doc.text(`Rate: ${contractData.rate}`, 25, 113);
-                doc.text(`Project Start: ${contractData.projectStart}`, 25, 120);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACTOR INFORMATION', 20, 95);
                 
-                // Contract Terms
-                doc.setFontSize(12);
+                // Information box
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, 100, 170, 50, 'F');
+                doc.setDrawColor(200, 200, 200);
+                doc.rect(20, 100, 170, 50, 'S');
+                
+                doc.setFontSize(11);
                 doc.setTextColor(0, 0, 0);
-                doc.text('CONTRACT TERMS:', 20, 140);
-                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
                 
-                const terms = [
-                    '1. Freelancer agrees to provide professional services as specified.',
-                    '2. Payment will be made within 24 hours of project completion.',
-                    '3. All work must meet Cochran Films quality standards.',
-                    '4. Professional attire (all black) is required on set.',
-                    '5. Arrive 15 minutes before scheduled start time.',
-                    '6. Bring valid ID and signed contract to all projects.',
-                    '7. Use provided Cochran Films branded equipment.',
-                    '8. Maintain professional demeanor at all times.',
-                    '9. Follow all safety protocols and guidelines.',
-                    '10. Respect confidentiality of project details.'
+                const contractorInfo = [
+                    { label: 'Full Name:', value: contractData.freelancerName },
+                    { label: 'Email Address:', value: contractData.freelancerEmail },
+                    { label: 'Role/Position:', value: contractData.role },
+                    { label: 'Location:', value: contractData.location },
+                    { label: 'Project Start Date:', value: contractData.projectStart },
+                    { label: 'Compensation Rate:', value: contractData.rate }
                 ];
                 
-                let yPos = 150;
-                terms.forEach((term, index) => {
-                    if (yPos > 250) {
-                        doc.addPage();
-                        yPos = 20;
-                    }
-                    doc.text(term, 25, yPos);
-                    yPos += 7;
+                let yPos = 110;
+                contractorInfo.forEach((info, index) => {
+                    const xPos = index % 2 === 0 ? 25 : 110;
+                    if (index % 2 === 0 && index > 0) yPos += 8;
+                    
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(info.label, xPos, yPos);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(info.value, xPos + 35, yPos);
                 });
                 
-                // Signature Section
-                doc.addPage();
-                doc.setFontSize(12);
-                doc.setTextColor(0, 0, 0);
-                doc.text('SIGNATURE SECTION:', 20, 30);
-                doc.setFontSize(10);
-                doc.text(`Freelancer Name: ${contractData.freelancerName}`, 25, 45);
-                doc.text(`Digital Signature: ${contractData.signature}`, 25, 52);
-                doc.text(`Signature Date: ${contractData.signatureDate}`, 25, 59);
-                doc.text(`Contract ID: ${contractData.contractId}`, 25, 66);
-                doc.text(`Signed Timestamp: ${contractData.signedDateTime}`, 25, 73);
+                // ==================== CONTRACT TERMS SECTION ====================
                 
-                // Footer
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACT TERMS & CONDITIONS', 20, 170);
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                
+                const terms = [
+                    '1. INDEPENDENT CONTRACTOR STATUS: The Contractor is an independent contractor and not an employee of Cochran Films.',
+                    '2. SERVICES: Contractor agrees to provide professional services as specified in their role description.',
+                    '3. COMPENSATION: Payment of the agreed rate will be made within 24 hours of project completion.',
+                    '4. PROFESSIONAL STANDARDS: All work must meet Cochran Films quality and professional standards.',
+                    '5. ATTIRE REQUIREMENTS: Professional attire (all black) is required on set at all times.',
+                    '6. PUNCTUALITY: Contractor must arrive 15 minutes before scheduled start time.',
+                    '7. DOCUMENTATION: Contractor must bring valid ID and signed contract to all projects.',
+                    '8. EQUIPMENT: Use provided Cochran Films branded equipment when available.',
+                    '9. CONDUCT: Maintain professional demeanor and respect at all times.',
+                    '10. SAFETY: Follow all safety protocols and guidelines provided.',
+                    '11. CONFIDENTIALITY: Respect and maintain confidentiality of project details.',
+                    '12. BTS CONTENT: Contractor may freely take and share behind-the-scenes content.',
+                    '13. TAX OBLIGATIONS: Contractor is responsible for all personal tax obligations.',
+                    '14. TRANSPORTATION: Contractor is responsible for their own transportation to/from projects.'
+                ];
+                
+                let termYPos = 180;
+                terms.forEach((term, index) => {
+                    if (termYPos > 250) {
+                        doc.addPage();
+                        termYPos = 20;
+                        
+                        // Add header to new page
+                        doc.setFillColor(255, 178, 0);
+                        doc.rect(0, 0, 210, 25, 'F');
+                        doc.setFontSize(16);
+                        doc.setTextColor(0, 0, 0);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('COCHRAN FILMS - CONTRACT TERMS (Continued)', 105, 15, { align: 'center' });
+                    }
+                    
+                    // Split long terms into multiple lines
+                    const words = term.split(' ');
+                    let line = '';
+                    let lineYPos = termYPos;
+                    
+                    words.forEach(word => {
+                        const testLine = line + word + ' ';
+                        const textWidth = doc.getTextWidth(testLine);
+                        
+                        if (textWidth > 170) {
+                            doc.text(line, 25, lineYPos);
+                            line = word + ' ';
+                            lineYPos += 5;
+                        } else {
+                            line = testLine;
+                        }
+                    });
+                    
+                    if (line) {
+                        doc.text(line, 25, lineYPos);
+                    }
+                    
+                    termYPos = lineYPos + 8;
+                });
+                
+                // ==================== SIGNATURE PAGE ====================
+                
+                doc.addPage();
+                
+                // Header for signature page
+                doc.setFillColor(255, 178, 0);
+                doc.rect(0, 0, 210, 30, 'F');
+                doc.setFontSize(18);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACT SIGNATURES', 105, 20, { align: 'center' });
+                
+                // Company signature section (pre-signed)
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('COCHRAN FILMS (COMPANY)', 20, 50);
+                
+                // Company signature box
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, 55, 170, 60, 'F');
+                doc.setDrawColor(200, 200, 200);
+                doc.rect(20, 55, 170, 60, 'S');
+                
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                
+                // Pre-signed company signature
+                doc.text('Authorized Signature: Cody Cochran', 25, 70);
+                doc.text('Title: Founder & CEO, Cochran Films', 25, 78);
+                doc.text('Date: ' + contractData.effectiveDate, 25, 86);
+                doc.text('Company: Cochran Films', 25, 94);
+                doc.text('Address: Atlanta, Georgia', 25, 102);
+                doc.text('Email: info@cochranfilms.com', 25, 110);
+                
+                // Contractor signature section
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACTOR SIGNATURE', 20, 140);
+                
+                // Contractor signature box
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, 145, 170, 60, 'F');
+                doc.setDrawColor(200, 200, 200);
+                doc.rect(20, 145, 170, 60, 'S');
+                
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                
+                doc.text('Contractor Name: ' + contractData.freelancerName, 25, 160);
+                doc.text('Digital Signature: ' + contractData.signature, 25, 168);
+                doc.text('Signature Date: ' + contractData.signatureDate, 25, 176);
+                doc.text('Contract ID: ' + contractData.contractId, 25, 184);
+                doc.text('Signed Timestamp: ' + contractData.signedDateTime, 25, 192);
+                
+                // ==================== LEGAL FOOTER ====================
+                
                 doc.setFontSize(8);
                 doc.setTextColor(100, 100, 100);
-                doc.text('This contract was digitally signed and is legally binding.', 105, 280, { align: 'center' });
-                doc.text('Generated by Cochran Films Contract Portal', 105, 285, { align: 'center' });
+                doc.setFont('helvetica', 'normal');
+                doc.text('This contract was digitally signed and is legally binding under Georgia law.', 105, 270, { align: 'center' });
+                doc.text('Generated by Cochran Films Contract Portal • ' + new Date().toLocaleDateString(), 105, 275, { align: 'center' });
+                doc.text('Contract ID: ' + contractData.contractId + ' • Digital Verification Hash: ' + contractData.contractId, 105, 280, { align: 'center' });
                 
                 return doc;
             } catch (error) {
