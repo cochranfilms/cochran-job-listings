@@ -3,7 +3,7 @@
     "Test Newest": {
       "profile": {
         "email": "codylcochran87@gmail.com",
-        "password": null,
+        "password": "test12345",
         "role": "Director",
         "location": "New York, NY",
         "projectStart": "2026-03-04T19:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 8:34:33 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754310873361-UFY80"
       },
       "jobs": {
         "job-test-newest-1754310796429": {
