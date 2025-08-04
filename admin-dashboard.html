@@ -4399,13 +4399,27 @@
         }
         
         body {
-            font-family: 'Inter', sans-serif;
-            background: #000;
-            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url('https://static.wixstatic.com/media/aeef42_a910287f24764299afec1bfd88559221~mv2.gif') center center fixed;
+            background-size: cover;
+            color: #ffffff;
+            line-height: 1.6;
             overflow-x: hidden;
             -webkit-text-size-adjust: 100%;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: -1;
         }
         
         /* Login Screen Styles */
@@ -4584,7 +4598,8 @@
         .admin-interface {
             display: none;
             min-height: 100vh;
-            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            position: relative;
+            z-index: 1;
             position: relative;
         }
         
@@ -4600,12 +4615,12 @@
         }
         
         .header {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.4);
             color: white;
             padding: 2rem;
-            border-radius: 16px;
+            border-radius: 15px;
             margin: 2rem;
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255,178,0,0.2);
             position: relative;
             z-index: 2;
@@ -4851,11 +4866,11 @@
         
         /* Tab Navigation */
         .tab-navigation {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.4);
             padding: 1rem 2rem;
-            margin: 0 2rem;
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
+            margin: 0 2rem 2rem 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255,178,0,0.2);
             position: relative;
             z-index: 2;
@@ -4904,12 +4919,12 @@
         
         /* Common Form Styles */
         .form-section {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.4);
             padding: 2rem;
-            border-radius: 16px;
+            border-radius: 15px;
             margin-bottom: 2rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255,178,0,0.2);
             position: relative;
             z-index: 2;
@@ -5027,12 +5042,12 @@
         
         /* List Styles */
         .list-section {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.4);
             padding: 2rem;
-            border-radius: 16px;
+            border-radius: 15px;
             margin-bottom: 2rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255,178,0,0.2);
             position: relative;
             z-index: 2;

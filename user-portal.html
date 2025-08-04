@@ -2812,11 +2812,25 @@
         }
         
         body {
-            font-family: 'Inter', sans-serif;
-            background: #000;
-            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url('https://static.wixstatic.com/media/aeef42_a910287f24764299afec1bfd88559221~mv2.gif') center center fixed;
+            background-size: cover;
+            color: #ffffff;
+            line-height: 1.6;
             min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: -1;
         }
         
         /* Login Screen */
@@ -2937,7 +2951,8 @@
         .user-portal {
             display: none;
             min-height: 100vh;
-            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            position: relative;
+            z-index: 1;
             padding: 2rem;
             position: relative;
         }
@@ -2954,14 +2969,12 @@
         }
         
         .portal-header {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
             padding: 2rem;
-            border-radius: 16px;
             margin-bottom: 2rem;
-            backdrop-filter: blur(20px);
             border: 1px solid rgba(255,178,0,0.2);
-            position: relative;
-            z-index: 2;
+            backdrop-filter: blur(10px);
         }
         
         .header-top {
@@ -3241,10 +3254,10 @@
         }
         
         .info-card, .contract-card {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.4);
             padding: 2rem;
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255,178,0,0.2);
             margin-bottom: 1rem;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3427,10 +3440,10 @@
         
         /* Job Card Styles */
         .job-card {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.4);
             padding: 2rem;
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255,178,0,0.2);
             margin-bottom: 1.5rem;
             display: flex;
@@ -3884,8 +3897,8 @@
         }
 
         .status-card {
-            background: linear-gradient(135deg, rgba(255, 178, 0, 0.1), rgba(255, 178, 0, 0.05));
-            border: 1px solid rgba(255, 178, 0, 0.3);
+            background: rgba(255,178,0,0.1);
+            border: 1px solid rgba(255,178,0,0.3);
             border-radius: 12px;
             padding: 1.5rem;
             display: flex;
