@@ -1614,6 +1614,27 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             }
         }
 
+        // User management functions
+        function editUser(userName) {
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
+                return;
+            }
+            
+            // For now, just show a notification that user editing is not implemented yet
+            showNotification(`User editing for ${userName} is not implemented yet. This feature will be added soon.`, 'info');
+        }
+
+        function deleteUser(userName) {
+            if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+                delete users[userName];
+                localStorage.setItem('users', JSON.stringify(users));
+                displayUsers();
+                showNotification(`User "${userName}" has been deleted.`, 'success');
+            }
+        }
+
         // Contract form submission
         document.addEventListener('DOMContentLoaded', function() {
             const contractForm = document.getElementById('contractForm');
