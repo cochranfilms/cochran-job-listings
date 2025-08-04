@@ -34,6 +34,7 @@
                     performanceReviews = data.performanceReviews || {};
                     console.log('✅ Performance reviews loaded from API:', Object.keys(performanceReviews).length, 'reviews');
                     console.log('📋 Performance reviews data:', performanceReviews);
+                    console.log('🔍 Available email keys:', Object.keys(performanceReviews));
                 } else {
                     console.warn('⚠️ Could not load performance reviews from API, using empty object');
                     performanceReviews = {};
@@ -49,8 +50,37 @@
             console.log('🔍 Getting performance review for:', userEmail);
             console.log('📊 Available performance reviews:', Object.keys(performanceReviews));
             console.log('📋 Performance reviews data:', performanceReviews);
-            const review = performanceReviews[userEmail] || null;
-            console.log('✅ Found review:', review);
+            console.log('🔍 Current user object:', currentUser);
+            console.log('🔍 Current user email:', currentUser?.email);
+            
+            // Validate input
+            if (!userEmail) {
+                console.warn('⚠️ No user email provided');
+                return null;
+            }
+            
+            // Try exact match first
+            let review = performanceReviews[userEmail] || null;
+            
+            // If no exact match, try case-insensitive match
+            if (!review && userEmail) {
+                const availableEmails = Object.keys(performanceReviews);
+                const matchingEmail = availableEmails.find(email => 
+                    email.toLowerCase() === userEmail.toLowerCase()
+                );
+                if (matchingEmail) {
+                    review = performanceReviews[matchingEmail];
+                    console.log('✅ Found case-insensitive match:', matchingEmail);
+                }
+            }
+            
+            // If still no match, log all available emails for debugging
+            if (!review) {
+                console.warn('⚠️ No performance review found for email:', userEmail);
+                console.log('🔍 All available performance review emails:', Object.keys(performanceReviews));
+            }
+            
+            console.log('✅ Final review result:', review);
             return review;
         }
 
@@ -796,6 +826,7 @@
 
             // Refresh data from server to get latest updates
             await loadUsersData();
+            await loadPerformanceReviews(); // Ensure performance reviews are loaded
             
             // Find the current user with updated data
             const updatedUser = users.find(u => u.email === currentUser.email);
@@ -1429,6 +1460,14 @@
         function getProjectTimeline() {
             if (!currentUser) return [];
             
+            // Ensure performance reviews are loaded
+            if (Object.keys(performanceReviews).length === 0) {
+                console.warn('⚠️ Performance reviews not loaded yet, loading now...');
+                loadPerformanceReviews().then(() => {
+                    console.log('✅ Performance reviews loaded, timeline should update');
+                });
+            }
+            
             // Get contract status from uploaded-contracts.json
             const userContract = getUserContractStatus(currentUser.email);
             const contractSigned = userContract ? true : (currentUser.contractStatus === 'uploaded');
@@ -1582,7 +1621,11 @@
                         // Check if payment is completed (either 'paid' or project is completed)
                         const paymentCompleted = paymentStatus === 'paid' || projectStatus === 'completed';
                         if (!paymentCompleted) return 'Review available after payment';
+                        console.log('🔍 Timeline: Getting performance review for user:', currentUser.email);
+                        console.log('🔍 Timeline: Current user object:', currentUser);
+                        console.log('🔍 Timeline: Performance reviews loaded:', Object.keys(performanceReviews));
                         const userReview = getUserPerformanceReview(currentUser.email);
+                        console.log('🔍 Timeline: Review result:', userReview);
                         return userReview ? 'Performance review available ✅' : 'Performance review pending ⏳';
                     })(),
                     icon: 'fas fa-star',

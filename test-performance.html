@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Review Test</title>
+</head>
+<body>
+    <h1>Performance Review Test</h1>
+    <div id="results"></div>
+
+    <script>
+        let performanceReviews = {};
+
+        // Load performance reviews from API
+        async function loadPerformanceReviews() {
+            try {
+                console.log('🔄 Loading performance reviews from API...');
+                const response = await fetch('/api/performance');
+                console.log('📡 API response status:', response.status);
+                if (response.ok) {
+                    const data = await response.json();
+                    performanceReviews = data.performanceReviews || {};
+                    console.log('✅ Performance reviews loaded from API:', Object.keys(performanceReviews).length, 'reviews');
+                    console.log('📋 Performance reviews data:', performanceReviews);
+                    console.log('🔍 Available email keys:', Object.keys(performanceReviews));
+                    
+                    // Test the specific email
+                    const testEmail = 'dedejackson727@gmail.com';
+                    const review = performanceReviews[testEmail];
+                    console.log('🔍 Testing email:', testEmail);
+                    console.log('🔍 Review found:', review);
+                    
+                    document.getElementById('results').innerHTML = `
+                        <h2>Test Results</h2>
+                        <p><strong>Available emails:</strong> ${Object.keys(performanceReviews).join(', ')}</p>
+                        <p><strong>Test email:</strong> ${testEmail}</p>
+                        <p><strong>Review found:</strong> ${review ? 'YES' : 'NO'}</p>
+                        <p><strong>Review data:</strong> ${JSON.stringify(review, null, 2)}</p>
+                    `;
+                } else {
+                    console.warn('⚠️ Could not load performance reviews from API');
+                }
+            } catch (error) {
+                console.error('❌ Error loading performance reviews:', error);
+            }
+        }
+
+        // Load on page load
+        window.addEventListener('load', loadPerformanceReviews);
+    </script>
+</body>
+</html> 
