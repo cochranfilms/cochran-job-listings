@@ -76,8 +76,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-04",
       "signedDate": "2025-08-04"
+    },
+    {
+      "contractId": "CF-1754296164959-6MNPE",
+      "freelancerName": "Cody Cochran",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Assistant",
+      "rate": "$150/hour",
+      "location": "Atlanta, GA",
+      "fileName": "CF-1754296164959-6MNPE.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T08:29:36.685Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754296164959-6MNPE.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-04",
+      "signedDate": "2025-08-04"
     }
   ],
-  "lastUpdated": "2025-08-04T05:56:48.810Z",
-  "totalContracts": 5
+  "lastUpdated": "2025-08-04T08:29:36.685Z",
+  "totalContracts": 6
 }
