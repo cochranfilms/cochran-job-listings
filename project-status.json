@@ -1,82 +1,37 @@
 {
   "projectStatus": {
-    "Francisco Flores": {
-      "email": "ciscocinema@gmail.com",
+    "Erica Jackson": {
       "jobs": {
-        "job-francisco-001": {
-          "id": "job-francisco-001",
-          "role": "Backdrop Photographer",
-          "location": "6695 Church Street, Douglasville, GA 30134",
-          "projectStart": "November 8, 2025 at 3:15 PM",
-          "rate": "$400.00 USD (Flat)",
+        "job-erica-jackson-1754267473803": {
+          "id": "job-erica-jackson-1754267473803",
+          "role": "Photographer",
+          "location": "Atlanta, GA",
+          "projectStart": "2025-10-22T19:10",
+          "rate": "$125/hour",
           "projectStatus": "completed",
           "paymentStatus": "paid",
-          "completionDate": "2025-11-08",
-          "paymentDate": "2025-11-15",
-          "projectType": "Photography",
-          "description": "Backdrop photography for corporate event"
-        }
-      }
-    },
-    "Big Pharma": {
-      "email": "bigpharma@example.com",
-      "jobs": {
-        "job-bigpharma-001": {
-          "id": "job-bigpharma-001",
-          "role": "Corporate Videographer",
-          "location": "Atlanta, GA",
-          "projectStart": "December 15th, 2025 at 9:00am",
-          "rate": "$500.00 USD (Flat)",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "completionDate": null,
-          "paymentDate": null,
-          "projectType": "Corporate Video",
-          "description": "Professional corporate video production for pharmaceutical company"
-        }
-      }
-    },
-    "Hannah Aryee": {
-      "email": "hannah@luciacreates.co",
-      "jobs": {
-        "job-hannah-001": {
-          "id": "job-hannah-001",
-          "role": "Backdrop Photographer",
-          "location": "6700 Church Street, Douglasville, GA,  30134",
-          "projectStart": "October 24, 2025 at 3:15 PM",
-          "rate": "$300 + Tip",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "completionDate": null,
-          "paymentDate": null,
-          "projectType": "Photography",
-          "description": "Backdrop photography session"
-        }
-      }
-    },
-    "Testical Users": {
-      "email": "codylcochran87@gmail.com",
-      "jobs": {
-        "job-testical-users-1754177181765": {
-          "id": "job-testical-users-1754177181765",
-          "role": "Editor",
-          "location": "Sandy Springs, GA",
-          "projectStart": "August 16th, 2025 at 2:00pm",
-          "rate": "$400 Flat Rate",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "completionDate": null,
-          "paymentDate": null,
-          "projectType": "Editor Project",
-          "description": "Primary assignment for Testical Users"
+          "projectType": "Photographer Project",
+          "description": "Primary assignment for Erica Jackson",
+          "completionDate": "2025-08-04",
+          "paymentDate": "2025-08-04"
         }
       }
     }
   },
   "statusOptions": {
-    "projectStatus": ["upcoming", "in-progress", "completed", "cancelled"],
-    "paymentStatus": ["pending", "processing", "paid", "overdue"]
+    "projectStatus": [
+      "upcoming",
+      "in-progress",
+      "completed",
+      "cancelled"
+    ],
+    "paymentStatus": [
+      "pending",
+      "processing",
+      "paid",
+      "overdue"
+    ]
   },
-  "lastUpdated": "2025-08-02",
-  "totalProjects": 4
-} 
+  "lastUpdated": "2025-08-04",
+  "totalProjects": 1
+}

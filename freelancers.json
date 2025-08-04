@@ -1,20 +1,5 @@
 {
   "approvedFreelancers": {
-    "Francisco Flores": {
-      "email": "ciscocinema@gmail.com",
-      "contractUrl": "contract.html",
-      "role": "Backdrop Photographer",
-      "location": "6695 Church Street, Douglasville, GA 30134",
-      "projectStart": "November 8, 2025 at 3:15 PM",
-      "rate": "$400.00 USD (Flat)",
-      "approvedDate": "2025-11-08",
-      "contractStatus": "pending",
-      "contractSignedDate": null,
-      "contractUploadedDate": null,
-      "contractId": null,
-      "jobs": [],
-      "primaryJob": null
-    },
     "Erica Jackson": {
       "email": "dedejackson727@gmail.com",
       "password": "Hello1234",
@@ -28,6 +13,8 @@
       "contractSignedDate": "8/3/2025, 8:32:10 PM",
       "contractUploadedDate": null,
       "contractId": "CF-1754267530379-1PU28",
+      "paymentMethod": "zelle",
+      "paymentStatus": "pending",
       "jobs": [
         {
           "id": "job-erica-jackson-1754267473803",
@@ -40,10 +27,9 @@
           "description": "Primary assignment for Erica Jackson"
         }
       ],
-      "primaryJob": "job-erica-jackson-1754267473803",
-      "paymentMethod": "check"
+      "primaryJob": "job-erica-jackson-1754267473803"
     }
   },
   "lastUpdated": "2025-08-04",
-  "totalFreelancers": 2
+  "totalFreelancers": 1
 }

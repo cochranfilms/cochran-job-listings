@@ -206,6 +206,40 @@
             showNotification(message, type);
         }
 
+        // ==================== JSON UPDATE NOTIFICATIONS ====================
+        
+        // Enhanced notification for JSON updates in user portal
+        function notifyUserJSONUpdate(fileName, action, details = '') {
+            const messages = {
+                'freelancers.json': {
+                    'updated': `✅ Your profile has been updated!`,
+                    'payment': `💰 Your payment method has been updated!`,
+                    'performance': `⭐ Your performance review is now available!`
+                },
+                'jobs-data.json': {
+                    'updated': `🎯 Your job assignments have been updated!`,
+                    'assigned': `✅ A new job has been assigned to you!`
+                },
+                'project-status.json': {
+                    'updated': `📊 Your project status has been updated!`,
+                    'payment': `💰 Your payment status has been updated!`
+                },
+                'performance.json': {
+                    'updated': `⭐ Your performance review has been updated!`,
+                    'created': `⭐ A new performance review is available!`
+                },
+                'uploaded-contracts.json': {
+                    'updated': `📄 Your contract has been updated!`,
+                    'uploaded': `📄 Your signed contract is now available!`
+                }
+            };
+            
+            const fileMessages = messages[fileName] || {};
+            const message = fileMessages[action] || `✅ Your ${fileName} has been updated!`;
+            
+            showNotification(`${message} ${details}`, 'success');
+        }
+
         // Load freelancer data from JSON file
         async function loadFreelancerData() {
             try {

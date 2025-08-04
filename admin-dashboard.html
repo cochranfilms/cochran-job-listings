@@ -273,11 +273,11 @@
                         <p>Upload signed contract PDFs using the form above</p>
                     </div>
                 `;
-                countElement.textContent = '';
+                if (countElement) countElement.textContent = '';
                 return;
             }
             
-            countElement.textContent = `(${uploadedContracts.length} contract${uploadedContracts.length !== 1 ? 's' : ''})`;
+            if (countElement) countElement.textContent = `(${uploadedContracts.length} contract${uploadedContracts.length !== 1 ? 's' : ''})`;
             
             const contractsHTML = uploadedContracts.map((contract, index) => `
                 <div class="item-card">
@@ -1200,7 +1200,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 <div style="background: #1a1a1a; padding: 2rem; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,178,0,0.3);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                         <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-star"></i> Performance Reviews Due</h2>
-                        <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" 
+                        <button onclick="closeModal(this)" 
                                 style="background: none; border: none; color: #FFB200; font-size: 1.5rem; cursor: pointer;">×</button>
                     </div>
                     
@@ -1215,7 +1215,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                                         <h4 style="color: #FFB200; margin: 0 0 0.5rem 0;">${freelancer.name}</h4>
                                         <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.9rem;">${freelancer.email}</p>
                                     </div>
-                                    <button onclick="showPerformanceReviewModal('${freelancer.name}'); this.closest('div[style*=\"position: fixed\"]').remove();" 
+                                    <button onclick="showPerformanceReviewModal('${freelancer.name}'); closeModal(this);" 
                                             style="background: #FFB200; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600;">
                                         Review Now
                                     </button>
@@ -2623,7 +2623,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 <div style="background: #1a1a1a; padding: 2rem; border-radius: 16px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,178,0,0.3);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                         <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-star"></i> Performance Review for ${freelancer.name}</h2>
-                        <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" 
+                        <button onclick="closeModal(this)" 
                                 style="background: none; border: none; color: #FFB200; font-size: 1.5rem; cursor: pointer;">×</button>
                     </div>
                     
@@ -2691,7 +2691,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                         </div>
                         
                         <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                            <button type="button" onclick="this.closest('div[style*=\"position: fixed\"]').remove()" 
+                            <button type="button" onclick="closeModal(this)" 
                                     style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">
                                 Cancel
                             </button>
@@ -2747,10 +2747,13 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             updatePerformanceReviewsOnGitHub();
             
             // Close modal
-            form.closest('div[style*="position: fixed"]').remove();
+            closeModal(form);
             
             // Refresh display
             displayFreelancers();
+            
+            // Show notification
+            notifyJSONUpdate('performance.json', 'created', `for ${userEmail}`);
             
             console.log('✅ Performance review saved for:', userEmail);
         }
@@ -2801,7 +2804,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                 <div style="background: #1a1a1a; padding: 2rem; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,178,0,0.3);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                         <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-briefcase"></i> Assign Jobs to ${freelancerName}</h2>
-                        <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" 
+                        <button onclick="closeModal(this)" 
                                 style="background: none; border: none; color: #FFB200; font-size: 1.5rem; cursor: pointer;">×</button>
                     </div>
                     
@@ -3253,6 +3256,48 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
         // Replace all alert() calls with professional notifications
         function showAlert(message, type = 'info') {
             showNotification(message, type);
+        }
+
+        // ==================== MODAL MANAGEMENT ====================
+        
+        // Universal modal close function
+        function closeModal(button) {
+            const modal = button.closest('div[style*="position: fixed"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Enhanced notification for JSON updates
+        function notifyJSONUpdate(fileName, action, details = '') {
+            const messages = {
+                'freelancers.json': {
+                    'updated': `✅ Freelancer data updated successfully!`,
+                    'payment': `💰 Payment status updated for freelancer`,
+                    'performance': `⭐ Performance review saved successfully!`
+                },
+                'jobs-data.json': {
+                    'updated': `🎯 Job data updated successfully!`,
+                    'assigned': `✅ Job assigned to freelancer successfully!`
+                },
+                'project-status.json': {
+                    'updated': `📊 Project status updated successfully!`,
+                    'payment': `💰 Payment status updated for project`
+                },
+                'performance.json': {
+                    'updated': `⭐ Performance review data updated successfully!`,
+                    'created': `⭐ New performance review created!`
+                },
+                'uploaded-contracts.json': {
+                    'updated': `📄 Contract data updated successfully!`,
+                    'uploaded': `📄 New contract uploaded successfully!`
+                }
+            };
+            
+            const fileMessages = messages[fileName] || {};
+            const message = fileMessages[action] || `✅ ${fileName} updated successfully!`;
+            
+            showNotification(`${message} ${details}`, 'success');
         }
     </script>
     
