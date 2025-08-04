@@ -1,5 +1,23 @@
 {
-  "projectStatus": {},
+  "projectStatus": {
+    "Test User": {
+      "jobs": {
+        "job-test-user-1754276911229": {
+          "id": "job-test-user-1754276911229",
+          "role": "Videographer",
+          "location": "Los Angeles, CA",
+          "projectStart": "2025-10-10T19:00",
+          "rate": "$50/hour",
+          "projectStatus": "completed",
+          "paymentStatus": "paid",
+          "projectType": "Videographer Project",
+          "description": "Primary assignment for Test User",
+          "completionDate": "2025-08-04",
+          "paymentDate": "2025-08-04"
+        }
+      }
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -14,6 +32,6 @@
       "overdue"
     ]
   },
-  "lastUpdated": "2025-01-27",
-  "totalProjects": 0
+  "lastUpdated": "2025-08-04",
+  "totalProjects": 1
 }
