@@ -92,135 +92,19 @@ module.exports = async (req, res) => {
             return;
         }
 
-        // POST /api/performance - Create new performance review
+        // POST /api/performance - Create new performance review (disabled in production)
         if (method === 'POST' && pathSegments.length === 1) {
-            if (!authenticateRequest(req, res)) {
-                return;
-            }
-
-            const {
-                userEmail,
-                overallRating,
-                categories,
-                comments,
-                adminNotes,
-                status = 'completed',
-                reviewedBy = 'admin'
-            } = req.body;
-            
-            if (!userEmail || !overallRating || !categories) {
-                return res.status(400).json({ error: 'Missing required fields' });
-            }
-            
-            const data = await loadPerformanceData();
-            
-            // Check if review already exists
-            if (data.performanceReviews[userEmail]) {
-                return res.status(409).json({ error: 'Performance review already exists for this user' });
-            }
-            
-            // Create new review
-            const newReview = {
-                userEmail,
-                reviewDate: new Date().toISOString().split('T')[0],
-                overallRating: parseInt(overallRating),
-                categories,
-                comments: comments || '',
-                adminNotes: adminNotes || '',
-                status,
-                reviewedBy,
-                lastUpdated: new Date().toISOString()
-            };
-            
-            data.performanceReviews[userEmail] = newReview;
-            data.totalReviews = Object.keys(data.performanceReviews).length;
-            data.lastUpdated = new Date().toISOString();
-            
-            const saved = await savePerformanceData(data);
-            if (!saved) {
-                return res.status(500).json({ error: 'Failed to save performance review' });
-            }
-            
-            res.status(201).json({
-                message: 'Performance review created successfully',
-                review: newReview
-            });
-            return;
+            return res.status(405).json({ error: 'Method not allowed - Use admin dashboard for creating reviews' });
         }
 
-        // PUT /api/performance/:email - Update performance review
+        // PUT /api/performance/:email - Update performance review (disabled in production)
         if (method === 'PUT' && pathSegments.length === 2) {
-            if (!authenticateRequest(req, res)) {
-                return;
-            }
-
-            const {
-                overallRating,
-                categories,
-                comments,
-                adminNotes,
-                status
-            } = req.body;
-            
-            const data = await loadPerformanceData();
-            
-            if (!data.performanceReviews[email]) {
-                return res.status(404).json({ error: 'Performance review not found' });
-            }
-            
-            // Update review
-            const updatedReview = {
-                ...data.performanceReviews[email],
-                ...(overallRating && { overallRating: parseInt(overallRating) }),
-                ...(categories && { categories }),
-                ...(comments !== undefined && { comments }),
-                ...(adminNotes !== undefined && { adminNotes }),
-                ...(status && { status }),
-                lastUpdated: new Date().toISOString()
-            };
-            
-            data.performanceReviews[email] = updatedReview;
-            data.lastUpdated = new Date().toISOString();
-            
-            const saved = await savePerformanceData(data);
-            if (!saved) {
-                return res.status(500).json({ error: 'Failed to update performance review' });
-            }
-            
-            res.json({
-                message: 'Performance review updated successfully',
-                review: updatedReview
-            });
-            return;
+            return res.status(405).json({ error: 'Method not allowed - Use admin dashboard for updating reviews' });
         }
 
-        // DELETE /api/performance/:email - Delete performance review
+        // DELETE /api/performance/:email - Delete performance review (disabled in production)
         if (method === 'DELETE' && pathSegments.length === 2) {
-            if (!authenticateRequest(req, res)) {
-                return;
-            }
-
-            const data = await loadPerformanceData();
-            
-            if (!data.performanceReviews[email]) {
-                return res.status(404).json({ error: 'Performance review not found' });
-            }
-            
-            // Delete review
-            delete data.performanceReviews[email];
-            data.totalReviews = Object.keys(data.performanceReviews).length;
-            data.lastUpdated = new Date().toISOString();
-            
-            const saved = await savePerformanceData(data);
-            if (!saved) {
-                return res.status(500).json({ error: 'Failed to delete performance review' });
-            }
-            
-            res.json({
-                message: 'Performance review deleted successfully',
-                deletedEmail: email
-            });
-            return;
+            return res.status(405).json({ error: 'Method not allowed - Use admin dashboard for deleting reviews' });
         }
 
         // Method not allowed
