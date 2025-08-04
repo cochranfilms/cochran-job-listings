@@ -4950,6 +4950,10 @@
                                 <i class="fas fa-users"></i>
                                 <span>User Portal</span>
                             </a>
+                            <a href="backend.html" class="action-btn link-btn" style="background: linear-gradient(135deg, #FFB200, #FF8C00);">
+                                <i class="fas fa-cogs"></i>
+                                <span>Backend Docs</span>
+                            </a>
                             <button class="action-btn link-btn" onclick="showPerformanceReviewManager()" style="background: #f59e0b;">
                                 <i class="fas fa-star"></i>
                                 <span>Performance Reviews</span>
@@ -4996,18 +5000,7 @@
 
         <!-- Jobs Tab -->
         <div id="jobs-tab" class="tab-content active">
-            <div class="form-section">
-                <h2>📋 How Job Management Works</h2>
-                <div class="workflow-info">
-                    <p><strong>Workflow:</strong></p>
-                    <ol>
-                        <li><strong>Add/Edit Jobs</strong> → Use this admin panel to create job listings</li>
-                        <li><strong>Export JSON</strong> → Download the updated jobs-data.json file</li>
-                        <li><strong>Update Website</strong> → Replace the jobs-data.json file on your server</li>
-                        <li><strong>Google Sheet</strong> → Handles all applicant submissions automatically</li>
-                    </ol>
-                    <p><strong>Note:</strong> The Google Sheet handles applicant data separately - this admin panel only manages job listings.</p>
-                </div>
+
                 
                 <h2>Add/Edit Job</h2>
                 <form id="jobForm">
@@ -5063,25 +5056,7 @@
 
         <!-- Contracts Tab -->
         <div id="contracts-tab" class="tab-content">
-            <div class="form-section">
-                <h2>👥 How Creator Management Works</h2>
-                <div class="workflow-info">
-                    <p><strong>🚀 Fully Automated Creator Management:</strong></p>
-                    <ol>
-                        <li><strong>Add Creators</strong> → Use dropdown selectors for all fields (roles, locations, rates, dates)</li>
-                        <li><strong>Auto-Job Creation</strong> → Primary job automatically created from creator details</li>
-                        <li><strong>Auto-Approval</strong> → When you save a new creator, they automatically receive a job acceptance email</li>
-                        <li><strong>Manual Approval</strong> → For existing creators, click the "✅ Approve" button to send job acceptance email</li>
-                        <li><strong>Additional Jobs</strong> → Assign extra jobs to creators using managed dropdown options</li>
-                        <li><strong>Contract Signing</strong> → Creators sign contracts directly on contract.html and set their own password</li>
-                        <li><strong>Automatic Updates</strong> → Password and contract status automatically update in freelancers.json</li>
-                        <li><strong>Email Notifications</strong> → You get instant email alerts when contracts are signed</li>
-                        <li><strong>Real-time Dashboard</strong> → See password status and contract progress in real-time</li>
-                        <li><strong>Managed Options</strong> → All dropdown options are managed through the dropdown management system</li>
-                    </ol>
-                    <p><strong>📧 Email Setup:</strong> Configure EmailJS credentials in contract.html to receive signing notifications.</p>
-                    <p><strong>🎯 Benefits:</strong> No password conflicts! Creators set their own passwords during contract signing, and everything updates automatically with managed dropdown options.</p>
-                </div>
+
                 
                 <h2>Add/Edit Creator</h2>
                 <form id="contractForm">
@@ -5351,39 +5326,7 @@
                 </div>
             </div>
 
-            <div class="export-section">
-                <h2>📧 Email Notification Setup</h2>
-                <p>To receive email notifications when contracts are signed, configure EmailJS in contract.html:</p>
-                <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2); margin-bottom: 2rem;">
-                    <h3 style="color: #FFB200; margin-bottom: 1rem;">Setup Instructions:</h3>
-                    <ol style="color: rgba(255,255,255,0.9); line-height: 1.6;">
-                        <li><strong>Sign up for EmailJS:</strong> Go to <a href="https://www.emailjs.com/" target="_blank" style="color: #FFB200;">emailjs.com</a> and create a free account</li>
-                        <li><strong>Create Email Service:</strong> Connect your email provider (Gmail, Outlook, etc.)</li>
-                        <li><strong>Create Email Template:</strong> Design your contract signing notification email</li>
-                        <li><strong>Get Credentials:</strong> Copy your Public Key, Service ID, and Template ID</li>
-                        <li><strong>Update contract.html:</strong> Replace the placeholder values in EMAILJS_CONFIG</li>
-                    </ol>
-                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(255,178,0,0.1); border-radius: 8px; border: 1px solid rgba(255,178,0,0.3);">
-                        <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 0.9rem;">
-                            💡 <strong>Template Variables Available:</strong><br>
-                            freelancer_name, freelancer_email, role, location, project_start, rate, signature_date, signed_timestamp, effective_date
-                        </p>
-                    </div>
-                </div>
-                
-                <div style="background: rgba(34, 197, 94, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3);">
-                    <h3 style="color: #22c55e; margin-bottom: 0.5rem;">🚀 Automated Workflow Benefits:</h3>
-                    <ul style="color: rgba(255,255,255,0.9); margin: 0;">
-                        <li>✅ No more individual HTML file generation</li>
-                        <li>✅ Automatic email notifications when contracts are signed</li>
-                        <li>✅ Digital signature validation and verification</li>
-                        <li>✅ Instant signed PDF downloads for creators</li>
-                        <li>✅ Single contract.html portal handles everything</li>
-                        <li>✅ Managed dropdown options for consistent data entry</li>
-                        <li>✅ Persistent storage via GitHub API</li>
-                    </ul>
-                </div>
-            </div>
+
         </div>
 
 
