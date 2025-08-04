@@ -1,42 +1,5 @@
 {
-  "users": {
-    "Test Final": {
-      "profile": {
-        "email": "dedejackson727@gmail.com",
-        "password": "test1234",
-        "role": "Videographer",
-        "location": "Miami, FL",
-        "projectStart": "2025-11-11T20:00",
-        "rate": "$125/hour",
-        "approvedDate": "2025-08-04"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/4/2025, 5:01:11 AM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754298071313-548X3"
-      },
-      "jobs": {
-        "job-test-final-1754298013800": {
-          "id": "job-test-final-1754298013800",
-          "role": "Videographer",
-          "location": "Miami, FL",
-          "projectStart": "2025-11-11T20:00",
-          "rate": "$125/hour",
-          "projectType": "Videographer Project",
-          "description": "Primary assignment for Test Final",
-          "projectStatus": "completed",
-          "paymentStatus": "paid",
-          "completionDate": null,
-          "paymentDate": null
-        }
-      },
-      "primaryJob": "job-test-final-1754298013800",
-      "paymentMethod": "paypal",
-      "paymentStatus": "paid"
-    }
-  },
+  "users": {},
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -52,5 +15,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 1
+  "totalUsers": 0
 }
