@@ -1389,15 +1389,30 @@
             }
         }
 
-        // View performance review details
-        function viewPerformanceReviewDetails(userName) {
-            const userData = users[userName];
+        // View performance review details (works with both username and email)
+        function viewPerformanceReviewDetails(userNameOrEmail) {
+            let userData = users[userNameOrEmail];
+            let userEmail = userNameOrEmail;
+            let userName = userNameOrEmail;
+            
+            // If not found by username, try to find by email
             if (!userData) {
-                showNotification('User not found', 'error');
-                return;
+                // Search for user by email
+                for (const [name, data] of Object.entries(users)) {
+                    if (data.profile?.email === userNameOrEmail) {
+                        userData = data;
+                        userName = name;
+                        break;
+                    }
+                }
+            } else {
+                // If found by username, get the email
+                userEmail = userData.profile?.email || userNameOrEmail;
             }
-
-            const existingReview = performanceReviews[userData.profile?.email];
+            
+            // If still no user data, try to get review directly by email
+            const existingReview = userData ? performanceReviews[userData.profile?.email] : performanceReviews[userNameOrEmail];
+            
             if (!existingReview) {
                 showNotification('No performance review found', 'warning');
                 return;
@@ -2776,15 +2791,29 @@
 
         // ==================== JOB ASSIGNMENT & PAYMENT MANAGEMENT ====================
         
-        // Show performance review modal
-        function showPerformanceReviewModal(userName) {
-            const userData = users[userName];
+        // Show performance review modal (works with both username and email)
+        function showPerformanceReviewModal(userNameOrEmail) {
+            let userData = users[userNameOrEmail];
+            let userEmail = userNameOrEmail;
+            let userName = userNameOrEmail;
+            
+            // If not found by username, try to find by email
             if (!userData) {
-                showNotification('User not found', 'error');
-                return;
+                // Search for user by email
+                for (const [name, data] of Object.entries(users)) {
+                    if (data.profile?.email === userNameOrEmail) {
+                        userData = data;
+                        userName = name;
+                        break;
+                    }
+                }
+            } else {
+                // If found by username, get the email
+                userEmail = userData.profile?.email || userNameOrEmail;
             }
-
-            const existingReview = performanceReviews[userData.profile?.email];
+            
+            // If still no user data, try to get review directly by email
+            const existingReview = userData ? performanceReviews[userData.profile?.email] : performanceReviews[userNameOrEmail];
             const reviewDate = new Date().toISOString().split('T')[0];
             
             const modal = document.createElement('div');

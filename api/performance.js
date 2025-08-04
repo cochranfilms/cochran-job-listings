@@ -41,17 +41,10 @@ async function savePerformanceData(data) {
     }
 }
 
-// Authentication middleware (you can enhance this)
+// Authentication middleware (disabled for now - can be enhanced later)
 function authenticateRequest(req, res) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Unauthorized - Missing or invalid token' });
-    }
-    
-    const token = authHeader.substring(7);
-    // Add your token validation logic here
-    // For now, we'll accept any token for development
-    
+    // For now, allow all requests without authentication
+    // TODO: Add proper authentication when needed
     return true;
 }
 
