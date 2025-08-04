@@ -1,5 +1,24 @@
 {
   "exportDate": "2025-08-04T13:48:46.123Z",
-  "totalContracts": 0,
-  "contracts": []
+  "totalContracts": 1,
+  "contracts": [],
+  "uploadedContracts": [
+    {
+      "contractId": "CF-1754315451785-VLNVP",
+      "freelancerName": "Thing Two",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Producer",
+      "rate": "$75/hour",
+      "location": "Los Angeles, CA",
+      "fileName": "CF-1754315451785-VLNVP.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T13:51:03.728Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754315451785-VLNVP.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-04",
+      "signedDate": "2025-08-04"
+    }
+  ],
+  "lastUpdated": "2025-08-04T13:51:03.728Z"
 }
