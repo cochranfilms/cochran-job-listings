@@ -266,6 +266,12 @@
             const container = document.getElementById('uploadedContractsList');
             const countElement = document.getElementById('contractCount');
             
+            // Check if container exists
+            if (!container) {
+                console.warn('⚠️ uploadedContractsList container not found');
+                return;
+            }
+            
             if (uploadedContracts.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 2rem;">
@@ -364,7 +370,7 @@ File Size: ${(contract.fileSize / 1024).toFixed(1)} KB
 Upload Date: ${new Date(contract.uploadDate).toLocaleString()}
 Status: ${contract.status}
 
-${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             `.trim();
             
             showNotification(details, 'info');
