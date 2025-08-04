@@ -1,5 +1,24 @@
 {
   "exportDate": "2025-08-04T12:59:04.063Z",
-  "totalContracts": 0,
-  "contracts": []
+  "totalContracts": 1,
+  "contracts": [],
+  "uploadedContracts": [
+    {
+      "contractId": "CF-1754312642352-37F45",
+      "freelancerName": "Thing One",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Assistant",
+      "rate": "$300/hour",
+      "location": "Chicago, IL",
+      "fileName": "CF-1754312642352-37F45.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T13:04:14.184Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754312642352-37F45.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-04",
+      "signedDate": "2025-08-04"
+    }
+  ],
+  "lastUpdated": "2025-08-04T13:04:14.184Z"
 }
