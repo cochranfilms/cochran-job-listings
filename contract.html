@@ -896,56 +896,60 @@
                 
                 // ==================== CONTRACTOR INFORMATION ====================
                 
-                doc.setFontSize(12);
+                // Professional section header with background
+                doc.setFillColor(255, 178, 0);
+                doc.rect(20, 50, 170, 8, 'F');
+                doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('CONTRACTOR INFORMATION', 20, 55);
+                doc.text('CONTRACTOR INFORMATION', 105, 56, { align: 'center' });
                 
-                // Compact information box
+                // Two separate info boxes for better organization
+                // Left box - Contractor Info
                 doc.setFillColor(248, 249, 250);
-                doc.rect(20, 60, 170, 30, 'F');
-                doc.setDrawColor(200, 200, 200);
-                doc.rect(20, 60, 170, 30, 'S');
+                doc.rect(20, 65, 80, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(20, 65, 80, 25, 'S');
                 
-                doc.setFontSize(9);
+                doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACTOR INFO', 25, 72);
+                
+                doc.setFontSize(7);
                 doc.setFont('helvetica', 'normal');
+                doc.text(`Name: ${contractData.freelancerName || 'Not specified'}`, 25, 78);
+                doc.text(`Role: ${contractData.role || 'Not specified'}`, 25, 82);
+                doc.text(`Location: ${contractData.location || 'Not specified'}`, 25, 86);
                 
-                // Two-column layout for contractor info
-                const leftColumn = [
-                    { label: 'Name:', value: contractData.freelancerName || 'Not specified' },
-                    { label: 'Role:', value: contractData.role || 'Not specified' },
-                    { label: 'Location:', value: contractData.location || 'Not specified' }
-                ];
+                // Right box - Project Details
+                doc.setFillColor(248, 249, 250);
+                doc.rect(110, 65, 80, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(110, 65, 80, 25, 'S');
                 
-                const rightColumn = [
-                    { label: 'Email:', value: contractData.freelancerEmail || 'Not specified' },
-                    { label: 'Start Date:', value: contractData.projectStart || 'Not specified' },
-                    { label: 'Rate:', value: contractData.rate || 'Not specified' }
-                ];
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('PROJECT DETAILS', 115, 72);
                 
-                // Left column
-                leftColumn.forEach((info, index) => {
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(info.label, 25, 68 + (index * 7));
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(info.value, 25 + 25, 68 + (index * 7));
-                });
-                
-                // Right column
-                rightColumn.forEach((info, index) => {
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(info.label, 110, 68 + (index * 7));
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(info.value, 110 + 25, 68 + (index * 7));
-                });
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Email: ${contractData.freelancerEmail || 'Not specified'}`, 115, 78);
+                doc.text(`Start: ${contractData.projectStart || 'Not specified'}`, 115, 82);
+                doc.text(`Rate: ${contractData.rate || 'Not specified'}`, 115, 86);
                 
                 // ==================== COMPACT CONTRACT TERMS ====================
                 
-                doc.setFontSize(12);
+                // Professional section header with background
+                doc.setFillColor(255, 178, 0);
+                doc.rect(20, 100, 170, 8, 'F');
+                doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
-                doc.text('CONTRACT TERMS & CONDITIONS', 20, 105);
+                doc.text('CONTRACT TERMS & CONDITIONS', 105, 106, { align: 'center' });
                 
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
@@ -1001,31 +1005,32 @@
                 
                 // ==================== COMPACT SIGNATURES ====================
                 
-                // Compact signature section - ensure it fits on one page
+                // Professional signature section - ensure it fits on one page
                 if (termYPos > 220) {
                     // If we're too close to bottom, start signatures on new page
                     doc.addPage();
                     termYPos = 20;
                 }
                 
-                // Signature header
+                // Signature header with professional styling
                 doc.setFillColor(255, 178, 0);
-                doc.rect(0, termYPos - 5, 210, 12, 'F');
+                doc.rect(20, termYPos - 5, 170, 8, 'F');
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
                 doc.text('CONTRACT SIGNATURES', 105, termYPos + 2, { align: 'center' });
                 
-                // Company signature (pre-signed)
+                // Company signature (pre-signed) - Professional styling
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
                 doc.text('COCHRAN FILMS (COMPANY)', 20, termYPos + 15);
                 
-                // Company signature box
+                // Company signature box with professional border
                 doc.setFillColor(248, 249, 250);
                 doc.rect(20, termYPos + 20, 75, 25, 'F');
-                doc.setDrawColor(200, 200, 200);
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
                 doc.rect(20, termYPos + 20, 75, 25, 'S');
                 
                 doc.setFontSize(6);
@@ -1037,16 +1042,17 @@
                 doc.text('Date: ' + contractData.effectiveDate, 25, termYPos + 34);
                 doc.text('Email: info@cochranfilms.com', 25, termYPos + 38);
                 
-                // Contractor signature
+                // Contractor signature - Professional styling
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
                 doc.text('CONTRACTOR SIGNATURE', 105, termYPos + 15);
                 
-                // Contractor signature box
+                // Contractor signature box with professional border
                 doc.setFillColor(248, 249, 250);
                 doc.rect(105, termYPos + 20, 75, 25, 'F');
-                doc.setDrawColor(200, 200, 200);
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
                 doc.rect(105, termYPos + 20, 75, 25, 'S');
                 
                 doc.setFontSize(8);
@@ -1058,15 +1064,23 @@
                 doc.text('Date: ' + contractData.signatureDate, 115, termYPos + 52);
                 doc.text('ID: ' + contractData.contractId, 115, termYPos + 58);
                 
-                // ==================== COMPACT LEGAL FOOTER ====================
+                // ==================== PROFESSIONAL LEGAL FOOTER ====================
                 
                 const footerY = 280;
-                doc.setFontSize(7);
+                
+                // Footer background
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, footerY - 5, 170, 15, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.3);
+                doc.rect(20, footerY - 5, 170, 15, 'S');
+                
+                doc.setFontSize(6);
                 doc.setTextColor(100, 100, 100);
                 doc.setFont('helvetica', 'normal');
-                doc.text('This contract was digitally signed and is legally binding under Georgia law.', 105, footerY, { align: 'center' });
-                doc.text('Generated by Cochran Films Contract Portal • ' + new Date().toLocaleDateString(), 105, footerY + 4, { align: 'center' });
-                doc.text('Contract ID: ' + contractData.contractId, 105, footerY + 8, { align: 'center' });
+                doc.text('This contract was digitally signed and is legally binding under Georgia law.', 105, footerY + 2, { align: 'center' });
+                doc.text('Generated by Cochran Films Contract Portal • ' + new Date().toLocaleDateString(), 105, footerY + 6, { align: 'center' });
+                doc.text('Contract ID: ' + contractData.contractId, 105, footerY + 10, { align: 'center' });
                 
                 return doc;
             } catch (error) {
