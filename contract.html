@@ -717,8 +717,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     
     <script>
-        // Approved freelancers database - loaded from JSON file
-        let approvedFreelancers = {};
+        // Approved users database - loaded from JSON file
+        let approvedUsers = {};
         let currentFreelancerData = null; // Store current user's data for PDF generation
         let contractSigned = false; // Track if contract has been signed
         let signatureData = null; // Store signature information
@@ -1131,21 +1131,21 @@
             }
         }
         
-        // Load freelancer data from JSON file
-        async function loadFreelancerData() {
+        // Load users data from JSON file
+        async function loadUsersData() {
             try {
-                const response = await fetch('/api/freelancers');
+                const response = await fetch('/api/users');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                approvedFreelancers = data.approvedFreelancers || {};
-                console.log('✅ Freelancer data loaded:', Object.keys(approvedFreelancers).length, 'freelancers');
+                approvedUsers = data.users || {};
+                console.log('✅ Users data loaded:', Object.keys(approvedUsers).length, 'users');
             } catch (error) {
-                console.error('❌ Error loading freelancer data:', error);
-                console.log('📋 Using fallback freelancer data for testing');
+                console.error('❌ Error loading users data:', error);
+                console.log('📋 Using fallback users data for testing');
                 // Fallback to hardcoded data if JSON loading fails
-                approvedFreelancers = {
+                approvedUsers = {
                     "Francisco Flores": {
                         email: "ciscocinema@gmail.com",
                         contractUrl: "contract.html",
@@ -1175,7 +1175,7 @@
             localStorage.removeItem('signedContracts');
             console.log('🧹 Cleared old local contract data from localStorage');
             
-            loadFreelancerData();
+            loadUsersData();
             
             // Ensure main containers are visible on page load
             const loginScreen = document.getElementById('loginScreen');
@@ -1333,27 +1333,27 @@
             
             console.log('📝 Input data:', { name, email });
             
-            // First, load the latest freelancer data from JSON file (prevent caching)
+            // First, load the latest users data from JSON file (prevent caching)
             try {
                 const timestamp = new Date().getTime();
-                const response = await fetch('/api/freelancers');
+                const response = await fetch('/api/users');
                 if (response.ok) {
                     const jsonData = await response.json();
-                    if (jsonData.approvedFreelancers) {
-                        approvedFreelancers = jsonData.approvedFreelancers;
-                        console.log('✅ Loaded latest freelancer data from JSON file:', Object.keys(jsonData.approvedFreelancers));
-                        console.log('🔍 Contract statuses:', Object.entries(jsonData.approvedFreelancers).map(([name, data]) => ({
+                    if (jsonData.users) {
+                        approvedUsers = jsonData.users;
+                        console.log('✅ Loaded latest users data from JSON file:', Object.keys(jsonData.users));
+                        console.log('🔍 Contract statuses:', Object.entries(jsonData.users).map(([name, data]) => ({
                             name,
-                            email: data.email,
-                            contractStatus: data.contractStatus
+                            email: data.profile?.email,
+                            contractStatus: data.contract?.contractStatus
                         })));
                     }
                 }
             } catch (error) {
-                console.warn('⚠️ Could not load latest freelancer data, using fallback:', error);
+                console.warn('⚠️ Could not load latest users data, using fallback:', error);
             }
             
-            console.log('👥 Available freelancers:', Object.keys(approvedFreelancers));
+            console.log('👥 Available users:', Object.keys(approvedUsers));
             
             const successDiv = document.getElementById("success-message");
             const errorDiv = document.getElementById("error-message");
@@ -1367,21 +1367,21 @@
             successDiv.classList.add("hidden");
             errorDiv.classList.add("hidden");
             
-            // Check if freelancer exists and email matches (case-insensitive for both name and email)
+            // Check if user exists and email matches (case-insensitive for both name and email)
             const normalizedName = name.toLowerCase();
-            const matchingFreelancer = Object.keys(approvedFreelancers).find(key => 
+            const matchingUser = Object.keys(approvedUsers).find(key => 
                 key.toLowerCase() === normalizedName
             );
             
             console.log('🔍 Matching logic:', { 
                 normalizedName, 
-                matchingFreelancer,
-                expectedEmail: matchingFreelancer ? approvedFreelancers[matchingFreelancer].email.toLowerCase() : 'N/A',
+                matchingUser,
+                expectedEmail: matchingUser ? approvedUsers[matchingUser].profile?.email.toLowerCase() : 'N/A',
                 inputEmail: email
             });
             
-            if (matchingFreelancer && approvedFreelancers[matchingFreelancer].email.toLowerCase() === email) {
-                const freelancerData = approvedFreelancers[matchingFreelancer];
+            if (matchingUser && approvedUsers[matchingUser].profile?.email.toLowerCase() === email) {
+                const userData = approvedUsers[matchingUser];
                 
                 // Store freelancer data for both signed and unsigned contracts
                 currentFreelancerData = {
@@ -1390,13 +1390,13 @@
                 };
                 
                 // Check if contract is already signed/uploaded
-                if (freelancerData.contractStatus === 'signed' || freelancerData.contractStatus === 'uploaded') {
-                    console.log('📋 Contract already signed for:', matchingFreelancer);
-                    showAlreadySignedMessage(freelancerData);
+                if (userData.contract?.contractStatus === 'signed' || userData.contract?.contractStatus === 'uploaded') {
+                    console.log('📋 Contract already signed for:', matchingUser);
+                    showAlreadySignedMessage(userData);
                     return;
                 }
                 
-                console.log('✅ Access granted for:', matchingFreelancer);
+                console.log('✅ Access granted for:', matchingUser);
                 
                 // Populate contract details
                 populateContractDetails();
@@ -1487,11 +1487,11 @@
             if (!currentFreelancerData) return;
             
             const data = currentFreelancerData;
-            const effectiveDate = data.approvedDate || new Date().toISOString().split('T')[0];
-            const role = data.role || 'Contractor';
-            const location = data.location || 'Atlanta Area';
-            const projectStart = data.projectStart || 'TBD';
-            const rate = data.rate || '$150/day';
+            const effectiveDate = data.profile?.approvedDate || new Date().toISOString().split('T')[0];
+            const role = data.profile?.role || 'Contractor';
+            const location = data.profile?.location || 'Atlanta Area';
+            const projectStart = data.profile?.projectStart || 'TBD';
+            const rate = data.profile?.rate || '$150/day';
             
             const contractDetailsDiv = document.getElementById('contractDetails');
             contractDetailsDiv.innerHTML = `
@@ -1632,7 +1632,7 @@
         }
 
         // Show message when contract is already signed
-        function showAlreadySignedMessage(freelancerData) {
+        function showAlreadySignedMessage(userData) {
             const loginElements = document.getElementById('loginElements');
             if (loginElements) {
                 loginElements.classList.add('hidden');
@@ -1651,16 +1651,16 @@
                     </div>
                     
                     <div class="message-content">
-                        <p><strong>Hi ${freelancerData.name},</strong></p>
+                        <p><strong>Hi ${userData.profile?.name || 'User'},</strong></p>
                         <p>Your contract has already been signed and processed!</p>
                         
                         <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 1px solid rgba(255,178,0,0.3);">
                             <h4 style="color: #FFB200; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Contract Status</h4>
                             <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; color: rgba(255,255,255,0.9);">
-                                <div><strong>Status:</strong> ${freelancerData.contractStatus === 'uploaded' ? 'Signed & Uploaded' : 'Digitally Signed'}</div>
-                                ${freelancerData.contractSignedDate ? `<div><strong>Signed Date:</strong> ${freelancerData.contractSignedDate}</div>` : ''}
-                                ${freelancerData.contractUploadedDate ? `<div><strong>Processed Date:</strong> ${freelancerData.contractUploadedDate}</div>` : ''}
-                                ${freelancerData.contractId ? `<div><strong>Contract ID:</strong> ${freelancerData.contractId}</div>` : ''}
+                                <div><strong>Status:</strong> ${userData.contract?.contractStatus === 'uploaded' ? 'Signed & Uploaded' : 'Digitally Signed'}</div>
+                                ${userData.contract?.contractSignedDate ? `<div><strong>Signed Date:</strong> ${userData.contract.contractSignedDate}</div>` : ''}
+                                ${userData.contract?.contractUploadedDate ? `<div><strong>Processed Date:</strong> ${userData.contract.contractUploadedDate}</div>` : ''}
+                                ${userData.contract?.contractId ? `<div><strong>Contract ID:</strong> ${userData.contract.contractId}</div>` : ''}
                             </div>
                         </div>
                         
@@ -1862,8 +1862,8 @@
                 localStorage.setItem('adminPortalPasswords', JSON.stringify(adminPasswords));
                 console.log('📱 Contract and password saved to local storage');
                 
-                // Update freelancers.json with the new password
-                await updateFreelancersJsonWithPassword(signedContractData);
+                // Update users.json with the new password
+                await updateUsersJsonWithPassword(signedContractData);
                 
                 // WAIT 3 seconds between JSON updates to avoid conflicts
                 console.log('⏳ Waiting 3 seconds before updating uploaded-contracts.json...');
@@ -1931,26 +1931,26 @@
             }
         }
         
-        // Update freelancers.json with password when contract is signed
-        async function updateFreelancersJsonWithPassword(contractData) {
+        // Update users.json with password when contract is signed
+        async function updateUsersJsonWithPassword(contractData) {
             try {
-                console.log('🔄 Updating freelancers.json with password on GitHub...');
+                console.log('🔄 Updating users.json with password on GitHub...');
                 
                 // Add a small delay to ensure GitHub API is ready
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Load current freelancers.json with retry logic
+                // Load current users.json with retry logic
                 let response;
                 let retryCount = 0;
                 const maxRetries = 3;
                 
                 while (retryCount < maxRetries) {
                     try {
-                        response = await fetch('/api/freelancers');
+                        response = await fetch('/api/users');
                         if (response.ok) break;
                         retryCount++;
                         if (retryCount < maxRetries) {
-                            console.log(`⚠️ Retry ${retryCount} loading freelancers.json...`);
+                            console.log(`⚠️ Retry ${retryCount} loading users.json...`);
                             await new Promise(resolve => setTimeout(resolve, 2000));
                         }
                     } catch (fetchError) {
@@ -1963,41 +1963,41 @@
                 }
                 
                 if (!response || !response.ok) {
-                    throw new Error('Could not load freelancers.json after retries');
+                    throw new Error('Could not load users.json after retries');
                 }
                 
-                const freelancersData = await response.json();
-                const approvedFreelancers = freelancersData.approvedFreelancers || {};
+                const usersData = await response.json();
+                const users = usersData.users || {};
                 
-                console.log('🔍 Available freelancers in JSON:', Object.keys(approvedFreelancers));
+                console.log('🔍 Available users in JSON:', Object.keys(users));
                 console.log('🔍 Looking for email:', contractData.freelancerEmail);
                 
-                // Find the freelancer by email (case-insensitive)
-                const freelancerKey = Object.keys(approvedFreelancers).find(key => 
-                    approvedFreelancers[key].email.toLowerCase() === contractData.freelancerEmail.toLowerCase()
+                // Find the user by email (case-insensitive)
+                const userKey = Object.keys(users).find(key => 
+                    users[key].profile?.email.toLowerCase() === contractData.freelancerEmail.toLowerCase()
                 );
                 
-                if (freelancerKey) {
-                    console.log('✅ Found freelancer in JSON:', freelancerKey);
+                if (userKey) {
+                    console.log('✅ Found user in JSON:', userKey);
                     
-                    // Update the freelancer's password and contract status
-                    approvedFreelancers[freelancerKey].password = contractData.portalPassword;
-                    approvedFreelancers[freelancerKey].contractStatus = 'signed';
-                    approvedFreelancers[freelancerKey].contractSignedDate = contractData.signedDateTime;
-                    approvedFreelancers[freelancerKey].contractId = contractData.contractId;
+                    // Update the user's password and contract status
+                    users[userKey].profile.password = contractData.portalPassword;
+                    users[userKey].contract.contractStatus = 'signed';
+                    users[userKey].contract.contractSignedDate = contractData.signedDateTime;
+                    users[userKey].contract.contractId = contractData.contractId;
                     
                     // Update the JSON structure
-                    const updatedFreelancersData = {
-                        ...freelancersData,
-                        approvedFreelancers: approvedFreelancers,
+                    const updatedUsersData = {
+                        ...usersData,
+                        users: users,
                         lastUpdated: new Date().toISOString().split('T')[0],
-                        totalFreelancers: Object.keys(approvedFreelancers).length
+                        totalUsers: Object.keys(users).length
                     };
                     
-                    // Update freelancers.json on GitHub directly
-                    await updateGitHubFile('freelancers.json', JSON.stringify(updatedFreelancersData, null, 2), `Update freelancers.json - Contract signed by ${contractData.freelancerName} - ${new Date().toLocaleString()}`);
+                    // Update users.json on GitHub directly
+                    await updateGitHubFile('users.json', JSON.stringify(updatedUsersData, null, 2), `Update users.json - Contract signed by ${contractData.freelancerName} - ${new Date().toLocaleString()}`);
                     
-                    console.log('✅ Freelancers.json updated on GitHub with password and contract status');
+                    console.log('✅ Users.json updated on GitHub with password and contract status');
                     
                     // Show success notification
                     setTimeout(() => {
@@ -2011,8 +2011,8 @@
                     }, 2000);
                     
                 } else {
-                    console.warn('⚠️ Freelancer not found in freelancers.json:', contractData.freelancerEmail);
-                    console.warn('⚠️ Available emails:', Object.values(approvedFreelancers).map(f => f.email));
+                    console.warn('⚠️ User not found in users.json:', contractData.freelancerEmail);
+                    console.warn('⚠️ Available emails:', Object.values(users).map(u => u.profile?.email).filter(Boolean));
                     
                     // Show error notification
                     setTimeout(() => {
@@ -2027,7 +2027,7 @@
                 }
                 
             } catch (error) {
-                console.error('❌ Error updating freelancers.json on GitHub:', error);
+                console.error('❌ Error updating users.json on GitHub:', error);
                 
                 // Show error notification
                 setTimeout(() => {

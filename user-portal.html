@@ -17,7 +17,7 @@
     
     <script>
         let currentUser = null;
-        let freelancers = [];
+        let users = [];
         let uploadedContracts = [];
         let projectStatus = [];
         let jobsData = [];
@@ -322,7 +322,7 @@
         // Enhanced notification for JSON updates in user portal
         function notifyUserJSONUpdate(fileName, action, details = '') {
             const messages = {
-                'freelancers.json': {
+                'users.json': {
                     'updated': `✅ Your profile has been updated!`,
                     'payment': `💰 Your payment method has been updated!`,
                     'performance': `⭐ Your performance review is now available!`
@@ -352,96 +352,96 @@
         }
 
         // Load freelancer data from JSON file
-        async function loadFreelancerData() {
+        async function loadUsersData() {
             try {
-                // First, try to load directly from freelancers API
+                // First, try to load directly from users API
                 try {
-                    const response = await fetch('/api/freelancers');
+                    const response = await fetch('/api/users');
                     if (response.ok) {
                         const jsonData = await response.json();
-                        if (jsonData.approvedFreelancers) {
+                        if (jsonData.users) {
                             // Convert the JSON structure to array format with job support
-                            freelancers = Object.entries(jsonData.approvedFreelancers).map(([name, freelancer]) => ({
+                            users = Object.entries(jsonData.users).map(([name, user]) => ({
                                 name: name,
-                                email: freelancer.email,
-                                password: freelancer.password,
-                                approvedDate: freelancer.approvedDate,
-                                contractUrl: freelancer.contractUrl || 'contract.html',
+                                email: user.profile?.email,
+                                password: user.profile?.password,
+                                approvedDate: user.profile?.approvedDate,
+                                contractUrl: user.contract?.contractUrl || 'contract.html',
                                 // CONTRACT STATUS FIELDS - CRITICAL!
-                                contractStatus: freelancer.contractStatus || 'pending',
-                                contractSignedDate: freelancer.contractSignedDate,
-                                contractUploadedDate: freelancer.contractUploadedDate,
-                                contractId: freelancer.contractId,
+                                contractStatus: user.contract?.contractStatus || 'pending',
+                                contractSignedDate: user.contract?.contractSignedDate,
+                                contractUploadedDate: user.contract?.contractUploadedDate,
+                                contractId: user.contract?.contractId,
                                 // PAYMENT FIELDS - CRITICAL!
-                                paymentMethod: freelancer.paymentMethod || null,
-                                paymentStatus: freelancer.paymentStatus || 'pending',
+                                paymentMethod: user.paymentMethod || null,
+                                paymentStatus: user.paymentStatus || 'pending',
                                 // Handle both old single job format and new multiple jobs format
-                                jobs: freelancer.jobs || [{
+                                jobs: user.jobs || [{
                                     id: 'legacy-job',
-                                    role: freelancer.role,
-                                    location: freelancer.location,
-                                    projectStart: freelancer.projectStart,
-                                    rate: freelancer.rate,
+                                    role: user.profile?.role,
+                                    location: user.profile?.location,
+                                    projectStart: user.profile?.projectStart,
+                                    rate: user.profile?.rate,
                                     status: 'upcoming',
                                     projectType: 'Legacy Job',
-                                    description: `${freelancer.role} position`
+                                    description: `${user.profile?.role} position`
                                 }],
-                                primaryJob: freelancer.primaryJob || 'legacy-job'
+                                primaryJob: user.primaryJob || 'legacy-job'
                             }));
                             
-                            console.log('✅ Freelancer data loaded from JSON file:', freelancers.length, 'freelancers');
-                            console.log('🔍 Available freelancers with jobs and contract status:', freelancers.map(f => ({ 
-                                name: f.name, 
-                                email: f.email, 
-                                jobCount: f.jobs.length,
-                                contractStatus: f.contractStatus,
-                                contractId: f.contractId
+                            console.log('✅ Users data loaded from JSON file:', users.length, 'users');
+                            console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
+                                name: u.name, 
+                                email: u.email, 
+                                jobCount: u.jobs.length,
+                                contractStatus: u.contractStatus,
+                                contractId: u.contractId
                             })));
                             
                             // Now merge with uploaded contracts data to get the most up-to-date contract information
-                            await mergeFreelancerDataWithUploadedContracts();
+                            await mergeUsersDataWithUploadedContracts();
                             return;
                         }
                     }
                 } catch (fetchError) {
-                    console.warn('⚠️ Could not fetch freelancers.json, trying localStorage...', fetchError);
+                    console.warn('⚠️ Could not fetch users.json, trying localStorage...', fetchError);
                 }
                 
                 // Fallback: Try to load from localStorage (admin dashboard format)
-                let data = JSON.parse(localStorage.getItem('freelancers') || '[]');
+                let data = JSON.parse(localStorage.getItem('users') || '[]');
                 
                 // If localStorage is empty or not an array, try to load from JSON file structure in localStorage
                 if (!Array.isArray(data) || data.length === 0) {
-                    const jsonData = localStorage.getItem('approvedFreelancers');
+                    const jsonData = localStorage.getItem('approvedUsers');
                     if (jsonData) {
                         const parsedJsonData = JSON.parse(jsonData);
-                        if (parsedJsonData.approvedFreelancers) {
+                        if (parsedJsonData.users) {
                             // Convert the JSON structure to array format
-                            data = Object.entries(parsedJsonData.approvedFreelancers).map(([name, freelancer]) => ({
+                            data = Object.entries(parsedJsonData.users).map(([name, user]) => ({
                                 name: name,
-                                email: freelancer.email,
-                                password: freelancer.password,
-                                approvedDate: freelancer.approvedDate,
-                                contractUrl: freelancer.contractUrl || 'contract.html',
+                                email: user.profile?.email,
+                                password: user.profile?.password,
+                                approvedDate: user.profile?.approvedDate,
+                                contractUrl: user.contract?.contractUrl || 'contract.html',
                                 // CONTRACT STATUS FIELDS - CRITICAL!
-                                contractStatus: freelancer.contractStatus || 'pending',
-                                contractSignedDate: freelancer.contractSignedDate,
-                                contractUploadedDate: freelancer.contractUploadedDate,
-                                contractId: freelancer.contractId,
+                                contractStatus: user.contract?.contractStatus || 'pending',
+                                contractSignedDate: user.contract?.contractSignedDate,
+                                contractUploadedDate: user.contract?.contractUploadedDate,
+                                contractId: user.contract?.contractId,
                                 // PAYMENT FIELDS - CRITICAL!
-                                paymentMethod: freelancer.paymentMethod || null,
-                                paymentStatus: freelancer.paymentStatus || 'pending',
-                                jobs: freelancer.jobs || [{
+                                paymentMethod: user.paymentMethod || null,
+                                paymentStatus: user.paymentStatus || 'pending',
+                                jobs: user.jobs || [{
                                     id: 'legacy-job',
-                                    role: freelancer.role,
-                                    location: freelancer.location,
-                                    projectStart: freelancer.projectStart,
-                                    rate: freelancer.rate,
+                                    role: user.profile?.role,
+                                    location: user.profile?.location,
+                                    projectStart: user.profile?.projectStart,
+                                    rate: user.profile?.rate,
                                     status: 'upcoming',
                                     projectType: 'Legacy Job',
-                                    description: `${freelancer.role} position`
+                                    description: `${user.profile?.role} position`
                                 }],
-                                primaryJob: freelancer.primaryJob || 'legacy-job'
+                                primaryJob: user.primaryJob || 'legacy-job'
                             }));
                         }
                     } else {
@@ -539,33 +539,33 @@
                     }
                 }
                 
-                freelancers = data;
-                console.log('✅ Freelancer data loaded from localStorage/fallback:', freelancers.length, 'freelancers');
-                console.log('🔍 Available freelancers:', freelancers.map(f => ({ name: f.name, email: f.email, jobCount: f.jobs?.length || 0 })));
+                users = data;
+                console.log('✅ Users data loaded from localStorage/fallback:', users.length, 'users');
+                console.log('🔍 Available users:', users.map(u => ({ name: u.name, email: u.email, jobCount: u.jobs?.length || 0 })));
                 
                 // Also merge with uploaded contracts for fallback data
-                await mergeFreelancerDataWithUploadedContracts();
+                await mergeUsersDataWithUploadedContracts();
             } catch (error) {
-                console.error('❌ Error loading freelancer data:', error);
-                freelancers = [];
+                console.error('❌ Error loading users data:', error);
+                users = [];
             }
         }
 
-        // Merge freelancer data with uploaded contracts to get the most up-to-date contract information
-        async function mergeFreelancerDataWithUploadedContracts() {
+        // Merge users data with uploaded contracts to get the most up-to-date contract information
+        async function mergeUsersDataWithUploadedContracts() {
             try {
-                console.log('🔄 Merging freelancer data with uploaded contracts...');
+                console.log('🔄 Merging users data with uploaded contracts...');
                 
                 // Load uploaded contracts if not already loaded
                 if (uploadedContracts.length === 0) {
                     await loadUploadedContracts();
                 }
                 
-                // Update freelancer data with contract information from uploaded-contracts.json
-                freelancers.forEach(freelancer => {
-                    // Find ALL contracts for this freelancer
+                // Update users data with contract information from uploaded-contracts.json
+                users.forEach(user => {
+                    // Find ALL contracts for this user
                     const userContracts = uploadedContracts.filter(contract => 
-                        contract.freelancerEmail.toLowerCase() === freelancer.email.toLowerCase()
+                        contract.freelancerEmail.toLowerCase() === user.email.toLowerCase()
                     );
                     
                     if (userContracts.length > 0) {
@@ -577,33 +577,33 @@
                         });
                         
                         const mostRecentContract = userContracts[0];
-                        console.log(`✅ Found ${userContracts.length} uploaded contract(s) for ${freelancer.name}:`, userContracts.map(c => c.contractId));
+                        console.log(`✅ Found ${userContracts.length} uploaded contract(s) for ${user.name}:`, userContracts.map(c => c.contractId));
                         console.log(`✅ Using most recent contract: ${mostRecentContract.contractId}`);
                         
-                        // Update freelancer with contract data from uploaded-contracts.json
-                        freelancer.contractStatus = mostRecentContract.status || 'uploaded';
-                        freelancer.contractId = mostRecentContract.contractId;
-                        freelancer.contractSignedDate = mostRecentContract.signedDate || mostRecentContract.uploadDate;
-                        freelancer.contractUploadedDate = mostRecentContract.uploadDate;
+                        // Update user with contract data from uploaded-contracts.json
+                        user.contractStatus = mostRecentContract.status || 'uploaded';
+                        user.contractId = mostRecentContract.contractId;
+                        user.contractSignedDate = mostRecentContract.signedDate || mostRecentContract.uploadDate;
+                        user.contractUploadedDate = mostRecentContract.uploadDate;
                         
                         // Update job information if available
-                        if (mostRecentContract.role && freelancer.jobs && freelancer.jobs.length > 0) {
-                            freelancer.jobs[0].role = mostRecentContract.role;
+                        if (mostRecentContract.role && user.jobs && user.jobs.length > 0) {
+                            user.jobs[0].role = mostRecentContract.role;
                         }
-                        if (mostRecentContract.rate && freelancer.jobs && freelancer.jobs.length > 0) {
-                            freelancer.jobs[0].rate = mostRecentContract.rate;
+                        if (mostRecentContract.rate && user.jobs && user.jobs.length > 0) {
+                            user.jobs[0].rate = mostRecentContract.rate;
                         }
-                        if (mostRecentContract.location && freelancer.jobs && freelancer.jobs.length > 0) {
-                            freelancer.jobs[0].location = mostRecentContract.location;
+                        if (mostRecentContract.location && user.jobs && user.jobs.length > 0) {
+                            user.jobs[0].location = mostRecentContract.location;
                         }
                         
-                        console.log(`✅ Updated ${freelancer.name} with most recent contract ID: ${mostRecentContract.contractId}`);
+                        console.log(`✅ Updated ${user.name} with most recent contract ID: ${mostRecentContract.contractId}`);
                     } else {
-                        console.log(`⚠️ No uploaded contract found for ${freelancer.name} (${freelancer.email})`);
+                        console.log(`⚠️ No uploaded contract found for ${user.name} (${user.email})`);
                     }
                 });
                 
-                console.log('✅ Freelancer data merged with uploaded contracts');
+                console.log('✅ Users data merged with uploaded contracts');
             } catch (error) {
                 console.error('❌ Error merging freelancer data with uploaded contracts:', error);
             }
@@ -770,8 +770,8 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             
-            // Find user in freelancers data
-            const user = freelancers.find(f => f.email.toLowerCase() === email.toLowerCase() && f.password === password);
+            // Find user in users data
+            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
             
             if (user) {
                 currentUser = user;
@@ -977,7 +977,7 @@
             // Reload data from all JSON files
             Promise.all([
                 loadUploadedContracts(),
-                loadFreelancerData(),
+                loadUsersData(),
                 loadProjectStatus(),
                 loadJobsData(),
                 loadPerformanceReviews()
@@ -986,7 +986,7 @@
                 
                 // Update current user data if needed
                 if (currentUser) {
-                    const updatedUser = freelancers.find(f => f.email.toLowerCase() === currentUser.email.toLowerCase());
+                    const updatedUser = users.find(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
                     if (updatedUser) {
                         currentUser = updatedUser;
                         console.log('✅ User data updated:', currentUser);
@@ -1789,7 +1789,7 @@
                 
                 // Update freelancers.json on GitHub
                 try {
-                    await updateFreelancerPaymentMethod(currentUser.email, paymentMethod);
+                    await updateUserPaymentMethod(currentUser.email, paymentMethod);
                     showNotification(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`, 'success');
                 } catch (error) {
                     console.error('❌ Error updating payment method:', error);
@@ -1801,52 +1801,52 @@
             }
         }
 
-        // Update freelancer payment method on GitHub
-        async function updateFreelancerPaymentMethod(email, paymentMethod) {
+        // Update user payment method on GitHub
+        async function updateUserPaymentMethod(email, paymentMethod) {
             try {
-                // Get current freelancers data
-                const response = await fetch('/api/freelancers');
+                // Get current users data
+                const response = await fetch('/api/users');
                 if (!response.ok) {
-                    throw new Error('Failed to load freelancers data');
+                    throw new Error('Failed to load users data');
                 }
                 
-                const freelancersData = await response.json();
-                const freelancers = freelancersData.approvedFreelancers || {};
+                const usersData = await response.json();
+                const users = usersData.users || {};
                 
                 // Find and update the user's payment method
                 let userFound = false;
-                for (const [name, freelancer] of Object.entries(freelancers)) {
-                    if (freelancer.email === email) {
-                        freelancer.paymentMethod = paymentMethod;
-                        freelancer.paymentStatus = 'configured'; // Mark payment method as configured
+                for (const [name, user] of Object.entries(users)) {
+                    if (user.profile?.email === email) {
+                        user.paymentMethod = paymentMethod;
+                        user.paymentStatus = 'configured'; // Mark payment method as configured
                         userFound = true;
                         break;
                     }
                 }
                 
                 if (!userFound) {
-                    throw new Error('User not found in freelancers data');
+                    throw new Error('User not found in users data');
                 }
                 
-                // Get current SHA for freelancers.json
-                const shaResponse = await fetch('/api/github/file/freelancers.json');
+                // Get current SHA for users.json
+                const shaResponse = await fetch('/api/github/file/users.json');
                 let sha = null;
                 if (shaResponse.ok) {
                     const shaData = await shaResponse.json();
                     sha = shaData.sha;
                 }
                 
-                // Update the freelancers.json file on GitHub
-                console.log('🔄 Updating freelancers.json with payment method:', paymentMethod);
-                console.log('📝 Data being sent:', JSON.stringify(freelancersData, null, 2).substring(0, 200) + '...');
+                // Update the users.json file on GitHub
+                console.log('🔄 Updating users.json with payment method:', paymentMethod);
+                console.log('📝 Data being sent:', JSON.stringify(usersData, null, 2).substring(0, 200) + '...');
                 
-                const updateResponse = await fetch('/api/github/file/freelancers.json', {
+                const updateResponse = await fetch('/api/github/file/users.json', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        content: JSON.stringify(freelancersData, null, 2),
+                        content: JSON.stringify(usersData, null, 2),
                         message: `Update payment method for ${email} to ${paymentMethod} - ${new Date().toLocaleString()}`,
                         sha: sha
                     })
@@ -1855,7 +1855,7 @@
                 if (!updateResponse.ok) {
                     const errorText = await updateResponse.text();
                     console.error('❌ GitHub update failed:', updateResponse.status, errorText);
-                    throw new Error(`Failed to update freelancers.json on GitHub: ${updateResponse.status} - ${errorText}`);
+                    throw new Error(`Failed to update users.json on GitHub: ${updateResponse.status} - ${errorText}`);
                 }
                 
                 console.log('✅ Payment method updated on GitHub');
@@ -2321,14 +2321,14 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         async function refreshUserData() {
             console.log('🔄 Refreshing user data...');
             await loadUploadedContracts();
-            await loadFreelancerData();
+            await loadUsersData();
             await loadProjectStatus();
             await loadJobsData();
             await loadPerformanceReviews();
             
             if (currentUser) {
                 // Find updated user data
-                const updatedUser = freelancers.find(f => f.email.toLowerCase() === currentUser.email.toLowerCase());
+                const updatedUser = users.find(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
                 if (updatedUser) {
                     currentUser = updatedUser;
                     console.log('✅ User data refreshed:', currentUser);
@@ -2355,7 +2355,7 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             });
             
             await loadUploadedContracts();
-            await loadFreelancerData();
+            await loadUsersData();
             await loadProjectStatus();
             await loadJobsData();
             await loadPerformanceReviews();
