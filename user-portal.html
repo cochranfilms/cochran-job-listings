@@ -1377,14 +1377,59 @@
                 {
                     id: 'milestones',
                     title: 'Project Milestones',
-                    description: contractSigned ? (projectStatus === 'upcoming' ? 'Project milestones in progress' : projectStatus === 'completed' ? 'All milestones completed' : 'Awaiting project start') : 'Awaiting contract signature',
+                    description: (() => {
+                        if (!contractSigned) return 'Awaiting contract signature';
+                        if (!projectData) return 'Project data not found';
+                        
+                        switch (projectStatus) {
+                            case 'upcoming': return 'Project milestones in progress 📋';
+                            case 'in-progress': return 'Project milestones active 🚀';
+                            case 'completed': return 'All milestones completed ✅';
+                            case 'cancelled': return 'Project cancelled ❌';
+                            default: return 'Awaiting project start';
+                        }
+                    })(),
                     icon: 'fas fa-flag-checkered',
-                    status: contractSigned ? (projectStatus === 'upcoming' ? 'current' : projectStatus === 'completed' ? 'completed' : 'pending') : 'pending',
-                    date: projectStartDate,
-                    details: contractSigned ? 
-                        'Track your project milestones and deliverables. Complete each milestone to ensure project success.' : 
-                        'This phase will begin once your contract is signed.',
-                    checklist: contractSigned ? [
+                    status: (() => {
+                        if (!contractSigned) return 'pending';
+                        if (!projectData) return 'pending';
+                        
+                        switch (projectStatus) {
+                            case 'upcoming': return 'current';
+                            case 'in-progress': return 'current';
+                            case 'completed': return 'completed';
+                            case 'cancelled': return 'completed';
+                            default: return 'pending';
+                        }
+                    })(),
+                    date: (() => {
+                        if (projectData?.completionDate) {
+                            return new Date(projectData.completionDate);
+                        }
+                        return projectStartDate;
+                    })(),
+                    details: (() => {
+                        if (!contractSigned) {
+                            return 'This phase will begin once your contract is signed.';
+                        }
+                        if (!projectData) {
+                            return 'Project data is being prepared. Please check back soon.';
+                        }
+                        
+                        switch (projectStatus) {
+                            case 'upcoming': 
+                                return `📋 Project: ${selectedJob?.role || currentUser.role}\n📍 Location: ${selectedJob?.location || currentUser.location}\n📅 Start Date: ${selectedJob?.projectStart || 'TBD'}\n\nProject milestones are being prepared. You'll receive detailed requirements soon.`;
+                            case 'in-progress': 
+                                return `🚀 Project: ${selectedJob?.role || currentUser.role}\n📍 Location: ${selectedJob?.location || currentUser.location}\n\nProject is actively in progress. Complete each milestone to ensure project success.`;
+                            case 'completed': 
+                                return `✅ Project: ${selectedJob?.role || currentUser.role}\n📍 Location: ${selectedJob?.location || currentUser.location}\n📅 Completion Date: ${projectData.completionDate}\n\nAll project milestones have been completed successfully!`;
+                            case 'cancelled': 
+                                return `❌ Project: ${selectedJob?.role || currentUser.role}\n\nThis project has been cancelled. Please contact admin for more information.`;
+                            default: 
+                                return 'Track your project milestones and deliverables. Complete each milestone to ensure project success.';
+                        }
+                    })(),
+                    checklist: contractSigned && projectData ? [
                         'Review project requirements and deliverables',
                         'Complete pre-project checklist',
                         'Attend project briefing (if scheduled)',
@@ -1395,15 +1440,51 @@
                 {
                     id: 'payment',
                     title: 'Payment Processing',
-                    description: projectStatus === 'completed' ? `Payment ${paymentStatus}` : 'Payment processing after completion',
+                    description: (() => {
+                        if (projectStatus !== 'completed') return 'Payment processing after completion';
+                        switch (paymentStatus) {
+                            case 'pending': return 'Payment pending ⏳';
+                            case 'processing': return 'Payment processing 🔄';
+                            case 'paid': return 'Payment completed ✅';
+                            case 'overdue': return 'Payment overdue ⚠️';
+                            default: return 'Payment status unknown';
+                        }
+                    })(),
                     icon: 'fas fa-credit-card',
-                    status: projectStatus === 'completed' ? (paymentStatus === 'paid' ? 'completed' : 'current') : 'pending',
-                    date: projectStatus === 'completed' ? (projectData?.paymentDate ? new Date(projectData.paymentDate) : null) : null,
-                    details: projectStatus === 'completed' ? 
-                        (paymentStatus === 'paid' ? 
-                        `✅ Payment of ${selectedJob?.rate || currentUser.rate} has been processed successfully.` :
-                        `Payment of ${selectedJob?.rate || currentUser.rate} is being processed. You will receive payment within 24 hours.`) :
-                        `You will receive payment of ${selectedJob?.rate || currentUser.rate} within 24 hours of project completion.`
+                    status: (() => {
+                        if (projectStatus !== 'completed') return 'pending';
+                        switch (paymentStatus) {
+                            case 'pending': return 'current';
+                            case 'processing': return 'current';
+                            case 'paid': return 'completed';
+                            case 'overdue': return 'current';
+                            default: return 'pending';
+                        }
+                    })(),
+                    date: (() => {
+                        if (projectStatus === 'completed' && projectData?.paymentDate) {
+                            return new Date(projectData.paymentDate);
+                        }
+                        return null;
+                    })(),
+                    details: (() => {
+                        if (projectStatus !== 'completed') {
+                            return `You will receive payment of ${selectedJob?.rate || currentUser.rate} within 24 hours of project completion.`;
+                        }
+                        
+                        switch (paymentStatus) {
+                            case 'pending': 
+                                return `⏳ Payment of ${selectedJob?.rate || currentUser.rate} is pending. Payment will be processed within 24 hours of project completion.`;
+                            case 'processing': 
+                                return `🔄 Payment of ${selectedJob?.rate || currentUser.rate} is being processed. You will receive payment within 24 hours.`;
+                            case 'paid': 
+                                return `✅ Payment of ${selectedJob?.rate || currentUser.rate} has been processed successfully on ${projectData?.paymentDate ? new Date(projectData.paymentDate).toLocaleDateString() : 'recent date'}.`;
+                            case 'overdue': 
+                                return `⚠️ Payment of ${selectedJob?.rate || currentUser.rate} is overdue. Please contact admin for assistance.`;
+                            default: 
+                                return `Payment of ${selectedJob?.rate || currentUser.rate} status is being updated.`;
+                        }
+                    })()
                 },
                 {
                     id: 'performance',
