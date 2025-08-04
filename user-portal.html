@@ -1510,8 +1510,9 @@
                         if (contractComplete) {
                             return {
                                 text: 'Configure Payment Method',
-                                onclick: 'switchPortalTab("profile")',
-                                icon: 'fas fa-credit-card'
+                                onclick: 'togglePaymentDropdown()',
+                                icon: 'fas fa-credit-card',
+                                hasDropdown: true
                             };
                         } else {
                             return {
@@ -1881,6 +1882,153 @@
             } catch (error) {
                 console.error('❌ Error updating payment method:', error);
                 throw error;
+            }
+        }
+
+        // Payment Dropdown Functions
+        function togglePaymentDropdown() {
+            const dropdown = document.getElementById('paymentDropdown');
+            if (dropdown) {
+                dropdown.remove();
+                return;
+            }
+            
+            createPaymentDropdown();
+        }
+
+        function createPaymentDropdown() {
+            const dropdown = document.createElement('div');
+            dropdown.id = 'paymentDropdown';
+            dropdown.className = 'payment-dropdown';
+            
+            const currentMethod = currentUser?.paymentMethod || 'none';
+            
+            dropdown.innerHTML = `
+                <div class="payment-dropdown-header">
+                    <h3><i class="fas fa-credit-card"></i> Configure Payment Method</h3>
+                    <button onclick="closePaymentDropdown()" class="dropdown-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="payment-dropdown-content">
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+                        How would you like to be paid for your work?
+                    </p>
+                    <div class="payment-options-grid">
+                        <label class="payment-option-dropdown">
+                            <input type="radio" name="dropdownPaymentMethod" value="cash" ${currentMethod === 'cash' ? 'checked' : ''}>
+                            <span class="payment-option-content">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <strong>Cash</strong>
+                                <small>Direct cash payment</small>
+                            </span>
+                        </label>
+                        <label class="payment-option-dropdown">
+                            <input type="radio" name="dropdownPaymentMethod" value="check" ${currentMethod === 'check' ? 'checked' : ''}>
+                            <span class="payment-option-content">
+                                <i class="fas fa-university"></i>
+                                <strong>Check</strong>
+                                <small>Paper check mailed</small>
+                            </span>
+                        </label>
+                        <label class="payment-option-dropdown">
+                            <input type="radio" name="dropdownPaymentMethod" value="zelle" ${currentMethod === 'zelle' ? 'checked' : ''}>
+                            <span class="payment-option-content">
+                                <i class="fas fa-mobile-alt"></i>
+                                <strong>Zelle</strong>
+                                <small>Digital bank transfer</small>
+                            </span>
+                        </label>
+                        <label class="payment-option-dropdown">
+                            <input type="radio" name="dropdownPaymentMethod" value="paypal" ${currentMethod === 'paypal' ? 'checked' : ''}>
+                            <span class="payment-option-content">
+                                <i class="fab fa-paypal"></i>
+                                <strong>PayPal</strong>
+                                <small>PayPal transfer</small>
+                            </span>
+                        </label>
+                        <label class="payment-option-dropdown">
+                            <input type="radio" name="dropdownPaymentMethod" value="invoice" ${currentMethod === 'invoice' ? 'checked' : ''}>
+                            <span class="payment-option-content">
+                                <i class="fas fa-file-invoice"></i>
+                                <strong>Invoice Request</strong>
+                                <small>You invoice Cochran Films</small>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="payment-dropdown-actions">
+                        <button onclick="savePaymentMethodFromDropdown()" class="btn-save-payment">
+                            <i class="fas fa-save"></i> Save Payment Method
+                        </button>
+                        <button onclick="switchPortalTab('profile')" class="btn-profile-payment">
+                            <i class="fas fa-user"></i> Go to Profile Tab
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Position the dropdown near the button
+            const button = document.querySelector('[onclick="togglePaymentDropdown()"]');
+            if (button) {
+                const rect = button.getBoundingClientRect();
+                dropdown.style.position = 'fixed';
+                dropdown.style.top = (rect.bottom + 10) + 'px';
+                dropdown.style.left = (rect.left - 200) + 'px';
+                dropdown.style.zIndex = '10000';
+            }
+            
+            document.body.appendChild(dropdown);
+            
+            // Close dropdown when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', closePaymentDropdownOnOutsideClick);
+            }, 100);
+        }
+
+        function closePaymentDropdown() {
+            const dropdown = document.getElementById('paymentDropdown');
+            if (dropdown) {
+                dropdown.remove();
+            }
+            document.removeEventListener('click', closePaymentDropdownOnOutsideClick);
+        }
+
+        function closePaymentDropdownOnOutsideClick(event) {
+            const dropdown = document.getElementById('paymentDropdown');
+            if (dropdown && !dropdown.contains(event.target)) {
+                closePaymentDropdown();
+            }
+        }
+
+        async function savePaymentMethodFromDropdown() {
+            const selectedMethod = document.querySelector('input[name="dropdownPaymentMethod"]:checked');
+            if (!selectedMethod) {
+                showNotification('Please select a payment method', 'warning');
+                return;
+            }
+            
+            const paymentMethod = selectedMethod.value;
+            
+            // Update current user's payment method
+            if (currentUser) {
+                currentUser.paymentMethod = paymentMethod;
+                currentUser.paymentStatus = 'configured';
+                
+                // Save to session storage
+                sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(currentUser));
+                
+                // Update freelancers.json on GitHub
+                try {
+                    await updateUserPaymentMethod(currentUser.email, paymentMethod);
+                    showNotification(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`, 'success');
+                    closePaymentDropdown();
+                    
+                    // Refresh the timeline to show updated status
+                    displayTimeline();
+                } catch (error) {
+                    console.error('❌ Error updating payment method:', error);
+                    showNotification(`⚠️ Payment method saved locally but there was an issue notifying the admin team. Please try again later.`, 'warning');
+                }
             }
         }
 
@@ -3137,6 +3285,161 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .payment-option-content small {
             color: rgba(255,255,255,0.7);
             font-size: 0.8rem;
+        }
+
+        /* Payment Dropdown Styles */
+        .payment-dropdown {
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            min-width: 400px;
+            max-width: 500px;
+            animation: dropdownSlideIn 0.3s ease-out;
+        }
+
+        @keyframes dropdownSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .payment-dropdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .payment-dropdown-header h3 {
+            color: #FFB200;
+            margin: 0;
+            font-size: 1.1rem;
+            font-family: 'Cinzel', serif;
+        }
+
+        .dropdown-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-close:hover {
+            background: rgba(255,255,255,0.1);
+            color: #FFB200;
+        }
+
+        .payment-dropdown-content {
+            padding: 1.5rem;
+        }
+
+        .payment-options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-option-dropdown {
+            display: block;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-option-dropdown input[type="radio"] {
+            display: none;
+        }
+
+        .payment-option-dropdown .payment-option-content {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .payment-option-dropdown input[type="radio"]:checked + .payment-option-content {
+            background: rgba(255, 178, 0, 0.1);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+
+        .payment-option-dropdown:hover .payment-option-content {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255, 178, 0, 0.3);
+        }
+
+        .payment-dropdown-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+        }
+
+        .btn-save-payment {
+            background: #FFB200;
+            color: #000;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-save-payment:hover {
+            background: #e6a000;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 178, 0, 0.3);
+        }
+
+        .btn-profile-payment {
+            background: rgba(255,255,255,0.1);
+            color: #FFB200;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-profile-payment:hover {
+            background: rgba(255, 178, 0, 0.1);
+            border-color: #FFB200;
+            transform: translateY(-1px);
+        }
+
+        /* Responsive design for payment dropdown */
+        @media (max-width: 768px) {
+            .payment-dropdown {
+                min-width: 90vw;
+                max-width: 90vw;
+                left: 5vw !important;
+            }
+            
+            .payment-dropdown-actions {
+                flex-direction: column;
+            }
         }
 
         .job-status.upcoming {
