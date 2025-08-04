@@ -686,12 +686,14 @@
                         <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.9);">
                             You can download your contract PDF directly to your device, or view it anytime in your personal freelancer portal along with job details and project timeline.
                         </p>
-                        <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin-right: 0;">
-                            <i class="fas fa-external-link-alt"></i> Open Freelancer Portal
-                        </a>
-                        <button onclick="downloadContractPDF(signedContractData)" class="contract-link" style="margin-left: 1rem;">
-                            <i class="fas fa-download"></i> Download Contract PDF
-                        </button>
+                        <div style="display: flex; gap: 1rem; justify-content: center; align-items: center;">
+                            <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin: 0;">
+                                <i class="fas fa-external-link-alt"></i> Open Creator Portal
+                            </a>
+                            <button onclick="downloadContractPDF(signedContractData)" class="contract-link" style="margin: 0;">
+                                <i class="fas fa-download"></i> Download Contract PDF
+                            </button>
+                        </div>
                     </div>
                 </div>
                 </div>
@@ -985,12 +987,48 @@
                 let currentYPos = 120;
                 const lineHeight = 6; // Reduced line height for compact layout
                 
-                // Process each term with compact formatting
+                // Process each term with clean, non-overlapping layout
                 compactTerms.forEach((term, index) => {
-                    // Add the term number and draw the line
-                    const numberedTerm = `${index + 1}. ${term}`;
-                    doc.text(numberedTerm, 20, currentYPos);
-                    currentYPos += lineHeight;
+                    // Ensure we stay within page bounds
+                    if (currentYPos > 160) {
+                        currentYPos = 120; // Reset to terms section if needed
+                    }
+                    
+                    // Draw the entire term as a single line with proper formatting
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7);
+                    
+                    // Split the term into title and description
+                    const colonIndex = term.indexOf(':');
+                    const title = term.substring(0, colonIndex + 1);
+                    const description = term.substring(colonIndex + 1);
+                    
+                    // Calculate total width to ensure it fits
+                    const titleWidth = doc.getTextWidth(title);
+                    doc.setFont('helvetica', 'normal');
+                    const descWidth = doc.getTextWidth(description);
+                    const totalWidth = titleWidth + descWidth + 3; // 3mm spacing
+                    
+                    // If total width exceeds page width, wrap to next line
+                    if (totalWidth > 160) {
+                        // Draw title on first line
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(title, 20, currentYPos);
+                        currentYPos += 4;
+                        
+                        // Draw description on second line with indent
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(description, 25, currentYPos);
+                        currentYPos += lineHeight + 2;
+                    } else {
+                        // Draw title and description on same line
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(title, 20, currentYPos);
+                        
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(description, 20 + titleWidth + 3, currentYPos); // 3mm spacing
+                        currentYPos += lineHeight;
+                    }
                 });
                 
                 // Fixed signature section position for single page
@@ -1195,14 +1233,14 @@
                 let currentYPos = 125;
                 const lineHeight = 6;
                 
-                // Process each term with proper spacing
+                // Process each term with clean, non-overlapping layout
                 compactTerms.forEach((term, index) => {
                     // Ensure we stay within page bounds
                     if (currentYPos > 160) {
                         currentYPos = 125; // Reset to terms section if needed
                     }
                     
-                    // Draw the entire term as one line with proper formatting
+                    // Draw the entire term as a single line with proper formatting
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(7);
                     
@@ -1211,15 +1249,32 @@
                     const title = term.substring(0, colonIndex + 1);
                     const description = term.substring(colonIndex + 1);
                     
-                    // Draw title in bold
-                    doc.text(title, 20, currentYPos);
-                    
-                    // Draw description in normal weight with proper spacing
-                    doc.setFont('helvetica', 'normal');
+                    // Calculate total width to ensure it fits
                     const titleWidth = doc.getTextWidth(title);
-                    doc.text(description, 20 + titleWidth + 2, currentYPos); // Add 2mm spacing
+                    doc.setFont('helvetica', 'normal');
+                    const descWidth = doc.getTextWidth(description);
+                    const totalWidth = titleWidth + descWidth + 3; // 3mm spacing
                     
-                    currentYPos += lineHeight;
+                    // If total width exceeds page width, wrap to next line
+                    if (totalWidth > 160) {
+                        // Draw title on first line
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(title, 20, currentYPos);
+                        currentYPos += 4;
+                        
+                        // Draw description on second line with indent
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(description, 25, currentYPos);
+                        currentYPos += lineHeight + 2;
+                    } else {
+                        // Draw title and description on same line
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(title, 20, currentYPos);
+                        
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(description, 20 + titleWidth + 3, currentYPos); // 3mm spacing
+                        currentYPos += lineHeight;
+                    }
                 });
                 
                 // ==================== ADVANCED SIGNATURES ====================
@@ -2208,12 +2263,14 @@
                             <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.9);">
                                 You can download your contract PDF directly to your device, or view it anytime in your personal freelancer portal along with job details and project timeline.
                             </p>
-                            <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin-right: 0;">
-                                <i class="fas fa-external-link-alt"></i> Open Freelancer Portal
-                            </a>
-                            <button onclick="downloadContractPDF({contractId: userData.contract?.contractId, freelancerName: userData.profile?.name, freelancerEmail: userData.profile?.email, role: userData.profile?.role, location: userData.profile?.location, projectStart: userData.profile?.projectStart, rate: userData.profile?.rate, effectiveDate: userData.profile?.approvedDate, signatureDate: userData.contract?.contractSignedDate, signature: userData.profile?.name})" class="contract-link" style="margin-left: 1rem;">
-                                <i class="fas fa-download"></i> Download Contract PDF
-                            </button>
+                            <div style="display: flex; gap: 1rem; justify-content: center; align-items: center;">
+                                <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin: 0;">
+                                    <i class="fas fa-external-link-alt"></i> Open Creator Portal
+                                </a>
+                                <button onclick="downloadContractPDF({contractId: userData.contract?.contractId, freelancerName: userData.profile?.name, freelancerEmail: userData.profile?.email, role: userData.profile?.role, location: userData.profile?.location, projectStart: userData.profile?.projectStart, rate: userData.profile?.rate, effectiveDate: userData.profile?.approvedDate, signatureDate: userData.contract?.contractSignedDate, signature: userData.profile?.name})" class="contract-link" style="margin: 0;">
+                                    <i class="fas fa-download"></i> Download Contract PDF
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
