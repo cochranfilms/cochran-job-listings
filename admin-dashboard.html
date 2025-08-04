@@ -811,32 +811,7 @@
             editingJobIndex = -1;
         }
 
-        // Export job data
-        function exportJobData() {
-            const exportData = {
-                jobs: jobs,
-                exportDate: new Date().toISOString()
-            };
-            document.getElementById('exportJobData').textContent = JSON.stringify(exportData, null, 2);
-            document.getElementById('downloadJobBtn').style.display = 'inline-block';
-        }
 
-        // Download job JSON
-        function downloadJobJSON() {
-            const exportData = {
-                jobs: jobs,
-                exportDate: new Date().toISOString()
-            };
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `jobs-data-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
 
         // ==================== FREELANCER MANAGEMENT FUNCTIONALITY ====================
         
@@ -5045,13 +5020,7 @@
                 <div id="jobsList"></div>
             </div>
 
-            <div class="export-section">
-                <h2>Export Job Data</h2>
-                <p>Export your job listings to update <code>jobs-data.json</code>:</p>
-                <button class="btn" onclick="exportJobData()">Generate JSON</button>
-                <button class="btn" onclick="downloadJobJSON()" id="downloadJobBtn" style="display: none;">Download jobs-data.json</button>
-                <pre id="exportJobData"></pre>
-            </div>
+
         </div>
 
         <!-- Contracts Tab -->
