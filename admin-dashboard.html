@@ -349,30 +349,92 @@
         function viewUploadedContractDetails(index) {
             const contract = uploadedContracts[index];
             
-            const details = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎬 COCHRAN FILMS - CONTRACT DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📋 BASIC INFO:
-Contract ID: ${contract.contractId}
-Freelancer: ${contract.freelancerName}
-Email: ${contract.freelancerEmail}
-Role: ${contract.role}
-Rate: ${contract.rate}
-Location: ${contract.location}
-Contract Date: ${contract.contractDate || 'Not specified'}
-
-📁 FILE INFO:
-File Name: ${contract.fileName}
-File Size: ${(contract.fileSize / 1024).toFixed(1)} KB
-Upload Date: ${new Date(contract.uploadDate).toLocaleString()}
-Status: ${contract.status}
-
-${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            `.trim();
+            // Create a proper modal instead of using notification
+            const modal = document.createElement('div');
+            modal.id = 'contractDetailsModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
             
-            showNotification(details, 'info');
+            modal.innerHTML = `
+                <div style="
+                    background: #1a1a1a;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    border: 1px solid #FFB200;
+                ">
+                    <button onclick="this.closest('#contractDetailsModal').remove()" 
+                            style="
+                                position: absolute;
+                                top: 1rem;
+                                right: 1rem;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 30px;
+                                height: 30px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 18px;
+                                font-weight: bold;
+                            ">×</button>
+                    
+                    <h3 style="color: #FFB200; margin-bottom: 1.5rem; text-align: center;">
+                        🎬 COCHRAN FILMS - CONTRACT DETAILS
+                    </h3>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                        <h4 style="color: #FFB200; margin-bottom: 0.5rem;">📋 Basic Information</h4>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; line-height: 1.6;">
+                            <div><strong>Contract ID:</strong> ${contract.contractId}</div>
+                            <div><strong>Freelancer:</strong> ${contract.freelancerName}</div>
+                            <div><strong>Email:</strong> ${contract.freelancerEmail}</div>
+                            <div><strong>Role:</strong> ${contract.role}</div>
+                            <div><strong>Rate:</strong> ${contract.rate}</div>
+                            <div><strong>Location:</strong> ${contract.location}</div>
+                            <div><strong>Contract Date:</strong> ${contract.contractDate || 'Not specified'}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                        <h4 style="color: #FFB200; margin-bottom: 0.5rem;">📁 File Information</h4>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; line-height: 1.6;">
+                            <div><strong>File Name:</strong> ${contract.fileName}</div>
+                            <div><strong>File Size:</strong> ${(contract.fileSize / 1024).toFixed(1)} KB</div>
+                            <div><strong>Upload Date:</strong> ${new Date(contract.uploadDate).toLocaleString()}</div>
+                            <div><strong>Status:</strong> ${contract.status}</div>
+                        </div>
+                    </div>
+                    
+                    ${contract.notes ? `
+                    <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,178,0,0.3);">
+                        <h4 style="color: #FFB200; margin-bottom: 0.5rem;">📝 Notes</h4>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; line-height: 1.6;">
+                            ${contract.notes}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
         }
 
         // Delete uploaded contract
@@ -1434,28 +1496,48 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 link.click();
                 document.body.removeChild(link);
                 console.log('✅ Contract downloaded for:', userName);
+                showNotification('✅ Contract downloaded successfully!', 'success');
             } else {
                 // Check if contract exists in the contracts directory using contract ID format
                 const contractId = userData.contract?.contractId;
                 if (contractId) {
                     const contractFileName = `${contractId}.pdf`;
-                    const contractUrl = `https://collaborate.cochranfilms.com/contracts/${contractFileName}`;
                     
-                    // Try to download from contracts directory
-                    const link = document.createElement('a');
-                    link.href = contractUrl;
-                    link.download = contractFileName;
-                    link.target = '_blank';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // Try multiple possible URLs like user-portal.html does
+                    const possibleUrls = [
+                        `contracts/${contractFileName}`,
+                        `https://collaborate.cochranfilms.com/contracts/${contractFileName}`,
+                        `contracts/${contractId.replace('CF-UPLOAD-', 'CF-')}.pdf`,
+                        `contracts/${contractId.replace('CF-', 'CF-UPLOAD-')}.pdf`
+                    ];
                     
-                    // Show status message
-                    showUpdateStatus(`📄 Downloading contract ${contractId} for ${userName}`, 'info');
-                    console.log('📄 Contract download attempted for:', userName, 'with ID:', contractId);
+                    let downloadAttempted = false;
+                    
+                    for (const contractUrl of possibleUrls) {
+                        try {
+                            const link = document.createElement('a');
+                            link.href = contractUrl;
+                            link.download = contractFileName;
+                            link.target = '_blank';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            downloadAttempted = true;
+                            console.log('📄 Contract download attempted for:', userName, 'with URL:', contractUrl);
+                            break;
+                        } catch (error) {
+                            console.log('❌ Failed to download from:', contractUrl);
+                        }
+                    }
+                    
+                    if (downloadAttempted) {
+                        showNotification(`📄 Downloading contract ${contractId} for ${userName}`, 'info');
+                    } else {
+                        showNotification(`❌ Failed to download contract for ${userName}`, 'error');
+                    }
                 } else {
                     // No contract ID found, show error
-                    showUpdateStatus(`❌ No contract ID found for ${userName}`, 'error');
+                    showNotification(`❌ No contract ID found for ${userName}`, 'error');
                     console.log('❌ No contract ID found for:', userName);
                 }
             }
@@ -1512,9 +1594,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                             <button onclick="downloadUserContract('${userName}')" style="background: #8b5cf6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                 📄 Download Contract
                             </button>
-                            <button onclick="showPerformanceReviewManager()" style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
-                                ⭐ Performance Reviews
-                            </button>
+
                             ${shouldShowPerformanceReview(userData) ? `
                             <button onclick="showPerformanceReviewModal('${userName}')" style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                 ⭐ Performance Review
@@ -3261,7 +3341,12 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             }
         }
         
-        // API token for authentication (you should store this securely)
+        // API token for authentication - IMPORTANT: Replace with your actual GitHub API token
+        // To set up: 
+        // 1. Go to GitHub Settings > Developer settings > Personal access tokens
+        // 2. Generate a new token with 'repo' permissions
+        // 3. Replace 'your-secure-api-token-here' with your actual token
+        // 4. Make sure your server is running (node server.js)
         const API_TOKEN = 'your-secure-api-token-here';
         
         // Create new performance review
@@ -3639,9 +3724,16 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         async function deletePerformanceReview(email) {
             if (confirm(`Are you sure you want to delete the performance review for ${email}?`)) {
                 try {
+                    // Check if API_TOKEN is set
+                    if (!API_TOKEN || API_TOKEN === 'your-secure-api-token-here') {
+                        showNotification('API token not configured. Please set the API_TOKEN in the code.', 'error');
+                        return;
+                    }
+
                     const response = await fetch(`/api/performance/${email}`, {
                         method: 'DELETE',
                         headers: {
+                            'Content-Type': 'application/json',
                             'Authorization': `Bearer ${API_TOKEN}`
                         }
                     });
@@ -3653,12 +3745,20 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                         await loadPerformanceReviews();
                         showPerformanceReviewManager();
                     } else {
-                        const error = await response.json();
-                        showNotification(`Error: ${error.error}`, 'error');
+                        // Handle non-JSON responses
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            const error = await response.json();
+                            showNotification(`Error: ${error.error || error.message}`, 'error');
+                        } else {
+                            const errorText = await response.text();
+                            console.error('Non-JSON response:', errorText);
+                            showNotification(`Server error: ${response.status} - ${response.statusText}`, 'error');
+                        }
                     }
                 } catch (error) {
                     console.error('Error deleting performance review:', error);
-                    showNotification('Failed to delete performance review', 'error');
+                    showNotification(`Failed to delete performance review: ${error.message}`, 'error');
                 }
             }
         }
@@ -5026,6 +5126,10 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                                 <i class="fas fa-users"></i>
                                 <span>User Portal</span>
                             </a>
+                            <button class="action-btn link-btn" onclick="showPerformanceReviewManager()" style="background: #f59e0b;">
+                                <i class="fas fa-star"></i>
+                                <span>Performance Reviews</span>
+                            </button>
                         </div>
                         
                         <div class="notification-container">
