@@ -610,8 +610,8 @@
                 const response = await fetch('uploaded-contracts.json');
                 if (response.ok) {
                     const jsonData = await response.json();
-                    // The JSON file has contracts in 'contracts' array, not 'uploadedContracts'
-                    uploadedContracts = jsonData.contracts || [];
+                    // The JSON file has contracts in 'uploadedContracts' array
+                    uploadedContracts = jsonData.uploadedContracts || [];
                     console.log('✅ Uploaded contracts loaded from JSON file:', uploadedContracts.length, 'contracts');
                 } else {
                     console.warn('⚠️ Could not load uploaded-contracts.json, falling back to localStorage');

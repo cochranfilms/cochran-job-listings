@@ -244,7 +244,8 @@
                 const response = await fetch('/api/uploaded-contracts');
                 if (response.ok) {
                     const data = await response.json();
-                    uploadedContracts = data.contracts || [];
+                    // The API returns the full JSON structure, so we need to access uploadedContracts
+                    uploadedContracts = data.uploadedContracts || [];
                     console.log('✅ Loaded', uploadedContracts.length, 'uploaded contracts from API');
                 } else {
                     console.warn('⚠️ Could not load uploaded contracts from API, showing empty state');
