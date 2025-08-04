@@ -498,7 +498,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
 
         // Update user contract status when contract is uploaded
-        function updateUserContractStatus(email, contractId, contractDate) {
+        async function updateUserContractStatus(email, contractId, contractDate) {
             try {
                 // Find and update the user in the users object
                 const userName = Object.keys(users).find(name => 
@@ -519,18 +519,17 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     // Refresh user list display
                     displayUsers();
                     
-                    // Show notification to export updated data
-                    setTimeout(() => {
-                        if (confirm('📋 User contract status updated!\n\nWould you like to export the updated users.json file now?\n\nThis will ensure the user portal reflects the signed contract status.')) {
-                            updateUsersOnGitHub();
-                        }
-                    }, 1000);
+                    // Automatically update GitHub
+                    await updateUsersOnGitHub();
+                    
+                    showNotification('✅ User contract status updated and users.json updated on GitHub!', 'success');
                 } else {
                     console.warn('⚠️ User not found in local array for email:', email);
                     showNotification(`⚠️ Note: User ${email} not found in local database.\n\nConsider adding them to the user list first, then re-uploading the contract.`, 'warning');
                 }
             } catch (error) {
                 console.error('❌ Error updating user contract status:', error);
+                showNotification(`❌ Error updating user contract status: ${error.message}`, 'error');
             }
         }
 
@@ -1609,12 +1608,22 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             showNotification(`User editing for ${userName} is not implemented yet. This feature will be added soon.`, 'info');
         }
 
-        function deleteUser(userName) {
+        async function deleteUser(userName) {
             if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
-                delete users[userName];
-                localStorage.setItem('users', JSON.stringify(users));
-                displayUsers();
-                showNotification(`User "${userName}" has been deleted.`, 'success');
+                try {
+                    delete users[userName];
+                    localStorage.setItem('users', JSON.stringify(users));
+                    
+                    // Update users.json on GitHub
+                    await updateUsersOnGitHub();
+                    
+                    displayUsers();
+                    showNotification(`User "${userName}" has been deleted and users.json updated on GitHub!`, 'success');
+                } catch (error) {
+                    console.error('❌ Error deleting user:', error);
+                    showNotification(`Error deleting user: ${error.message}. The user was removed locally but the GitHub update failed.`, 'error');
+                    displayUsers(); // Still update the display
+                }
             }
         }
 
@@ -1630,14 +1639,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             showNotification(`User editing for ${userName} is not implemented yet. This feature will be added soon.`, 'info');
         }
 
-        function deleteUser(userName) {
-            if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
-                delete users[userName];
-                localStorage.setItem('users', JSON.stringify(users));
-                displayUsers();
-                showNotification(`User "${userName}" has been deleted.`, 'success');
-            }
-        }
+
 
         // Contract form submission
         document.addEventListener('DOMContentLoaded', function() {
@@ -1650,96 +1652,106 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             }
         });
 
-        // Save freelancer
+        // Save user (formerly freelancer)
         async function saveFreelancer() {
-            const freelancerData = {
-                name: document.getElementById('freelancerName').value,
-                email: document.getElementById('freelancerEmail').value,
-                password: null, // Password will be set by freelancer during contract signing
-                role: document.getElementById('freelancerRole').value,
-                location: document.getElementById('freelancerLocation').value,
-                projectStart: document.getElementById('projectStart').value,
-                rate: document.getElementById('freelancerRate').value,
-                approvedDate: document.getElementById('approvedDate').value,
-                contractStatus: 'pending',
-                contractSignedDate: null,
-                contractUploadedDate: null,
-                contractId: null,
-                passwordSet: false // Track if password has been set
+            const userName = document.getElementById('freelancerName').value;
+            const userData = {
+                profile: {
+                    email: document.getElementById('freelancerEmail').value,
+                    password: null, // Password will be set by user during contract signing
+                    role: document.getElementById('freelancerRole').value,
+                    location: document.getElementById('freelancerLocation').value,
+                    projectStart: document.getElementById('projectStart').value,
+                    rate: document.getElementById('freelancerRate').value,
+                    approvedDate: document.getElementById('approvedDate').value
+                },
+                contract: {
+                    contractUrl: "contract.html",
+                    contractStatus: 'pending',
+                    contractSignedDate: null,
+                    contractUploadedDate: null,
+                    contractId: null
+                },
+                jobs: {},
+                primaryJob: null,
+                paymentMethod: null
             };
 
-            if (!freelancerData.name.trim() || !freelancerData.email.trim() || !freelancerData.role.trim()) {
+            if (!userName.trim() || !userData.profile.email.trim() || !userData.profile.role.trim()) {
                 showNotification('Name, email, and role are required', 'error');
                 return;
             }
 
             if (editingFreelancerIndex >= 0) {
-                // Preserve existing contract status and additional data when editing
-                const existingFreelancer = freelancers[editingFreelancerIndex];
-                freelancerData.contractStatus = existingFreelancer.contractStatus || 'pending';
-                freelancerData.contractSignedDate = existingFreelancer.contractSignedDate || null;
-                freelancerData.contractUploadedDate = existingFreelancer.contractUploadedDate || null;
-                freelancerData.contractId = existingFreelancer.contractId || null;
-                freelancerData.jobs = existingFreelancer.jobs || [];
-                freelancerData.primaryJob = existingFreelancer.primaryJob || null;
-                freelancerData.contractUrl = existingFreelancer.contractUrl || "contract.html";
+                // Preserve existing data when editing
+                const existingUser = users[userName];
+                if (existingUser) {
+                    userData.contract = {
+                        ...userData.contract,
+                        ...existingUser.contract
+                    };
+                    userData.jobs = existingUser.jobs || {};
+                    userData.primaryJob = existingUser.primaryJob;
+                    userData.paymentMethod = existingUser.paymentMethod;
+                }
                 
-                freelancers[editingFreelancerIndex] = freelancerData;
+                users[userName] = userData;
                 editingFreelancerIndex = -1;
-                showNotification('Freelancer updated successfully!', 'success');
+                showNotification('User updated successfully!', 'success');
             } else {
-                // Set default values for new freelancers
-                freelancerData.contractUrl = "contract.html";
-                
-                // Automatically create a primary job from the freelancer details
-                const primaryJobId = 'job-' + freelancerData.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+                // Create primary job for new users
+                const primaryJobId = 'job-' + userName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
                 const primaryJob = {
                     id: primaryJobId,
-                    role: freelancerData.role,
-                    location: freelancerData.location,
-                    projectStart: freelancerData.projectStart,
-                    rate: freelancerData.rate,
-                    status: 'upcoming',
-                    projectType: freelancerData.role + ' Project',
-                    description: `Primary assignment for ${freelancerData.name}`
+                    role: userData.profile.role,
+                    location: userData.profile.location,
+                    projectStart: userData.profile.projectStart,
+                    rate: userData.profile.rate,
+                    projectType: userData.profile.role + ' Project',
+                    description: `Primary assignment for ${userName}`,
+                    projectStatus: 'upcoming',
+                    paymentStatus: 'pending',
+                    completionDate: null,
+                    paymentDate: null
                 };
                 
-                freelancerData.jobs = [primaryJob];
-                freelancerData.primaryJob = primaryJobId;
+                userData.jobs[primaryJobId] = primaryJob;
+                userData.primaryJob = primaryJobId;
                 
-                freelancers.push(freelancerData);
+                users[userName] = userData;
                 
-                // Send job acceptance email for new freelancers
-                sendJobAcceptanceEmail(freelancerData);
+                // Send job acceptance email for new users
+                sendJobAcceptanceEmail(userName, userData);
             }
 
-            localStorage.setItem('freelancers', JSON.stringify(freelancers));
+            // Save to localStorage for backup
+            localStorage.setItem('users', JSON.stringify(users));
             
             // Automatically update GitHub
-            await updateFreelancersOnGitHub();
+            await updateUsersOnGitHub();
             
-            displayFreelancers();
+            displayUsers();
             clearContractForm();
         }
 
         // Send job acceptance email
-        async function sendJobAcceptanceEmail(freelancerData) {
+        async function sendJobAcceptanceEmail(userName, userData) {
             try {
                 // Generate contract ID for tracking
                 const contractId = 'CF-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
                 
                 // Prepare email parameters
                 const emailParams = {
-                    to_email: freelancerData.email,
-                    freelancer_name: freelancerData.name || 'Freelancer',
-                    role: freelancerData.role || 'Contractor',
-                    location: freelancerData.location || 'Atlanta Area',
-                    rate: freelancerData.rate || 'Rate to be determined',
-                    project_start: freelancerData.projectStart || 'TBD',
+                    to_email: userData.profile.email,
+                    freelancer_name: userName || 'User',
+                    role: userData.profile.role || 'Contractor',
+                    location: userData.profile.location || 'Atlanta Area',
+                    rate: userData.profile.rate || 'Rate to be determined',
+                    project_start: userData.profile.projectStart || 'TBD',
                     contract_id: contractId
                 };
 
-                console.log('📧 Sending job acceptance email to:', freelancerData.email);
+                console.log('📧 Sending job acceptance email to:', userData.profile.email);
 
                 // Send email using EmailJS
                 if (typeof emailjs !== 'undefined') {
@@ -1753,21 +1765,47 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     
                     // Show success message
                     setTimeout(() => {
-                        showNotification(`🎉 Freelancer approved and email sent!\n\n📧 Email sent to: ${freelancerData.email}\n📄 Contract ID: ${contractId}\n\n✅ The freelancer will receive the job acceptance email with contract signing instructions.`, 'success');
+                        showNotification(`🎉 User approved and email sent!\n\n📧 Email sent to: ${userData.profile.email}\n📄 Contract ID: ${contractId}\n\n✅ The user will receive the job acceptance email with contract signing instructions.`, 'success');
                     }, 1000);
                     
                 } else {
                     console.warn('⚠️ EmailJS not available, skipping email send');
-                    showNotification('✅ Freelancer saved successfully!\n\n⚠️ EmailJS not configured - please set up EmailJS to send automatic job acceptance emails.', 'warning');
+                    showNotification('✅ User saved successfully!\n\n⚠️ EmailJS not configured - please set up EmailJS to send automatic job acceptance emails.', 'warning');
                 }
                 
             } catch (error) {
                 console.error('❌ Error sending job acceptance email:', error);
-                showNotification('✅ Freelancer saved successfully!\n\n⚠️ Email sending failed. Please check EmailJS configuration.', 'warning');
+                showNotification('✅ User saved successfully!\n\n⚠️ Email sending failed. Please check EmailJS configuration.', 'warning');
             }
         }
 
-        // Approve existing freelancer (for freelancers already in the system)
+        // Approve existing user (for users already in the system)
+        async function approveUser(userName) {
+            const userData = users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to approve ${userName}?\n\nThis will send them a job acceptance email with contract signing instructions.`)) {
+                // Update approval date if not set
+                if (!userData.profile.approvedDate) {
+                    userData.profile.approvedDate = new Date().toISOString().split('T')[0];
+                }
+                
+                // Send job acceptance email
+                sendJobAcceptanceEmail(userName, userData);
+                
+                // Save updated user data
+                localStorage.setItem('users', JSON.stringify(users));
+                await updateUsersOnGitHub();
+                displayUsers();
+                
+                showNotification(`✅ ${userName} approved successfully!`, 'success');
+            }
+        }
+
+        // Approve existing freelancer (for freelancers already in the system) - LEGACY
         function approveFreelancer(index) {
             const freelancer = freelancers[index];
             
@@ -2530,7 +2568,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         }
         
         // Update project status for a specific job
-        function updateProjectStatus(userName, jobId, newStatus, paymentStatus = null) {
+        async function updateProjectStatus(userName, jobId, newStatus, paymentStatus = null) {
             if (!users[userName]) {
                 users[userName] = {
                     profile: {},
@@ -2589,10 +2627,14 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 }
             }
             
+            // Save to localStorage
+            localStorage.setItem('users', JSON.stringify(users));
+            
             // Update GitHub
-            updateUsersOnGitHub();
+            await updateUsersOnGitHub();
             
             console.log(`✅ Updated project status for ${userName} - ${jobId}: ${newStatus}`);
+            showNotification(`✅ Project status updated for ${userName} - ${jobId}: ${newStatus}`, 'success');
         }
 
         // ==================== JOB ASSIGNMENT & PAYMENT MANAGEMENT ====================

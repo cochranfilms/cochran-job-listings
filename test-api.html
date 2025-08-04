@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Cochran Films</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255,178,0,0.3);
+        }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        button {
+            background: #FFB200;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 API Test - Cochran Films</h1>
+    
+    <div class="test-section">
+        <h2>📊 Users API Test</h2>
+        <button onclick="testUsersAPI()">Test Users API</button>
+        <div id="usersResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Jobs API Test</h2>
+        <button onclick="testJobsAPI()">Test Jobs API</button>
+        <div id="jobsResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📄 Uploaded Contracts API Test</h2>
+        <button onclick="testContractsAPI()">Test Contracts API</button>
+        <div id="contractsResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔧 Dropdown Options API Test</h2>
+        <button onclick="testDropdownAPI()">Test Dropdown API</button>
+        <div id="dropdownResult"></div>
+    </div>
+
+    <script>
+        async function testUsersAPI() {
+            const resultDiv = document.getElementById('usersResult');
+            resultDiv.innerHTML = '<p class="warning">🔄 Testing Users API...</p>';
+            
+            try {
+                const response = await fetch('/api/users');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Users API working!</p>
+                        <p>Total users: ${data.totalUsers || Object.keys(data.users || {}).length}</p>
+                        <p>Last updated: ${data.lastUpdated}</p>
+                        <details>
+                            <summary>Raw Data</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Users API failed: ${data.error}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Users API error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testJobsAPI() {
+            const resultDiv = document.getElementById('jobsResult');
+            resultDiv.innerHTML = '<p class="warning">🔄 Testing Jobs API...</p>';
+            
+            try {
+                const response = await fetch('/api/jobs-data');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Jobs API working!</p>
+                        <p>Total jobs: ${data.jobs ? data.jobs.length : 0}</p>
+                        <p>Last updated: ${data.lastUpdated}</p>
+                        <details>
+                            <summary>Raw Data</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Jobs API failed: ${data.error}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Jobs API error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testContractsAPI() {
+            const resultDiv = document.getElementById('contractsResult');
+            resultDiv.innerHTML = '<p class="warning">🔄 Testing Contracts API...</p>';
+            
+            try {
+                const response = await fetch('/api/uploaded-contracts');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Contracts API working!</p>
+                        <p>Total contracts: ${data.uploadedContracts ? data.uploadedContracts.length : 0}</p>
+                        <details>
+                            <summary>Raw Data</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Contracts API failed: ${data.error}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Contracts API error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testDropdownAPI() {
+            const resultDiv = document.getElementById('dropdownResult');
+            resultDiv.innerHTML = '<p class="warning">🔄 Testing Dropdown API...</p>';
+            
+            try {
+                const response = await fetch('/api/dropdown-options');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Dropdown API working!</p>
+                        <p>Roles: ${data.roles ? data.roles.length : 0}</p>
+                        <p>Locations: ${data.locations ? data.locations.length : 0}</p>
+                        <p>Rates: ${data.rates ? data.rates.length : 0}</p>
+                        <details>
+                            <summary>Raw Data</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Dropdown API failed: ${data.error}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Dropdown API error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testUsersAPI();
+                setTimeout(() => testJobsAPI(), 500);
+                setTimeout(() => testContractsAPI(), 1000);
+                setTimeout(() => testDropdownAPI(), 1500);
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 
