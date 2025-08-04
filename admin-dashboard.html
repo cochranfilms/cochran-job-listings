@@ -2177,6 +2177,46 @@
             return password;
         }
         
+        // Update users.json on GitHub
+        async function updateUsersOnGitHub() {
+            try {
+                console.log('🔄 Updating users.json on GitHub...');
+                
+                const usersData = {
+                    users: users,
+                    statusOptions: {
+                        projectStatus: ["upcoming", "in-progress", "completed", "cancelled"],
+                        paymentStatus: ["pending", "processing", "paid", "overdue"]
+                    },
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    totalUsers: Object.keys(users).length
+                };
+                
+                const response = await fetch('/api/github/file/users.json', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: JSON.stringify(usersData, null, 2),
+                        message: `Update users.json - Admin dashboard update - ${new Date().toLocaleString()}`
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ users.json updated on GitHub successfully');
+                    return true;
+                } else {
+                    console.error('❌ Failed to update users.json on GitHub:', response.status);
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error('❌ Error updating users.json on GitHub:', error);
+                return false;
+            }
+        }
+        
 
         
         // Validate user data
