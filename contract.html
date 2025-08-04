@@ -913,15 +913,15 @@
                 
                 // Two-column layout for contractor info
                 const leftColumn = [
-                    { label: 'Name:', value: contractData.freelancerName },
-                    { label: 'Role:', value: contractData.role },
-                    { label: 'Location:', value: contractData.location }
+                    { label: 'Name:', value: contractData.freelancerName || 'Not specified' },
+                    { label: 'Role:', value: contractData.role || 'Not specified' },
+                    { label: 'Location:', value: contractData.location || 'Not specified' }
                 ];
                 
                 const rightColumn = [
-                    { label: 'Email:', value: contractData.freelancerEmail },
-                    { label: 'Start Date:', value: contractData.projectStart },
-                    { label: 'Rate:', value: contractData.rate }
+                    { label: 'Email:', value: contractData.freelancerEmail || 'Not specified' },
+                    { label: 'Start Date:', value: contractData.projectStart || 'Not specified' },
+                    { label: 'Rate:', value: contractData.rate || 'Not specified' }
                 ];
                 
                 // Left column
@@ -1386,7 +1386,19 @@
                 // Store freelancer data for both signed and unsigned contracts
                 currentFreelancerData = {
                     name: matchingUser,
-                    ...userData
+                    email: userData.profile?.email,
+                    role: userData.profile?.role,
+                    location: userData.profile?.location,
+                    projectStart: userData.profile?.projectStart,
+                    rate: userData.profile?.rate,
+                    approvedDate: userData.profile?.approvedDate,
+                    contractStatus: userData.contract?.contractStatus,
+                    contractSignedDate: userData.contract?.contractSignedDate,
+                    contractUploadedDate: userData.contract?.contractUploadedDate,
+                    contractId: userData.contract?.contractId,
+                    primaryJob: userData.primaryJob,
+                    jobs: userData.jobs,
+                    paymentMethod: userData.paymentMethod
                 };
                 
                 // Check if contract is already signed/uploaded
