@@ -1,7 +1,24 @@
 {
   "exportDate": "2025-08-04T14:06:06.259Z",
-  "totalContracts": 0,
+  "totalContracts": 1,
   "contracts": [],
-  "uploadedContracts": [],
-  "lastUpdated": "2025-08-04T19:48:52.030Z"
+  "uploadedContracts": [
+    {
+      "contractId": "CF-1754339225224-9X8LJ",
+      "freelancerName": "Thing Four",
+      "freelancerEmail": "clc.collective2025@gmail.com",
+      "role": "Videographer",
+      "rate": "$300/hour",
+      "location": "New York, NY",
+      "fileName": "CF-1754339225224-9X8LJ.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-04T20:27:17.096Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754339225224-9X8LJ.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-04",
+      "signedDate": "2025-08-04"
+    }
+  ],
+  "lastUpdated": "2025-08-04T20:27:17.096Z"
 }
