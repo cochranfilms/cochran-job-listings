@@ -1930,7 +1930,13 @@
 
         // Firebase Management Functions
         function showFirebaseManagement() {
-            const container = document.getElementById('mainContent');
+            const container = document.getElementById('firebase-tab');
+            if (!container) {
+                console.error('❌ Firebase tab container not found');
+                showNotification('Error: Firebase tab not found', 'error');
+                return;
+            }
+            
             container.innerHTML = `
                 <div class="section">
                     <h2><i class="fas fa-fire"></i> Firebase Authentication Management</h2>
@@ -5112,14 +5118,6 @@
             background: rgba(255, 178, 0, 0.3);
             border-color: #FFB200;
             color: white;
-        }
-            background: rgba(255, 178, 0, 0.2);
-            border-color: #FFB200;
-        }
-        
-        .tab-btn.active {
-            background: #FFB200;
-            color: #000;
         }
         
         /* Tab Content */
