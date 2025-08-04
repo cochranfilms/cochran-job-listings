@@ -331,10 +331,7 @@
                     'updated': `🎯 Your job assignments have been updated!`,
                     'assigned': `✅ A new job has been assigned to you!`
                 },
-                'project-status.json': {
-                    'updated': `📊 Your project status has been updated!`,
-                    'payment': `💰 Your payment status has been updated!`
-                },
+
                 'performance.json': {
                     'updated': `⭐ Your performance review has been updated!`,
                     'created': `⭐ A new performance review is available!`
@@ -638,23 +635,7 @@
             }
         }
 
-        // Load project status from JSON file
-        async function loadProjectStatus() {
-            try {
-                const response = await fetch('project-status.json');
-                if (response.ok) {
-                    const jsonData = await response.json();
-                    projectStatus = jsonData.projectStatus || {};
-                    console.log('✅ Project status loaded from JSON file:', Object.keys(projectStatus).length, 'freelancers');
-                } else {
-                    console.warn('⚠️ Could not load project-status.json, using empty object');
-                    projectStatus = {};
-                }
-            } catch (error) {
-                console.error('❌ Error loading project status:', error);
-                projectStatus = {};
-            }
-        }
+
 
         // Load jobs data from JSON file
         async function loadJobsData() {
@@ -754,14 +735,7 @@
             return null;
         }
 
-        // Get user's project status
-        function getUserProjectStatus(userName) {
-            const userProjects = projectStatus[userName];
-            if (userProjects) {
-                return Object.values(userProjects.jobs || {});
-            }
-            return [];
-        }
+
 
         // Handle login
         function handleLogin(event) {
@@ -840,8 +814,7 @@
             const fixedApprovedDate = fixTimezone(currentUser.approvedDate);
             const displayApprovedDate = fixedApprovedDate ? new Date(fixedApprovedDate).toLocaleDateString() : 'Pending';
             
-            // Get user's project status
-            const userProjectStatus = getUserProjectStatus(currentUser.name);
+
             
             container.innerHTML = `
                 <div class="profile-grid">
@@ -889,10 +862,10 @@
                         
                         <div class="job-selector">
                             ${userJobs.map((job, index) => {
-                                // Get project status from project-status.json
-                                const projectData = userProjectStatus.find(p => p.id === job.id);
-                                const projectStatus = projectData ? projectData.projectStatus : 'upcoming';
-                                const paymentStatus = projectData ? projectData.paymentStatus : 'pending';
+                                // Get project status from users data
+                                const userJob = currentUser.jobs[job.id];
+                                const projectStatus = userJob ? userJob.projectStatus : 'upcoming';
+                                const paymentStatus = userJob ? userJob.paymentStatus : 'pending';
                                 
                                 return `
                                 <div class="job-option ${job.id === primaryJobId ? 'active' : ''}" onclick="selectJob(${index}, '${job.id}')">
@@ -997,7 +970,6 @@
             Promise.all([
                 loadUploadedContracts(),
                 loadUsersData(),
-                loadProjectStatus(),
                 loadJobsData(),
                 loadPerformanceReviews()
             ]).then(() => {
@@ -1146,32 +1118,11 @@
                 return;
             }
 
-            // Load project status data
-            loadProjectStatus().then(() => {
-                displayJobsWithStatus();
-            }).catch(error => {
-                console.error('❌ Error loading project status:', error);
-                displayJobsWithStatus();
-            });
+            // Display jobs with status (now using users data directly)
+            displayJobsWithStatus();
         }
 
-        // Load project status from JSON file
-        async function loadProjectStatus() {
-            try {
-                const response = await fetch('project-status.json');
-                if (response.ok) {
-                    const jsonData = await response.json();
-                    window.projectStatus = jsonData.projectStatus || {};
-                    console.log('✅ Project status loaded:', Object.keys(window.projectStatus).length, 'users');
-                } else {
-                    console.warn('⚠️ Could not load project-status.json, using empty object');
-                    window.projectStatus = {};
-                }
-            } catch (error) {
-                console.error('❌ Error loading project status:', error);
-                window.projectStatus = {};
-            }
-        }
+
 
         // Display jobs with project status
         function displayJobsWithStatus() {
@@ -1189,9 +1140,12 @@
                 return;
             }
 
-            // Get project status for this job
-            const userProjectStatus = window.projectStatus[currentUser.name] || { jobs: {} };
-            const jobProjectStatus = userProjectStatus.jobs[selectedJob.id] || {
+            // Get project status for this job from users data (not project-status.json)
+            const userJob = currentUser.jobs[selectedJob.id];
+            const jobProjectStatus = userJob ? {
+                projectStatus: userJob.projectStatus || 'upcoming',
+                paymentStatus: userJob.paymentStatus || 'pending'
+            } : {
                 projectStatus: 'upcoming',
                 paymentStatus: 'pending'
             };
@@ -1364,20 +1318,19 @@
             `;
         }
 
-        // Helper function to determine job status (connected to project-status.json)
+        // Helper function to determine job status (connected to users.json)
         function getJobStatus(projectStart) {
             if (!currentUser) return 'PENDING';
             
-            // Get project status from project-status.json for selected job
+            // Get project status from users data for selected job
             const selectedJob = getSelectedJob();
             if (!selectedJob) return 'PENDING';
             
-            const userProjectStatus = getUserProjectStatus(currentUser.name);
-            const projectData = userProjectStatus.find(p => p.id === selectedJob.id);
-            
-            if (projectData) {
-                // Use project status from JSON
-                switch (projectData.projectStatus) {
+            // Get job data from current user's jobs
+            const userJob = currentUser.jobs[selectedJob.id];
+            if (userJob && userJob.projectStatus) {
+                // Use project status from users.json
+                switch (userJob.projectStatus) {
                     case 'upcoming': return 'UPCOMING';
                     case 'in-progress': return 'ACTIVE';
                     case 'completed': return 'COMPLETED';
@@ -1441,12 +1394,11 @@
             const userContract = getUserContractStatus(currentUser.email);
             const contractSigned = userContract ? true : (currentUser.contractStatus === 'uploaded');
             
-            // Get project status from project-status.json
-            const userProjectStatus = getUserProjectStatus(currentUser.name);
+            // Get project status from users data
             const selectedJob = getSelectedJob();
-            const projectData = selectedJob ? userProjectStatus.find(p => p.id === selectedJob.id) : null;
-            const projectStatus = projectData ? projectData.projectStatus : 'upcoming';
-            const paymentStatus = projectData ? projectData.paymentStatus : currentUser.paymentStatus || 'pending';
+            const userJob = selectedJob ? currentUser.jobs[selectedJob.id] : null;
+            const projectStatus = userJob ? userJob.projectStatus : 'upcoming';
+            const paymentStatus = userJob ? userJob.paymentStatus : (currentUser.paymentStatus || 'pending');
             
             // Get job data from jobs-data.json
             const jobData = jobsData.find(job => job.id === selectedJob?.id);
@@ -1468,7 +1420,7 @@
             console.log('📊 Timeline Data Sources:', {
                 userContract: userContract,
                 contractSigned: contractSigned,
-                projectData: projectData,
+                userJob: userJob,
                 projectStatus: projectStatus,
                 paymentStatus: paymentStatus,
                 jobData: jobData,
@@ -1836,8 +1788,13 @@
                 
                 // Find and update the user's payment method
                 let userFound = false;
+                console.log('🔍 Looking for user with email:', email);
+                console.log('📋 Available users:', Object.keys(users));
+                
                 for (const [name, user] of Object.entries(users)) {
-                    if (user.profile?.email === email) {
+                    console.log(`🔍 Checking user "${name}" with email: "${user.profile?.email}"`);
+                    if (user.profile?.email && user.profile.email.toLowerCase() === email.toLowerCase()) {
+                        console.log(`✅ Found user "${name}" with matching email`);
                         user.paymentMethod = paymentMethod;
                         user.paymentStatus = 'configured'; // Mark payment method as configured
                         userFound = true;
@@ -2344,7 +2301,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             console.log('🔄 Refreshing user data...');
             await loadUploadedContracts();
             await loadUsersData();
-            await loadProjectStatus();
             await loadJobsData();
             await loadPerformanceReviews();
             
@@ -2378,7 +2334,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             
             await loadUploadedContracts();
             await loadUsersData();
-            await loadProjectStatus();
             await loadJobsData();
             await loadPerformanceReviews();
             checkAuth();
