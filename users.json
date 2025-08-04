@@ -26,15 +26,14 @@
           "rate": "$125/hour",
           "projectType": "Videographer Project",
           "description": "Primary assignment for Test Final",
-          "projectStatus": "upcoming",
+          "projectStatus": "completed",
           "paymentStatus": "pending",
           "completionDate": null,
           "paymentDate": null
         }
       },
       "primaryJob": "job-test-final-1754298013800",
-      "paymentMethod": "paypal",
-      "paymentStatus": "configured"
+      "paymentMethod": null
     }
   },
   "statusOptions": {
