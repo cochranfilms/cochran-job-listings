@@ -1170,7 +1170,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
 
         // Show performance review list
         function showPerformanceReviewList() {
-            const pendingReviews = freelancers.filter(freelancer => shouldShowPerformanceReview(freelancer));
+            const pendingReviews = Object.values(users).filter(userData => shouldShowPerformanceReview(userData));
             
             const modal = document.createElement('div');
             modal.style.cssText = `
@@ -1196,16 +1196,16 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                     
                     <div style="margin-bottom: 1.5rem;">
                         <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
-                            The following freelancers have completed paid projects and need performance reviews:
+                            The following users have completed paid projects and need performance reviews:
                         </p>
-                        ${pendingReviews.map(freelancer => `
+                        ${pendingReviews.map(userData => `
                             <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div>
-                                        <h4 style="color: #FFB200; margin: 0 0 0.5rem 0;">${freelancer.name}</h4>
-                                        <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.9rem;">${freelancer.email}</p>
+                                        <h4 style="color: #FFB200; margin: 0 0 0.5rem 0;">${Object.keys(users).find(key => users[key] === userData)}</h4>
+                                        <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.9rem;">${userData.profile?.email || 'No email'}</p>
                                     </div>
-                                    <button onclick="showPerformanceReviewModal('${freelancer.name}'); closeModal(this);" 
+                                    <button onclick="showPerformanceReviewModal('${Object.keys(users).find(key => users[key] === userData)}'); closeModal(this);" 
                                             style="background: #FFB200; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600;">
                                         Review Now
                                     </button>
@@ -2964,6 +2964,16 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 await updateUsersOnGitHub();
                 console.log('✅ GitHub update successful');
                 showNotification(`✅ Payment status updated for ${userName}!\nStatus: ${paymentStatus}`, 'success');
+                
+                // Add performance review notification if payment status is "paid"
+                if (paymentStatus === 'paid') {
+                    addNotification(
+                        'Performance Review Needed',
+                        `${userName} has completed a paid project and needs a performance review.`,
+                        'performance'
+                    );
+                    showNotification(`⭐ Performance review notification added for ${userName}`, 'info');
+                }
             } catch (error) {
                 console.error('❌ Error updating GitHub:', error);
                 showNotification(`⚠️ Payment status saved locally but GitHub update failed: ${error.message}`, 'warning');
@@ -3152,6 +3162,18 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             if (session === 'true') {
                 isAuthenticated = true;
                 showAdminInterface();
+                
+                // Initialize notification system
+                updateNotificationBadge();
+                
+                // Close notification dropdown when clicking outside
+                document.addEventListener('click', function(event) {
+                    const container = document.querySelector('.notification-container');
+                    const dropdown = document.getElementById('notificationDropdown');
+                    if (container && dropdown && !container.contains(event.target)) {
+                        dropdown.style.display = 'none';
+                    }
+                });
             }
         });
 
@@ -3318,6 +3340,102 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
         // Replace all alert() calls with professional notifications
         function showAlert(message, type = 'info') {
             showNotification(message, type);
+        }
+
+        // ==================== BELL NOTIFICATION SYSTEM ====================
+        
+        // Notification System
+        let notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+        
+        function addNotification(title, message, type = 'info') {
+            const notification = {
+                id: Date.now() + Math.random(),
+                title: title,
+                message: message,
+                type: type,
+                timestamp: new Date().toISOString(),
+                read: false
+            };
+            
+            notifications.unshift(notification);
+            localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+            updateNotificationBadge();
+            updateNotificationList();
+        }
+        
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                const unreadCount = notifications.filter(n => !n.read).length;
+                badge.textContent = unreadCount;
+                badge.style.display = unreadCount > 0 ? 'block' : 'none';
+            }
+        }
+        
+        function updateNotificationList() {
+            const list = document.getElementById('notificationList');
+            if (!list) return;
+            
+            if (notifications.length === 0) {
+                list.innerHTML = `
+                    <div class="no-notifications">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No notifications</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = notifications.map(notification => `
+                <div class="notification-item ${notification.read ? 'read' : 'unread'}" onclick="markAsRead(${notification.id})">
+                    <div class="notification-title">
+                        <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
+                        ${notification.title}
+                    </div>
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time">${formatNotificationTime(notification.timestamp)}</div>
+                </div>
+            `).join('');
+        }
+        
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                updateNotificationList();
+            }
+        }
+        
+        function markAsRead(notificationId) {
+            const notification = notifications.find(n => n.id === notificationId);
+            if (notification) {
+                notification.read = true;
+                localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+                updateNotificationBadge();
+                updateNotificationList();
+            }
+        }
+        
+        function clearAllNotifications() {
+            notifications = [];
+            localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+            updateNotificationBadge();
+            updateNotificationList();
+        }
+        
+        function formatNotificationTime(timestamp) {
+            const now = new Date();
+            const notificationTime = new Date(timestamp);
+            const diffMs = now - notificationTime;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return notificationTime.toLocaleDateString();
         }
 
         // ==================== MODAL MANAGEMENT ====================
@@ -3946,6 +4064,58 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             margin-top: 1rem;
             white-space: pre-wrap;
         }
+        
+        /* Notification System Styles */
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,178,0,0.1);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .notification-item:hover {
+            background: rgba(255,178,0,0.05);
+        }
+        
+        .notification-item.unread {
+            background: rgba(255,178,0,0.1);
+        }
+        
+        .notification-item.read {
+            opacity: 0.7;
+        }
+        
+        .notification-title {
+            font-weight: bold;
+            color: #FFB200;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .notification-message {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .notification-time {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+        }
+        
+        .no-notifications {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .no-notifications i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -3980,10 +4150,84 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             <a href="#" class="logout-btn" onclick="logout()">🚪 Logout</a>
             <h1>⚙️ Admin Dashboard</h1>
             <p>Cochran Films - Central Management System</p>
-            <div style="margin-top: 1rem;">
-                <a href="https://collaborate.cochranfilms.com" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">📋 Job Listings</a>
-                <a href="contract.html" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">🔐 Contract Access</a>
-                <a href="user-portal.html" style="color: #FFB200; text-decoration: none; font-weight: 600;">👤 User Portal</a>
+            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <a href="https://collaborate.cochranfilms.com" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">📋 Job Listings</a>
+                    <a href="contract.html" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">🔐 Contract Access</a>
+                    <a href="user-portal.html" style="color: #FFB200; text-decoration: none; font-weight: 600;">👤 User Portal</a>
+                </div>
+                
+                <!-- Bell Notification System -->
+                <div class="notification-container" style="position: relative;">
+                    <button onclick="toggleNotifications()" style="
+                        background: rgba(255,178,0,0.1);
+                        border: 1px solid rgba(255,178,0,0.3);
+                        color: #FFB200;
+                        padding: 0.5rem;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        position: relative;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.2rem;
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.background='rgba(255,178,0,0.2)'" onmouseout="this.style.background='rgba(255,178,0,0.1)'">
+                        🔔
+                        <span id="notificationBadge" style="
+                            position: absolute;
+                            top: -5px;
+                            right: -5px;
+                            background: #ef4444;
+                            color: white;
+                            border-radius: 50%;
+                            width: 20px;
+                            height: 20px;
+                            display: none;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 0.7rem;
+                            font-weight: bold;
+                        ">0</span>
+                    </button>
+                    
+                    <div id="notificationDropdown" style="
+                        position: absolute;
+                        top: 100%;
+                        right: 0;
+                        width: 350px;
+                        max-height: 400px;
+                        overflow-y: auto;
+                        background: #1a1a1a;
+                        border: 1px solid rgba(255,178,0,0.3);
+                        border-radius: 12px;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                        z-index: 1000;
+                        display: none;
+                        margin-top: 0.5rem;
+                    ">
+                        <div style="
+                            padding: 1rem;
+                            border-bottom: 1px solid rgba(255,178,0,0.2);
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        ">
+                            <h3 style="color: #FFB200; margin: 0; font-size: 1rem;">Notifications</h3>
+                            <button onclick="clearAllNotifications()" style="
+                                background: none;
+                                border: none;
+                                color: #FFB200;
+                                cursor: pointer;
+                                font-size: 0.8rem;
+                                text-decoration: underline;
+                            ">Clear All</button>
+                        </div>
+                        <div id="notificationList" style="padding: 0.5rem;"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
