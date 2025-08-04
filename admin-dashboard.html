@@ -3709,14 +3709,24 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             padding: 2rem;
             border-radius: 16px;
             margin: 2rem;
-            text-align: center;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255,178,0,0.2);
             position: relative;
             z-index: 2;
         }
         
-        .header h1 {
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 2rem;
+        }
+        
+        .header-left {
+            flex: 1;
+        }
+        
+        .header-left h1 {
             font-family: 'Cinzel', serif;
             font-size: 2.5rem;
             font-weight: 700;
@@ -3725,29 +3735,222 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             text-shadow: 0 2px 10px rgba(255,178,0,0.3);
         }
         
-        .header p {
+        .header-left p {
             color: rgba(255,255,255,0.8);
             font-size: 1.1rem;
+            margin: 0;
         }
         
-        .logout-btn {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .quick-links {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             background: rgba(255,255,255,0.1);
             color: white;
             border: 1px solid rgba(255,255,255,0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
             font-size: 0.9rem;
+            font-weight: 500;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
+            text-decoration: none;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: #FFB200;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255,178,0,0.2);
+        }
+        
+        .link-btn {
+            background: rgba(255, 178, 0, 0.1);
+            border-color: rgba(255, 178, 0, 0.3);
+            color: #FFB200;
+        }
+        
+        .link-btn:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: #FFB200;
+        }
+        
+        .notification-bell {
+            background: rgba(255, 178, 0, 0.1);
+            border-color: rgba(255, 178, 0, 0.3);
+            color: #FFB200;
+        }
+        
+        .notification-bell:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: #FFB200;
+        }
+        
+        /* Notification System Styles */
+        .notification-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 350px;
+            max-height: 400px;
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            margin-top: 0.5rem;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .notification-header h3 {
+            color: #FFB200;
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .clear-all-btn {
+            background: none;
+            border: none;
+            color: #FFB200;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        .clear-all-btn:hover {
+            background: rgba(255, 178, 0, 0.1);
+        }
+
+        .notification-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 178, 0, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .notification-item:hover {
+            background: rgba(255, 178, 0, 0.05);
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .no-notifications {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .no-notifications i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
         }
         
         .logout-btn:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: #FFB200;
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .header-top {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .header-left h1 {
+                font-size: 2rem;
+            }
+            
+            .header-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .quick-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-left h1 {
+                font-size: 1.8rem;
+            }
+            
+            .action-btn {
+                padding: 0.6rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            
+            .action-btn span {
+                display: none;
+            }
+            
+            .quick-links {
+                gap: 0.25rem;
+            }
         }
         
         /* Tab Navigation */
@@ -4147,85 +4350,49 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
     <!-- Main Admin Interface -->
     <div id="adminInterface" class="admin-interface">
         <div class="header">
-            <a href="#" class="logout-btn" onclick="logout()">🚪 Logout</a>
-            <h1>⚙️ Admin Dashboard</h1>
-            <p>Cochran Films - Central Management System</p>
-            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <a href="https://collaborate.cochranfilms.com" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">📋 Job Listings</a>
-                    <a href="contract.html" style="color: #FFB200; text-decoration: none; font-weight: 600; margin-right: 1rem;">🔐 Contract Access</a>
-                    <a href="user-portal.html" style="color: #FFB200; text-decoration: none; font-weight: 600;">👤 User Portal</a>
+            <!-- Modern Header Layout -->
+            <div class="header-top">
+                <div class="header-left">
+                    <h1><i class="fas fa-cogs"></i> Admin Dashboard</h1>
+                    <p>Cochran Films - Central Management System</p>
                 </div>
-                
-                <!-- Bell Notification System -->
-                <div class="notification-container" style="position: relative;">
-                    <button onclick="toggleNotifications()" style="
-                        background: rgba(255,178,0,0.1);
-                        border: 1px solid rgba(255,178,0,0.3);
-                        color: #FFB200;
-                        padding: 0.5rem;
-                        border-radius: 50%;
-                        cursor: pointer;
-                        position: relative;
-                        width: 40px;
-                        height: 40px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 1.2rem;
-                        transition: all 0.3s ease;
-                    " onmouseover="this.style.background='rgba(255,178,0,0.2)'" onmouseout="this.style.background='rgba(255,178,0,0.1)'">
-                        🔔
-                        <span id="notificationBadge" style="
-                            position: absolute;
-                            top: -5px;
-                            right: -5px;
-                            background: #ef4444;
-                            color: white;
-                            border-radius: 50%;
-                            width: 20px;
-                            height: 20px;
-                            display: none;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 0.7rem;
-                            font-weight: bold;
-                        ">0</span>
-                    </button>
-                    
-                    <div id="notificationDropdown" style="
-                        position: absolute;
-                        top: 100%;
-                        right: 0;
-                        width: 350px;
-                        max-height: 400px;
-                        overflow-y: auto;
-                        background: #1a1a1a;
-                        border: 1px solid rgba(255,178,0,0.3);
-                        border-radius: 12px;
-                        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-                        z-index: 1000;
-                        display: none;
-                        margin-top: 0.5rem;
-                    ">
-                        <div style="
-                            padding: 1rem;
-                            border-bottom: 1px solid rgba(255,178,0,0.2);
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                        ">
-                            <h3 style="color: #FFB200; margin: 0; font-size: 1rem;">Notifications</h3>
-                            <button onclick="clearAllNotifications()" style="
-                                background: none;
-                                border: none;
-                                color: #FFB200;
-                                cursor: pointer;
-                                font-size: 0.8rem;
-                                text-decoration: underline;
-                            ">Clear All</button>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <div class="quick-links">
+                            <a href="https://collaborate.cochranfilms.com" class="action-btn link-btn">
+                                <i class="fas fa-list"></i>
+                                <span>Job Listings</span>
+                            </a>
+                            <a href="contract.html" class="action-btn link-btn">
+                                <i class="fas fa-file-contract"></i>
+                                <span>Contracts</span>
+                            </a>
+                            <a href="user-portal.html" class="action-btn link-btn">
+                                <i class="fas fa-users"></i>
+                                <span>User Portal</span>
+                            </a>
                         </div>
-                        <div id="notificationList" style="padding: 0.5rem;"></div>
+                        
+                        <div class="notification-container">
+                            <button class="action-btn notification-bell" onclick="toggleNotifications()" id="notificationBell">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                            </button>
+                            <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
+                                <div class="notification-header">
+                                    <h3><i class="fas fa-bell"></i> Notifications</h3>
+                                    <button onclick="clearAllNotifications()" class="clear-all-btn">
+                                        <i class="fas fa-trash"></i> Clear All
+                                    </button>
+                                </div>
+                                <div class="notification-list" id="notificationList"></div>
+                            </div>
+                        </div>
+                        
+                        <button class="action-btn logout-btn" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </button>
                     </div>
                 </div>
             </div>
