@@ -1,0 +1,40 @@
+{
+  "roles": [
+    "Photographer",
+    "Videographer",
+    "Editor",
+    "Assistant",
+    "Producer",
+    "Director"
+  ],
+  "locations": [
+    "Los Angeles, CA",
+    "New York, NY",
+    "Miami, FL",
+    "Chicago, IL",
+    "Atlanta, GA",
+    "San Francisco, CA"
+  ],
+  "rates": [
+    "$50/hour",
+    "$75/hour",
+    "$100/hour",
+    "$125/hour",
+    "$150/hour",
+    "$200/hour",
+    "$250/hour",
+    "$300/hour"
+  ],
+  "projectTypes": [
+    "Wedding Photography",
+    "Corporate Event",
+    "Product Photography",
+    "Real Estate",
+    "Fashion Shoot",
+    "Portrait Session",
+    "Event Coverage",
+    "Commercial Video",
+    "Music Video",
+    "Documentary"
+  ]
+} 

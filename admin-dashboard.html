@@ -707,7 +707,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             console.log('✅ Total freelancers loaded:', freelancers.length);
             
             // Load and populate dropdown options
-            loadDropdownOptions();
+            await loadDropdownOptions();
             
             // Populate freelancer dropdowns
             populateFreelancerDropdowns();
@@ -753,13 +753,28 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             console.log('👥 Populated freelancer dropdowns with', freelancers.length, 'options');
         }
 
-        // Load dropdown options from localStorage or use defaults
-        function loadDropdownOptions() {
-            const savedOptions = localStorage.getItem('adminDropdownOptions');
-            if (savedOptions) {
-                window.dropdownOptions = JSON.parse(savedOptions);
-                console.log('📋 Loaded dropdown options from localStorage:', window.dropdownOptions);
-            } else {
+        // Load dropdown options from API or use defaults
+        async function loadDropdownOptions() {
+            try {
+                const response = await fetch('/api/dropdown-options');
+                if (response.ok) {
+                    window.dropdownOptions = await response.json();
+                    console.log('📋 Loaded dropdown options from API:', window.dropdownOptions);
+                } else {
+                    // Initialize with default options if API fails
+                    window.dropdownOptions = {
+                        roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Photographer', 'Full Stack Designer', 'Video Editor', 'Corporate Videographer'],
+                        locations: ['6695 Church Street, Douglasville, GA 30134', 'Sandy Springs, GA', 'Douglasville, GA', 'Atlanta, GA', 'Atlanta Area'],
+                        rates: ['$400.00 USD (Flat)', '$450.00 USD (Flat)', '$500.00 USD (Flat)', '$750.00 USD (Flat)', '$900.00 USD (Flat)', '$150/day', '$200/day'],
+                        projectTypes: ['Photography', 'Video', 'Editor Project', 'Corporate Video', 'Event Coverage', 'Product Photography', 'Real Estate', 'Wedding', 'Commercial'],
+                        paymentMethods: ['Cash', 'Check', 'Zelle', 'PayPal', 'Invoice Request'],
+                        projectStatuses: ['upcoming', 'in-progress', 'completed', 'cancelled'],
+                        paymentStatuses: ['pending', 'processing', 'paid', 'overdue']
+                    };
+                    console.log('📋 Initialized default dropdown options (API failed):', window.dropdownOptions);
+                }
+            } catch (error) {
+                console.error('❌ Error loading dropdown options from API:', error);
                 // Initialize with default options
                 window.dropdownOptions = {
                     roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Photographer', 'Full Stack Designer', 'Video Editor', 'Corporate Videographer'],
@@ -770,7 +785,7 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
                     projectStatuses: ['upcoming', 'in-progress', 'completed', 'cancelled'],
                     paymentStatuses: ['pending', 'processing', 'paid', 'overdue']
                 };
-                console.log('📋 Initialized default dropdown options:', window.dropdownOptions);
+                console.log('📋 Initialized default dropdown options (error):', window.dropdownOptions);
             }
             
             // Populate the management interface
@@ -951,12 +966,50 @@ ${contract.notes ? `📝 NOTES:\n${contract.notes}\n\n` : ''}━━━━━━�
             }
         }
         
-        // Save dropdown options to localStorage
-        function saveDropdownOptions() {
-            if (window.dropdownOptions) {
-                localStorage.setItem('adminDropdownOptions', JSON.stringify(window.dropdownOptions));
-                console.log('✅ Saved dropdown options to localStorage');
-                alert('✅ Dropdown options saved successfully!');
+        // Save dropdown options to GitHub API
+        async function saveDropdownOptions() {
+            if (!window.dropdownOptions) {
+                alert('❌ No dropdown options to save.');
+                return;
+            }
+            
+            try {
+                console.log('🔄 Saving dropdown options to GitHub via server...');
+                
+                // Get current SHA for the file
+                const shaResponse = await fetch('/api/github/info');
+                if (!shaResponse.ok) {
+                    throw new Error('Failed to get GitHub info');
+                }
+                
+                const shaData = await shaResponse.json();
+                const currentSha = shaData.sha;
+                
+                console.log('🔍 Retrieved current SHA:', currentSha);
+                
+                // Update the file on GitHub
+                const updateResponse = await fetch('/api/github/file/dropdown-options.json', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'Update dropdown options via admin dashboard',
+                        content: btoa(JSON.stringify(window.dropdownOptions, null, 2)),
+                        sha: currentSha
+                    })
+                });
+                
+                if (updateResponse.ok) {
+                    console.log('✅ Successfully saved dropdown options to GitHub');
+                    alert('✅ Dropdown options saved successfully to GitHub!');
+                } else {
+                    const errorData = await updateResponse.json();
+                    throw new Error(`GitHub API error: ${errorData.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('❌ Error saving dropdown options:', error);
+                alert(`❌ Failed to save dropdown options: ${error.message}`);
             }
         }
         
