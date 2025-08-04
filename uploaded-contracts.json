@@ -1,6 +1,6 @@
 {
-  "exportDate": "2025-08-04T08:53:39.845Z",
-  "totalContracts": 3,
+  "exportDate": "2025-08-04T08:55:14.235Z",
+  "totalContracts": 2,
   "contracts": [
     {
       "contractId": "CF-1754286223831-CLLKM",
@@ -27,20 +27,6 @@
       "fileName": "CF-1754286996882-AJ0OM.pdf",
       "fileSize": 0,
       "uploadDate": "2025-08-04T05:56:48.810Z",
-      "status": "uploaded"
-    },
-    {
-      "contractId": "CF-1754296164959-6MNPE",
-      "freelancerName": "Cody Cochran",
-      "freelancerEmail": "codylcochran87@gmail.com",
-      "role": "Assistant",
-      "rate": "$150/hour",
-      "location": "Atlanta, GA",
-      "contractDate": "2025-08-04",
-      "notes": "Automatically uploaded via contract signing",
-      "fileName": "CF-1754296164959-6MNPE.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T08:29:36.685Z",
       "status": "uploaded"
     }
   ]
