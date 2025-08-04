@@ -2931,23 +2931,15 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                 return;
             }
             
-            const paymentMethod = document.getElementById(`paymentMethod_${userName}`).value;
             const paymentStatus = document.getElementById(`paymentStatus_${userName}`).value;
             
-            if (!paymentMethod) {
-                showNotification('Please select a payment method', 'warning');
-                return;
-            }
-            
-            // Update user's payment settings
-            userData.paymentMethod = paymentMethod;
+            // Update user's payment status (payment method is read-only, set by user)
             userData.paymentStatus = paymentStatus;
             
             // Update all jobs for this user
             if (userData.jobs) {
                 Object.values(userData.jobs).forEach(job => {
                     job.paymentStatus = paymentStatus;
-                    job.paymentMethod = paymentMethod;
                 });
             }
             
@@ -2957,7 +2949,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
             // Update GitHub
             await updateUsersOnGitHub();
             
-            showNotification(`✅ Payment settings updated for ${userName}!\nMethod: ${paymentMethod}\nStatus: ${paymentStatus}`, 'success');
+            showNotification(`✅ Payment status updated for ${userName}!\nStatus: ${paymentStatus}`, 'success');
             
             // Refresh the display
             displayUsers();
@@ -3077,14 +3069,7 @@ ${contract.notes ? '📝 NOTES:\n' + contract.notes + '\n\n' : ''}━━━━�
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                             <div>
                                 <label style="color: #FFB200; font-weight: bold;">Payment Method:</label>
-                                <select id="paymentMethod_${freelancerName}" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
-                                    <option value="">Select payment method</option>
-                                    <option value="cash" ${userData?.paymentMethod === 'cash' ? 'selected' : ''}>Cash</option>
-                                    <option value="check" ${userData?.paymentMethod === 'check' ? 'selected' : ''}>Check</option>
-                                    <option value="zelle" ${userData?.paymentMethod === 'zelle' ? 'selected' : ''}>Zelle</option>
-                                    <option value="paypal" ${userData?.paymentMethod === 'paypal' ? 'selected' : ''}>PayPal</option>
-                                    <option value="invoice" ${userData?.paymentMethod === 'invoice' ? 'selected' : ''}>Invoice Request</option>
-                                </select>
+                                <input type="text" id="paymentMethod_${freelancerName}" value="${userData?.paymentMethod ? userData.paymentMethod.charAt(0).toUpperCase() + userData.paymentMethod.slice(1) : 'Not Set'}" readonly style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid #FFB200; color: white; border-radius: 4px; cursor: not-allowed;">
                             </div>
                             <div>
                                 <label style="color: #FFB200; font-weight: bold;">Payment Status:</label>
