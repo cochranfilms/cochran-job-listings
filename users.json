@@ -3,7 +3,7 @@
     "Cody Cochran": {
       "profile": {
         "email": "codylcochran87@gmail.com",
-        "password": null,
+        "password": "cody1234",
         "role": "Assistant",
         "location": "Atlanta, GA",
         "projectStart": "2025-10-10T20:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 4:29:24 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754296164959-6MNPE"
       },
       "jobs": {
         "job-cody-cochran-1754296113828": {
