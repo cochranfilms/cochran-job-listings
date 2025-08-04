@@ -15,6 +15,9 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Performance Data Script -->
+    <script src="performance-data.js"></script>
+    
     <script>
         let currentUser = null;
         let users = [];
@@ -36,12 +39,51 @@
                     console.log('📋 Performance reviews data:', performanceReviews);
                     console.log('🔍 Available email keys:', Object.keys(performanceReviews));
                 } else {
-                    console.warn('⚠️ Could not load performance reviews from API, using empty object');
-                    performanceReviews = {};
+                    console.warn('⚠️ Could not load performance reviews from API, trying fallback...');
+                    // Try to load directly from performance.json file
+                    try {
+                        const fallbackResponse = await fetch('/performance.json');
+                        if (fallbackResponse.ok) {
+                            const fallbackData = await fallbackResponse.json();
+                            performanceReviews = fallbackData.performanceReviews || {};
+                            console.log('✅ Performance reviews loaded from fallback JSON:', Object.keys(performanceReviews).length, 'reviews');
+                        } else {
+                            console.warn('⚠️ Fallback also failed, using empty object');
+                            performanceReviews = {};
+                        }
+                                    } catch (fallbackError) {
+                    console.error('❌ Fallback error:', fallbackError);
+                    // Try embedded data as final fallback
+                    if (window.performanceData && window.performanceData.performanceReviews) {
+                        performanceReviews = window.performanceData.performanceReviews;
+                        console.log('✅ Performance reviews loaded from embedded data:', Object.keys(performanceReviews).length, 'reviews');
+                    } else {
+                        performanceReviews = {};
+                    }
+                }
                 }
             } catch (error) {
                 console.error('❌ Error loading performance reviews:', error);
-                performanceReviews = {};
+                // Try fallback
+                try {
+                    const fallbackResponse = await fetch('/performance.json');
+                    if (fallbackResponse.ok) {
+                        const fallbackData = await fallbackResponse.json();
+                        performanceReviews = fallbackData.performanceReviews || {};
+                        console.log('✅ Performance reviews loaded from fallback JSON:', Object.keys(performanceReviews).length, 'reviews');
+                    } else {
+                        performanceReviews = {};
+                    }
+                } catch (fallbackError) {
+                    console.error('❌ Fallback error:', fallbackError);
+                    // Try embedded data as final fallback
+                    if (window.performanceData && window.performanceData.performanceReviews) {
+                        performanceReviews = window.performanceData.performanceReviews;
+                        console.log('✅ Performance reviews loaded from embedded data:', Object.keys(performanceReviews).length, 'reviews');
+                    } else {
+                        performanceReviews = {};
+                    }
+                }
             }
         }
 
