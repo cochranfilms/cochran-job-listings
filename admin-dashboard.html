@@ -204,18 +204,19 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
+            // Show loading state
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Signing in...';
+            submitBtn.disabled = true;
+            
             try {
-                // Show loading state
-                const submitBtn = event.target.querySelector('button[type="submit"]');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Signing in...';
-                submitBtn.disabled = true;
                 
                 // Firebase authentication
                 const userCredential = await auth.signInWithEmailAndPassword(username, password);
                 
                 // Check if user is admin (you can customize this logic)
-                if (userCredential.user.email === 'admin@cochranfilms.com' || username === 'admin') {
+                if (userCredential.user.email === 'admin@cochranfilms.com' || userCredential.user.email === username) {
                     sessionStorage.setItem('adminDashboardAuthenticated', 'true');
                     sessionStorage.setItem('adminUser', JSON.stringify({
                         email: userCredential.user.email,
@@ -5328,8 +5329,8 @@
             
             <form class="login-form" id="loginForm">
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" value="admin" readonly style="background: rgba(255,255,255,0.1);">
+                    <label for="username">Email</label>
+                    <input type="email" id="username" name="username" placeholder="Enter your email address" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
