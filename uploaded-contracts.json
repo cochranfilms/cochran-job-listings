@@ -1,60 +1,24 @@
 {
-  "exportDate": "2025-08-04T08:45:31.323Z",
-  "totalContracts": 4,
-  "contracts": [
+  "exportDate": "2025-08-04T08:57:17.368Z",
+  "totalContracts": 1,
+  "contracts": [],
+  "uploadedContracts": [
     {
-      "contractId": "CF-1754285962387-2JGYM",
-      "freelancerName": "Testing Again",
-      "role": "Contractor",
-      "rate": "Not specified",
-      "location": "Atlanta Area",
-      "contractDate": "2025-08-04",
-      "notes": "Automatically uploaded via contract signing",
-      "fileName": "CF-1754285962387-2JGYM.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T05:39:27.615Z",
-      "status": "uploaded"
-    },
-    {
-      "contractId": "CF-1754286223831-CLLKM",
-      "freelancerName": "Dede Jackson",
-      "role": "Contractor",
-      "rate": "Not specified",
-      "location": "Atlanta Area",
-      "contractDate": "2025-08-04",
-      "notes": "Automatically uploaded via contract signing",
-      "fileName": "CF-1754286223831-CLLKM.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T05:43:49.052Z",
-      "status": "uploaded"
-    },
-    {
-      "contractId": "CF-1754286996882-AJ0OM",
-      "freelancerName": "Testing Another",
-      "freelancerEmail": "codylcochran89@gmail.com",
-      "role": "Editor",
-      "rate": "$50/hour",
+      "contractId": "CF-1754298071313-548X3",
+      "freelancerName": "Test Final",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Videographer",
+      "rate": "$125/hour",
       "location": "Miami, FL",
-      "contractDate": "2025-08-04",
-      "notes": "Automatically uploaded via contract signing",
-      "fileName": "CF-1754286996882-AJ0OM.pdf",
+      "fileName": "CF-1754298071313-548X3.pdf",
       "fileSize": 0,
-      "uploadDate": "2025-08-04T05:56:48.810Z",
-      "status": "uploaded"
-    },
-    {
-      "contractId": "CF-1754296164959-6MNPE",
-      "freelancerName": "Cody Cochran",
-      "freelancerEmail": "codylcochran87@gmail.com",
-      "role": "Assistant",
-      "rate": "$150/hour",
-      "location": "Atlanta, GA",
-      "contractDate": "2025-08-04",
+      "uploadDate": "2025-08-04T09:01:23.076Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754298071313-548X3.pdf",
       "notes": "Automatically uploaded via contract signing",
-      "fileName": "CF-1754296164959-6MNPE.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-04T08:29:36.685Z",
-      "status": "uploaded"
+      "contractDate": "2025-08-04",
+      "signedDate": "2025-08-04"
     }
-  ]
+  ],
+  "lastUpdated": "2025-08-04T09:01:23.076Z"
 }

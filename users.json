@@ -1,40 +1,40 @@
 {
   "users": {
-    "Cody Cochran": {
+    "Test Final": {
       "profile": {
-        "email": "codylcochran87@gmail.com",
-        "password": "cody1234",
-        "role": "Assistant",
-        "location": "Atlanta, GA",
-        "projectStart": "2025-10-10T20:00",
-        "rate": "$150/hour",
+        "email": "dedejackson727@gmail.com",
+        "password": "test1234",
+        "role": "Videographer",
+        "location": "Miami, FL",
+        "projectStart": "2025-11-11T20:00",
+        "rate": "$125/hour",
         "approvedDate": "2025-08-04"
       },
       "contract": {
         "contractUrl": "contract.html",
         "contractStatus": "signed",
-        "contractSignedDate": "8/4/2025, 4:29:24 AM",
+        "contractSignedDate": "8/4/2025, 5:01:11 AM",
         "contractUploadedDate": null,
-        "contractId": "CF-1754296164959-6MNPE"
+        "contractId": "CF-1754298071313-548X3"
       },
       "jobs": {
-        "job-cody-cochran-1754296113828": {
-          "id": "job-cody-cochran-1754296113828",
-          "role": "Assistant",
-          "location": "Atlanta, GA",
-          "projectStart": "2025-10-10T20:00",
-          "rate": "$150/hour",
-          "projectType": "Assistant Project",
-          "description": "Primary assignment for Cody Cochran",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
+        "job-test-final-1754298013800": {
+          "id": "job-test-final-1754298013800",
+          "role": "Videographer",
+          "location": "Miami, FL",
+          "projectStart": "2025-11-11T20:00",
+          "rate": "$125/hour",
+          "projectType": "Videographer Project",
+          "description": "Primary assignment for Test Final",
+          "projectStatus": "completed",
+          "paymentStatus": "paid",
           "completionDate": null,
           "paymentDate": null
         }
       },
-      "primaryJob": "job-cody-cochran-1754296113828",
-      "paymentMethod": "cash",
-      "paymentStatus": "configured"
+      "primaryJob": "job-test-final-1754298013800",
+      "paymentMethod": "paypal",
+      "paymentStatus": "paid"
     }
   },
   "statusOptions": {
