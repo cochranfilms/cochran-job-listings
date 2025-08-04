@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Thing One": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": null,
+        "role": "Assistant",
+        "location": "Chicago, IL",
+        "projectStart": "2025-10-10T20:00",
+        "rate": "$300/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-thing-one-1754312549721": {
+          "id": "job-thing-one-1754312549721",
+          "role": "Assistant",
+          "location": "Chicago, IL",
+          "projectStart": "2025-10-10T20:00",
+          "rate": "$300/hour",
+          "projectType": "Assistant Project",
+          "description": "Primary assignment for Thing One",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "completionDate": null,
+          "paymentDate": null
+        }
+      },
+      "primaryJob": "job-thing-one-1754312549721",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +51,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 0
+  "totalUsers": 1
 }
