@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Cody Cochran": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "password": null,
+        "role": "Assistant",
+        "location": "Atlanta, GA",
+        "projectStart": "2025-10-10T20:00",
+        "rate": "$150/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-cody-cochran-1754296113828": {
+          "id": "job-cody-cochran-1754296113828",
+          "role": "Assistant",
+          "location": "Atlanta, GA",
+          "projectStart": "2025-10-10T20:00",
+          "rate": "$150/hour",
+          "projectType": "Assistant Project",
+          "description": "Primary assignment for Cody Cochran",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "completionDate": null,
+          "paymentDate": null
+        }
+      },
+      "primaryJob": "job-cody-cochran-1754296113828",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +51,5 @@
     ]
   },
   "lastUpdated": "2025-08-04",
-  "totalUsers": 0
+  "totalUsers": 1
 }
