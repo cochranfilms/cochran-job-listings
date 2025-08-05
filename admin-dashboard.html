@@ -4931,12 +4931,13 @@
         // Notification System
         let notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
         
-        function addNotification(title, message, type = 'info') {
+        function addNotification(title, message, type = 'info', userEmail = null) {
             const notification = {
-                id: Date.now() + Math.random(),
+                id: Math.floor(Date.now() + Math.random() * 1000),
                 title: title,
                 message: message,
                 type: type,
+                userEmail: userEmail,
                 timestamp: new Date().toISOString(),
                 read: false
             };
@@ -4971,7 +4972,7 @@
             }
             
             list.innerHTML = notifications.map(notification => `
-                <div class="notification-item ${notification.read ? 'read' : 'unread'}" onclick="handleNotificationClick('${notification.id}')">
+                <div class="notification-item ${notification.read ? 'read' : 'unread'}" onclick="handleNotificationClick(${notification.id})">
                     <div class="notification-title">
                         <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
                         ${notification.title}
@@ -4992,9 +4993,21 @@
         
         // Handle notification clicks to navigate to relevant screens
         function handleNotificationClick(notificationId) {
-            const notification = notifications.find(n => n.id === notificationId);
+            console.log('🔍 Looking for notification with ID:', notificationId);
+            console.log('📋 Available notifications:', notifications);
+            
+            // Try both string and number comparison
+            let notification = notifications.find(n => n.id === notificationId);
+            if (!notification) {
+                notification = notifications.find(n => n.id == notificationId); // Loose comparison
+            }
+            if (!notification) {
+                notification = notifications.find(n => String(n.id) === String(notificationId)); // String comparison
+            }
+            
             if (!notification) {
                 console.error('❌ Notification not found:', notificationId);
+                console.log('🔍 Available notification IDs:', notifications.map(n => n.id));
                 return;
             }
             
