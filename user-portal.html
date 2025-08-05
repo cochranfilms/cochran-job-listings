@@ -803,6 +803,20 @@
         async function loadUsersData() {
             try {
                 console.log('🔄 Loading users data...');
+                
+                // Check if we have cached data and it's recent (less than 5 minutes old)
+                const cachedData = sessionStorage.getItem('cachedUsersData');
+                const cacheTimestamp = sessionStorage.getItem('cachedUsersDataTimestamp');
+                const now = Date.now();
+                const cacheAge = now - (parseInt(cacheTimestamp) || 0);
+                const cacheValid = cacheAge < 5 * 60 * 1000; // 5 minutes
+                
+                if (cachedData && cacheValid) {
+                    console.log('✅ Using cached users data (age:', Math.round(cacheAge / 1000), 'seconds)');
+                    users = JSON.parse(cachedData);
+                    return;
+                }
+                
                 // First, try to load directly from users API
                 try {
                     const response = await fetch('/api/users');
@@ -848,6 +862,10 @@
                                 contractStatus: u.contractStatus,
                                 contractId: u.contractId
                             })));
+                            
+                            // Cache the data
+                            sessionStorage.setItem('cachedUsersData', JSON.stringify(users));
+                            sessionStorage.setItem('cachedUsersDataTimestamp', now.toString());
                             
                             // Now merge with uploaded contracts data to get the most up-to-date contract information
                             await mergeUsersDataWithUploadedContracts();
@@ -1215,25 +1233,26 @@
                 submitBtn.textContent = 'Signing in...';
                 submitBtn.disabled = true;
                 
-                // Load users data first
-                await loadUsersData();
-                
-                // Find user in our system
-                const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+                // Quick user validation first (without heavy data loading)
+                const user = await validateUserQuickly(email, password);
                 
                 if (!user) {
-                    throw new Error('User not found');
+                    throw new Error('Invalid credentials');
                 }
                 
-                // Check password
-                if (user.password !== password) {
-                    throw new Error('Incorrect password');
-                }
-                
-                // Set current user and show portal
+                // Set current user and show portal immediately
                 currentUser = user;
                 sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
                 showUserPortal();
+                
+                // Load full data in background after successful login
+                setTimeout(() => {
+                    loadUsersData().then(() => {
+                        console.log('✅ Full user data loaded in background');
+                    }).catch(error => {
+                        console.warn('⚠️ Background data loading failed:', error);
+                    });
+                }, 100);
                 
             } catch (error) {
                 console.error('Login error:', error);
@@ -1244,6 +1263,8 @@
                     errorMessage = 'User not found. Please check your email.';
                 } else if (error.message === 'Incorrect password') {
                     errorMessage = 'Incorrect password. Please try again.';
+                } else if (error.message === 'Invalid credentials') {
+                    errorMessage = 'Invalid email or password. Please try again.';
                 }
                 
                 document.getElementById('loginError').textContent = errorMessage;
@@ -1253,6 +1274,71 @@
                 const submitBtn = event.target.querySelector('button[type="submit"]');
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
+            }
+        }
+
+        // Quick user validation without heavy data loading
+        async function validateUserQuickly(email, password) {
+            try {
+                // Try to get cached users data first
+                if (users.length === 0) {
+                    // Quick API call without heavy processing
+                    const response = await fetch('/api/users');
+                    if (response.ok) {
+                        const jsonData = await response.json();
+                        if (jsonData.users) {
+                            // Quick user lookup without full data transformation
+                            const userEntry = Object.entries(jsonData.users).find(([name, user]) => 
+                                user.profile?.email && user.profile.email.toLowerCase() === email.toLowerCase()
+                            );
+                            
+                            if (userEntry) {
+                                const [name, user] = userEntry;
+                                // Check password
+                                if (user.profile?.password === password) {
+                                    // Return minimal user object for immediate login
+                                    return {
+                                        name: name,
+                                        email: user.profile.email,
+                                        password: user.profile.password,
+                                        approvedDate: user.profile.approvedDate,
+                                        contractUrl: user.contract?.contractUrl || 'contract.html',
+                                        contractStatus: user.contract?.contractStatus || 'pending',
+                                        contractSignedDate: user.contract?.contractSignedDate,
+                                        contractUploadedDate: user.contract?.contractUploadedDate,
+                                        contractId: user.contract?.contractId,
+                                        paymentMethod: user.paymentMethod || null,
+                                        paymentStatus: user.paymentStatus || 'pending',
+                                        jobs: user.jobs || {
+                                            'legacy-job': {
+                                                id: 'legacy-job',
+                                                role: user.profile?.role,
+                                                location: user.profile?.location,
+                                                projectStart: user.profile?.projectStart,
+                                                rate: user.profile?.rate,
+                                                status: 'upcoming',
+                                                projectType: 'Legacy Job',
+                                                description: `${user.profile?.role} position`
+                                            }
+                                        },
+                                        primaryJob: user.primaryJob || 'legacy-job'
+                                    };
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Use cached data if available
+                    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+                    if (user && user.password === password) {
+                        return user;
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Quick validation error:', error);
+                return null;
             }
         }
 
@@ -3568,6 +3654,43 @@
             const loginForm = document.getElementById('loginForm');
             if (loginForm) {
                 loginForm.addEventListener('submit', handleLogin);
+                
+                // Add input debouncing to prevent lag
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
+                
+                if (emailInput) {
+                    emailInput.addEventListener('input', debounce(() => {
+                        // Clear error message when user starts typing
+                        const errorElement = document.getElementById('loginError');
+                        if (errorElement) {
+                            errorElement.style.display = 'none';
+                        }
+                    }, 300));
+                }
+                
+                if (passwordInput) {
+                    passwordInput.addEventListener('input', debounce(() => {
+                        // Clear error message when user starts typing
+                        const errorElement = document.getElementById('loginError');
+                        if (errorElement) {
+                            errorElement.style.display = 'none';
+                        }
+                    }, 300));
+                }
+            }
+            
+            // Debounce function to prevent excessive function calls
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
             }
             
             // Add refresh button functionality
