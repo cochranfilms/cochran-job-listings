@@ -3680,7 +3680,7 @@
         // Update performance reviews file
         async function updatePerformanceReviewsFile() {
             try {
-                console.log('🔄 Starting performance reviews update...');
+                console.log('🔄 Starting performance reviews update to GitHub...');
                 console.log('📊 Current performance reviews:', performanceReviews);
                 
                 const performanceData = {
@@ -3700,33 +3700,57 @@
                     totalReviews: Object.keys(performanceReviews).length
                 };
                 
-                console.log('📤 Sending performance data to API:', performanceData);
+                console.log('📤 Preparing performance data for GitHub:', performanceData);
                 
-                // Save to performance.json via API
-                const response = await fetch('/api/performance', {
-                    method: 'POST',
+                // First, get the current file SHA
+                const getResponse = await fetch('/api/github/file/performance.json');
+                let sha = null;
+                
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                    console.log('📄 Got current performance.json SHA:', sha.substring(0, 7));
+                } else if (getResponse.status === 404) {
+                    console.log('📄 performance.json does not exist, will create new file');
+                } else {
+                    console.warn('⚠️ Could not get current file SHA, proceeding without it');
+                }
+                
+                const updateBody = {
+                    content: JSON.stringify(performanceData, null, 2),
+                    message: `Update performance.json - Performance review saved - ${new Date().toLocaleString()}`
+                };
+                
+                // Include SHA if we have it (for updates)
+                if (sha) {
+                    updateBody.sha = sha;
+                }
+                
+                console.log('📤 Sending performance data to GitHub API...');
+                
+                const response = await fetch('/api/github/file/performance.json', {
+                    method: 'PUT',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(performanceData)
+                    body: JSON.stringify(updateBody)
                 });
                 
-                console.log('📡 API response status:', response.status);
-                console.log('📡 API response headers:', response.headers);
+                console.log('📡 GitHub API response status:', response.status);
                 
                 if (response.ok) {
                     const responseData = await response.json();
-                    console.log('✅ Performance reviews updated successfully:', responseData);
-                    showNotification('Performance review saved successfully!', 'success');
+                    console.log('✅ Performance reviews updated on GitHub successfully:', responseData);
+                    showNotification('Performance review saved to GitHub successfully!', 'success');
                 } else {
-                    const errorText = await response.text();
-                    console.warn('⚠️ Could not update performance reviews via API:', response.status, errorText);
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ Failed to update performance.json on GitHub:', response.status, errorData);
                     // Fallback: save to localStorage
                     localStorage.setItem('performanceReviews', JSON.stringify(performanceReviews));
-                    showNotification('Performance review saved locally (API unavailable)', 'warning');
+                    showNotification('Performance review saved locally (GitHub API unavailable)', 'warning');
                 }
             } catch (error) {
-                console.error('❌ Error updating performance reviews:', error);
+                console.error('❌ Error updating performance reviews on GitHub:', error);
                 // Fallback: save to localStorage
                 localStorage.setItem('performanceReviews', JSON.stringify(performanceReviews));
                 showNotification('Performance review saved locally (Network error)', 'warning');
