@@ -32,6 +32,41 @@
       },
       "primaryJob": "job-producer-default",
       "paymentMethod": null
+    },
+    "Black Widow": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "password": "Bl4vSDA6wJ6T",
+        "role": "Producer",
+        "location": "Atlanta, GA",
+        "projectStart": "2026-10-10T14:00",
+        "rate": "$125/hour",
+        "approvedDate": "2026-08-05"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-producer-default": {
+          "id": "job-producer-default",
+          "title": "Producer Position",
+          "date": "2025-08-05",
+          "location": "Atlanta, GA",
+          "pay": "$125/hour",
+          "description": "Professional Producer position in Atlanta, GA. Details to be provided.",
+          "status": "upcoming",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-05",
+          "projectStart": "2026-10-10T14:00"
+        }
+      },
+      "primaryJob": "job-producer-default",
+      "paymentMethod": null
     }
   },
   "statusOptions": {
@@ -49,5 +84,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 1
+  "totalUsers": 2
 }
