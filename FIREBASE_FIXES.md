@@ -5,17 +5,19 @@
 ### 1. Firebase User Deletion Error
 **Problem**: When deleting users in admin-dashboard.html, users were being deleted from users.json but not from Firebase database.
 
-**Root Cause**: Firebase Admin SDK was not properly configured, causing the error "Firebase Admin SDK not configured. User deletion limited to local data cleanup."
+**Root Cause**: Organization policy restrictions prevented service account key creation, making Firebase Admin SDK unavailable.
 
 **Solution**: 
-- Updated `api/firebase.js` to provide better error handling and instructions
-- Added clear logging to help identify configuration issues
-- Improved error messages to guide proper Firebase setup
+- Updated `api/firebase.js` to use Firebase REST API approach instead of Admin SDK
+- Removed dependency on service account keys
+- Added better error handling and user feedback
+- Implemented graceful fallback to local data cleanup
 
-**To Enable Firebase User Deletion**:
-1. Set the `FIREBASE_SERVICE_ACCOUNT` environment variable with your Firebase service account JSON
-2. Or set `GOOGLE_APPLICATION_CREDENTIALS` to point to your service account file
-3. Restart the server
+**Current Status**: 
+- ✅ User deletion from users.json works perfectly
+- ✅ Contract deletion with PDF cleanup works perfectly  
+- ⚠️ Firebase user deletion requires additional authentication setup
+- 📝 Manual Firebase user deletion through Firebase Console recommended
 
 ### 2. Contract Deletion - PDF File Removal
 **Problem**: When deleting contracts from admin-dashboard.html, contracts were removed from uploaded-contracts.json but PDF files weren't deleted from the /contracts folder.
@@ -56,11 +58,10 @@
 
 ## Environment Variables Required
 
-### For Firebase User Deletion:
+### For Firebase Configuration:
 ```env
-FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"cochran-films",...}
-# OR
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+FIREBASE_API_KEY=AIzaSyCkL31Phi7FxYCeB5zgHeYTb2iY2sTJJdw
+FIREBASE_APP_ID=1:566448458094:web:default
 ```
 
 ### For GitHub Contract Deletion:
@@ -73,12 +74,6 @@ GITHUB_BRANCH=main
 
 ## Testing the Fixes
 
-### Test Firebase User Deletion:
-1. Go to admin-dashboard.html
-2. Try to delete a user
-3. Check console for detailed error messages
-4. If Firebase is not configured, user will be removed from users.json only
-
 ### Test Contract Deletion:
 1. Go to admin-dashboard.html
 2. Select contracts to delete
@@ -90,6 +85,12 @@ GITHUB_BRANCH=main
 2. Check console for user matching logs
 3. Verify job data loads correctly from users.json
 
+### Test User Deletion:
+1. Go to admin-dashboard.html
+2. Try to delete a user
+3. Check console for detailed messages
+4. User will be removed from users.json (Firebase requires manual deletion)
+
 ## Manual Push Commands
 
 ```bash
@@ -97,13 +98,12 @@ GITHUB_BRANCH=main
 git add .
 
 # Commit the fixes
-git commit -m "Fix Firebase user deletion and contract PDF cleanup
+git commit -m "Update Firebase approach to work with organization restrictions
 
-- Improve Firebase Admin SDK error handling and instructions
-- Add local PDF file deletion API endpoint
-- Enhance contract deletion with multiple fallback mechanisms
-- Improve user data syncing in user portal
-- Add better logging and error reporting"
+- Replace Firebase Admin SDK with REST API approach
+- Remove dependency on service account keys
+- Improve error handling for organization policy restrictions
+- Maintain all contract deletion and user portal fixes"
 
 # Push to GitHub
 git push origin main
@@ -111,17 +111,12 @@ git push origin main
 
 ## Next Steps
 
-1. **Configure Firebase Service Account**: Set up proper Firebase Admin SDK credentials
-2. **Test All Deletion Scenarios**: Verify both user and contract deletions work properly
-3. **Monitor Logs**: Check console output for any remaining issues
-4. **Update Documentation**: Update README.md with new environment variable requirements
+1. **Test All Deletion Scenarios**: Verify contract deletions work properly
+2. **Monitor User Portal**: Ensure user data syncing works correctly
+3. **Manual Firebase Cleanup**: Delete Firebase users manually through Firebase Console when needed
+4. **Consider Alternative**: For full automation, consider using Firebase CLI or custom authentication tokens
 
 ## Troubleshooting
-
-### Firebase Issues:
-- Check if `FIREBASE_SERVICE_ACCOUNT` environment variable is set
-- Verify the service account JSON has proper permissions
-- Check console logs for detailed error messages
 
 ### Contract Deletion Issues:
 - Verify GitHub token has repository write permissions
@@ -131,4 +126,9 @@ git push origin main
 ### User Portal Issues:
 - Check if user email matches exactly in users.json
 - Verify users.json is properly formatted
-- Review console logs for user matching details 
+- Review console logs for user matching details
+
+### Firebase User Deletion:
+- Currently requires manual deletion through Firebase Console
+- Organization policy restrictions prevent automated deletion
+- Consider using Firebase CLI for bulk operations if needed 

@@ -2488,8 +2488,8 @@
                                 firebaseDeleted = true;
                                 firebaseMessage = 'Removed from Firebase and GitHub.';
                             } else {
-                                // Firebase API now returns success: false with a message when Firebase Admin SDK isn't configured
-                                // This is expected behavior when Firebase Admin SDK isn't configured
+                                // Firebase API now returns success: false with a message when Firebase isn't configured
+                                // This is expected behavior when Firebase REST API isn't fully configured
                                 console.warn('⚠️ Firebase account deletion limited:', firebaseResult.error);
                                 firebaseMessage = firebaseResult.message || 'Firebase account may still exist.';
                                 
