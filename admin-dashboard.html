@@ -1257,21 +1257,57 @@
             try {
                 console.log('🔄 Updating jobs-data.json on GitHub...');
                 
-                // Prepare the jobs data structure
                 const jobsData = {
                     jobs: jobs,
                     lastUpdated: new Date().toISOString().split('T')[0],
                     totalJobs: jobs.length
                 };
                 
-                // Update jobs-data.json on GitHub
-                await updateGitHubFile('jobs-data.json', JSON.stringify(jobsData, null, 2), `Update jobs-data.json - ${jobs.length} jobs - ${new Date().toLocaleString()}`);
+                // First, get the current file SHA
+                const getResponse = await fetch('/api/github/file/jobs-data.json');
+                let sha = null;
                 
-                console.log('✅ Jobs updated on GitHub successfully');
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                    console.log('📄 Got current file SHA:', sha.substring(0, 7));
+                } else if (getResponse.status === 404) {
+                    console.log('📄 File does not exist, will create new file');
+                } else {
+                    console.warn('⚠️ Could not get current file SHA, proceeding without it');
+                }
+                
+                const updateBody = {
+                    content: JSON.stringify(jobsData, null, 2),
+                    message: `Update jobs-data.json - Admin dashboard update - ${new Date().toLocaleString()}`
+                };
+                
+                // Include SHA if we have it (for updates)
+                if (sha) {
+                    updateBody.sha = sha;
+                }
+                
+                const response = await fetch('/api/github/file/jobs-data.json', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateBody)
+                });
+                
+                if (response.ok) {
+                    console.log('✅ jobs-data.json updated on GitHub successfully');
+                    return true;
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ Failed to update jobs-data.json on GitHub:', response.status, errorData);
+                    return false;
+                }
                 
             } catch (error) {
                 console.error('❌ Error updating jobs on GitHub:', error);
                 showNotification('⚠️ Jobs saved locally but GitHub update failed. Please try again.', 'warning');
+                return false;
             }
         }
 
