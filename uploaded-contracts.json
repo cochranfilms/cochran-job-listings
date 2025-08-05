@@ -1,24 +1,7 @@
 {
-  "exportDate": "2025-08-05T06:12:00.475Z",
-  "totalContracts": 1,
+  "exportDate": "2025-08-05T06:14:14.292Z",
+  "totalContracts": 0,
   "contracts": [],
-  "uploadedContracts": [
-    {
-      "contractId": "CF-1754364806149-P6K90",
-      "freelancerName": "Chance Jarrard",
-      "freelancerEmail": "chancejarrard@gmail.com",
-      "role": "Videographer",
-      "rate": "$100/hour",
-      "location": "Los Angeles, CA",
-      "fileName": "CF-1754364806149-P6K90.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-05T03:33:38.999Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754364806149-P6K90.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
-    }
-  ],
-  "lastUpdated": "2025-08-05T06:12:00.475Z"
+  "uploadedContracts": [],
+  "lastUpdated": "2025-08-05T06:14:14.292Z"
 }
