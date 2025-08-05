@@ -1,5 +1,27 @@
 {
-  "users": {},
+  "users": {
+    "Thing Six": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "password": "qkvMYRI0tDkv",
+        "role": "Producer",
+        "location": "Atlanta, GA",
+        "projectStart": "2026-04-04T08:00",
+        "rate": "$200/hour",
+        "approvedDate": "2025-08-05"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {},
+      "primaryJob": null,
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +37,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 0
+  "totalUsers": 1
 }
