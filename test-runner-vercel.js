@@ -340,8 +340,19 @@ class AutomatedTestRunner {
 
     async testUserCreation() {
         return this.runTest('User Creation', async () => {
-            // Load current users
-            const usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            // Load current users or create if doesn't exist
+            let usersData;
+            try {
+                usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                usersData = {
+                    users: [],
+                    totalUsers: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = usersData.users.length;
             
             // Add test user
@@ -396,8 +407,19 @@ class AutomatedTestRunner {
 
     async testJobCreation() {
         return this.runTest('Job Creation', async () => {
-            // Load current jobs
-            const jobsData = JSON.parse(await fs.readFile('jobs-data.json', 'utf8'));
+            // Load current jobs or create if doesn't exist
+            let jobsData;
+            try {
+                jobsData = JSON.parse(await fs.readFile('jobs-data.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                jobsData = {
+                    jobs: [],
+                    totalJobs: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = jobsData.jobs.length;
             
             // Add test job
@@ -574,8 +596,20 @@ class AutomatedTestRunner {
 
     async testNotificationCreation() {
         return this.runTest('Notification Creation', async () => {
-            // Load current notifications
-            const notificationsData = JSON.parse(await fs.readFile('notifications.json', 'utf8'));
+            // Load current notifications or create if doesn't exist
+            let notificationsData;
+            try {
+                notificationsData = JSON.parse(await fs.readFile('notifications.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                notificationsData = {
+                    notifications: [],
+                    totalNotifications: 0,
+                    unreadCount: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = notificationsData.notifications.length;
             
             // Add test notification
@@ -605,8 +639,20 @@ class AutomatedTestRunner {
 
     async testNotificationDeletion() {
         return this.runTest('Notification Deletion', async () => {
-            // Load current notifications
-            const notificationsData = JSON.parse(await fs.readFile('notifications.json', 'utf8'));
+            // Load current notifications or create if doesn't exist
+            let notificationsData;
+            try {
+                notificationsData = JSON.parse(await fs.readFile('notifications.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                notificationsData = {
+                    notifications: [],
+                    totalNotifications: 0,
+                    unreadCount: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = notificationsData.notifications.length;
             
             // Remove test notification
