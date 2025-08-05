@@ -2197,22 +2197,44 @@
                     totalUsers: Object.keys(users).length
                 };
                 
+                // First, get the current file SHA
+                const getResponse = await fetch('/api/github/file/users.json');
+                let sha = null;
+                
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                    console.log('📄 Got current file SHA:', sha.substring(0, 7));
+                } else if (getResponse.status === 404) {
+                    console.log('📄 File does not exist, will create new file');
+                } else {
+                    console.warn('⚠️ Could not get current file SHA, proceeding without it');
+                }
+                
+                const updateBody = {
+                    content: JSON.stringify(usersData, null, 2),
+                    message: `Update users.json - Admin dashboard update - ${new Date().toLocaleString()}`
+                };
+                
+                // Include SHA if we have it (for updates)
+                if (sha) {
+                    updateBody.sha = sha;
+                }
+                
                 const response = await fetch('/api/github/file/users.json', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        content: JSON.stringify(usersData, null, 2),
-                        message: `Update users.json - Admin dashboard update - ${new Date().toLocaleString()}`
-                    })
+                    body: JSON.stringify(updateBody)
                 });
                 
                 if (response.ok) {
                     console.log('✅ users.json updated on GitHub successfully');
                     return true;
                 } else {
-                    console.error('❌ Failed to update users.json on GitHub:', response.status);
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ Failed to update users.json on GitHub:', response.status, errorData);
                     return false;
                 }
                 
@@ -2726,9 +2748,13 @@
                         performanceReviews = apiData.performanceReviews || {};
                         console.log('✅ Performance reviews loaded from API:', Object.keys(performanceReviews).length, 'reviews');
                         return;
+                    } else if (apiResponse.status === 404) {
+                        console.warn('⚠️ Performance API endpoint not found (404), trying direct JSON file...');
+                    } else {
+                        console.warn(`⚠️ API endpoint failed with status ${apiResponse.status}, trying direct JSON file...`);
                     }
                 } catch (apiError) {
-                    console.warn('⚠️ API endpoint failed, trying direct JSON file...');
+                    console.warn('⚠️ API endpoint failed, trying direct JSON file...', apiError);
                 }
                 
                 // Try direct JSON file
@@ -3628,13 +3654,16 @@
                         // Refresh the performance reviews
                         await loadPerformanceReviews();
                         showPerformanceReviewManager();
+                    } else if (response.status === 404) {
+                        console.error('❌ Performance API endpoint not found (404)');
+                        showNotification('Performance API endpoint not available. Please check server configuration.', 'error');
                     } else {
-                        const error = await response.json();
+                        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
                         showNotification(`Error: ${error.error}`, 'error');
                     }
                 } catch (error) {
                     console.error('Error creating performance review:', error);
-                    showNotification('Failed to create performance review', 'error');
+                    showNotification('Failed to create performance review. Please check server connection.', 'error');
                 }
             });
         }
