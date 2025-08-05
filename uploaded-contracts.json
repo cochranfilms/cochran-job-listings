@@ -1,24 +1,7 @@
 {
-  "exportDate": "2025-08-05T06:30:13.220Z",
-  "totalContracts": 1,
+  "exportDate": "2025-08-05T06:31:47.750Z",
+  "totalContracts": 0,
   "contracts": [],
-  "uploadedContracts": [
-    {
-      "contractId": "CF-1754363094793-DADAL",
-      "freelancerName": "Thing Three",
-      "freelancerEmail": "codylcochran89@gmail.com",
-      "role": "Editor",
-      "rate": "$100/hour",
-      "location": "Miami, FL",
-      "fileName": "CF-1754363094793-DADAL.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-05T03:05:06.831Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754363094793-DADAL.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
-    }
-  ],
-  "lastUpdated": "2025-08-05T06:30:13.220Z"
+  "uploadedContracts": [],
+  "lastUpdated": "2025-08-05T06:31:47.750Z"
 }
