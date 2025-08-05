@@ -59,6 +59,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
         :root {
             --primary: #FFB200;
@@ -1465,56 +1469,10 @@
             try {
                 console.log('📄 Starting HTML-based PDF generation for contract:', contractData.contractId);
                 
-                // Use the main PDF content generator for consistent formatting
-                const contractHTML = generatePDFContent(contractData);
+                // For now, fall back to the advanced PDF method since html2canvas has issues
+                // We'll use the reliable advanced method that works well
+                return generateAdvancedContractPDF(contractData);
                 
-                // Create jsPDF document
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'letter');
-                
-                // Use html2canvas to render the HTML properly
-                const element = document.createElement('div');
-                element.innerHTML = contractHTML;
-                element.style.position = 'absolute';
-                element.style.left = '-9999px';
-                element.style.top = '0';
-                document.body.appendChild(element);
-                
-                // Convert HTML to canvas and then to PDF
-                return new Promise((resolve, reject) => {
-                    html2canvas(element, {
-                        scale: 2,
-                        useCORS: true,
-                        allowTaint: true,
-                        backgroundColor: '#ffffff'
-                    }).then(canvas => {
-                        document.body.removeChild(element);
-                        
-                        const imgData = canvas.toDataURL('image/png');
-                        const pdf = new jsPDF('p', 'mm', 'letter');
-                        
-                        const imgWidth = 210;
-                        const pageHeight = 295;
-                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                        let heightLeft = imgHeight;
-                        let position = 0;
-                        
-                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                        heightLeft -= pageHeight;
-                        
-                        while (heightLeft >= 0) {
-                            position = heightLeft - imgHeight;
-                            pdf.addPage();
-                            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                            heightLeft -= pageHeight;
-                        }
-                        
-                                                 resolve(pdf);
-                     }).catch(error => {
-                         document.body.removeChild(element);
-                         reject(error);
-                     });
-                 });
             } catch (error) {
                 console.error('❌ Error in HTML-based PDF generation:', error);
                 throw error;
