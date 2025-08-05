@@ -1009,19 +1009,23 @@
                 let currentYPos = 120;
                 const lineHeight = 10; // INCREASED from 6 to 10 for proper spacing
                 
-                // Process each term with FIXED coordinates to prevent corruption
+                // Process each term with TWO-COLUMN layout to save vertical space
                 compactTerms.forEach((term, index) => {
-                    // Use fixed Y positions to prevent coordinate corruption
-                    const fixedYPos = 120 + (index * 8);
+                    // Split into two columns: left column (0-6) and right column (7-13)
+                    const isLeftColumn = index < 7;
+                    const columnIndex = isLeftColumn ? index : index - 7;
+                    const xPos = isLeftColumn ? 20 : 110; // Left column at x=20, right column at x=110
+                    const fixedYPos = 120 + (columnIndex * 8);
                     
-                    // FIXED: Render each term with fixed coordinates
+                    // FIXED: Render each term with two-column layout
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(8);
-                    doc.text(term, 20, fixedYPos);
+                    doc.text(term, xPos, fixedYPos);
                 });
                 
-                // Calculate signature position AFTER all terms are rendered
-                const lastTermY = 120 + (compactTerms.length * 8);
+                // Calculate signature position AFTER all terms are rendered (two-column layout)
+                const maxColumnHeight = Math.ceil(compactTerms.length / 2) * 8; // Height of tallest column
+                const lastTermY = 120 + maxColumnHeight;
                 const signatureY = lastTermY + 20; // Add 20px spacing after last term
                 
                 // ==================== SIGNATURES ====================
@@ -1250,21 +1254,25 @@
                 let currentYPos = 125;
                 const lineHeight = 10; // INCREASED from 6 to 10 for proper spacing
                 
-                // Process each term with FIXED coordinates to prevent corruption
+                // Process each term with TWO-COLUMN layout to save vertical space
                 compactTerms.forEach((term, index) => {
-                    // Use fixed Y positions to prevent coordinate corruption
-                    const fixedYPos = 125 + (index * 8);
+                    // Split into two columns: left column (0-6) and right column (7-13)
+                    const isLeftColumn = index < 7;
+                    const columnIndex = isLeftColumn ? index : index - 7;
+                    const xPos = isLeftColumn ? 20 : 110; // Left column at x=20, right column at x=110
+                    const fixedYPos = 125 + (columnIndex * 8);
                     
-                    // FIXED: Render each term with fixed coordinates
+                    // FIXED: Render each term with two-column layout
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(8);
-                    doc.text(term, 20, fixedYPos);
+                    doc.text(term, xPos, fixedYPos);
                 });
                 
                 // ==================== ADVANCED SIGNATURES ====================
                 
-                // Calculate signature position AFTER all terms are rendered
-                const lastTermY = 125 + (compactTerms.length * 8);
+                // Calculate signature position AFTER all terms are rendered (two-column layout)
+                const maxColumnHeight = Math.ceil(compactTerms.length / 2) * 8; // Height of tallest column
+                const lastTermY = 125 + maxColumnHeight;
                 const signatureY = lastTermY + 20; // Add 20px spacing after last term
                 
                 // Signature header
