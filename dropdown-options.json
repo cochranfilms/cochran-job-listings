@@ -5,7 +5,9 @@
     "Editor",
     "Assistant",
     "Producer",
-    "Director"
+    "Director",
+    "Backdrop Photographer Base",
+    "Backdrop Photographer Spotlight"
   ],
   "locations": [
     "Los Angeles, CA",
@@ -13,7 +15,8 @@
     "Miami, FL",
     "Chicago, IL",
     "Atlanta, GA",
-    "San Francisco, CA"
+    "San Francisco, CA",
+    "Douglasville, GA"
   ],
   "rates": [
     "$50/hour",
@@ -23,7 +26,9 @@
     "$150/hour",
     "$200/hour",
     "$250/hour",
-    "$300/hour"
+    "$300/hour",
+    "$400",
+    "$300 + Tip"
   ],
   "projectTypes": [
     "Wedding Photography",
@@ -35,6 +40,8 @@
     "Event Coverage",
     "Commercial Video",
     "Music Video",
-    "Documentary"
+    "Documentary",
+    "Block Party Photography",
+    "On-site Printing"
   ]
 } 

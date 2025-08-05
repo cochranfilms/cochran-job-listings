@@ -1120,6 +1120,10 @@
             }
             
             displayJobs();
+            
+            // Populate job form dropdowns
+            await populateJobFormDropdowns();
+            
             console.log('✅ Total jobs loaded:', jobs.length);
         }
 
@@ -1248,6 +1252,97 @@
             editingJobIndex = -1;
         }
 
+        // Update jobs on GitHub
+        async function updateJobsOnGitHub() {
+            try {
+                console.log('🔄 Updating jobs-data.json on GitHub...');
+                
+                // Prepare the jobs data structure
+                const jobsData = {
+                    jobs: jobs,
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    totalJobs: jobs.length
+                };
+                
+                // Update jobs-data.json on GitHub
+                await updateGitHubFile('jobs-data.json', JSON.stringify(jobsData, null, 2), `Update jobs-data.json - ${jobs.length} jobs - ${new Date().toLocaleString()}`);
+                
+                console.log('✅ Jobs updated on GitHub successfully');
+                
+            } catch (error) {
+                console.error('❌ Error updating jobs on GitHub:', error);
+                showNotification('⚠️ Jobs saved locally but GitHub update failed. Please try again.', 'warning');
+            }
+        }
+
+        // Populate job form dropdowns with values from dropdown-options.json
+        async function populateJobFormDropdowns() {
+            try {
+                console.log('🔄 Loading dropdown options for job form...');
+                
+                // Load dropdown options from API
+                const response = await fetch('/api/dropdown-options');
+                if (response.ok) {
+                    const dropdownOptions = await response.json();
+                    
+                    // Populate location dropdown
+                    const locationSelect = document.getElementById('jobLocation');
+                    if (locationSelect) {
+                        locationSelect.innerHTML = '<option value="">Select a location...</option>';
+                        dropdownOptions.locations.forEach(location => {
+                            const option = document.createElement('option');
+                            option.value = location;
+                            option.textContent = location;
+                            locationSelect.appendChild(option);
+                        });
+                    }
+                    
+                    // Populate pay rate dropdown
+                    const paySelect = document.getElementById('jobPay');
+                    if (paySelect) {
+                        paySelect.innerHTML = '<option value="">Select a rate...</option>';
+                        dropdownOptions.rates.forEach(rate => {
+                            const option = document.createElement('option');
+                            option.value = rate;
+                            option.textContent = rate;
+                            paySelect.appendChild(option);
+                        });
+                    }
+                    
+                    console.log('✅ Job form dropdowns populated with', dropdownOptions.locations.length, 'locations and', dropdownOptions.rates.length, 'rates');
+                } else {
+                    console.warn('⚠️ Could not load dropdown options, using defaults');
+                    // Use default values if API fails
+                    const defaultLocations = ['Atlanta, GA', 'Douglasville, GA', 'Sandy Springs, GA'];
+                    const defaultRates = ['$50/hour', '$75/hour', '$100/hour', '$150/hour', '$200/hour', '$400', '$300 + Tip'];
+                    
+                    const locationSelect = document.getElementById('jobLocation');
+                    if (locationSelect) {
+                        locationSelect.innerHTML = '<option value="">Select a location...</option>';
+                        defaultLocations.forEach(location => {
+                            const option = document.createElement('option');
+                            option.value = location;
+                            option.textContent = location;
+                            locationSelect.appendChild(option);
+                        });
+                    }
+                    
+                    const paySelect = document.getElementById('jobPay');
+                    if (paySelect) {
+                        paySelect.innerHTML = '<option value="">Select a rate...</option>';
+                        defaultRates.forEach(rate => {
+                            const option = document.createElement('option');
+                            option.value = rate;
+                            option.textContent = rate;
+                            paySelect.appendChild(option);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error populating job form dropdowns:', error);
+            }
+        }
+
 
 
         // ==================== FREELANCER MANAGEMENT FUNCTIONALITY ====================
@@ -1312,7 +1407,7 @@
             if (uploadUserSelect) {
                 uploadUserSelect.innerHTML = '<option value="">Select a user...</option>';
                 Object.keys(users).forEach(userName => {
-                    const option = document.createElement('option');
+                            const option = document.createElement('option');
                     option.value = userName;
                     option.textContent = userName;
                     uploadUserSelect.appendChild(option);
@@ -1324,7 +1419,7 @@
             if (jobAssignmentSelect) {
                 jobAssignmentSelect.innerHTML = '<option value="">Choose a user...</option>';
                 Object.keys(users).forEach(userName => {
-                    const option = document.createElement('option');
+                            const option = document.createElement('option');
                     option.value = userName;
                     option.textContent = userName;
                     jobAssignmentSelect.appendChild(option);
@@ -1534,15 +1629,15 @@
             const locationSelects = ['assignmentJobLocation', 'freelancerLocation', 'jobLocation'];
             locationSelects.forEach(selectId => {
                 const locationSelect = document.getElementById(selectId);
-                if (locationSelect) {
-                    locationSelect.innerHTML = '<option value="">Select a location...</option>';
+                    if (locationSelect) {
+                        locationSelect.innerHTML = '<option value="">Select a location...</option>';
                     window.dropdownOptions.locations.forEach(location => {
-                        const option = document.createElement('option');
-                        option.value = location;
-                        option.textContent = location;
-                        locationSelect.appendChild(option);
-                    });
-                }
+                            const option = document.createElement('option');
+                            option.value = location;
+                            option.textContent = location;
+                            locationSelect.appendChild(option);
+                        });
+                    }
             });
             
             // Populate rate dropdowns
@@ -1552,9 +1647,9 @@
                 if (rateSelect) {
                     rateSelect.innerHTML = '<option value="">Select a rate...</option>';
                     window.dropdownOptions.rates.forEach(rate => {
-                        const option = document.createElement('option');
-                        option.value = rate;
-                        option.textContent = rate;
+                            const option = document.createElement('option');
+                            option.value = rate;
+                            option.textContent = rate;
                         rateSelect.appendChild(option);
                     });
                 }
@@ -3397,49 +3492,40 @@
                 return;
             }
 
-            // Add job to freelancer's jobs array
-            if (!freelancer.jobs) {
-                freelancer.jobs = [];
+            // Add job to user's jobs object
+            if (!userData.jobs) {
+                userData.jobs = {};
             }
             
             const newJob = {
-                id: job.id,
+                id: jobId,
                 role: job.title,
                 location: job.location,
-                projectStart: job.eventDate,
-                rate: job.rate || '$TBD',
+                projectStart: job.date,
+                rate: job.pay || '$TBD',
                 projectType: job.title,
                 description: job.description || `Assigned job: ${job.title}`,
                 status: 'upcoming'
             };
             
-            freelancer.jobs.push(newJob);
+            userData.jobs[jobId] = newJob;
             
-            // Update project status
-            if (!projectStatus[freelancerName]) {
-                projectStatus[freelancerName] = { jobs: {} };
-            }
+            // Update users object
+            users[userName] = userData;
             
-            projectStatus[freelancerName].jobs[jobId] = {
-                id: job.id,
-                role: job.title,
-                location: job.location,
-                projectStart: job.eventDate,
-                rate: job.rate || '$TBD',
-                projectStatus: 'upcoming',
-                paymentStatus: 'pending',
-                projectType: job.title,
-                description: job.description || `Assigned job: ${job.title}`
-            };
+            // Update localStorage
+            localStorage.setItem('users', JSON.stringify(users));
             
             // Update GitHub
-            updateFreelancersOnGitHub();
-            updateProjectStatusOnGitHub();
+            updateUsersOnGitHub();
             
-            showNotification(`✅ Job "${job.title}" assigned to ${freelancerName} successfully!`, 'success');
+            showNotification(`✅ Job "${job.title}" assigned to ${userName} successfully!`, 'success');
             
             // Close modal
-            document.querySelector('div[style*="position: fixed"]').remove();
+            const modal = document.querySelector('div[style*="position: fixed"]');
+            if (modal) {
+                modal.remove();
+            }
         }
 
         // Update payment settings
