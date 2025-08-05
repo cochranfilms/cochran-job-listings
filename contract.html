@@ -1012,7 +1012,7 @@
                 // Process each term with FIXED coordinates to prevent corruption
                 compactTerms.forEach((term, index) => {
                     // Use fixed Y positions to prevent coordinate corruption
-                    const fixedYPos = 120 + (index * 12);
+                    const fixedYPos = 120 + (index * 8);
                     
                     // FIXED: Render each term with fixed coordinates
                     doc.setFont('helvetica', 'normal');
@@ -1021,7 +1021,7 @@
                 });
                 
                 // Calculate signature position AFTER all terms are rendered
-                const lastTermY = 120 + (compactTerms.length * 12);
+                const lastTermY = 120 + (compactTerms.length * 8);
                 const signatureY = lastTermY + 20; // Add 20px spacing after last term
                 
                 // ==================== SIGNATURES ====================
@@ -1253,7 +1253,7 @@
                 // Process each term with FIXED coordinates to prevent corruption
                 compactTerms.forEach((term, index) => {
                     // Use fixed Y positions to prevent coordinate corruption
-                    const fixedYPos = 125 + (index * 12);
+                    const fixedYPos = 125 + (index * 8);
                     
                     // FIXED: Render each term with fixed coordinates
                     doc.setFont('helvetica', 'normal');
@@ -1264,7 +1264,7 @@
                 // ==================== ADVANCED SIGNATURES ====================
                 
                 // Calculate signature position AFTER all terms are rendered
-                const lastTermY = 125 + (compactTerms.length * 12);
+                const lastTermY = 125 + (compactTerms.length * 8);
                 const signatureY = lastTermY + 20; // Add 20px spacing after last term
                 
                 // Signature header
