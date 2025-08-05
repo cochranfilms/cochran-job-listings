@@ -6,6 +6,7 @@ const fs = require('fs');
 // Import API routes
 const performanceRouter = require('./api/performance');
 const firebaseRouter = require('./api/firebase');
+const notificationsRouter = require('./api/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -240,6 +241,9 @@ app.use('/api/performance', performanceRouter);
 // Firebase API routes
 app.use('/api/firebase', firebaseRouter);
 
+// Notifications API routes
+app.use('/api/notifications', notificationsRouter);
+
 // Local file deletion endpoint for contracts
 app.post('/api/contracts/delete-local', async (req, res) => {
     try {
@@ -301,6 +305,8 @@ app.listen(PORT, () => {
     console.log(`   - DELETE /api/performance/:email`);
     console.log(`   - DELETE /api/firebase (delete user)`);
     console.log(`   - PUT  /api/github/file/:filename`);
+    console.log(`   - GET  /api/notifications`);
+    console.log(`   - POST /api/notifications`);
     console.log(`\n🌐 Test page: http://localhost:${PORT}/test-api.html`);
     console.log(`📋 Admin dashboard: http://localhost:${PORT}/admin-dashboard.html`);
 }); 

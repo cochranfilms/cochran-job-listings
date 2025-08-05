@@ -347,39 +347,241 @@
             }
         }
 
-        // Notification System
-        let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-
-        function addNotification(title, message, type = 'info') {
-            const notification = {
-                id: Date.now(),
-                title,
-                message,
-                type,
-                timestamp: new Date().toISOString(),
-                read: false
-            };
-            
-            notifications.unshift(notification);
-            localStorage.setItem('notifications', JSON.stringify(notifications));
+        // ==================== SOPHISTICATED NOTIFICATION SYSTEM ====================
+        
+        // Centralized notification system with real-time updates
+        let notifications = [];
+        let notificationUpdateInterval;
+        
+        // Initialize notification system
+        async function initializeNotificationSystem() {
+            console.log('🔔 Initializing sophisticated notification system...');
+            await loadNotifications();
+            startNotificationPolling();
             updateNotificationBadge();
             updateNotificationList();
         }
-
+        
+        // Load notifications from centralized storage
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications');
+                if (response.ok) {
+                    const data = await response.json();
+                    notifications = data.notifications || [];
+                    console.log('✅ Loaded notifications from API:', notifications.length);
+                } else {
+                    // Fallback to localStorage
+                    notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+                    console.log('⚠️ Using localStorage fallback for notifications');
+                }
+            } catch (error) {
+                console.error('❌ Error loading notifications:', error);
+                notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            }
+        }
+        
+        // Save notifications to centralized storage
+        async function saveNotifications() {
+            try {
+                const response = await fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        notifications: notifications,
+                        lastUpdated: new Date().toISOString()
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Notifications saved to centralized storage');
+                } else {
+                    // Fallback to localStorage
+                    localStorage.setItem('notifications', JSON.stringify(notifications));
+                    console.log('⚠️ Using localStorage fallback for notifications');
+                }
+            } catch (error) {
+                console.error('❌ Error saving notifications:', error);
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+            }
+        }
+        
+        // Add notification with rich data
+        async function addNotification(title, message, type = 'info', data = {}) {
+            const notification = {
+                id: Math.floor(Date.now() + Math.random() * 1000),
+                title: title,
+                message: message,
+                type: type,
+                data: data,
+                timestamp: new Date().toISOString(),
+                read: false,
+                actionRequired: data.actionRequired || false,
+                priority: data.priority || 'normal'
+            };
+            
+            notifications.unshift(notification);
+            await saveNotifications();
+            updateNotificationBadge();
+            updateNotificationList();
+            
+            console.log('🔔 Added notification:', notification);
+            return notification.id;
+        }
+        
+        // Smart notification triggers for user portal
+        async function triggerSmartNotifications() {
+            console.log('🔍 Checking for smart notification triggers...');
+            
+            // Check for payment method updates
+            await checkPaymentMethodNotifications();
+            
+            // Check for contract status updates
+            await checkContractStatusNotifications();
+            
+            // Check for job status updates
+            await checkJobStatusNotifications();
+        }
+        
+        // Check for payment method notifications
+        async function checkPaymentMethodNotifications() {
+            try {
+                if (currentUser && currentUser.paymentMethod) {
+                    const existingNotification = notifications.find(n => 
+                        n.type === 'payment_method_updated' && 
+                        n.data.userEmail === currentUser.email
+                    );
+                    
+                    if (!existingNotification) {
+                        await addNotification(
+                            'Payment Method Updated',
+                            `Your payment method has been updated to ${currentUser.paymentMethod}`,
+                            'payment_method_updated',
+                            {
+                                userEmail: currentUser.email,
+                                paymentMethod: currentUser.paymentMethod,
+                                actionRequired: false,
+                                priority: 'normal'
+                            }
+                        );
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error checking payment method notifications:', error);
+            }
+        }
+        
+        // Check for contract status notifications
+        async function checkContractStatusNotifications() {
+            try {
+                if (currentUser && currentUser.contract) {
+                    const contract = currentUser.contract;
+                    if (contract.contractStatus === 'signed') {
+                        const existingNotification = notifications.find(n => 
+                            n.type === 'contract_signed' && 
+                            n.data.userEmail === currentUser.email
+                        );
+                        
+                        if (!existingNotification) {
+                            await addNotification(
+                                'Contract Signed',
+                                `Your contract has been signed and is being processed by admin`,
+                                'contract_signed',
+                                {
+                                    userEmail: currentUser.email,
+                                    contractId: contract.contractId,
+                                    actionRequired: false,
+                                    priority: 'normal'
+                                }
+                            );
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error checking contract status notifications:', error);
+            }
+        }
+        
+        // Check for job status notifications
+        async function checkJobStatusNotifications() {
+            try {
+                if (currentUser && currentUser.jobs) {
+                    for (const [jobId, job] of Object.entries(currentUser.jobs)) {
+                        if (job.projectStatus === 'completed' && job.paymentStatus === 'paid') {
+                            const existingNotification = notifications.find(n => 
+                                n.type === 'job_completed' && 
+                                n.data.userEmail === currentUser.email &&
+                                n.data.jobId === jobId
+                            );
+                            
+                            if (!existingNotification) {
+                                await addNotification(
+                                    'Job Completed',
+                                    `Your job "${job.title}" has been completed and payment has been processed`,
+                                    'job_completed',
+                                    {
+                                        userEmail: currentUser.email,
+                                        jobId: jobId,
+                                        jobTitle: job.title,
+                                        actionRequired: false,
+                                        priority: 'normal'
+                                    }
+                                );
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error checking job status notifications:', error);
+            }
+        }
+        
+        // Start notification polling
+        function startNotificationPolling() {
+            // Check for new notifications every 30 seconds
+            notificationUpdateInterval = setInterval(async () => {
+                await triggerSmartNotifications();
+            }, 30000);
+            
+            console.log('🔄 Started notification polling (30s interval)');
+        }
+        
+        // Stop notification polling
+        function stopNotificationPolling() {
+            if (notificationUpdateInterval) {
+                clearInterval(notificationUpdateInterval);
+                console.log('⏹️ Stopped notification polling');
+            }
+        }
+        
+        // Update notification badge
         function updateNotificationBadge() {
             const badge = document.getElementById('notificationBadge');
             if (!badge) return;
             
             const unreadCount = notifications.filter(n => !n.read).length;
+            const highPriorityCount = notifications.filter(n => !n.read && n.priority === 'high').length;
             
             if (unreadCount > 0) {
                 badge.textContent = unreadCount;
                 badge.style.display = 'flex';
+                
+                // Add visual indicator for high priority notifications
+                if (highPriorityCount > 0) {
+                    badge.style.background = '#ff4444';
+                    badge.style.animation = 'pulse 2s infinite';
+                } else {
+                    badge.style.background = '#FFB200';
+                    badge.style.animation = 'none';
+                }
             } else {
                 badge.style.display = 'none';
             }
         }
-
+        
+        // Update notification list with rich display
         function updateNotificationList() {
             const list = document.getElementById('notificationList');
             if (!list) return;
@@ -389,63 +591,174 @@
                     <div class="no-notifications">
                         <i class="fas fa-bell-slash"></i>
                         <p>No notifications</p>
+                        <small>Notifications will appear here for important updates</small>
                     </div>
                 `;
                 return;
             }
             
             list.innerHTML = notifications.map(notification => `
-                <div class="notification-item ${notification.read ? 'read' : 'unread'}" onclick="markAsRead(${notification.id})">
-                    <div class="notification-title">
-                        <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
-                        ${notification.title}
+                <div class="notification-item ${notification.read ? 'read' : 'unread'} ${notification.priority}" 
+                     onclick="handleNotificationClick(${notification.id})">
+                    <div class="notification-header">
+                        <div class="notification-title">
+                            <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
+                            ${notification.title}
+                            ${notification.actionRequired ? '<span class="action-required">Action Required</span>' : ''}
+                        </div>
+                        <div class="notification-time">${formatNotificationTime(notification.timestamp)}</div>
                     </div>
                     <div class="notification-message">${notification.message}</div>
-                    <div class="notification-time">${formatNotificationTime(notification.timestamp)}</div>
+                    ${notification.data.actionRequired ? `
+                        <div class="notification-actions">
+                            <button onclick="handleNotificationAction(${notification.id}, 'view')" class="action-btn">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                            <button onclick="handleNotificationAction(${notification.id}, 'dismiss')" class="action-btn secondary">
+                                <i class="fas fa-times"></i> Dismiss
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             `).join('');
         }
-
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notificationDropdown');
-            if (!dropdown) return;
+        
+        // Handle notification clicks with smart navigation
+        async function handleNotificationClick(notificationId) {
+            const notification = notifications.find(n => n.id === notificationId);
+            if (!notification) {
+                console.error('❌ Notification not found:', notificationId);
+                return;
+            }
             
-            const isVisible = dropdown.style.display !== 'none';
+            console.log('🔍 Handling notification click:', notification);
             
-            if (isVisible) {
-                dropdown.style.display = 'none';
-            } else {
-                dropdown.style.display = 'block';
-                updateNotificationList();
+            // Mark as read
+            await markAsRead(notificationId);
+            
+            // Navigate based on notification type
+            switch (notification.type) {
+                case 'payment_method_updated':
+                    console.log('✅ Switching to profile tab for payment management');
+                    switchPortalTab('profile');
+                    break;
+                    
+                case 'contract_signed':
+                    console.log('✅ Switching to contracts tab for contract details');
+                    switchPortalTab('contracts');
+                    break;
+                    
+                case 'job_completed':
+                    console.log('✅ Switching to jobs tab for job details');
+                    switchPortalTab('jobs');
+                    break;
+                    
+                default:
+                    console.log('ℹ️ No specific action for notification type:', notification.type);
             }
         }
-
-        function markAsRead(notificationId) {
+        
+        // Handle notification actions
+        async function handleNotificationAction(notificationId, action) {
+            const notification = notifications.find(n => n.id === notificationId);
+            if (!notification) return;
+            
+            switch (action) {
+                case 'view':
+                    await handleNotificationClick(notificationId);
+                    break;
+                    
+                case 'dismiss':
+                    await removeNotification(notificationId);
+                    break;
+                    
+                case 'approve':
+                    // Handle approval action
+                    console.log('✅ Approving notification:', notificationId);
+                    await removeNotification(notificationId);
+                    break;
+                    
+                case 'reject':
+                    // Handle rejection action
+                    console.log('❌ Rejecting notification:', notificationId);
+                    await removeNotification(notificationId);
+                    break;
+            }
+        }
+        
+        // Remove notification
+        async function removeNotification(notificationId) {
+            notifications = notifications.filter(n => n.id !== notificationId);
+            await saveNotifications();
+            updateNotificationBadge();
+            updateNotificationList();
+        }
+        
+        // Mark notification as read
+        async function markAsRead(notificationId) {
             const notification = notifications.find(n => n.id === notificationId);
             if (notification) {
                 notification.read = true;
-                localStorage.setItem('notifications', JSON.stringify(notifications));
+                await saveNotifications();
                 updateNotificationBadge();
                 updateNotificationList();
             }
         }
-
-        function clearAllNotifications() {
+        
+        // Clear all notifications
+        async function clearAllNotifications() {
             notifications = [];
-            localStorage.setItem('notifications', JSON.stringify(notifications));
+            await saveNotifications();
             updateNotificationBadge();
             updateNotificationList();
         }
-
-        function formatNotificationTime(timestamp) {
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diff = now - date;
+        
+        // Toggle notification dropdown
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (!dropdown) return;
             
-            if (diff < 60000) return 'Just now';
-            if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-            if (diff < 86400000) return `${Math.floor(diff / 86400000)}d ago`;
-            return date.toLocaleDateString();
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+            
+            if (!isVisible) {
+                updateNotificationList();
+                // Mark all as read when opened
+                notifications.forEach(n => n.read = true);
+                updateNotificationBadge();
+            }
+        }
+        
+        // Get notification icon based on type
+        function getNotificationIcon(type) {
+            const icons = {
+                'payment_method_updated': 'credit-card',
+                'contract_signed': 'file-contract',
+                'job_completed': 'check-circle',
+                'performance_review': 'star',
+                'system_update': 'cog',
+                'warning': 'exclamation-triangle',
+                'error': 'times-circle',
+                'success': 'check-circle',
+                'info': 'info-circle'
+            };
+            return icons[type] || 'bell';
+        }
+        
+        // Format notification time
+        function formatNotificationTime(timestamp) {
+            const now = new Date();
+            const notificationTime = new Date(timestamp);
+            const diffMs = now - notificationTime;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return notificationTime.toLocaleDateString();
         }
 
         // ==================== JSON UPDATE NOTIFICATIONS ====================
@@ -3212,8 +3525,8 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
-            // Initialize notification system
-            updateNotificationBadge();
+            // Initialize sophisticated notification system
+            await initializeNotificationSystem();
             
             // Close notification dropdown when clicking outside
             document.addEventListener('click', function(event) {
@@ -3648,32 +3961,126 @@
             padding: 1rem;
             border-bottom: 1px solid rgba(255, 178, 0, 0.1);
             transition: background 0.3s ease;
+            cursor: pointer;
         }
 
         .notification-item:hover {
             background: rgba(255, 178, 0, 0.05);
         }
+        
+        .notification-item.unread {
+            background: rgba(255, 178, 0, 0.05);
+            border-left: 3px solid #FFB200;
+        }
+        
+        .notification-item.read {
+            opacity: 0.7;
+        }
+        
+        .notification-item.high {
+            border-left: 3px solid #ff4444;
+        }
 
         .notification-item:last-child {
             border-bottom: none;
         }
+        
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
 
         .notification-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             color: #FFB200;
             font-weight: bold;
             margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .action-required {
+            background: #ff4444;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
         }
 
         .notification-message {
             color: rgba(255, 255, 255, 0.8);
             font-size: 0.9rem;
             line-height: 1.4;
+            margin-bottom: 0.5rem;
         }
 
         .notification-time {
             color: rgba(255, 255, 255, 0.5);
             font-size: 0.8rem;
             margin-top: 0.5rem;
+        }
+        
+        .notification-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .notification-actions .action-btn {
+            background: rgba(255, 178, 0, 0.2);
+            color: #FFB200;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .notification-actions .action-btn:hover {
+            background: rgba(255, 178, 0, 0.3);
+            border-color: #FFB200;
+        }
+        
+        .notification-actions .action-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .notification-actions .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .no-notifications {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .no-notifications i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #FFB200;
+        }
+        
+        .no-notifications small {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
         .no-notifications {
