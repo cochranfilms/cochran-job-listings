@@ -2892,10 +2892,7 @@
         // Send job acceptance email
         async function sendJobAcceptanceEmail(userName, userData) {
             try {
-                // Generate contract ID for tracking
-                const contractId = 'CF-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
-                
-                // Prepare email parameters
+                // Prepare email parameters (no contract ID until user actually signs)
                 const emailParams = {
                     to_email: userData.profile.email,
                     freelancer_name: userName || 'User',
@@ -2903,7 +2900,7 @@
                     location: userData.profile.location || 'Atlanta Area',
                     rate: userData.profile.rate || 'Rate to be determined',
                     project_start: userData.profile.projectStart || 'TBD',
-                    contract_id: contractId
+                    contract_id: 'Will be generated when you sign the contract'
                 };
 
                 console.log('📧 Sending job acceptance email to:', userData.profile.email);
@@ -2921,7 +2918,7 @@
                         
                         // Show success message
                         setTimeout(() => {
-                            showNotification(`🎉 User approved and email sent!\n\n📧 Email sent to: ${userData.profile.email}\n📄 Contract ID: ${contractId}\n\n✅ The user will receive the job acceptance email with contract signing instructions.`, 'success');
+                            showNotification(`🎉 User approved and email sent!\n\n📧 Email sent to: ${userData.profile.email}\n\n✅ The user will receive the job acceptance email with contract signing instructions.`, 'success');
                         }, 1000);
                         
                     } catch (emailError) {
