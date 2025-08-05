@@ -1,5 +1,27 @@
 {
-  "users": {},
+  "users": {
+    "Chance Jarrard": {
+      "profile": {
+        "email": "chancejarrard@icloud.com",
+        "password": "Nrbs5zM3f7vO",
+        "role": "Videographer",
+        "location": "New York, NY",
+        "projectStart": "2025-10-10T20:00",
+        "rate": "$150/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {},
+      "primaryJob": null,
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +37,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 0
+  "totalUsers": 1
 }
