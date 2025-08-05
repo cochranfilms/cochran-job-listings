@@ -1020,8 +1020,9 @@
                     doc.text(term, 20, fixedYPos);
                 });
                 
-                // Fixed signature section position for single page
-                const signatureY = 220; // MOVED DOWN from 200 to 220 for more space
+                // Calculate signature position AFTER all terms are rendered
+                const lastTermY = 120 + (compactTerms.length * 12);
+                const signatureY = lastTermY + 20; // Add 20px spacing after last term
                 
                 // ==================== SIGNATURES ====================
                 
@@ -1262,8 +1263,9 @@
                 
                 // ==================== ADVANCED SIGNATURES ====================
                 
-                // Fixed signature section position for single page
-                const signatureY = 220; // MOVED DOWN from 200 to 220 for more space
+                // Calculate signature position AFTER all terms are rendered
+                const lastTermY = 125 + (compactTerms.length * 12);
+                const signatureY = lastTermY + 20; // Add 20px spacing after last term
                 
                 // Signature header
                 doc.setFillColor(255, 178, 0);
