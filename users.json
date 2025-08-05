@@ -3,7 +3,7 @@
     "Cody Cochran": {
       "profile": {
         "email": "codylcochran89@gmail.com",
-        "password": "I6yPwNMmR5SW",
+        "password": "testing1234",
         "role": "Editor",
         "location": "Chicago, IL",
         "projectStart": "2026-03-10T20:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/5/2025, 2:47:56 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754376476668-BLMXD"
       },
       "jobs": {
         "job-editor-default": {
