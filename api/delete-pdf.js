@@ -2,7 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 module.exports = async (req, res) => {
-    // Set CORS headers
+    // Set CORS headers for Vercel
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -18,17 +18,13 @@ module.exports = async (req, res) => {
             const { fileName, contractId } = req.body;
             
             if (!fileName) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: 'fileName is required' 
-                });
+                return res.status(400).json({ success: false, error: 'fileName is required' });
             }
             
             console.log(`🗑️ Attempting to delete PDF: ${fileName}`);
-            
-            // Delete from local contracts directory
-            const localFilePath = path.join(__dirname, '../contracts', fileName);
+
             let localDeleted = false;
+            const localFilePath = path.join(__dirname, '../contracts', fileName);
             
             try {
                 await fs.access(localFilePath);
@@ -38,16 +34,14 @@ module.exports = async (req, res) => {
             } catch (localError) {
                 console.log(`📄 Local PDF not found: ${fileName}`);
             }
-            
-            // Delete from uploaded-contracts.json
-            const contractsPath = path.join(__dirname, '../uploaded-contracts.json');
+
             let jsonUpdated = false;
+            const contractsPath = path.join(__dirname, '../uploaded-contracts.json');
             
             try {
                 const contractsData = JSON.parse(await fs.readFile(contractsPath, 'utf8'));
                 const initialCount = contractsData.uploadedContracts.length;
                 
-                // Remove contract from JSON
                 contractsData.uploadedContracts = contractsData.uploadedContracts.filter(
                     contract => contract.fileName !== fileName
                 );
@@ -61,19 +55,17 @@ module.exports = async (req, res) => {
             } catch (jsonError) {
                 console.error(`❌ Error updating JSON:`, jsonError.message);
             }
-            
-            // Try to delete from GitHub if contractId is provided
+
             let githubDeleted = false;
             if (contractId) {
                 try {
-                    const githubResponse = await fetch(`/api/github/file/${fileName}`, {
+                    // Simplified GitHub deletion for testing. In production, SHA would be fetched.
+                    const githubResponse = await fetch(`/api/github/file/contracts/${fileName}`, {
                         method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: `Delete contract ${contractId} - ${fileName}`,
-                            sha: 'latest' // This would need to be fetched properly in production
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            message: `Delete contract ${contractId} - ${fileName}`, 
+                            sha: 'latest' 
                         })
                     });
                     
@@ -87,35 +79,31 @@ module.exports = async (req, res) => {
                     console.log(`⚠️ GitHub deletion error: ${githubError.message}`);
                 }
             }
-            
-            // Return success response
+
             const success = localDeleted || jsonUpdated;
             
             res.status(200).json({
                 success: success,
                 message: success ? 'PDF deleted successfully' : 'PDF not found',
-                details: {
-                    fileName: fileName,
-                    contractId: contractId,
-                    localDeleted: localDeleted,
-                    jsonUpdated: jsonUpdated,
-                    githubDeleted: githubDeleted
+                details: { 
+                    fileName, 
+                    contractId, 
+                    localDeleted, 
+                    jsonUpdated, 
+                    githubDeleted 
                 }
             });
             
         } else {
-            res.status(405).json({ 
-                success: false, 
-                error: 'Method not allowed. Use DELETE.' 
-            });
+            res.status(405).json({ success: false, error: 'Method not allowed. Use DELETE.' });
         }
         
     } catch (error) {
         console.error('❌ PDF deletion API error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Internal server error',
-            message: error.message
+        res.status(500).json({ 
+            success: false, 
+            error: 'Internal server error', 
+            message: error.message 
         });
     }
 }; 

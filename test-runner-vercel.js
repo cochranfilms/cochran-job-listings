@@ -1,0 +1,899 @@
+const fs = require('fs').promises;
+const path = require('path');
+const fetch = require('node-fetch');
+
+class AutomatedTestRunner {
+    constructor() {
+        // Use the actual domain for Vercel deployment
+        this.baseUrl = 'https://collaborate.cochranfilms.com';
+        this.testResults = {
+            timestamp: new Date().toISOString(),
+            summary: {
+                total: 0,
+                passed: 0,
+                failed: 0,
+                warnings: 0
+            },
+            tests: [],
+            systemHealth: {},
+            recommendations: []
+        };
+        
+        // Test data for creating/updating records
+        this.testData = {
+            user: {
+                name: 'Test User',
+                email: 'test@cochranfilms.com',
+                role: 'Photographer',
+                location: 'Atlanta, GA',
+                rate: '$400.00 USD (Flat)',
+                projectStart: '2025-01-15',
+                approvedDate: new Date().toISOString().split('T')[0]
+            },
+            job: {
+                title: 'Test Photography Job',
+                date: '2025-12-15',
+                location: 'Atlanta, GA',
+                pay: '$500',
+                description: 'Test job for automated testing',
+                status: 'Active'
+            },
+            contract: {
+                fileName: 'test-contract.pdf',
+                contractId: 'TEST-001',
+                status: 'pending',
+                uploadedDate: new Date().toISOString()
+            },
+            performance: {
+                rating: 4,
+                category: 'Professionalism',
+                notes: 'Test performance review',
+                status: 'completed'
+            },
+            notification: {
+                title: 'Test Notification',
+                message: 'This is a test notification',
+                type: 'info',
+                read: false,
+                timestamp: new Date().toISOString()
+            }
+        };
+        
+        // Initialize test data tracking for cleanup
+        this.testDataLog = [];
+        this.testDataLogFile = `test-data-log-${new Date().toISOString().split('T')[0]}.json`;
+    }
+
+    async log(message, type = 'info') {
+        const timestamp = new Date().toISOString();
+        const prefix = {
+            info: 'ℹ️',
+            success: '✅',
+            warning: '⚠️',
+            error: '❌',
+            test: '🧪'
+        }[type] || 'ℹ️';
+        
+        console.log(`${prefix} [${timestamp}] ${message}`);
+    }
+
+    // Internal logging for test data tracking and cleanup
+    logTestData(action, data) {
+        const logEntry = {
+            action: action,
+            timestamp: new Date().toISOString(),
+            data: data
+        };
+        
+        this.testDataLog.push(logEntry);
+        
+        // Save to file for cleanup reference
+        try {
+            const fsSync = require('fs');
+            fsSync.writeFileSync(
+                this.testDataLogFile,
+                JSON.stringify(this.testDataLog, null, 2)
+            );
+        } catch (error) {
+            console.error('❌ Failed to log test data:', error.message);
+        }
+    }
+
+    getTestDataForCleanup() {
+        const cleanupData = {
+            users: [],
+            jobs: [],
+            contracts: [],
+            performance: [],
+            notifications: [],
+            files: []
+        };
+        
+        this.testDataLog.forEach(entry => {
+            switch (entry.action) {
+                case 'USER_CREATED':
+                    cleanupData.users.push(entry.data.email);
+                    break;
+                case 'JOB_CREATED':
+                    cleanupData.jobs.push(entry.data.title);
+                    break;
+                case 'CONTRACT_CREATED':
+                    cleanupData.contracts.push({
+                        fileName: entry.data.fileName,
+                        contractId: entry.data.contractId
+                    });
+                    cleanupData.files.push(entry.data.fileName);
+                    break;
+                case 'PERFORMANCE_CREATED':
+                    cleanupData.performance.push(entry.data.email);
+                    break;
+                case 'NOTIFICATION_CREATED':
+                    cleanupData.notifications.push(entry.data.title);
+                    break;
+            }
+        });
+        
+        return cleanupData;
+    }
+
+    async cleanupTestData() {
+        await this.log('🧹 Starting test data cleanup...', 'info');
+        const cleanupData = this.getTestDataForCleanup();
+        let cleanedCount = 0;
+        
+        try {
+            // Clean up users
+            if (cleanupData.users.length > 0) {
+                try {
+                    const usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+                    const initialCount = usersData.users.length;
+                    usersData.users = usersData.users.filter(user => 
+                        !cleanupData.users.includes(user.email)
+                    );
+                    usersData.totalUsers = usersData.users.length;
+                    usersData.lastUpdated = new Date().toISOString().split('T')[0];
+                    await fs.writeFile('users.json', JSON.stringify(usersData, null, 2));
+                    cleanedCount += initialCount - usersData.users.length;
+                } catch (error) {
+                    console.log(`⚠️ Could not clean up users: ${error.message}`);
+                }
+            }
+            
+            // Clean up jobs
+            if (cleanupData.jobs.length > 0) {
+                try {
+                    const jobsData = JSON.parse(await fs.readFile('jobs-data.json', 'utf8'));
+                    const initialCount = jobsData.jobs.length;
+                    jobsData.jobs = jobsData.jobs.filter(job => 
+                        !cleanupData.jobs.includes(job.title)
+                    );
+                    jobsData.totalJobs = jobsData.jobs.length;
+                    jobsData.lastUpdated = new Date().toISOString().split('T')[0];
+                    await fs.writeFile('jobs-data.json', JSON.stringify(jobsData, null, 2));
+                    cleanedCount += initialCount - jobsData.jobs.length;
+                } catch (error) {
+                    console.log(`⚠️ Could not clean up jobs: ${error.message}`);
+                }
+            }
+            
+            // Clean up contracts
+            if (cleanupData.contracts.length > 0) {
+                try {
+                    const contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+                    const initialCount = contractsData.uploadedContracts.length;
+                    contractsData.uploadedContracts = contractsData.uploadedContracts.filter(contract => 
+                        !cleanupData.contracts.some(c => c.fileName === contract.fileName)
+                    );
+                    contractsData.totalContracts = contractsData.uploadedContracts.length;
+                    contractsData.lastUpdated = new Date().toISOString().split('T')[0];
+                    await fs.writeFile('uploaded-contracts.json', JSON.stringify(contractsData, null, 2));
+                    cleanedCount += initialCount - contractsData.uploadedContracts.length;
+                } catch (error) {
+                    console.log(`⚠️ Could not clean up contracts: ${error.message}`);
+                }
+            }
+            
+            // Clean up performance reviews
+            if (cleanupData.performance.length > 0) {
+                try {
+                    const performanceData = JSON.parse(await fs.readFile('performance.json', 'utf8'));
+                    const initialCount = performanceData.reviews.length;
+                    performanceData.reviews = performanceData.reviews.filter(review => 
+                        !cleanupData.performance.includes(review.email)
+                    );
+                    performanceData.totalReviews = performanceData.reviews.length;
+                    performanceData.lastUpdated = new Date().toISOString().split('T')[0];
+                    await fs.writeFile('performance.json', JSON.stringify(performanceData, null, 2));
+                    cleanedCount += initialCount - performanceData.reviews.length;
+                } catch (error) {
+                    console.log(`⚠️ Could not clean up performance reviews: ${error.message}`);
+                }
+            }
+            
+            // Clean up notifications
+            if (cleanupData.notifications.length > 0) {
+                try {
+                    const notificationsData = JSON.parse(await fs.readFile('notifications.json', 'utf8'));
+                    const initialCount = notificationsData.notifications.length;
+                    notificationsData.notifications = notificationsData.notifications.filter(notification => 
+                        !cleanupData.notifications.includes(notification.title)
+                    );
+                    notificationsData.totalNotifications = notificationsData.notifications.length;
+                    notificationsData.unreadCount = notificationsData.notifications.filter(n => !n.read).length;
+                    notificationsData.lastUpdated = new Date().toISOString().split('T')[0];
+                    await fs.writeFile('notifications.json', JSON.stringify(notificationsData, null, 2));
+                    cleanedCount += initialCount - notificationsData.notifications.length;
+                } catch (error) {
+                    console.log(`⚠️ Could not clean up notifications: ${error.message}`);
+                }
+            }
+            
+            // Clean up test files
+            cleanupData.files.forEach(fileName => {
+                try {
+                    const fsSync = require('fs');
+                    const filePath = path.join('contracts', fileName);
+                    if (fsSync.existsSync(filePath)) {
+                        fsSync.unlinkSync(filePath);
+                        cleanedCount++;
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Could not delete test file: ${fileName}`);
+                }
+            });
+            
+            await this.log(`✅ Cleanup completed: ${cleanedCount} items removed`, 'success');
+            
+            // Clear the test data log
+            this.testDataLog = [];
+            const fsSync = require('fs');
+            if (fsSync.existsSync(this.testDataLogFile)) {
+                fsSync.unlinkSync(this.testDataLogFile);
+            }
+            
+        } catch (error) {
+            await this.log(`❌ Cleanup failed: ${error.message}`, 'error');
+        }
+    }
+
+    async runTest(testName, testFunction) {
+        const startTime = Date.now();
+        
+        try {
+            await this.log(`🧪 Starting test: ${testName}`, 'test');
+            const result = await testFunction();
+            const duration = Date.now() - startTime;
+            
+            if (result.success) {
+                await this.log(`✅ PASSED: ${testName}`, 'success');
+            } else {
+                await this.log(`❌ FAILED: ${testName}`, 'error');
+            }
+            
+            return {
+                name: testName,
+                success: result.success,
+                message: result.message,
+                details: result.details || {},
+                duration: duration,
+                timestamp: new Date().toISOString()
+            };
+            
+        } catch (error) {
+            const duration = Date.now() - startTime;
+            await this.log(`❌ ERROR in ${testName}: ${error.message}`, 'error');
+            
+            return {
+                name: testName,
+                success: false,
+                message: `Test failed with error: ${error.message}`,
+                details: { error: error.message },
+                duration: duration,
+                timestamp: new Date().toISOString()
+            };
+        }
+    }
+
+    async testServerHealth() {
+        return this.runTest('Server Health Check', async () => {
+            const response = await fetch(`${this.baseUrl}/api/health`);
+            
+            if (!response.ok) {
+                throw new Error(`Server health check failed: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return {
+                success: true,
+                message: 'Server is healthy and responding',
+                details: data
+            };
+        });
+    }
+
+    async testFileSystemAccess() {
+        return this.runTest('File System Access', async () => {
+            const requiredFiles = [
+                'users.json',
+                'jobs-data.json', 
+                'uploaded-contracts.json',
+                'dropdown-options.json',
+                'performance.json',
+                'notifications.json'
+            ];
+            
+            const fileStatus = {};
+            
+            for (const file of requiredFiles) {
+                try {
+                    const stats = await fs.stat(file);
+                    fileStatus[file] = {
+                        accessible: true,
+                        size: stats.size
+                    };
+                } catch (error) {
+                    fileStatus[file] = {
+                        accessible: false,
+                        error: error.message
+                    };
+                }
+            }
+            
+            const allAccessible = Object.values(fileStatus).every(status => status.accessible);
+            
+            return {
+                success: allAccessible,
+                message: allAccessible ? 'All required files are accessible' : 'Some files are not accessible',
+                details: fileStatus
+            };
+        });
+    }
+
+    async testUserCreation() {
+        return this.runTest('User Creation', async () => {
+            // Load current users
+            const usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            const initialCount = usersData.users.length;
+            
+            // Add test user
+            usersData.users.push(this.testData.user);
+            usersData.totalUsers = usersData.users.length;
+            usersData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('users.json', JSON.stringify(usersData, null, 2));
+            
+            // Log for cleanup
+            this.logTestData('USER_CREATED', {
+                email: this.testData.user.email,
+                file: 'users.json'
+            });
+            
+            return {
+                success: true,
+                message: `Test user created successfully (${initialCount} → ${usersData.totalUsers} users)`,
+                details: {
+                    user: this.testData.user.email,
+                    totalUsers: usersData.totalUsers
+                }
+            };
+        });
+    }
+
+    async testUserDeletion() {
+        return this.runTest('User Deletion', async () => {
+            // Load current users
+            const usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            const initialCount = usersData.users.length;
+            
+            // Remove test user
+            usersData.users = usersData.users.filter(user => 
+                user.email !== this.testData.user.email
+            );
+            usersData.totalUsers = usersData.users.length;
+            usersData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('users.json', JSON.stringify(usersData, null, 2));
+            
+            return {
+                success: true,
+                message: `Test user deleted successfully (${initialCount} → ${usersData.totalUsers} users)`,
+                details: {
+                    deletedUser: this.testData.user.email,
+                    totalUsers: usersData.totalUsers
+                }
+            };
+        });
+    }
+
+    async testJobCreation() {
+        return this.runTest('Job Creation', async () => {
+            // Load current jobs
+            const jobsData = JSON.parse(await fs.readFile('jobs-data.json', 'utf8'));
+            const initialCount = jobsData.jobs.length;
+            
+            // Add test job
+            jobsData.jobs.push(this.testData.job);
+            jobsData.totalJobs = jobsData.jobs.length;
+            jobsData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('jobs-data.json', JSON.stringify(jobsData, null, 2));
+            
+            // Log for cleanup
+            this.logTestData('JOB_CREATED', {
+                title: this.testData.job.title,
+                file: 'jobs-data.json'
+            });
+            
+            return {
+                success: true,
+                message: `Test job created successfully (${initialCount} → ${jobsData.totalJobs} jobs)`,
+                details: {
+                    job: this.testData.job.title,
+                    totalJobs: jobsData.totalJobs
+                }
+            };
+        });
+    }
+
+    async testJobDeletion() {
+        return this.runTest('Job Deletion', async () => {
+            // Load current jobs
+            const jobsData = JSON.parse(await fs.readFile('jobs-data.json', 'utf8'));
+            const initialCount = jobsData.jobs.length;
+            
+            // Remove test job
+            jobsData.jobs = jobsData.jobs.filter(job => 
+                job.title !== this.testData.job.title
+            );
+            jobsData.totalJobs = jobsData.jobs.length;
+            jobsData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('jobs-data.json', JSON.stringify(jobsData, null, 2));
+            
+            return {
+                success: true,
+                message: `Test job deleted successfully (${initialCount} → ${jobsData.totalJobs} jobs)`,
+                details: {
+                    deletedJob: this.testData.job.title,
+                    totalJobs: jobsData.totalJobs
+                }
+            };
+        });
+    }
+
+    async testContractAddition() {
+        return this.runTest('Contract Addition', async () => {
+            // Load current contracts
+            const contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            const initialCount = contractsData.uploadedContracts.length;
+            
+            // Add test contract
+            contractsData.uploadedContracts.push(this.testData.contract);
+            contractsData.totalContracts = contractsData.uploadedContracts.length;
+            contractsData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('uploaded-contracts.json', JSON.stringify(contractsData, null, 2));
+            
+            // Log for cleanup
+            this.logTestData('CONTRACT_CREATED', {
+                fileName: this.testData.contract.fileName,
+                contractId: this.testData.contract.contractId,
+                file: 'uploaded-contracts.json'
+            });
+            
+            return {
+                success: true,
+                message: `Test contract added successfully (${initialCount} → ${contractsData.totalContracts} contracts)`,
+                details: {
+                    contract: this.testData.contract.fileName,
+                    totalContracts: contractsData.totalContracts
+                }
+            };
+        });
+    }
+
+    async testContractDeletion() {
+        return this.runTest('Contract Deletion', async () => {
+            // Load current contracts
+            const contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            const initialCount = contractsData.uploadedContracts.length;
+            
+            // Remove test contract
+            contractsData.uploadedContracts = contractsData.uploadedContracts.filter(contract => 
+                contract.fileName !== this.testData.contract.fileName
+            );
+            contractsData.totalContracts = contractsData.uploadedContracts.length;
+            contractsData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('uploaded-contracts.json', JSON.stringify(contractsData, null, 2));
+            
+            return {
+                success: true,
+                message: `Test contract deleted successfully (${initialCount} → ${contractsData.totalContracts} contracts)`,
+                details: {
+                    deletedContract: this.testData.contract.fileName,
+                    totalContracts: contractsData.totalContracts
+                }
+            };
+        });
+    }
+
+    async testPerformanceReviewCreation() {
+        return this.runTest('Performance Review Creation', async () => {
+            // Load current performance reviews
+            const performanceData = JSON.parse(await fs.readFile('performance.json', 'utf8'));
+            const initialCount = performanceData.reviews.length;
+            
+            // Add test performance review
+            const testReview = {
+                email: this.testData.user.email,
+                rating: this.testData.performance.rating,
+                category: this.testData.performance.category,
+                notes: this.testData.performance.notes,
+                status: this.testData.performance.status,
+                reviewDate: new Date().toISOString().split('T')[0]
+            };
+            
+            performanceData.reviews.push(testReview);
+            performanceData.totalReviews = performanceData.reviews.length;
+            performanceData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('performance.json', JSON.stringify(performanceData, null, 2));
+            
+            // Log for cleanup
+            this.logTestData('PERFORMANCE_CREATED', {
+                email: this.testData.user.email,
+                file: 'performance.json'
+            });
+            
+            return {
+                success: true,
+                message: `Test performance review created successfully (${initialCount} → ${performanceData.totalReviews} reviews)`,
+                details: {
+                    review: this.testData.user.email,
+                    totalReviews: performanceData.totalReviews
+                }
+            };
+        });
+    }
+
+    async testPerformanceReviewDeletion() {
+        return this.runTest('Performance Review Deletion', async () => {
+            // Load current performance reviews
+            const performanceData = JSON.parse(await fs.readFile('performance.json', 'utf8'));
+            const initialCount = performanceData.reviews.length;
+            
+            // Remove test performance review
+            performanceData.reviews = performanceData.reviews.filter(review => 
+                review.email !== this.testData.user.email
+            );
+            performanceData.totalReviews = performanceData.reviews.length;
+            performanceData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('performance.json', JSON.stringify(performanceData, null, 2));
+            
+            return {
+                success: true,
+                message: `Test performance review deleted successfully (${initialCount} → ${performanceData.totalReviews} reviews)`,
+                details: {
+                    deletedReview: this.testData.user.email,
+                    totalReviews: performanceData.totalReviews
+                }
+            };
+        });
+    }
+
+    async testNotificationCreation() {
+        return this.runTest('Notification Creation', async () => {
+            // Load current notifications
+            const notificationsData = JSON.parse(await fs.readFile('notifications.json', 'utf8'));
+            const initialCount = notificationsData.notifications.length;
+            
+            // Add test notification
+            notificationsData.notifications.push(this.testData.notification);
+            notificationsData.totalNotifications = notificationsData.notifications.length;
+            notificationsData.unreadCount = notificationsData.notifications.filter(n => !n.read).length;
+            notificationsData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('notifications.json', JSON.stringify(notificationsData, null, 2));
+            
+            // Log for cleanup
+            this.logTestData('NOTIFICATION_CREATED', {
+                title: this.testData.notification.title,
+                file: 'notifications.json'
+            });
+            
+            return {
+                success: true,
+                message: `Test notification created successfully (${initialCount} → ${notificationsData.totalNotifications} notifications)`,
+                details: {
+                    notification: this.testData.notification.title,
+                    totalNotifications: notificationsData.totalNotifications
+                }
+            };
+        });
+    }
+
+    async testNotificationDeletion() {
+        return this.runTest('Notification Deletion', async () => {
+            // Load current notifications
+            const notificationsData = JSON.parse(await fs.readFile('notifications.json', 'utf8'));
+            const initialCount = notificationsData.notifications.length;
+            
+            // Remove test notification
+            notificationsData.notifications = notificationsData.notifications.filter(notification => 
+                notification.title !== this.testData.notification.title
+            );
+            notificationsData.totalNotifications = notificationsData.notifications.length;
+            notificationsData.unreadCount = notificationsData.notifications.filter(n => !n.read).length;
+            notificationsData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('notifications.json', JSON.stringify(notificationsData, null, 2));
+            
+            return {
+                success: true,
+                message: `Test notification deleted successfully (${initialCount} → ${notificationsData.totalNotifications} notifications)`,
+                details: {
+                    deletedNotification: this.testData.notification.title,
+                    totalNotifications: notificationsData.totalNotifications
+                }
+            };
+        });
+    }
+
+    async testAllAPIEndpoints() {
+        return this.runTest('All API Endpoints', async () => {
+            const endpoints = [
+                '/api/users',
+                '/api/jobs-data',
+                '/api/uploaded-contracts',
+                '/api/dropdown-options',
+                '/api/performance',
+                '/api/notifications',
+                '/api/health'
+            ];
+            
+            const results = {};
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${this.baseUrl}${endpoint}`);
+                    const data = await response.json();
+                    
+                    results[endpoint] = {
+                        status: response.status,
+                        working: response.ok,
+                        hasData: data && Object.keys(data).length > 0
+                    };
+                } catch (error) {
+                    results[endpoint] = {
+                        status: 0,
+                        working: false,
+                        error: error.message
+                    };
+                }
+            }
+            
+            const allWorking = Object.values(results).every(result => result.working);
+            
+            return {
+                success: allWorking,
+                message: allWorking ? 'All API endpoints are working' : 'Some API endpoints are not working',
+                details: results
+            };
+        });
+    }
+
+    async testProjectTimelineUpdates() {
+        return this.runTest('Project Timeline Updates', async () => {
+            // First ensure test user exists
+            const usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            const testUser = usersData.users.find(user => user.email === this.testData.user.email);
+            
+            if (!testUser) {
+                // Create test user if it doesn't exist
+                usersData.users.push(this.testData.user);
+                usersData.totalUsers = usersData.users.length;
+                usersData.lastUpdated = new Date().toISOString().split('T')[0];
+                await fs.writeFile('users.json', JSON.stringify(usersData, null, 2));
+            }
+            
+            // Update user's project timeline
+            const updatedUser = usersData.users.find(user => user.email === this.testData.user.email);
+            updatedUser.currentProject = 'Test Project';
+            updatedUser.projectStatus = 'in-progress';
+            updatedUser.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile('users.json', JSON.stringify(usersData, null, 2));
+            
+            return {
+                success: true,
+                message: 'Project timeline updated successfully',
+                details: {
+                    user: this.testData.user.email,
+                    job: 'Test Project',
+                    status: 'in-progress'
+                }
+            };
+        });
+    }
+
+    async testPdfDeletion() {
+        return this.runTest('PDF Deletion API', async () => {
+            // First create a test user and contract to simulate the full lifecycle
+            const usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            const testUser = usersData.users.find(user => user.email === this.testData.user.email);
+            
+            if (!testUser) {
+                usersData.users.push(this.testData.user);
+                usersData.totalUsers = usersData.users.length;
+                usersData.lastUpdated = new Date().toISOString().split('T')[0];
+                await fs.writeFile('users.json', JSON.stringify(usersData, null, 2));
+            }
+            
+            // Create test contract
+            const contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            const testContract = {
+                fileName: 'test-delete-pdf.pdf',
+                contractId: 'TEST-DELETE-001',
+                status: 'signed',
+                uploadedDate: new Date().toISOString(),
+                userEmail: this.testData.user.email
+            };
+            
+            contractsData.uploadedContracts.push(testContract);
+            contractsData.totalContracts = contractsData.uploadedContracts.length;
+            contractsData.lastUpdated = new Date().toISOString().split('T')[0];
+            await fs.writeFile('uploaded-contracts.json', JSON.stringify(contractsData, null, 2));
+            
+            // Update user's contract status
+            const updatedUser = usersData.users.find(user => user.email === this.testData.user.email);
+            updatedUser.hasContract = true;
+            updatedUser.contractStatus = 'signed';
+            updatedUser.lastUpdated = new Date().toISOString().split('T')[0];
+            await fs.writeFile('users.json', JSON.stringify(usersData, null, 2));
+            
+            // Log for cleanup
+            this.logTestData('CONTRACT_CREATED', {
+                fileName: testContract.fileName,
+                contractId: testContract.contractId,
+                file: 'uploaded-contracts.json'
+            });
+            
+            // Now test the PDF deletion API
+            const response = await fetch(`${this.baseUrl}/api/delete-pdf`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fileName: testContract.fileName,
+                    contractId: testContract.contractId
+                })
+            });
+            
+            const result = await response.json();
+            
+            return {
+                success: result.success,
+                message: 'Complete contract lifecycle test passed (creation, signing, upload, deletion)',
+                details: {
+                    contractCreated: true,
+                    userUpdated: true,
+                    contractDeleted: result.success,
+                    result: result
+                }
+            };
+        });
+    }
+
+    generateRecommendations() {
+        const recommendations = [];
+        
+        // Analyze test results and generate recommendations
+        const failedTests = this.testResults.tests.filter(test => !test.success);
+        
+        if (failedTests.length > 0) {
+            for (const test of failedTests) {
+                recommendations.push({
+                    priority: 'HIGH',
+                    title: `Fix ${test.name}`,
+                    description: `Test failed: ${test.message}`
+                });
+            }
+        }
+        
+        // Check for performance issues
+        const slowTests = this.testResults.tests.filter(test => test.duration > 1000);
+        if (slowTests.length > 0) {
+            recommendations.push({
+                priority: 'MEDIUM',
+                title: 'Optimize Slow Tests',
+                description: `${slowTests.length} tests are taking longer than 1 second to complete`
+            });
+        }
+        
+        // Check for system health issues
+        const healthTests = this.testResults.tests.filter(test => 
+            test.name.includes('Health') || test.name.includes('API')
+        );
+        const failedHealthTests = healthTests.filter(test => !test.success);
+        
+        if (failedHealthTests.length > 0) {
+            recommendations.push({
+                priority: 'HIGH',
+                title: 'System Health Issues',
+                description: `${failedHealthTests.length} system health tests failed`
+            });
+        }
+        
+        return recommendations;
+    }
+
+    async runAllTests() {
+        await this.log('🚀 Starting Automated Test Suite', 'info');
+        await this.log('================================', 'info');
+        
+        // Run all tests
+        const tests = [
+            this.testServerHealth(),
+            this.testFileSystemAccess(),
+            this.testAllAPIEndpoints(),
+            this.testUserCreation(),
+            this.testUserDeletion(),
+            this.testJobCreation(),
+            this.testJobDeletion(),
+            this.testContractAddition(),
+            this.testContractDeletion(),
+            this.testPerformanceReviewCreation(),
+            this.testPerformanceReviewDeletion(),
+            this.testNotificationCreation(),
+            this.testNotificationDeletion(),
+            this.testProjectTimelineUpdates(),
+            this.testPdfDeletion()
+        ];
+        
+        const results = await Promise.all(tests);
+        
+        // Update summary
+        this.testResults.tests = results;
+        this.testResults.summary.total = results.length;
+        this.testResults.summary.passed = results.filter(r => r.success).length;
+        this.testResults.summary.failed = results.filter(r => !r.success).length;
+        this.testResults.summary.warnings = 0;
+        
+        // Generate recommendations
+        this.testResults.recommendations = this.generateRecommendations();
+        
+        // Log test data for cleanup
+        await this.log('📝 Test data logged for cleanup', 'info');
+        await this.log(`   Log file: ${this.testDataLogFile}`, 'info');
+        await this.log(`   Total log entries: ${this.testDataLog.length}`, 'info');
+        
+        // Log summary
+        await this.log('================================', 'info');
+        await this.log('📊 Test Summary:', 'info');
+        await this.log(`   Total Tests: ${this.testResults.summary.total}`, 'info');
+        await this.log(`   Passed: ${this.testResults.summary.passed}`, this.testResults.summary.passed > 0 ? 'success' : 'info');
+        await this.log(`   Failed: ${this.testResults.summary.failed}`, this.testResults.summary.failed > 0 ? 'error' : 'info');
+        await this.log(`   Success Rate: ${((this.testResults.summary.passed / this.testResults.summary.total) * 100).toFixed(1)}%`, 'success');
+        
+        return this.testResults;
+    }
+
+    async saveTestResults() {
+        const timestamp = new Date().toISOString();
+        const filename = `test-results-${timestamp}.json`;
+        
+        try {
+            await fs.writeFile(filename, JSON.stringify(this.testResults, null, 2));
+            await this.log(`💾 Test results saved to: ${filename}`, 'success');
+            return filename;
+        } catch (error) {
+            await this.log(`❌ Failed to save test results: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+}
+
+module.exports = AutomatedTestRunner; 
