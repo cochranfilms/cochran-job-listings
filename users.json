@@ -3,7 +3,7 @@
     "thing one": {
       "profile": {
         "email": "dedejackson727@gmail.com",
-        "password": "5txlAtQ8UKjN",
+        "password": "testuser1",
         "role": "Assistant",
         "location": "New York, NY",
         "projectStart": "2026-10-10T20:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/5/2025, 4:40:01 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754383201595-64YZ7"
       },
       "jobs": {
         "job-assistant-default": {
