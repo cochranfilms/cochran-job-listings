@@ -24,8 +24,8 @@
           "pay": "$200/hour",
           "description": "Professional Producer position in Atlanta, GA. Details to be provided.",
           "status": "upcoming",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
+          "projectStatus": "completed",
+          "paymentStatus": "paid",
           "assignedDate": "2025-08-05",
           "projectStart": "TBD"
         }
