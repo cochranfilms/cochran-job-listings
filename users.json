@@ -3,7 +3,7 @@
     "Chance Jarrard": {
       "profile": {
         "email": "chancejarrard@gmail.com",
-        "password": "NVxB0bfR4eCG",
+        "password": "zujwi9-Hihdov-hubwug",
         "role": "Videographer",
         "location": "Los Angeles, CA",
         "projectStart": "2025-10-11T17:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/4/2025, 11:33:26 PM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754364806149-P6K90"
       },
       "jobs": {},
       "primaryJob": null,
