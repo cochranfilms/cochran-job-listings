@@ -92,9 +92,27 @@ module.exports = async (req, res) => {
             return;
         }
 
-        // POST /api/performance - Create new performance review (disabled in production)
+        // POST /api/performance - Create/Update performance reviews
         if (method === 'POST' && pathSegments.length === 1) {
-            return res.status(405).json({ error: 'Method not allowed - Use admin dashboard for creating reviews' });
+            const requestData = req.body;
+            
+            if (!requestData || !requestData.performanceReviews) {
+                return res.status(400).json({ error: 'Invalid request data' });
+            }
+            
+            const data = await loadPerformanceData();
+            data.performanceReviews = requestData.performanceReviews;
+            data.lastUpdated = new Date().toISOString();
+            data.totalReviews = Object.keys(requestData.performanceReviews).length;
+            
+            const success = await savePerformanceData(data);
+            
+            if (success) {
+                res.json({ message: 'Performance reviews updated successfully', totalReviews: data.totalReviews });
+            } else {
+                res.status(500).json({ error: 'Failed to save performance reviews' });
+            }
+            return;
         }
 
         // PUT /api/performance/:email - Update performance review (disabled in production)

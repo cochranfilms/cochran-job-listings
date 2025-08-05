@@ -44,6 +44,10 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
+        // Session persistence timer (5 minutes)
+        const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
+        let sessionTimer = null;
+
         // Authentication state observer
         auth.onAuthStateChanged(function(user) {
             if (user) {
@@ -52,6 +56,8 @@
                 // Only check if user is properly authenticated and not just a temporary state
                 if (user.email && user.emailVerified !== false) {
                     checkUserInSystem(user.email);
+                    // Set session timer
+                    startSessionTimer();
                 } else {
                     console.log('⚠️ User not fully authenticated, waiting for proper auth...');
                     showLoginScreen();
@@ -59,8 +65,38 @@
             } else {
                 console.log('❌ User signed out');
                 showLoginScreen();
+                clearSessionTimer();
             }
         });
+
+        // Start session timer
+        function startSessionTimer() {
+            clearSessionTimer();
+            sessionTimer = setTimeout(() => {
+                console.log('⏰ Session timeout - logging out user');
+                logout();
+            }, SESSION_TIMEOUT);
+        }
+
+        // Clear session timer
+        function clearSessionTimer() {
+            if (sessionTimer) {
+                clearTimeout(sessionTimer);
+                sessionTimer = null;
+            }
+        }
+
+        // Reset session timer on user activity
+        function resetSessionTimer() {
+            if (currentUser) {
+                startSessionTimer();
+            }
+        }
+
+        // Add activity listeners to reset timer
+        document.addEventListener('click', resetSessionTimer);
+        document.addEventListener('keypress', resetSessionTimer);
+        document.addEventListener('scroll', resetSessionTimer);
 
         // Load performance reviews from API
         async function loadPerformanceReviews() {
@@ -2309,27 +2345,27 @@
                                 <div class="info-list">
                                     <div class="info-item">
                                         <span class="label">Position:</span>
-                                        <span class="value">${data.job.role}</span>
+                                        <span class="value">${data.job.title || data.job.role || 'Assistant Position'}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Project Type:</span>
-                                        <span class="value">${data.job.projectType}</span>
+                                        <span class="value">${data.job.projectType || 'Assistant'}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Location:</span>
-                                        <span class="value">${data.job.location}</span>
+                                        <span class="value">${data.job.location || 'New York, NY'}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Start Date:</span>
-                                        <span class="value">${data.job.projectStart}</span>
+                                        <span class="value">${data.job.projectStart || data.job.date || '2026-10-10T20:00'}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Rate:</span>
-                                        <span class="value highlight">${data.job.rate}</span>
+                                        <span class="value highlight">${data.job.pay || data.job.rate || '$75/hour'}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Description:</span>
-                                        <span class="value">${data.job.description}</span>
+                                        <span class="value">${data.job.description || 'Professional Assistant position. Details to be provided.'}</span>
                                     </div>
                                 </div>
                             </div>
