@@ -66,7 +66,8 @@
         }
       },
       "primaryJob": "job-producer-default",
-      "paymentMethod": null
+      "paymentMethod": "paypal",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
