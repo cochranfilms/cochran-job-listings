@@ -1,5 +1,27 @@
 {
-  "users": {},
+  "users": {
+    "Thing Three": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": "9R1ne3Y6HsFk",
+        "role": "Editor",
+        "location": "Miami, FL",
+        "projectStart": "2025-10-10T22:00",
+        "rate": "$100/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {},
+      "primaryJob": null,
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +37,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 0
+  "totalUsers": 1
 }
