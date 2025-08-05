@@ -1,46 +1,7 @@
 {
-<<<<<<< HEAD
-  "exportDate": "2025-08-05T06:14:14.292Z",
-=======
-  "exportDate": "2025-08-05T06:31:47.750Z",
->>>>>>> 240624cd35e64a69e9d4135f94deb3210d84ec56
-  "totalContracts": 1,
+  "exportDate": "2025-08-05T00:00:00.000Z",
+  "totalContracts": 0,
   "contracts": [],
-  "uploadedContracts": [
-    {
-<<<<<<< HEAD
-      "contractId": "CF-1754374579524-1TXMZ",
-      "freelancerName": "Thing Six",
-      "freelancerEmail": "codylcochran87@gmail.com",
-      "role": "Producer",
-      "rate": "$200/hour",
-      "location": "Atlanta, GA",
-      "fileName": "CF-1754374579524-1TXMZ.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-05T06:16:31.536Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754374579524-1TXMZ.pdf",
-=======
-      "contractId": "CF-1754376476668-BLMXD",
-      "freelancerName": "Cody Cochran",
-      "freelancerEmail": "codylcochran89@gmail.com",
-      "role": "Editor",
-      "rate": "$100/hour",
-      "location": "Chicago, IL",
-      "fileName": "CF-1754376476668-BLMXD.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-05T06:48:08.857Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754376476668-BLMXD.pdf",
->>>>>>> 240624cd35e64a69e9d4135f94deb3210d84ec56
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-05",
-      "signedDate": "2025-08-05"
-    }
-  ],
-<<<<<<< HEAD
-  "lastUpdated": "2025-08-05T06:16:31.536Z"
-=======
-  "lastUpdated": "2025-08-05T06:48:08.857Z"
->>>>>>> 240624cd35e64a69e9d4135f94deb3210d84ec56
+  "uploadedContracts": [],
+  "lastUpdated": "2025-08-05T00:00:00.000Z"
 }
