@@ -235,6 +235,38 @@ app.put('/api/github/file/:filename', async (req, res) => {
     }
 });
 
+app.delete('/api/github/file/:filename', async (req, res) => {
+    try {
+        const { filename } = req.params;
+        const { message, sha } = req.body;
+        
+        if (!message || !sha) {
+            return res.status(400).json({ error: 'message and sha are required for deletion' });
+        }
+
+        // For local testing, just log the deletion
+        console.log(`🗑️ Local GitHub delete: ${filename}`);
+        console.log(`📝 Message: ${message}`);
+        console.log(`🔗 SHA: ${sha.substring(0, 7)}`);
+        
+        // In a real environment, this would delete the file from GitHub
+        // For local testing, we'll just return success
+        res.status(200).json({
+            commit: {
+                sha: 'local-delete-sha',
+                message: message
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error in GitHub file delete API:', error);
+        res.status(500).json({ 
+            error: 'Internal server error',
+            message: error.message 
+        });
+    }
+});
+
 // Performance API routes
 app.use('/api/performance', performanceRouter);
 
@@ -305,6 +337,7 @@ app.listen(PORT, () => {
     console.log(`   - DELETE /api/performance/:email`);
     console.log(`   - DELETE /api/firebase (delete user)`);
     console.log(`   - PUT  /api/github/file/:filename`);
+    console.log(`   - DELETE /api/github/file/:filename`);
     console.log(`   - GET  /api/notifications`);
     console.log(`   - POST /api/notifications`);
     console.log(`\n🌐 Test page: http://localhost:${PORT}/test-api.html`);

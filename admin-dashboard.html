@@ -2632,18 +2632,51 @@
                     // 6. Refresh display
                     await displayUsers();
                     
-                    showNotification(`✅ User "${userName}" created successfully! Firebase account created and email sent.`, 'success');
+                    // Add notification to centralized system
+                    await addNotification(
+                        'User Created Successfully',
+                        `User "${userName}" has been created with Firebase account and job acceptance email sent.`,
+                        'user_created',
+                        {
+                            userName: userName,
+                            userEmail: userData.profile.email,
+                            actionRequired: false,
+                            priority: 'normal'
+                        }
+                    );
                     
                     // Clear form
                     clearFreelancerForm();
                     
                 } else {
-                    showNotification(`❌ Failed to create Firebase account: ${firebaseResult.error}`, 'error');
+                    // Add error notification to centralized system
+                    await addNotification(
+                        'User Creation Failed',
+                        `Failed to create Firebase account for user "${userName}": ${firebaseResult.error}`,
+                        'error',
+                        {
+                            userName: userName,
+                            error: firebaseResult.error,
+                            actionRequired: true,
+                            priority: 'high'
+                        }
+                    );
                 }
                 
             } catch (error) {
                 console.error('❌ Error creating user:', error);
-                showNotification(`❌ Error creating user: ${error.message}`, 'error');
+                // Add error notification to centralized system
+                await addNotification(
+                    'User Creation Error',
+                    `Error creating user "${userName}": ${error.message}`,
+                    'error',
+                    {
+                        userName: userName,
+                        error: error.message,
+                        actionRequired: true,
+                        priority: 'high'
+                    }
+                );
             }
         }
         
@@ -5750,6 +5783,34 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #FFB200, #22c55e);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #FF8C00, #16a34a);
+        }
+
+        /* Fix browser autofill styling */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #0a0a0a inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
         }
         
         body {
