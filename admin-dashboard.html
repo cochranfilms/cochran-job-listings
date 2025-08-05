@@ -4980,25 +4980,36 @@
         // Handle notification clicks to navigate to relevant screens
         function handleNotificationClick(notificationId) {
             const notification = notifications.find(n => n.id === notificationId);
-            if (!notification) return;
+            if (!notification) {
+                console.error('❌ Notification not found:', notificationId);
+                return;
+            }
+            
+            console.log('🔍 Handling notification click:', notification);
             
             if (notification.type === 'performance') {
                 // Navigate to performance review for the specific user
                 const userEmail = notification.userEmail;
+                console.log('🔍 Performance notification - userEmail:', userEmail);
                 if (userEmail) {
+                    console.log('✅ Opening performance review modal for:', userEmail);
                     showPerformanceReviewModal(userEmail);
                     // Mark as read and remove notification
                     markAsRead(notificationId);
                     removeNotification(notificationId);
+                } else {
+                    console.error('❌ No userEmail found in performance notification');
                 }
             } else if (notification.type === 'payment') {
                 // Navigate to payment management
+                console.log('✅ Switching to contracts tab for payment management');
                 switchTab('contracts');
                 // Mark as read and remove notification
                 markAsRead(notificationId);
                 removeNotification(notificationId);
             } else if (notification.type === 'contract') {
                 // Navigate to contract management
+                console.log('✅ Switching to contracts tab for contract management');
                 switchTab('contracts');
                 // Mark as read and remove notification
                 markAsRead(notificationId);
@@ -5741,7 +5752,7 @@
             border: 1px solid rgba(255, 178, 0, 0.3);
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            z-index: 10002;
+            z-index: 99999;
             margin-top: 0.5rem;
         }
 
