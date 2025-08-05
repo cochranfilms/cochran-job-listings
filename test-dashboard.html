@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cochran Films - Automated Test Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .test-categories {
+            margin-bottom: 25px;
+        }
+
+        .category {
+            margin-bottom: 15px;
+        }
+
+        .category-label {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #34495e;
+        }
+
+        .checkbox {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .run-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .run-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .run-button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .status-idle {
+            background: #ecf0f1;
+            color: #7f8c8d;
+        }
+
+        .status-running {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-complete {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .test-results {
+            margin-top: 20px;
+        }
+
+        .test-item {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+            background: #f8f9fa;
+        }
+
+        .test-passed {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+
+        .test-failed {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .test-running {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .test-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .test-message {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .test-duration {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .recommendations {
+            margin-top: 25px;
+        }
+
+        .recommendation {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+        }
+
+        .rec-high {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .rec-medium {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .rec-low {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+
+        .rec-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .rec-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .export-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .export-button {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .export-button:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .log-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-info { color: #3498db; }
+        .log-success { color: #2ecc71; }
+        .log-warning { color: #f39c12; }
+        .log-error { color: #e74c3c; }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .summary-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Automated Test Dashboard</h1>
+            <p>Comprehensive testing suite for Cochran Films workflow systems</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="control-panel">
+                <div class="section-title">Test Configuration</div>
+                
+                <div class="test-categories">
+                    <div class="category">
+                        <label class="category-label">
+                            <input type="checkbox" class="checkbox" id="system-health" checked>
+                            System Health Tests
+                        </label>
+                    </div>
+                    <div class="category">
+                        <label class="category-label">
+                            <input type="checkbox" class="checkbox" id="user-management" checked>
+                            User Management
+                        </label>
+                    </div>
+                    <div class="category">
+                        <label class="category-label">
+                            <input type="checkbox" class="checkbox" id="job-management" checked>
+                            Job Management
+                        </label>
+                    </div>
+                    <div class="category">
+                        <label class="category-label">
+                            <input type="checkbox" class="checkbox" id="contract-management" checked>
+                            Contract Management
+                        </label>
+                    </div>
+                    <div class="category">
+                        <label class="category-label">
+                            <input type="checkbox" class="checkbox" id="performance-reviews" checked>
+                            Performance Reviews
+                        </label>
+                    </div>
+                    <div class="category">
+                        <label class="category-label">
+                            <input type="checkbox" class="checkbox" id="notifications" checked>
+                            Notifications
+                        </label>
+                    </div>
+                    <div class="category">
+                        <label class="category-label">
+                            <input type="checkbox" class="checkbox" id="project-timeline" checked>
+                            Project Timeline
+                        </label>
+                    </div>
+                    <div class="category">
+                        <label class="category-label">
+                            <input type="checkbox" class="checkbox" id="pdf-deletion" checked>
+                            PDF Deletion
+                        </label>
+                    </div>
+                </div>
+
+                <button id="runTests" class="run-button">
+                    🚀 Run All Tests
+                </button>
+
+                <div id="statusIndicator" class="status-indicator status-idle">
+                    <span>Ready to run tests</span>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="export-section">
+                    <div class="section-title">Export Results</div>
+                    <button id="exportJSON" class="export-button">Export JSON</button>
+                    <button id="exportMD" class="export-button">Export Markdown</button>
+                    <button id="exportHTML" class="export-button">Export HTML</button>
+                </div>
+            </div>
+
+            <div class="results-panel">
+                <div class="section-title">Test Results</div>
+                
+                <div id="summaryStats" class="summary-stats" style="display: none;">
+                    <div class="stat-card">
+                        <div id="totalTests" class="stat-number">0</div>
+                        <div class="stat-label">Total Tests</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="passedTests" class="stat-number">0</div>
+                        <div class="stat-label">Passed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="failedTests" class="stat-number">0</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="successRate" class="stat-number">0%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                </div>
+
+                <div id="testResults" class="test-results"></div>
+                
+                <div id="recommendations" class="recommendations" style="display: none;">
+                    <div class="section-title">Recommendations</div>
+                    <div id="recommendationsList"></div>
+                </div>
+
+                <div id="logOutput" class="log-output" style="display: none;">
+                    <div class="section-title">Test Log</div>
+                    <div id="logEntries"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TestDashboard {
+            constructor() {
+                this.isRunning = false;
+                this.testResults = null;
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('runTests').addEventListener('click', () => this.runTests());
+                document.getElementById('exportJSON').addEventListener('click', () => this.exportResults('json'));
+                document.getElementById('exportMD').addEventListener('click', () => this.exportResults('markdown'));
+                document.getElementById('exportHTML').addEventListener('click', () => this.exportResults('html'));
+            }
+
+            async runTests() {
+                if (this.isRunning) return;
+
+                this.isRunning = true;
+                this.updateStatus('running', 'Running automated tests...');
+                this.clearResults();
+                this.showLogOutput();
+
+                try {
+                    const response = await fetch('/api/run-tests', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            categories: this.getSelectedCategories()
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    this.testResults = await response.json();
+                    this.displayResults();
+                    this.updateStatus('complete', 'Tests completed successfully');
+                } catch (error) {
+                    console.error('Test execution failed:', error);
+                    this.updateStatus('error', `Test execution failed: ${error.message}`);
+                    this.addLogEntry(`❌ Test execution failed: ${error.message}`, 'error');
+                } finally {
+                    this.isRunning = false;
+                }
+            }
+
+            getSelectedCategories() {
+                const categories = [
+                    'system-health',
+                    'user-management', 
+                    'job-management',
+                    'contract-management',
+                    'performance-reviews',
+                    'notifications',
+                    'project-timeline',
+                    'pdf-deletion'
+                ];
+
+                return categories.filter(category => 
+                    document.getElementById(category).checked
+                );
+            }
+
+            updateStatus(status, message) {
+                const indicator = document.getElementById('statusIndicator');
+                const button = document.getElementById('runTests');
+                const progressFill = document.getElementById('progressFill');
+
+                indicator.className = `status-indicator status-${status}`;
+                indicator.innerHTML = `
+                    <span>${message}</span>
+                    ${status === 'running' ? '<div class="loading-spinner"></div>' : ''}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${status === 'complete' ? '100%' : status === 'running' ? '50%' : '0%'}"></div>
+                    </div>
+                `;
+
+                button.disabled = status === 'running';
+                button.innerHTML = status === 'running' ? '🔄 Running...' : '🚀 Run All Tests';
+            }
+
+            clearResults() {
+                document.getElementById('testResults').innerHTML = '';
+                document.getElementById('summaryStats').style.display = 'none';
+                document.getElementById('recommendations').style.display = 'none';
+                document.getElementById('logEntries').innerHTML = '';
+            }
+
+            showLogOutput() {
+                document.getElementById('logOutput').style.display = 'block';
+            }
+
+            addLogEntry(message, type = 'info') {
+                const logEntries = document.getElementById('logEntries');
+                const entry = document.createElement('div');
+                entry.className = `log-entry log-${type}`;
+                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                logEntries.appendChild(entry);
+                logEntries.scrollTop = logEntries.scrollHeight;
+            }
+
+            displayResults() {
+                if (!this.testResults) return;
+
+                this.displaySummaryStats();
+                this.displayTestResults();
+                this.displayRecommendations();
+            }
+
+            displaySummaryStats() {
+                const summary = this.testResults.summary;
+                const successRate = ((summary.passed / summary.total) * 100).toFixed(1);
+
+                document.getElementById('totalTests').textContent = summary.total;
+                document.getElementById('passedTests').textContent = summary.passed;
+                document.getElementById('failedTests').textContent = summary.failed;
+                document.getElementById('successRate').textContent = `${successRate}%`;
+
+                document.getElementById('summaryStats').style.display = 'grid';
+            }
+
+            displayTestResults() {
+                const container = document.getElementById('testResults');
+                container.innerHTML = '';
+
+                this.testResults.tests.forEach(test => {
+                    const testElement = document.createElement('div');
+                    testElement.className = `test-item test-${test.success ? 'passed' : 'failed'}`;
+                    
+                    testElement.innerHTML = `
+                        <div class="test-name">${test.name}</div>
+                        <div class="test-message">${test.message}</div>
+                        <div class="test-duration">Duration: ${test.duration}ms</div>
+                    `;
+
+                    container.appendChild(testElement);
+                });
+            }
+
+            displayRecommendations() {
+                if (!this.testResults.recommendations || this.testResults.recommendations.length === 0) {
+                    return;
+                }
+
+                const container = document.getElementById('recommendationsList');
+                container.innerHTML = '';
+
+                this.testResults.recommendations.forEach(rec => {
+                    const recElement = document.createElement('div');
+                    recElement.className = `recommendation rec-${rec.priority}`;
+                    
+                    recElement.innerHTML = `
+                        <div class="rec-title">${rec.title}</div>
+                        <div class="rec-description">${rec.description}</div>
+                    `;
+
+                    container.appendChild(recElement);
+                });
+
+                document.getElementById('recommendations').style.display = 'block';
+            }
+
+            async exportResults(format) {
+                if (!this.testResults) {
+                    alert('No test results to export. Please run tests first.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/export-results', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            results: this.testResults,
+                            format: format
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Export failed: ${response.statusText}`);
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `test-results-${new Date().toISOString().split('T')[0]}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    this.addLogEntry(`✅ Exported results as ${format.toUpperCase()}`, 'success');
+                } catch (error) {
+                    console.error('Export failed:', error);
+                    this.addLogEntry(`❌ Export failed: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new TestDashboard();
+        });
+    </script>
+</body>
+</html> 

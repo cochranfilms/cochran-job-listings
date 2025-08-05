@@ -1,5 +1,35 @@
 {
-  "users": {},
+  "users": {
+    "test@cochranfilms.com": {
+      "name": "Test User",
+      "email": "test@cochranfilms.com",
+      "role": "Photographer",
+      "location": "Atlanta, GA",
+      "rate": "$400.00 USD (Flat)",
+      "projectStart": "2025-01-15",
+      "approvedDate": "2025-08-05",
+      "contract": {
+        "contractUrl": null,
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "test-job-001": {
+          "id": "test-job-001",
+          "title": "Test Project",
+          "status": "in-progress",
+          "startDate": "2025-01-15",
+          "endDate": "2025-02-15",
+          "progress": 50,
+          "lastUpdated": "2025-08-05T19:50:38.671Z"
+        }
+      },
+      "primaryJob": null,
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",

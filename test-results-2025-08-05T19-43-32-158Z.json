@@ -1,0 +1,241 @@
+{
+  "timestamp": "2025-08-05T19:43:32.122Z",
+  "summary": {
+    "total": 14,
+    "passed": 1,
+    "failed": 13,
+    "warnings": 0
+  },
+  "tests": [
+    {
+      "name": "Server Health Check",
+      "success": false,
+      "message": "Cannot connect to server",
+      "details": {
+        "error": "request to http://localhost:8000/api/health failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.139Z"
+    },
+    {
+      "name": "File System Access",
+      "success": true,
+      "message": "All required files are accessible",
+      "details": {
+        "users.json": {
+          "accessible": true,
+          "size": 295
+        },
+        "jobs-data.json": {
+          "accessible": true,
+          "size": 989
+        },
+        "uploaded-contracts.json": {
+          "accessible": true,
+          "size": 83
+        },
+        "dropdown-options.json": {
+          "accessible": true,
+          "size": 849
+        },
+        "performance.json": {
+          "accessible": true,
+          "size": 345
+        },
+        "notifications.json": {
+          "accessible": true,
+          "size": 118
+        }
+      },
+      "duration": 1,
+      "timestamp": "2025-08-05T19:43:32.140Z"
+    },
+    {
+      "name": "All API Endpoints",
+      "success": false,
+      "message": "Some API endpoints are not working",
+      "details": {
+        "/api/users": {
+          "status": "error",
+          "working": false,
+          "error": "request to http://localhost:8000/api/users failed, reason: "
+        },
+        "/api/jobs-data": {
+          "status": "error",
+          "working": false,
+          "error": "request to http://localhost:8000/api/jobs-data failed, reason: "
+        },
+        "/api/uploaded-contracts": {
+          "status": "error",
+          "working": false,
+          "error": "request to http://localhost:8000/api/uploaded-contracts failed, reason: "
+        },
+        "/api/dropdown-options": {
+          "status": "error",
+          "working": false,
+          "error": "request to http://localhost:8000/api/dropdown-options failed, reason: "
+        },
+        "/api/performance": {
+          "status": "error",
+          "working": false,
+          "error": "request to http://localhost:8000/api/performance failed, reason: "
+        },
+        "/api/notifications": {
+          "status": "error",
+          "working": false,
+          "error": "request to http://localhost:8000/api/notifications failed, reason: "
+        },
+        "/api/health": {
+          "status": "error",
+          "working": false,
+          "error": "request to http://localhost:8000/api/health failed, reason: "
+        }
+      },
+      "duration": 7,
+      "timestamp": "2025-08-05T19:43:32.147Z"
+    },
+    {
+      "name": "User Creation",
+      "success": false,
+      "message": "Failed to create test user",
+      "details": {
+        "error": "request to http://localhost:8000/api/users failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.149Z"
+    },
+    {
+      "name": "User Deletion",
+      "success": false,
+      "message": "Failed to delete test user",
+      "details": {
+        "error": "request to http://localhost:8000/api/users failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.149Z"
+    },
+    {
+      "name": "Job Creation",
+      "success": false,
+      "message": "Failed to create test job",
+      "details": {
+        "error": "request to http://localhost:8000/api/jobs-data failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.150Z"
+    },
+    {
+      "name": "Job Deletion",
+      "success": false,
+      "message": "Failed to delete test job",
+      "details": {
+        "error": "request to http://localhost:8000/api/jobs-data failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.151Z"
+    },
+    {
+      "name": "Contract Addition",
+      "success": false,
+      "message": "Failed to add test contract",
+      "details": {
+        "error": "request to http://localhost:8000/api/uploaded-contracts failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.152Z"
+    },
+    {
+      "name": "Contract Deletion",
+      "success": false,
+      "message": "Failed to delete test contract",
+      "details": {
+        "error": "request to http://localhost:8000/api/uploaded-contracts failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.153Z"
+    },
+    {
+      "name": "Performance Review Creation",
+      "success": false,
+      "message": "Failed to create test performance review",
+      "details": {
+        "error": "request to http://localhost:8000/api/performance failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.153Z"
+    },
+    {
+      "name": "Performance Review Deletion",
+      "success": false,
+      "message": "Failed to delete test performance review",
+      "details": {
+        "error": "request to http://localhost:8000/api/performance failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.154Z"
+    },
+    {
+      "name": "Notification Creation",
+      "success": false,
+      "message": "Failed to create test notification",
+      "details": {
+        "error": "request to http://localhost:8000/api/notifications failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.155Z"
+    },
+    {
+      "name": "Notification Deletion",
+      "success": false,
+      "message": "Failed to delete test notification",
+      "details": {
+        "error": "request to http://localhost:8000/api/notifications failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.157Z"
+    },
+    {
+      "name": "Project Timeline Updates",
+      "success": false,
+      "message": "Failed to update project timeline",
+      "details": {
+        "error": "request to http://localhost:8000/api/users failed, reason: "
+      },
+      "duration": 0,
+      "timestamp": "2025-08-05T19:43:32.158Z"
+    }
+  ],
+  "systemHealth": {},
+  "recommendations": [
+    {
+      "priority": "high",
+      "category": "Critical Issues",
+      "title": "Fix Failed Tests",
+      "description": "13 tests failed and need immediate attention",
+      "tests": [
+        "Server Health Check",
+        "All API Endpoints",
+        "User Creation",
+        "User Deletion",
+        "Job Creation",
+        "Job Deletion",
+        "Contract Addition",
+        "Contract Deletion",
+        "Performance Review Creation",
+        "Performance Review Deletion",
+        "Notification Creation",
+        "Notification Deletion",
+        "Project Timeline Updates"
+      ]
+    },
+    {
+      "priority": "high",
+      "category": "API Issues",
+      "title": "Fix API Endpoints",
+      "description": "Some API endpoints are not responding correctly",
+      "tests": [
+        "All API Endpoints"
+      ]
+    }
+  ]
+}
