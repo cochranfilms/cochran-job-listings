@@ -65,11 +65,19 @@ module.exports = async (req, res) => {
 
     try {
         const { method, url, params } = req;
-        const pathSegments = url.split('/').filter(Boolean);
-        const email = pathSegments[1]; // For /api/performance/:email
+        console.log('🔍 Full URL:', url);
+        console.log('🔍 Method:', method);
+        
+        // Remove /api/performance prefix to get the remaining path
+        const remainingPath = url.replace('/api/performance', '').replace(/^\/+/, '');
+        const pathSegments = remainingPath.split('/').filter(Boolean);
+        console.log('🔍 Remaining path:', remainingPath);
+        console.log('🔍 Path segments:', pathSegments);
+        
+        const email = pathSegments[0]; // For /api/performance/:email
 
         // GET /api/performance - Get all performance reviews
-        if (method === 'GET' && pathSegments.length === 1) {
+        if (method === 'GET' && pathSegments.length === 0) {
             console.log('📖 Loading performance data...');
             const data = await loadPerformanceData();
             console.log('✅ Performance data loaded:', Object.keys(data.performanceReviews).length, 'reviews');
@@ -78,7 +86,7 @@ module.exports = async (req, res) => {
         }
 
         // GET /api/performance/:email - Get specific performance review
-        if (method === 'GET' && pathSegments.length === 2) {
+        if (method === 'GET' && pathSegments.length === 1) {
             const data = await loadPerformanceData();
             const review = data.performanceReviews[email];
             
@@ -91,14 +99,14 @@ module.exports = async (req, res) => {
         }
 
         // GET /api/performance/options - Get review options
-        if (method === 'GET' && pathSegments[1] === 'options') {
+        if (method === 'GET' && pathSegments[0] === 'options') {
             const data = await loadPerformanceData();
             res.json(data.reviewOptions);
             return;
         }
 
         // POST /api/performance - Create/Update performance reviews
-        if (method === 'POST' && pathSegments.length === 1) {
+        if (method === 'POST' && pathSegments.length === 0) {
             const requestData = req.body;
             
             if (!requestData || !requestData.performanceReviews) {
@@ -121,12 +129,12 @@ module.exports = async (req, res) => {
         }
 
         // PUT /api/performance/:email - Update performance review (disabled in production)
-        if (method === 'PUT' && pathSegments.length === 2) {
+        if (method === 'PUT' && pathSegments.length === 1) {
             return res.status(405).json({ error: 'Method not allowed - Use admin dashboard for updating reviews' });
         }
 
         // DELETE /api/performance/:email - Delete performance review (disabled in production)
-        if (method === 'DELETE' && pathSegments.length === 2) {
+        if (method === 'DELETE' && pathSegments.length === 1) {
             return res.status(405).json({ error: 'Method not allowed - Use admin dashboard for deleting reviews' });
         }
 
