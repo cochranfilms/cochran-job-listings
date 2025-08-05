@@ -432,6 +432,276 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* Interactive Elements */
+        .interactive-card {
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .interactive-card:hover {
+            transform: scale(1.02) translateY(-5px);
+            box-shadow: 0 20px 40px rgba(255, 178, 0, 0.3);
+        }
+
+        .expandable-section {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .expandable-section.expanded {
+            max-height: 500px;
+            padding: 1.5rem;
+        }
+
+        .expand-toggle {
+            background: linear-gradient(135deg, #FFB200, #FF8C00);
+            color: #1a1a1a;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .expand-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 178, 0, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #FFB200;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 178, 0, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #FFB200;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: rgba(255,255,255,0.9);
+            font-size: 1rem;
+        }
+
+        .feature-highlight {
+            background: linear-gradient(135deg, rgba(255, 178, 0, 0.1), rgba(34, 197, 94, 0.1));
+            border-left: 4px solid #FFB200;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .feature-highlight h4 {
+            color: #FFB200;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            color: rgba(255,255,255,0.9);
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .zoom-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+
+        .zoom-content {
+            transition: transform 0.3s ease;
+        }
+
+        .zoom-content:hover {
+            transform: scale(1.05);
+        }
+
+        .pricing-section {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1));
+            padding: 4rem 2rem;
+            margin: 4rem 0;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #3B82F6;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+        }
+
+        .pricing-card.featured {
+            border-color: #FFB200;
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        .pricing-title {
+            color: #3B82F6;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .pricing-price {
+            font-size: 3rem;
+            color: #FFB200;
+            margin-bottom: 1rem;
+        }
+
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .testimonial-section {
+            background: rgba(0,0,0,0.8);
+            padding: 4rem 2rem;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .testimonial-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .testimonial-card::before {
+            content: '"';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            font-size: 4rem;
+            color: #FFB200;
+            opacity: 0.3;
+        }
+
+        .testimonial-text {
+            color: rgba(255,255,255,0.9);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .testimonial-author {
+            color: #FFB200;
+            font-weight: bold;
+        }
+
+        .testimonial-role {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: rgba(0,0,0,0.6);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .comparison-table th {
+            background: #FFB200;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 178, 0, 0.1);
+        }
+
+        .check-mark {
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .x-mark {
+            color: #ef4444;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -443,8 +713,42 @@
             <p style="font-size: 1.3rem; color: rgba(255,255,255,0.8);">
                 Revolutionizing how production companies manage creators, contracts, and workflows
             </p>
+            
+            <!-- Interactive Stats Grid -->
+            <div class="stats-grid fade-in">
+                <div class="stat-card interactive-card">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Automated Workflow</div>
+                </div>
+                <div class="stat-card interactive-card">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Real-Time Updates</div>
+                </div>
+                <div class="stat-card interactive-card">
+                    <div class="stat-number">Enterprise</div>
+                    <div class="stat-label">Security Grade</div>
+                </div>
+                <div class="stat-card interactive-card">
+                    <div class="stat-number">Zero</div>
+                    <div class="stat-label">Manual Errors</div>
+                </div>
+            </div>
+            
             <div class="ceo-badge">
                 <i class="fas fa-crown"></i> Cody Cochran, CEO & Founder
+            </div>
+            
+            <!-- Feature Highlights -->
+            <div class="feature-highlight fade-in">
+                <h4><i class="fas fa-rocket"></i> Why Choose Our Platform?</h4>
+                <ul class="feature-list">
+                    <li>Complete automation from onboarding to contract execution</li>
+                    <li>Enterprise-grade security with server-side token handling</li>
+                    <li>Real-time dashboard with instant notifications</li>
+                    <li>Professional email system with branded templates</li>
+                    <li>Scalable architecture built for production companies</li>
+                    <li>White-label ready for immediate deployment</li>
+                </ul>
             </div>
         </div>
     </section>
@@ -459,7 +763,7 @@
         <!-- Blueprint System Architecture -->
         <div class="blueprint-section">
             <div class="blueprint-grid">
-                <div class="blueprint-card fade-in">
+                <div class="blueprint-card fade-in interactive-card">
                     <h3><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h3>
                     <div class="mockup">
                         <div class="mockup-header">Admin Control Panel</div>
@@ -471,9 +775,32 @@
                         </div>
                     </div>
                     <p>Centralized management interface with real-time updates and comprehensive controls</p>
+                    
+                    <button class="expand-toggle" onclick="toggleSection('admin-details')">
+                        <i class="fas fa-plus"></i> View Detailed Features
+                    </button>
+                    
+                    <div id="admin-details" class="expandable-section">
+                        <h4><i class="fas fa-list"></i> Admin Dashboard Features:</h4>
+                        <ul class="feature-list">
+                            <li>Real-time creator onboarding with dropdown validation</li>
+                            <li>One-click approval system with automated notifications</li>
+                            <li>Comprehensive job management with auto-sync</li>
+                            <li>Contract status tracking with PDF generation</li>
+                            <li>Performance analytics and reporting tools</li>
+                            <li>System health monitoring and alerts</li>
+                            <li>Bulk operations for efficient management</li>
+                            <li>Export capabilities for external integrations</li>
+                        </ul>
+                        
+                        <div class="feature-highlight">
+                            <h5><i class="fas fa-chart-line"></i> Real-Time Analytics</h5>
+                            <p>Track creator performance, contract completion rates, and system efficiency with live dashboards and automated reporting.</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="blueprint-card fade-in">
+                <div class="blueprint-card fade-in interactive-card">
                     <h3><i class="fas fa-file-contract"></i> Contract Portal</h3>
                     <div class="mockup">
                         <div class="mockup-header">Digital Contract Signing</div>
@@ -485,6 +812,29 @@
                         </div>
                     </div>
                     <p>Secure contract signing with instant PDF generation and email notifications</p>
+                    
+                    <button class="expand-toggle" onclick="toggleSection('contract-details')">
+                        <i class="fas fa-plus"></i> View Detailed Features
+                    </button>
+                    
+                    <div id="contract-details" class="expandable-section">
+                        <h4><i class="fas fa-shield-alt"></i> Contract Portal Features:</h4>
+                        <ul class="feature-list">
+                            <li>Secure creator information collection with validation</li>
+                            <li>Custom password creation with strength requirements</li>
+                            <li>Digital signature capture with legal compliance</li>
+                            <li>Instant PDF generation with professional formatting</li>
+                            <li>Automated email notifications to all parties</li>
+                            <li>Contract status tracking and verification</li>
+                            <li>Mobile-responsive design for any device</li>
+                            <li>Audit trail for legal documentation</li>
+                        </ul>
+                        
+                        <div class="feature-highlight">
+                            <h5><i class="fas fa-lock"></i> Enterprise Security</h5>
+                            <p>All contract data is encrypted and stored securely with server-side token handling and no exposed credentials.</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="blueprint-card fade-in">
