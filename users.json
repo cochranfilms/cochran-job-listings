@@ -11,8 +11,8 @@
       "contract": {
         "contractUrl": "/contracts/test-delete-pdf.pdf",
         "contractStatus": "signed",
-        "contractSignedDate": "2025-08-05T19:59:02.252Z",
-        "contractUploadedDate": "2025-08-05T19:59:02.252Z",
+        "contractSignedDate": "2025-08-05T20:18:22.376Z",
+        "contractUploadedDate": "2025-08-05T20:18:22.376Z",
         "contractId": "TEST-DELETE-001"
       },
       "jobs": {
@@ -23,7 +23,7 @@
           "startDate": "2025-01-15",
           "endDate": "2025-02-15",
           "progress": 50,
-          "lastUpdated": "2025-08-05T19:59:02.251Z"
+          "lastUpdated": "2025-08-05T20:18:22.375Z"
         }
       },
       "primaryJob": null,

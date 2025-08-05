@@ -156,10 +156,18 @@ The system automatically generates recommendations based on test results:
 ### 5. Dashboard 404 Errors
 **Issue**: "Failed to load resource: the server responded with a status of 404"
 **Fix**: 
-1. Ensure server is running: `node server.js`
-2. Check browser console for detailed error messages
-3. Verify the dashboard is being served from the correct port
-4. Try accessing the API directly: `curl -X POST http://localhost:8000/api/run-tests`
+1. **Check Server Status**: Ensure server is running: `node server.js`
+2. **Verify API Endpoint**: Try accessing directly: `curl -X POST http://localhost:8000/api/run-tests`
+3. **Check Domain Mismatch**: If dashboard is on different domain than API, update server configuration
+4. **Browser Console**: Check for detailed error messages and debugging information
+5. **Alternative Endpoints**: Dashboard will try alternative API paths automatically
+6. **Server Logs**: Check server console for routing or import errors
+
+**Common Causes**:
+- Dashboard served from different domain than API
+- Server not running or crashed
+- API routes not properly configured
+- CORS issues between domains
 
 ## Export Options
 

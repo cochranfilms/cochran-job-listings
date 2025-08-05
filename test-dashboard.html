@@ -489,8 +489,16 @@
                 this.showLogOutput();
 
                 try {
-                    // Get the current host and port
-                    const baseUrl = window.location.origin;
+                    // Determine the correct API base URL
+                    let baseUrl;
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                        // Local development
+                        baseUrl = window.location.origin;
+                    } else {
+                        // Production server - use the same domain
+                        baseUrl = window.location.origin;
+                    }
+                    
                     const url = `${baseUrl}/api/run-tests`;
                     const body = JSON.stringify({
                         categories: this.getSelectedCategories()
@@ -498,6 +506,8 @@
                     
                     console.log('🔍 Making request to:', url);
                     console.log('📦 Request body:', body);
+                    console.log('🌐 Current location:', window.location.href);
+                    console.log('🏠 Hostname:', window.location.hostname);
                     
                     const response = await fetch(url, {
                         method: 'POST',
@@ -513,6 +523,43 @@
                     if (!response.ok) {
                         const errorText = await response.text();
                         console.error('❌ Response error:', errorText);
+                        
+                        // If we get a 404, try alternative endpoints
+                        if (response.status === 404) {
+                            console.log('🔄 Trying alternative API endpoints...');
+                            
+                            // Try different possible API paths
+                            const alternativeUrls = [
+                                `${baseUrl}/api/test-runner`,
+                                `${baseUrl}/test-api`,
+                                `${baseUrl}/api/tests`,
+                                `${baseUrl}/run-tests`
+                            ];
+                            
+                            for (const altUrl of alternativeUrls) {
+                                try {
+                                    console.log(`🔄 Trying: ${altUrl}`);
+                                    const altResponse = await fetch(altUrl, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: body
+                                    });
+                                    
+                                    if (altResponse.ok) {
+                                        console.log(`✅ Found working endpoint: ${altUrl}`);
+                                        this.testResults = await altResponse.json();
+                                        this.displayResults();
+                                        this.updateStatus('complete', 'Tests completed successfully');
+                                        return;
+                                    }
+                                } catch (altError) {
+                                    console.log(`❌ ${altUrl} failed:`, altError.message);
+                                }
+                            }
+                        }
+                        
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
 
@@ -521,8 +568,19 @@
                     this.updateStatus('complete', 'Tests completed successfully');
                 } catch (error) {
                     console.error('Test execution failed:', error);
-                    this.updateStatus('error', `Test execution failed: ${error.message}`);
-                    this.addLogEntry(`❌ Test execution failed: ${error.message}`, 'error');
+                    
+                    let errorMessage = error.message;
+                    if (error.message.includes('404')) {
+                        errorMessage = `API endpoint not found. Please ensure:
+                        1. The server is running on the same domain
+                        2. The API routes are properly configured
+                        3. Try accessing: ${window.location.origin}/api/health
+                        4. Check server logs for routing issues`;
+                    }
+                    
+                    this.updateStatus('error', `Test execution failed: ${errorMessage}`);
+                    this.addLogEntry(`❌ Test execution failed: ${errorMessage}`, 'error');
+                    this.addLogEntry(`🔧 Troubleshooting: Check browser console for detailed logs`, 'info');
                 } finally {
                     this.isRunning = false;
                 }
