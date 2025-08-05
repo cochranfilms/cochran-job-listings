@@ -1,286 +1,742 @@
-# 🎬 Cochran Films Landing Page
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cochran Films - Next-Gen Creator Management Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-A professional, responsive landing page for **Cochran Films** - showcasing premium video production, photography, and creative services with modern design and seamless mobile experience.
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
 
-![Cochran Films Landing Page](https://img.shields.io/badge/Status-Client%20Ready-brightgreen) ![Mobile Optimized](https://img.shields.io/badge/Mobile-Optimized-blue) ![Security](https://img.shields.io/badge/Security-Compliant-green)
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
 
-## 📋 Table of Contents
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(255, 178, 0, 0.1), rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1));
+            position: relative;
+            overflow: hidden;
+        }
 
-- [Overview](#overview)
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Design Highlights](#design-highlights)
-- [Mobile Experience](#mobile-experience)
-- [Getting Your Own](#getting-your-own)
-- [Installation](#installation)
-- [Customization](#customization)
-- [Browser Support](#browser-support)
-- [Performance](#performance)
-- [Security](#security)
-- [Support](#support)
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 178, 0, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
 
-## 🎯 Overview
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
 
-This landing page represents **Cochran Films** - a premium creative agency specializing in:
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            padding: 2rem;
+        }
 
-- **Professional Video Production** - From concept to final delivery
-- **Event Photography** - High-quality event coverage with instant prints
-- **Brand Development** - Complete brand identity and visual guidelines
-- **Web Design** - Responsive websites that convert visitors
+        .hero h1 {
+            font-size: 4.5rem;
+            color: #FFB200;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
 
-The site features a **dark theme** with **gold accents**, cinematic animations, and a fully responsive design that works seamlessly across all devices.
+        .hero p {
+            font-size: 1.6rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 2rem;
+        }
 
-## ✨ Features
+        .ceo-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFB200, #FF8C00);
+            color: #1a1a1a;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 2rem;
+            transform: perspective(1000px) rotateY(-15deg);
+            box-shadow: 0 8px 32px rgba(255, 178, 0, 0.4);
+            animation: float 3s ease-in-out infinite;
+        }
 
-### 🎨 Design & UX
-- **Dark Theme** with professional gold branding
-- **Cinematic Loading Screen** with smooth animations
-- **Responsive Design** - Perfect on desktop, tablet, and mobile
-- **Interactive Service Builder** - Custom package creation
-- **Professional Gallery** with lightbox functionality
-- **Smooth Scrolling** and optimized navigation
+        @keyframes float {
+            0%, 100% { transform: perspective(1000px) rotateY(-15deg) translateY(0px); }
+            50% { transform: perspective(1000px) rotateY(-15deg) translateY(-10px); }
+        }
 
-### 📱 Mobile Experience
-- **Mobile-First Design** with touch-optimized interactions
-- **Floating Action Button** for quick booking access
-- **Collapsible Navigation** with hamburger menu
-- **Touch-Friendly** buttons and form elements
-- **Optimized Performance** for mobile devices
+        /* App Layout Showcase */
+        .app-showcase {
+            padding: 6rem 2rem;
+            background: rgba(0,0,0,0.8);
+        }
 
-### 🔧 Functionality
-- **Booking Modal** with comprehensive form
-- **Service Package Builder** with real-time pricing
-- **Testimonials Section** with client feedback
-- **Portfolio Gallery** with image lightbox
-- **Contact Forms** with validation
-- **Social Media Integration**
+        .showcase-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
 
-## 🛠 Technologies Used
+        .showcase-header h2 {
+            font-size: 3rem;
+            color: #FFB200;
+            margin-bottom: 1rem;
+        }
 
-### Frontend
-- **HTML5** - Semantic markup and structure
-- **CSS3** - Advanced styling with gradients, animations, and responsive design
-- **JavaScript (ES6+)** - Interactive functionality and dynamic content
-- **Google Fonts** - Professional typography (Inter, Cinzel)
+        .showcase-header p {
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.8);
+        }
 
-### Performance & Security
-- **Content Security Policy (CSP)** - Enhanced security
-- **Cross-Browser Compatibility** - Works on all modern browsers
-- **Mobile Optimization** - Touch-friendly and performance-optimized
-- **SEO Optimized** - Meta tags and structured data
+        /* Blueprint System Architecture */
+        .blueprint-section {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 4rem 2rem;
+            position: relative;
+        }
 
-### Features
-- **EmailJS Integration** - Contact form functionality
-- **Intersection Observer** - Scroll-based animations
-- **Local Storage** - User preferences and state management
-- **Responsive Images** - Optimized for all screen sizes
+        .blueprint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
 
-## 🎨 Design Highlights
+        .blueprint-card {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #3B82F6;
+            border-radius: 15px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
 
-### Color Scheme
-- **Primary**: Dark theme (#000000, #1a1a1a)
-- **Accent**: Gold gradient (#FFB200, #FFC700)
-- **Text**: White and light grays for readability
-- **Background**: Dark gradients for professional appearance
+        .blueprint-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
 
-### Typography
-- **Headings**: Cinzel (elegant serif)
-- **Body**: Inter (clean sans-serif)
-- **Hierarchy**: Clear visual hierarchy with proper spacing
+        .blueprint-card:hover::before {
+            left: 100%;
+        }
 
-### Animations
-- **Loading Screen**: Cinematic brand introduction
-- **Scroll Animations**: Smooth reveal effects
-- **Hover Effects**: Interactive feedback
-- **Transitions**: Professional micro-interactions
+        .blueprint-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+        }
 
-## 📱 Mobile Experience
+        .blueprint-card h3 {
+            color: #3B82F6;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-### Optimized for Mobile
-- **Touch-Friendly** - 44px minimum touch targets
-- **Smooth Scrolling** - Hardware-accelerated performance
-- **Responsive Images** - Optimized loading and display
-- **Mobile Navigation** - Collapsible menu with smooth animations
+        .blueprint-card .mockup {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
 
-### Mobile Features
-- **Floating Book Button** - Always accessible booking
-- **Mobile Service Builder** - Touch-optimized package creation
-- **Mobile Gallery** - Swipe-friendly image viewing
-- **Mobile Forms** - Keyboard-optimized input fields
+        .mockup-header {
+            background: #3B82F6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
 
-### Performance
-- **Fast Loading** - Optimized assets and lazy loading
-- **Smooth Animations** - 60fps performance
-- **Battery Efficient** - Reduced animations on mobile
-- **Network Optimized** - Compressed images and assets
+        .mockup-content {
+            display: grid;
+            gap: 0.5rem;
+        }
 
-## 🚀 Getting Your Own
+        .mockup-row {
+            background: rgba(255,255,255,0.1);
+            padding: 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
 
-### Option 1: Custom Development
-Contact **Cochran Films** for a custom landing page built specifically for your brand:
+        /* Workflow Visualization */
+        .workflow-section {
+            padding: 6rem 2rem;
+            background: rgba(0,0,0,0.9);
+        }
 
-- **Professional Design** - Tailored to your brand identity
-- **Custom Functionality** - Features specific to your business
-- **SEO Optimization** - Search engine optimization included
-- **Ongoing Support** - Maintenance and updates
+        .workflow-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-**Contact**: [https://www.cochranfilms.com/contact](https://www.cochranfilms.com/contact)
+        .workflow-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
 
-### Option 2: Template Customization
-Use this codebase as a starting point for your own landing page:
+        .workflow-header h2 {
+            font-size: 3rem;
+            color: #22c55e;
+            margin-bottom: 1rem;
+        }
 
-1. **Fork this repository**
-2. **Customize the content** for your business
-3. **Update branding** and color scheme
-4. **Modify services** and pricing
-5. **Deploy to your hosting**
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
 
-## 📦 Installation
+        .workflow-step {
+            flex: 1;
+            min-width: 250px;
+            text-align: center;
+            position: relative;
+        }
 
-### Prerequisites
-- Modern web browser
-- Text editor (VS Code, Sublime Text, etc.)
-- Basic knowledge of HTML, CSS, and JavaScript
+        .workflow-step::after {
+            content: '→';
+            position: absolute;
+            right: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: #22c55e;
+        }
 
-### Setup Steps
+        .workflow-step:last-child::after {
+            display: none;
+        }
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/cochran-landing-page.git
-   cd cochran-landing-page
-   ```
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            color: white;
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+        }
 
-2. **Open in browser**
-   ```bash
-   # Using Python
-   python -m http.server 8000
-   
-   # Using Node.js
-   npx serve .
-   
-   # Or simply open index.html in your browser
-   ```
+        .step-title {
+            color: #22c55e;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
 
-3. **Customize for your business**
-   - Update content in `index.html`
-   - Modify colors in CSS variables
-   - Replace images with your own
-   - Update contact information
+        .step-description {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+        }
 
-## 🎨 Customization
+        /* Technology Stack */
+        .tech-section {
+            padding: 6rem 2rem;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1));
+        }
 
-### Branding Changes
-```css
-/* Update primary colors */
-:root {
-  --primary: #FFB200;    /* Your brand color */
-  --secondary: #FFC700;  /* Your accent color */
-  --dark: #1a1a1a;      /* Your dark theme */
-}
-```
+        .tech-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-### Content Updates
-- **Company Information**: Update in the header and footer
-- **Services**: Modify service cards and pricing
-- **Contact Details**: Update phone, email, and social links
-- **Images**: Replace with your own portfolio images
+        .tech-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
 
-### Feature Modifications
-- **Booking Form**: Customize form fields and validation
-- **Service Builder**: Adjust services and pricing tiers
-- **Gallery**: Add your own portfolio images
-- **Testimonials**: Include your client feedback
+        .tech-header h2 {
+            font-size: 3rem;
+            color: #3B82F6;
+            margin-bottom: 1rem;
+        }
 
-## 🌐 Browser Support
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
 
-### Supported Browsers
-- ✅ **Chrome** 90+
-- ✅ **Firefox** 88+
-- ✅ **Safari** 14+
-- ✅ **Edge** 90+
-- ✅ **Mobile Safari** (iOS 14+)
-- ✅ **Chrome Mobile** (Android 10+)
+        .tech-item {
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #3B82F6;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
 
-### Features by Browser
-- **Modern Browsers**: Full functionality with animations
-- **Older Browsers**: Graceful degradation with core features
-- **Mobile Browsers**: Optimized touch experience
+        .tech-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.3);
+        }
 
-## ⚡ Performance
+        .tech-item i {
+            font-size: 3rem;
+            color: #3B82F6;
+            margin-bottom: 1rem;
+        }
 
-### Optimization Features
-- **Lazy Loading** - Images load as needed
-- **Minified CSS/JS** - Reduced file sizes
-- **Optimized Images** - Compressed and responsive
-- **Caching** - Browser caching for faster loads
-- **CDN Ready** - Can be deployed to CDN
+        .tech-item h4 {
+            color: #3B82F6;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
 
-### Performance Metrics
-- **First Contentful Paint**: < 1.5s
-- **Largest Contentful Paint**: < 2.5s
-- **Cumulative Layout Shift**: < 0.1
-- **First Input Delay**: < 100ms
+        /* Call to Action */
+        .cta-section {
+            padding: 6rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(255, 178, 0, 0.2), rgba(34, 197, 94, 0.2));
+            position: relative;
+            overflow: hidden;
+        }
 
-## 🔒 Security
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 178, 0, 0.1) 0%, transparent 70%);
+            animation: rotate 15s linear infinite reverse;
+        }
 
-### Security Features
-- **Content Security Policy** - XSS protection
-- **HTTPS Enforcement** - Secure connections
-- **Input Validation** - Form security
-- **Sanitized Content** - XSS prevention
-- **Secure Headers** - Additional protection
+        .cta-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
 
-### Best Practices
-- **No External Dependencies** - Self-contained
-- **Minimal JavaScript** - Reduced attack surface
-- **Secure Forms** - Proper validation and sanitization
-- **Privacy Compliant** - GDPR and privacy friendly
+        .cta-section h2 {
+            color: #FFB200;
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+        }
 
-## 📞 Support
+        .cta-section p {
+            font-size: 1.4rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 3rem;
+        }
 
-### Getting Help
-- **Documentation**: Check this README for setup instructions
-- **Issues**: Report bugs via GitHub Issues
-- **Custom Development**: Contact Cochran Films for custom work
+        .cta-buttons {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
 
-### Contact Information
-- **Website**: [https://www.cochranfilms.com](https://www.cochranfilms.com)
-- **Contact Page**: [https://www.cochranfilms.com/contact](https://www.cochranfilms.com/contact)
-- **Email**: contact@cochranfilms.com
-- **Services**: Video production, photography, web design
+        .cta-button {
+            background: linear-gradient(135deg, #FFB200, #FF8C00);
+            color: #1a1a1a;
+            padding: 1.5rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            transform: perspective(1000px) rotateY(0deg);
+        }
 
-### Social Media Links
-- **YouTube**: [https://www.youtube.com/@cochranfilmsllc](https://www.youtube.com/@cochranfilmsllc)
-- **Instagram**: [https://www.instagram.com/cochran.films/](https://www.instagram.com/cochran.films/)
-- **LinkedIn**: [https://www.linkedin.com/company/cochranfilms/](https://www.linkedin.com/company/cochranfilms/)
-- **Twitter/X**: [https://x.com/cochranfilms](https://x.com/cochranfilms)
+        .cta-button:hover {
+            transform: perspective(1000px) rotateY(-10deg) translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 178, 0, 0.4);
+        }
 
-### Additional Links
-- **Portfolio**: [https://www.cochranfilms.com/portfolio](https://www.cochranfilms.com/portfolio)
-- **Video Production**: [https://www.cochranfilms.com/portfolio](https://www.cochranfilms.com/portfolio)
-- **Event Photography**: [https://www.cochranfilms.com/service-page/professional-event-photography](https://www.cochranfilms.com/service-page/professional-event-photography)
-- **Web Design**: [https://www.cochranfilms.com/service-page/custom-website-design](https://www.cochranfilms.com/service-page/custom-website-design)
-- **Brand Development**: [https://www.cochranfilms.com/brand-building](https://www.cochranfilms.com/brand-building)
-- **About Us**: [https://www.cochranfilms.com/about](https://www.cochranfilms.com/about)
-- **Blog**: [https://www.cochranfilms.com/blog](https://www.cochranfilms.com/blog)
-- **Privacy Policy**: [https://www.cochranfilms.com/privacy-policy](https://www.cochranfilms.com/privacy-policy)
-- **Terms of Service**: [https://www.cochranfilms.com/terms-of-service](https://www.cochranfilms.com/terms-of-service)
-- **Accessibility**: [https://www.cochranfilms.com/accessibilitystatement](https://www.cochranfilms.com/accessibilitystatement)
+        .cta-button.secondary {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
 
----
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .workflow-steps {
+                flex-direction: column;
+            }
+            
+            .workflow-step::after {
+                display: none;
+            }
+            
+            .tech-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
 
-## 📄 License
+        /* Scroll Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1><i class="fas fa-film"></i> Cochran Films</h1>
+            <p>Next-Generation Creator Management Platform</p>
+            <p style="font-size: 1.3rem; color: rgba(255,255,255,0.8);">
+                Revolutionizing how production companies manage creators, contracts, and workflows
+            </p>
+            <div class="ceo-badge">
+                <i class="fas fa-crown"></i> Cody Cochran, CEO & Founder
+            </div>
+        </div>
+    </section>
 
-## 🙏 Acknowledgments
+    <!-- App Layout Showcase -->
+    <section class="app-showcase">
+        <div class="showcase-header fade-in">
+            <h2><i class="fas fa-laptop"></i> Platform Architecture</h2>
+            <p>Explore our sophisticated system design and workflow automation</p>
+        </div>
 
-- **Cochran Films** - Original design and concept
-- **Modern Web Standards** - HTML5, CSS3, ES6+
-- **Open Source Community** - Tools and libraries used
+        <!-- Blueprint System Architecture -->
+        <div class="blueprint-section">
+            <div class="blueprint-grid">
+                <div class="blueprint-card fade-in">
+                    <h3><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h3>
+                    <div class="mockup">
+                        <div class="mockup-header">Admin Control Panel</div>
+                        <div class="mockup-content">
+                            <div class="mockup-row">📊 Creator Management</div>
+                            <div class="mockup-row">📋 Job Listings</div>
+                            <div class="mockup-row">📁 Contract Tracking</div>
+                            <div class="mockup-row">⚙️ System Settings</div>
+                        </div>
+                    </div>
+                    <p>Centralized management interface with real-time updates and comprehensive controls</p>
+                </div>
 
----
+                <div class="blueprint-card fade-in">
+                    <h3><i class="fas fa-file-contract"></i> Contract Portal</h3>
+                    <div class="mockup">
+                        <div class="mockup-header">Digital Contract Signing</div>
+                        <div class="mockup-content">
+                            <div class="mockup-row">✍️ Creator Information</div>
+                            <div class="mockup-row">🔐 Password Setup</div>
+                            <div class="mockup-row">📝 Digital Signature</div>
+                            <div class="mockup-row">📄 PDF Generation</div>
+                        </div>
+                    </div>
+                    <p>Secure contract signing with instant PDF generation and email notifications</p>
+                </div>
 
-**Built with ❤️ by [Cochran Films](https://www.cochranfilms.com)**
+                <div class="blueprint-card fade-in">
+                    <h3><i class="fas fa-users"></i> Creator Portal</h3>
+                    <div class="mockup">
+                        <div class="mockup-header">Creator Access</div>
+                        <div class="mockup-content">
+                            <div class="mockup-row">👤 Profile Management</div>
+                            <div class="mockup-row">📋 Job Assignments</div>
+                            <div class="mockup-row">📄 Contract Status</div>
+                            <div class="mockup-row">📱 Mobile Responsive</div>
+                        </div>
+                    </div>
+                    <p>Dedicated portal for creators to access their contracts and job information</p>
+                </div>
 
-*Professional video production that transforms your vision into compelling content that drives results.*
+                <div class="blueprint-card fade-in">
+                    <h3><i class="fas fa-database"></i> Data Management</h3>
+                    <div class="mockup">
+                        <div class="mockup-header">GitHub Integration</div>
+                        <div class="mockup-content">
+                            <div class="mockup-row">📊 freelancers.json</div>
+                            <div class="mockup-row">📋 jobs-data.json</div>
+                            <div class="mockup-row">⚙️ dropdown-options.json</div>
+                            <div class="mockup-row">📁 uploaded-contracts.json</div>
+                        </div>
+                    </div>
+                    <p>Secure GitHub-based data storage with automatic synchronization</p>
+                </div>
+
+                <div class="blueprint-card fade-in">
+                    <h3><i class="fas fa-envelope"></i> Email System</h3>
+                    <div class="mockup">
+                        <div class="mockup-header">EmailJS Integration</div>
+                        <div class="mockup-content">
+                            <div class="mockup-row">📧 Job Acceptance</div>
+                            <div class="mockup-row">📝 Contract Notifications</div>
+                            <div class="mockup-row">✅ Approval Alerts</div>
+                            <div class="mockup-row">📱 Mobile Optimized</div>
+                        </div>
+                    </div>
+                    <p>Professional email notifications for all workflow events</p>
+                </div>
+
+                <div class="blueprint-card fade-in">
+                    <h3><i class="fas fa-shield-alt"></i> Security Layer</h3>
+                    <div class="mockup">
+                        <div class="mockup-header">Enterprise Security</div>
+                        <div class="mockup-content">
+                            <div class="mockup-row">🔐 Server-side Tokens</div>
+                            <div class="mockup-row">🚫 CORS-Free Design</div>
+                            <div class="mockup-row">🔒 Environment Variables</div>
+                            <div class="mockup-row">✍️ Digital Signatures</div>
+                        </div>
+                    </div>
+                    <p>Enterprise-grade security with no exposed credentials</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Workflow Visualization -->
+    <section class="workflow-section">
+        <div class="workflow-container">
+            <div class="workflow-header fade-in">
+                <h2><i class="fas fa-cogs"></i> Automated Workflow Process</h2>
+                <p>See how our platform streamlines creator management from start to finish</p>
+            </div>
+
+            <div class="workflow-steps">
+                <div class="workflow-step fade-in">
+                    <div class="step-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="step-title">Creator Onboarding</div>
+                    <div class="step-description">Add creators with dropdown options. System auto-generates jobs and sends approval emails.</div>
+                </div>
+
+                <div class="workflow-step fade-in">
+                    <div class="step-icon">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                    <div class="step-title">Contract Signing</div>
+                    <div class="step-description">Creators set passwords and sign contracts digitally with instant PDF generation.</div>
+                </div>
+
+                <div class="workflow-step fade-in">
+                    <div class="step-icon">
+                        <i class="fas fa-sync"></i>
+                    </div>
+                    <div class="step-title">Real-Time Updates</div>
+                    <div class="step-description">All activities update instantly. Admins receive notifications and track progress.</div>
+                </div>
+
+                <div class="workflow-step fade-in">
+                    <div class="step-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="step-title">Job Management</div>
+                    <div class="step-description">Create and manage job listings with auto-sync to website and Google Sheets.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Stack -->
+    <section class="tech-section">
+        <div class="tech-container">
+            <div class="tech-header fade-in">
+                <h2><i class="fas fa-microchip"></i> Technology Stack</h2>
+                <p>Built with cutting-edge technologies for maximum performance and security</p>
+            </div>
+
+            <div class="tech-grid">
+                <div class="tech-item fade-in">
+                    <i class="fab fa-github"></i>
+                    <h4>GitHub API</h4>
+                    <p>Secure file storage and version control</p>
+                </div>
+
+                <div class="tech-item fade-in">
+                    <i class="fab fa-js"></i>
+                    <h4>JavaScript</h4>
+                    <p>Modern frontend and backend development</p>
+                </div>
+
+                <div class="tech-item fade-in">
+                    <i class="fas fa-server"></i>
+                    <h4>Vercel Functions</h4>
+                    <p>Scalable serverless API infrastructure</p>
+                </div>
+
+                <div class="tech-item fade-in">
+                    <i class="fas fa-envelope"></i>
+                    <h4>EmailJS</h4>
+                    <p>Professional notification system</p>
+                </div>
+
+                <div class="tech-item fade-in">
+                    <i class="fas fa-file-pdf"></i>
+                    <h4>PDF Generation</h4>
+                    <p>Automated contract creation and signing</p>
+                </div>
+
+                <div class="tech-item fade-in">
+                    <i class="fas fa-database"></i>
+                    <h4>JSON Storage</h4>
+                    <p>Lightweight, fast data management</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2 class="fade-in"><i class="fas fa-star"></i> Ready to Transform Your Workflow?</h2>
+            <p class="fade-in">
+                Experience the future of creator management with our sophisticated, 
+                fully-automated platform designed for production companies that demand excellence.
+            </p>
+            <div class="cta-buttons">
+                <a href="admin-dashboard.html" class="cta-button fade-in">
+                    <i class="fas fa-tachometer-alt"></i> View Live Demo
+                </a>
+                <a href="contract.html" class="cta-button secondary fade-in">
+                    <i class="fas fa-file-contract"></i> Try Contract Portal
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 3rem 2rem; background: rgba(0,0,0,0.8);">
+        <h3 style="color: #FFB200; margin-bottom: 1rem; font-size: 1.5rem;">
+            <i class="fas fa-film"></i> Cochran Films
+        </h3>
+        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+            Next-generation creator management platform
+        </p>
+        <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">
+            Secure • Scalable • Sophisticated
+        </p>
+    </div>
+
+    <script>
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all fade-in elements
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Add interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effects to blueprint cards
+            document.querySelectorAll('.blueprint-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05) translateY(-10px)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1) translateY(0)';
+                });
+            });
+
+            // Add click effects to CTA buttons
+            document.querySelectorAll('.cta-button').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // Add ripple effect
+                    const ripple = document.createElement('span');
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255,255,255,0.3)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    ripple.style.left = e.clientX - this.offsetLeft + 'px';
+                    ripple.style.top = e.clientY - this.offsetTop + 'px';
+                    ripple.style.width = ripple.style.height = '20px';
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        });
+
+        // Add CSS for ripple effect
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
