@@ -1107,7 +1107,7 @@
                 // ==================== PROFESSIONAL LEGAL FOOTER ====================
                 
                 // Footer - positioned with proper spacing to fit in container
-                const footerY = 275; // MOVED DOWN from 265 to 275 for more space
+                const footerY = 240; // MOVED UP from 275 to 240 since terms are now more compact
                 
                 doc.setFillColor(248, 249, 250);
                 doc.rect(20, footerY - 5, 170, 20, 'F'); // Increased height to 20mm
@@ -1344,7 +1344,7 @@
                 doc.text('Date: ' + contractData.signatureDate, 115, signatureY + 42);
                 
                 // Footer - positioned with proper spacing to fit in container
-                const footerY = 275; // MOVED DOWN from 265 to 275 for more space
+                const footerY = 240; // MOVED UP from 275 to 240 since terms are now more compact
                 
                 doc.setFillColor(248, 249, 250);
                 doc.rect(20, footerY - 5, 170, 20, 'F'); // Increased height to 20mm
