@@ -160,11 +160,25 @@
         // Delete Firebase account
         async function deleteFirebaseAccount(email) {
             try {
-                // Note: Firebase Admin SDK is required for user deletion
-                // For now, we'll use a different approach - we can't delete users from client-side
-                // This would need to be handled server-side with Firebase Admin SDK
-                console.log('⚠️ Firebase account deletion requires server-side implementation');
-                return { success: true, message: 'Account deletion requires server-side implementation' };
+                console.log(`🔄 Deleting Firebase account for: ${email}`);
+                
+                const response = await fetch('/api/firebase', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    console.log('✅ Firebase account deleted successfully:', result.message);
+                    return { success: true, message: result.message };
+                } else {
+                    console.error('❌ Firebase deletion failed:', result.error);
+                    return { success: false, error: result.error || 'Failed to delete Firebase account' };
+                }
             } catch (error) {
                 console.error('❌ Error deleting Firebase account:', error);
                 return { success: false, error: error.message };
@@ -2041,14 +2055,22 @@
                     const userData = users[userName];
                     const userEmail = userData?.profile?.email;
                     
+                    let firebaseDeleted = false;
+                    
                     // 1. Delete from Firebase (if email exists)
                     if (userEmail) {
                         try {
-                            await deleteFirebaseAccount(userEmail);
-                            console.log('✅ Firebase account deleted for:', userEmail);
+                            const firebaseResult = await deleteFirebaseAccount(userEmail);
+                            if (firebaseResult.success) {
+                                console.log('✅ Firebase account deleted for:', userEmail);
+                                firebaseDeleted = true;
+                            } else {
+                                console.warn('⚠️ Could not delete Firebase account:', firebaseResult.error);
+                                showNotification(`⚠️ Firebase account deletion failed: ${firebaseResult.error}`, 'warning');
+                            }
                         } catch (firebaseError) {
                             console.warn('⚠️ Could not delete Firebase account:', firebaseError);
-                            showNotification('⚠️ User deleted but Firebase account may still exist.', 'warning');
+                            showNotification('⚠️ Firebase account deletion failed. User will still be removed from local data.', 'warning');
                         }
                     }
                     
@@ -2062,7 +2084,12 @@
                     // 4. Refresh display
                     await displayUsers();
                     
-                    showNotification(`✅ User "${userName}" deleted successfully! Removed from Firebase and GitHub.`, 'success');
+                    // Show appropriate success message
+                    if (firebaseDeleted) {
+                        showNotification(`✅ User "${userName}" deleted successfully! Removed from Firebase and GitHub.`, 'success');
+                    } else {
+                        showNotification(`✅ User "${userName}" deleted from local data and GitHub. Firebase account may still exist.`, 'success');
+                    }
                     
                 } catch (error) {
                     console.error('❌ Error deleting user:', error);

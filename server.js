@@ -5,6 +5,7 @@ const fs = require('fs');
 
 // Import API routes
 const performanceRouter = require('./api/performance');
+const firebaseRouter = require('./api/firebase');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -236,6 +237,9 @@ app.put('/api/github/file/:filename', async (req, res) => {
 // Performance API routes
 app.use('/api/performance', performanceRouter);
 
+// Firebase API routes
+app.use('/api/firebase', firebaseRouter);
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.status(200).json({
@@ -258,6 +262,7 @@ app.listen(PORT, () => {
     console.log(`   - POST /api/performance`);
     console.log(`   - PUT  /api/performance/:email`);
     console.log(`   - DELETE /api/performance/:email`);
+    console.log(`   - DELETE /api/firebase (delete user)`);
     console.log(`   - PUT  /api/github/file/:filename`);
     console.log(`\n🌐 Test page: http://localhost:${PORT}/test-api.html`);
     console.log(`📋 Admin dashboard: http://localhost:${PORT}/admin-dashboard.html`);
