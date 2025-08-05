@@ -396,8 +396,19 @@ class AutomatedTestRunner {
 
     async testUserDeletion() {
         return this.runTest('User Deletion', async () => {
-            // Load current users
-            const usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            // Load current users or create if doesn't exist
+            let usersData;
+            try {
+                usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                usersData = {
+                    users: [],
+                    totalUsers: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = usersData.users.length;
             
             // Remove test users (by email and test data flag)
@@ -465,8 +476,19 @@ class AutomatedTestRunner {
 
     async testJobDeletion() {
         return this.runTest('Job Deletion', async () => {
-            // Load current jobs
-            const jobsData = JSON.parse(await fs.readFile('jobs-data.json', 'utf8'));
+            // Load current jobs or create if doesn't exist
+            let jobsData;
+            try {
+                jobsData = JSON.parse(await fs.readFile('jobs-data.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                jobsData = {
+                    jobs: [],
+                    totalJobs: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = jobsData.jobs.length;
             
             // Remove test jobs (by title and test data flag)
@@ -493,8 +515,19 @@ class AutomatedTestRunner {
 
     async testContractAddition() {
         return this.runTest('Contract Addition', async () => {
-            // Load current contracts
-            const contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            // Load current contracts or create if doesn't exist
+            let contractsData;
+            try {
+                contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                contractsData = {
+                    uploadedContracts: [],
+                    totalContracts: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = contractsData.uploadedContracts.length;
             
             // Add test contract
@@ -524,8 +557,19 @@ class AutomatedTestRunner {
 
     async testContractDeletion() {
         return this.runTest('Contract Deletion', async () => {
-            // Load current contracts
-            const contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            // Load current contracts or create if doesn't exist
+            let contractsData;
+            try {
+                contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                contractsData = {
+                    uploadedContracts: [],
+                    totalContracts: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = contractsData.uploadedContracts.length;
             
             // Remove test contract
@@ -550,8 +594,19 @@ class AutomatedTestRunner {
 
     async testPerformanceReviewCreation() {
         return this.runTest('Performance Review Creation', async () => {
-            // Load current performance reviews
-            const performanceData = JSON.parse(await fs.readFile('performance.json', 'utf8'));
+            // Load current performance reviews or create if doesn't exist
+            let performanceData;
+            try {
+                performanceData = JSON.parse(await fs.readFile('performance.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                performanceData = {
+                    reviews: [],
+                    totalReviews: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = performanceData.reviews.length;
             
             // Add test performance review
@@ -589,8 +644,19 @@ class AutomatedTestRunner {
 
     async testPerformanceReviewDeletion() {
         return this.runTest('Performance Review Deletion', async () => {
-            // Load current performance reviews
-            const performanceData = JSON.parse(await fs.readFile('performance.json', 'utf8'));
+            // Load current performance reviews or create if doesn't exist
+            let performanceData;
+            try {
+                performanceData = JSON.parse(await fs.readFile('performance.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                performanceData = {
+                    reviews: [],
+                    totalReviews: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const initialCount = performanceData.reviews.length;
             
             // Remove test performance review
@@ -775,7 +841,18 @@ class AutomatedTestRunner {
     async testPdfDeletion() {
         return this.runTest('PDF Deletion API', async () => {
             // First create a test user and contract to simulate the full lifecycle
-            const usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            let usersData;
+            try {
+                usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                usersData = {
+                    users: [],
+                    totalUsers: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const testUser = usersData.users.find(user => user.email === this.testData.user.email);
             
             if (!testUser) {
@@ -786,13 +863,26 @@ class AutomatedTestRunner {
             }
             
             // Create test contract
-            const contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            let contractsData;
+            try {
+                contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            } catch (error) {
+                // File doesn't exist, create default structure
+                contractsData = {
+                    uploadedContracts: [],
+                    totalContracts: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
             const testContract = {
                 fileName: 'test-delete-pdf.pdf',
                 contractId: 'TEST-DELETE-001',
                 status: 'signed',
                 uploadedDate: new Date().toISOString(),
-                userEmail: this.testData.user.email
+                userEmail: this.testData.user.email,
+                isTestContract: true,
+                testData: true
             };
             
             contractsData.uploadedContracts.push(testContract);
