@@ -886,7 +886,7 @@
         
         // ==================== PDF GENERATION & GITHUB UPLOAD ====================
         
-        // Generate professional PDF contract content - ADVANCED SINGLE PAGE VERSION
+        // Generate professional PDF contract content - FIXED VERSION WITH PROPER SPACING
         function generateContractPDF(contractData) {
             try {
                 console.log('📄 Starting PDF generation for contract:', contractData.contractId);
@@ -898,7 +898,7 @@
                 
                 const doc = new jsPDF();
                 
-                // ==================== COMPACT HEADER ====================
+                // ==================== HEADER ====================
                 
                 // Professional header with gold background
                 doc.setFillColor(255, 178, 0);
@@ -969,7 +969,7 @@
                 doc.text(`Start: ${contractData.projectStart || 'Not specified'}`, 115, 82);
                 doc.text(`Rate: ${contractData.rate || 'Not specified'}`, 115, 86);
                 
-                // ==================== COMPACT CONTRACT TERMS ====================
+                // ==================== CONTRACT TERMS - FIXED SPACING ====================
                 
                 // Professional section header with background
                 doc.setFillColor(255, 178, 0);
@@ -983,7 +983,7 @@
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                // Professional compact terms list - designed to fit on one page
+                // Professional compact terms list - FIXED SPACING
                 const compactTerms = [
                     'INDEPENDENT CONTRACTOR: Not an employee of Cochran Films.',
                     'SERVICES: Provide professional services as specified.',
@@ -1001,14 +1001,14 @@
                     'TRANSPORTATION: Contractor responsible for own transport.'
                 ];
                 
-                // Compact single column layout
+                // FIXED: Proper spacing to prevent text overlap
                 let currentYPos = 120;
-                const lineHeight = 6; // Reduced line height for compact layout
+                const lineHeight = 10; // INCREASED from 6 to 10 for proper spacing
                 
-                // Process each term with clean, non-overlapping layout
+                // Process each term with FIXED spacing
                 compactTerms.forEach((term, index) => {
                     // Ensure we stay within page bounds
-                    if (currentYPos > 160) {
+                    if (currentYPos > 180) {
                         currentYPos = 120; // Reset to terms section if needed
                     }
                     
@@ -1017,24 +1017,24 @@
                     const title = term.substring(0, colonIndex + 1);
                     const description = term.substring(colonIndex + 1);
                     
-                    // Always use two-line layout to prevent overlapping
+                    // FIXED: Use proper spacing for two-line layout
                     // Draw title on first line
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(7);
+                    doc.setFontSize(8); // INCREASED from 7 to 8 for better readability
                     doc.text(title, 20, currentYPos);
-                    currentYPos += 4;
+                    currentYPos += 6; // INCREASED from 4 to 6 for proper spacing
                     
                     // Draw description on second line with indent
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(6); // Slightly smaller for description
+                    doc.setFontSize(7); // INCREASED from 6 to 7 for better readability
                     doc.text(description, 25, currentYPos);
-                    currentYPos += lineHeight + 2;
+                    currentYPos += lineHeight + 4; // INCREASED spacing between terms
                 });
                 
                 // Fixed signature section position for single page
-                const signatureY = 200; // Fixed position to ensure it fits
+                const signatureY = 220; // MOVED DOWN from 200 to 220 for more space
                 
-                // ==================== COMPACT SIGNATURES ====================
+                // ==================== SIGNATURES ====================
                 
                 // Signature header with professional styling
                 doc.setFillColor(255, 178, 0);
@@ -1061,9 +1061,23 @@
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                doc.text('Authorized Signature: Cody Cochran', 25, signatureY + 26);
-                doc.text('Title: Founder & CEO', 25, signatureY + 30);
-                doc.text('Date: ' + contractData.effectiveDate, 25, signatureY + 34);
+                doc.text('Authorized Signature:', 25, signatureY + 26);
+                
+                // CURSIVE SIGNATURE FOR CODY COCHRAN
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'italic'); // Use italic for cursive effect
+                doc.text('Cody Cochran', 25, signatureY + 32);
+                
+                // Add signature line for authenticity
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.3);
+                doc.line(25, signatureY + 34, 85, signatureY + 34);
+                
+                doc.setFontSize(6);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Title: Founder & CEO', 25, signatureY + 38);
+                doc.text('Date: ' + contractData.effectiveDate, 25, signatureY + 42);
                 
                 // Contractor signature - Professional styling
                 doc.setFontSize(8);
@@ -1082,16 +1096,28 @@
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                doc.text('Contractor: ' + contractData.freelancerName, 115, signatureY + 26);
-                doc.text('Signature: ' + contractData.signature, 115, signatureY + 30);
-                doc.text('Date: ' + contractData.signatureDate, 115, signatureY + 34);
+                doc.text('Contractor:', 115, signatureY + 26);
                 
-
+                // CURSIVE SIGNATURE FOR CONTRACTOR
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'italic'); // Use italic for cursive effect
+                doc.text(contractData.freelancerName || 'Contractor Name', 115, signatureY + 32);
+                
+                // Add signature line for authenticity
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.3);
+                doc.line(115, signatureY + 34, 175, signatureY + 34);
+                
+                doc.setFontSize(6);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Signature: ' + contractData.signature, 115, signatureY + 38);
+                doc.text('Date: ' + contractData.signatureDate, 115, signatureY + 42);
                 
                 // ==================== PROFESSIONAL LEGAL FOOTER ====================
                 
                 // Footer - positioned with proper spacing to fit in container
-                const footerY = 265; // Moved up to ensure text fits in container
+                const footerY = 275; // MOVED DOWN from 265 to 275 for more space
                 
                 doc.setFillColor(248, 249, 250);
                 doc.rect(20, footerY - 5, 170, 20, 'F'); // Increased height to 20mm
@@ -1113,7 +1139,7 @@
             }
         }
         
-        // Advanced PDF generation with better text handling
+        // Advanced PDF generation with FIXED text handling
         function generateAdvancedContractPDF(contractData) {
             try {
                 console.log('📄 Starting advanced PDF generation for contract:', contractData.contractId);
@@ -1198,7 +1224,7 @@
                 doc.text(`Date: ${contractData.effectiveDate}`, 115, 86);
                 doc.text(`Status: Active`, 115, 90);
                 
-                // ==================== ADVANCED CONTRACT TERMS ====================
+                // ==================== ADVANCED CONTRACT TERMS - FIXED ====================
                 
                 // Professional section header
                 doc.setFillColor(255, 178, 0);
@@ -1208,11 +1234,11 @@
                 doc.setFont('helvetica', 'bold');
                 doc.text('CONTRACT TERMS & CONDITIONS', 105, 111, { align: 'center' });
                 
-                doc.setFontSize(7);
+                doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                // Compact terms for single page
+                // Compact terms for single page - FIXED SPACING
                 const compactTerms = [
                     '1. INDEPENDENT CONTRACTOR: Not an employee of Cochran Films.',
                     '2. SERVICES: Provide professional services as specified.',
@@ -1230,13 +1256,14 @@
                     '14. TRANSPORTATION: Contractor responsible for own transport.'
                 ];
                 
+                // FIXED: Proper spacing to prevent text overlap
                 let currentYPos = 125;
-                const lineHeight = 6;
+                const lineHeight = 10; // INCREASED from 6 to 10 for proper spacing
                 
-                // Process each term with clean, non-overlapping layout
+                // Process each term with FIXED spacing
                 compactTerms.forEach((term, index) => {
                     // Ensure we stay within page bounds
-                    if (currentYPos > 160) {
+                    if (currentYPos > 185) {
                         currentYPos = 125; // Reset to terms section if needed
                     }
                     
@@ -1245,24 +1272,24 @@
                     const title = term.substring(0, colonIndex + 1);
                     const description = term.substring(colonIndex + 1);
                     
-                    // Always use two-line layout to prevent overlapping
+                    // FIXED: Use proper spacing for two-line layout
                     // Draw title on first line
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(7);
+                    doc.setFontSize(8); // INCREASED from 7 to 8 for better readability
                     doc.text(title, 20, currentYPos);
-                    currentYPos += 4;
+                    currentYPos += 6; // INCREASED from 4 to 6 for proper spacing
                     
                     // Draw description on second line with indent
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(6); // Slightly smaller for description
+                    doc.setFontSize(7); // INCREASED from 6 to 7 for better readability
                     doc.text(description, 25, currentYPos);
-                    currentYPos += lineHeight + 2;
+                    currentYPos += lineHeight + 4; // INCREASED spacing between terms
                 });
                 
                 // ==================== ADVANCED SIGNATURES ====================
                 
                 // Fixed signature section position for single page
-                const signatureY = 200; // Fixed position to ensure it fits
+                const signatureY = 220; // MOVED DOWN from 200 to 220 for more space
                 
                 // Signature header
                 doc.setFillColor(255, 178, 0);
@@ -1288,9 +1315,23 @@
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                doc.text('Authorized Signature: Cody Cochran', 25, signatureY + 26);
-                doc.text('Title: Founder & CEO', 25, signatureY + 30);
-                doc.text('Date: ' + contractData.effectiveDate, 25, signatureY + 34);
+                doc.text('Authorized Signature:', 25, signatureY + 26);
+                
+                // CURSIVE SIGNATURE FOR CODY COCHRAN
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'italic'); // Use italic for cursive effect
+                doc.text('Cody Cochran', 25, signatureY + 32);
+                
+                // Add signature line for authenticity
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.3);
+                doc.line(25, signatureY + 34, 85, signatureY + 34);
+                
+                doc.setFontSize(6);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Title: Founder & CEO', 25, signatureY + 38);
+                doc.text('Date: ' + contractData.effectiveDate, 25, signatureY + 42);
                 
                 // Contractor signature
                 doc.setFontSize(8);
@@ -1308,12 +1349,26 @@
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
                 
-                doc.text('Contractor: ' + contractData.freelancerName, 115, signatureY + 26);
-                doc.text('Signature: ' + contractData.signature, 115, signatureY + 30);
-                doc.text('Date: ' + contractData.signatureDate, 115, signatureY + 34);
+                doc.text('Contractor:', 115, signatureY + 26);
+                
+                // CURSIVE SIGNATURE FOR CONTRACTOR
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'italic'); // Use italic for cursive effect
+                doc.text(contractData.freelancerName || 'Contractor Name', 115, signatureY + 32);
+                
+                // Add signature line for authenticity
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.3);
+                doc.line(115, signatureY + 34, 175, signatureY + 34);
+                
+                doc.setFontSize(6);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Signature: ' + contractData.signature, 115, signatureY + 38);
+                doc.text('Date: ' + contractData.signatureDate, 115, signatureY + 42);
                 
                 // Footer - positioned with proper spacing to fit in container
-                const footerY = 265; // Moved up to ensure text fits in container
+                const footerY = 275; // MOVED DOWN from 265 to 275 for more space
                 
                 doc.setFillColor(248, 249, 250);
                 doc.rect(20, footerY - 5, 170, 20, 'F'); // Increased height to 20mm
@@ -1562,19 +1617,12 @@
                         <div class="section-header">CONTRACT TERMS & CONDITIONS</div>
                         <div class="terms">
                             <div class="term"><strong>1. INDEPENDENT CONTRACTOR:</strong> Not an employee of Cochran Films.</div>
-                            <div class="term"><strong>2. SERVICES:</strong> Provide professional services as specified.</div>
-                            <div class="term"><strong>3. COMPENSATION:</strong> Payment within 24 hours of completion.</div>
-                            <div class="term"><strong>4. STANDARDS:</strong> All work must meet Cochran Films quality.</div>
-                            <div class="term"><strong>5. ATTIRE:</strong> Professional attire (all black) required.</div>
-                            <div class="term"><strong>6. PUNCTUALITY:</strong> Arrive 15 minutes before start time.</div>
-                            <div class="term"><strong>7. DOCUMENTATION:</strong> Bring valid ID and signed contract.</div>
-                            <div class="term"><strong>8. EQUIPMENT:</strong> Use provided Cochran Films equipment.</div>
-                            <div class="term"><strong>9. CONDUCT:</strong> Maintain professional demeanor at all times.</div>
-                            <div class="term"><strong>10. SAFETY:</strong> Follow all safety protocols provided.</div>
-                            <div class="term"><strong>11. CONFIDENTIALITY:</strong> Respect project confidentiality.</div>
-                            <div class="term"><strong>12. BTS CONTENT:</strong> May freely take and share behind-the-scenes.</div>
-                            <div class="term"><strong>13. TAX OBLIGATIONS:</strong> Contractor responsible for personal taxes.</div>
-                            <div class="term"><strong>14. TRANSPORTATION:</strong> Contractor responsible for own transport.</div>
+                            <div class="term"><strong>2. SERVICES:</strong> Provide professional ${contractData.role} services as specified.</div>
+                            <div class="term"><strong>3. COMPENSATION:</strong> Payment within 24 hours of project completion.</div>
+                            <div class="term"><strong>4. STANDARDS:</strong> All work must meet Cochran Films quality standards.</div>
+                            <div class="term"><strong>5. ATTIRE:</strong> Professional attire (all black) required on set.</div>
+                            <div class="term"><strong>6. PUNCTUALITY:</strong> Arrive 15 minutes before scheduled start time.</div>
+                            <div class="term"><strong>7. DOCUMENTATION:</strong> Bring valid ID and signed contract to all projects.</div>
                         </div>
                     </div>
                     
@@ -2292,6 +2340,9 @@
                 return;
             }
             
+            // Show beautiful loading notification immediately
+            showContractSigningNotification();
+            
             const signButton = document.getElementById('signContractBtn');
             const originalText = signButton.textContent;
             signButton.textContent = '📝 Signing Contract...';
@@ -2310,13 +2361,14 @@
                 
                 contractSigned = true;
                 
+                // Update notification with progress
+                updateNotificationProgress('Validating your signature...', 20);
+                
                 // Save signed contract data and send emails
                 await saveSignedContractData();
                 
-                // Update UI to show contract signed successfully
-                document.getElementById('success-message').classList.add('hidden');
-                document.getElementById('signed-message').style.display = 'block';
-                document.getElementById('signed-message').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Show final success notification
+                showFinalSuccessNotification();
                 
                 console.log('Contract signed successfully!', signatureData);
                 
@@ -2324,7 +2376,132 @@
                 console.error('Error signing contract:', error);
                 signButton.textContent = originalText;
                 signButton.disabled = false;
-                alert('❌ There was an error processing your signature. Please try again or contact support.');
+                showErrorNotification('There was an error processing your signature. Please try again or contact support.');
+            }
+        }
+        
+        // Show beautiful contract signing notification
+        function showContractSigningNotification() {
+            // Create notification container
+            const notification = document.createElement('div');
+            notification.id = 'contract-signing-notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+                border: 2px solid #FFB200;
+                border-radius: 16px;
+                padding: 2rem;
+                max-width: 500px;
+                width: 90%;
+                z-index: 10000;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+                backdrop-filter: blur(20px);
+                color: white;
+                text-align: center;
+                font-family: 'Inter', sans-serif;
+            `;
+            
+            notification.innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+                    <h2 style="color: #FFB200; font-family: 'Cinzel', serif; margin-bottom: 0.5rem;">Signing Your Contract</h2>
+                    <p style="color: rgba(255,255,255,0.8); margin: 0;">Please wait while we process your digital signature...</p>
+                </div>
+                
+                <div id="notification-progress" style="margin-bottom: 1.5rem;">
+                    <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                        <div id="progress-bar" style="background: linear-gradient(90deg, #FFB200, #FFD700); height: 100%; width: 0%; transition: width 0.5s ease;"></div>
+                    </div>
+                    <p id="progress-text" style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-top: 0.5rem;">Preparing your contract...</p>
+                </div>
+                
+                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">
+                    This process is secure and encrypted
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+        }
+        
+        // Update notification progress
+        function updateNotificationProgress(message, percentage) {
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            
+            if (progressBar && progressText) {
+                progressBar.style.width = percentage + '%';
+                progressText.textContent = message;
+            }
+        }
+        
+        // Show final success notification
+        function showFinalSuccessNotification() {
+            const notification = document.getElementById('contract-signing-notification');
+            if (notification) {
+                notification.innerHTML = `
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+                        <h2 style="color: #22c55e; font-family: 'Cinzel', serif; margin-bottom: 0.5rem;">Contract Signed Successfully!</h2>
+                        <p style="color: rgba(255,255,255,0.8); margin: 0;">Your digital signature has been recorded and your contract is now legally binding.</p>
+                    </div>
+                    
+                    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: left;">
+                        <h3 style="color: #22c55e; margin-bottom: 1rem; font-size: 1.1rem;">What happens next:</h3>
+                        <ul style="list-style: none; padding: 0; margin: 0; color: rgba(255,255,255,0.9);">
+                            <li style="margin-bottom: 0.5rem;">✅ Your contract has been saved securely</li>
+                            <li style="margin-bottom: 0.5rem;">✅ You'll receive a confirmation email shortly</li>
+                            <li style="margin-bottom: 0.5rem;">✅ Your portal access is now active</li>
+                            <li style="margin-bottom: 0.5rem;">✅ Admin has been notified automatically</li>
+                            <li>📋 You're scheduled for the job - thank you!</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="downloadContractPDF(signedContractData)" style="background: linear-gradient(135deg, #FFB200, #FFD700); color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s ease;">
+                            📄 Download Contract PDF
+                        </button>
+                        <a href="https://collaborate.cochranfilms.com/user-portal.html" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease;">
+                            🚪 Open Creator Portal
+                        </a>
+                    </div>
+                    
+                    <button onclick="closeNotification()" style="background: none; border: none; color: rgba(255,255,255,0.6); margin-top: 1rem; cursor: pointer; font-size: 0.9rem;">
+                        Close
+                    </button>
+                `;
+            }
+            
+            // Update main UI
+            document.getElementById('success-message').classList.add('hidden');
+            document.getElementById('signed-message').style.display = 'block';
+        }
+        
+        // Show error notification
+        function showErrorNotification(message) {
+            const notification = document.getElementById('contract-signing-notification');
+            if (notification) {
+                notification.innerHTML = `
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
+                        <h2 style="color: #ef4444; font-family: 'Cinzel', serif; margin-bottom: 0.5rem;">Something went wrong</h2>
+                        <p style="color: rgba(255,255,255,0.8); margin: 0;">${message}</p>
+                    </div>
+                    
+                    <button onclick="closeNotification()" style="background: linear-gradient(135deg, #FFB200, #FFD700); color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer;">
+                        Try Again
+                    </button>
+                `;
+            }
+        }
+        
+        // Close notification
+        function closeNotification() {
+            const notification = document.getElementById('contract-signing-notification');
+            if (notification) {
+                notification.remove();
             }
         }
         
@@ -2346,6 +2523,8 @@
             try {
                 // Generate unique contract ID for tracking
                 const contractId = 'CF-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+                
+                updateNotificationProgress('Creating your contract...', 30);
                 
                 signedContractData = {
                     contractId: contractId,
@@ -2373,6 +2552,8 @@
                     }
                 };
 
+                updateNotificationProgress('Securing your data...', 50);
+                
                 // Update Firebase password for user
                 const newPassword = document.getElementById('portalPassword').value;
                 const firebaseResult = await updateFirebasePassword(signatureData.freelancerEmail, newPassword);
@@ -2407,6 +2588,8 @@
                 
                 console.log('✅ Signed contract data prepared:', signedContractData);
                 
+                updateNotificationProgress('Generating your contract PDF...', 70);
+                
                 // ==================== AUTOMATIC PDF UPLOAD ====================
                 try {
                     console.log('📄 Starting automatic PDF generation and upload...');
@@ -2423,35 +2606,17 @@
                     
                     console.log('✅ PDF automatically uploaded to GitHub:', uploadedContract.githubUrl);
                     
+                    updateNotificationProgress('Finalizing your contract...', 85);
+                    
                     // WAIT 5 seconds before updating JSON files to avoid conflicts
                     console.log('⏳ Waiting 5 seconds before updating JSON files...');
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     
-                    // Update success message to reflect instant availability
-                    setTimeout(() => {
-                        const signedMessage = document.getElementById('signed-message');
-                        if (signedMessage) {
-                            const uploadStatus = document.createElement('div');
-                            uploadStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #e8f5e8; border: 1px solid #4caf50; border-radius: 5px; color: #2e7d32;';
-                            uploadStatus.innerHTML = '🚀 <strong>Contract signed and uploaded!</strong><br>Your PDF is now available for download in your freelancer portal.';
-                            signedMessage.appendChild(uploadStatus);
-                        }
-                    }, 1000);
-                    
                 } catch (uploadError) {
                     console.warn('⚠️ PDF upload failed (contract still signed):', uploadError);
-                    
-                    // Show partial success message
-                    setTimeout(() => {
-                        const signedMessage = document.getElementById('signed-message');
-                        if (signedMessage) {
-                            const uploadStatus = document.createElement('div');
-                            uploadStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; color: #856404;';
-                            uploadStatus.innerHTML = '⚠️ <strong>Contract signed successfully!</strong><br>PDF upload failed, but your contract is saved. Admin will process it manually.';
-                            signedMessage.appendChild(uploadStatus);
-                        }
-                    }, 1000);
                 }
+                
+                updateNotificationProgress('Sending confirmation emails...', 90);
                 
                 // Contract data saved to GitHub (no local backup needed)
                 
@@ -2495,31 +2660,11 @@
                     await sendAdminNotificationEmail(signedContractData, pdfContent);
                     console.log('✅ Admin notification email sent');
                     
-                    // Show success message
-                        setTimeout(() => {
-                            const signedMessage = document.getElementById('signed-message');
-                            if (signedMessage) {
-                                const syncStatus = document.createElement('div');
-                                syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #e8f5e8; border: 1px solid #4caf50; border-radius: 5px; color: #2e7d32;';
-                            syncStatus.innerHTML = '✅ <strong>Contract signed successfully!</strong><br>You will receive a confirmation email shortly. Your signed contract has been sent to admin.';
-                                signedMessage.appendChild(syncStatus);
-                            }
-                        }, 1000);
-                        
                 } catch (emailError) {
                     console.warn('⚠️ Email sending failed:', emailError);
-                    
-                        // Show partial success message
-                        setTimeout(() => {
-                            const signedMessage = document.getElementById('signed-message');
-                            if (signedMessage) {
-                                const syncStatus = document.createElement('div');
-                                syncStatus.style.cssText = 'margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; color: #856404;';
-                            syncStatus.innerHTML = '⚠️ <strong>Contract signed and saved locally</strong><br>Email notification failed, but your contract is saved. Please contact admin.';
-                                signedMessage.appendChild(syncStatus);
-                            }
-                        }, 1000);
-                    }
+                }
+                
+                updateNotificationProgress('Contract signed successfully!', 100);
                 
                 // Legacy notification for compatibility
                 localStorage.setItem('contractSignedNotification', JSON.stringify({
@@ -2531,7 +2676,7 @@
                 
             } catch (error) {
                 console.error('❌ Error saving signed contract data:', error);
-                alert('⚠️ Contract was signed but there was an issue saving the data. Please contact support with your contract ID and timestamp.');
+                throw error;
             }
         }
         
@@ -2620,32 +2765,10 @@
                     
                     console.log('✅ Users.json updated on GitHub with password and contract status');
                     
-                    // Show success notification
-                    setTimeout(() => {
-                        const signedMessage = document.getElementById('signed-message');
-                        if (signedMessage) {
-                            const updateStatus = document.createElement('div');
-                            updateStatus.style.cssText = 'margin-top: 10px; padding: 8px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; color: #155724; font-size: 0.9rem;';
-                            updateStatus.innerHTML = '✅ <strong>Password updated on GitHub!</strong> Your portal access is now active.';
-                            signedMessage.appendChild(updateStatus);
-                        }
-                    }, 2000);
-                    
                 } else {
                     console.warn('⚠️ User not found in users.json:', contractData.freelancerEmail);
                     console.warn('⚠️ Available emails:', Object.values(users).map(u => u.profile?.email).filter(Boolean));
                     console.warn('⚠️ Contract data:', contractData);
-                    
-                    // Show error notification
-                    setTimeout(() => {
-                        const signedMessage = document.getElementById('signed-message');
-                        if (signedMessage) {
-                            const updateStatus = document.createElement('div');
-                            updateStatus.style.cssText = 'margin-top: 10px; padding: 8px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; color: #721c24; font-size: 0.9rem;';
-                            updateStatus.innerHTML = '⚠️ <strong>Warning:</strong> Could not update password automatically. Please contact admin.';
-                            signedMessage.appendChild(updateStatus);
-                        }
-                    }, 2000);
                 }
                 
             } catch (error) {
@@ -2711,31 +2834,8 @@
                 
                 console.log('✅ Uploaded-contracts.json updated on GitHub');
                 
-                // Show success notification
-                setTimeout(() => {
-                    const signedMessage = document.getElementById('signed-message');
-                    if (signedMessage) {
-                        const updateStatus = document.createElement('div');
-                        updateStatus.style.cssText = 'margin-top: 10px; padding: 8px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; color: #155724; font-size: 0.9rem;';
-                        updateStatus.innerHTML = '✅ <strong>Contract added to portal!</strong> Your contract is now available for download.';
-                        signedMessage.appendChild(updateStatus);
-                    }
-                }, 3000);
-                
             } catch (error) {
                 console.error('❌ Error updating uploaded-contracts.json:', error);
-                
-                // Show error notification
-                setTimeout(() => {
-                    const signedMessage = document.getElementById('signed-message');
-                    if (signedMessage) {
-                        const updateStatus = document.createElement('div');
-                        updateStatus.style.cssText = 'margin-top: 10px; padding: 8px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; color: #721c24; font-size: 0.9rem;';
-                        updateStatus.innerHTML = '⚠️ <strong>Warning:</strong> Could not update contract list automatically. Please contact admin.';
-                        signedMessage.appendChild(updateStatus);
-                    }
-                }, 3000);
-                
                 // Don't fail the contract signing process for this
             }
         }
