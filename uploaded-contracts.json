@@ -1,24 +1,8 @@
 {
-  "exportDate": "2025-08-05T00:00:00.000Z",
-  "totalContracts": 2,
+  "exportDate": "2025-08-05T12:51:18.109Z",
+  "totalContracts": 1,
   "contracts": [],
   "uploadedContracts": [
-    {
-      "contractId": "CF-1754383201595-64YZ7",
-      "freelancerName": "thing one",
-      "freelancerEmail": "dedejackson727@gmail.com",
-      "role": "Assistant",
-      "rate": "$75/hour",
-      "location": "New York, NY",
-      "fileName": "CF-1754383201595-64YZ7.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-05T08:40:17.483Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754383201595-64YZ7.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-05",
-      "signedDate": "2025-08-05"
-    },
     {
       "contractId": "CF-1754397809602-KXKFK",
       "freelancerName": "Thing Two",
@@ -36,5 +20,5 @@
       "signedDate": "2025-08-05"
     }
   ],
-  "lastUpdated": "2025-08-05T12:43:41.441Z"
+  "lastUpdated": "2025-08-05T12:51:18.109Z"
 }
