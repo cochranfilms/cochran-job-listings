@@ -2727,6 +2727,12 @@
                 try {
                     console.log('🔄 Starting payment method update to GitHub...');
                     await updateUserPaymentMethod(currentUser.email, paymentMethod);
+                    
+                    // Immediately update UI without waiting for next refresh cycle
+                    loadUserData();
+                    updatePaymentStatusDisplay();
+                    updateTimelineDisplay();
+                    
                     showNotification(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`, 'success');
                 } catch (error) {
                     console.error('❌ Error updating payment method:', error);
@@ -3710,28 +3716,106 @@
                 };
             }
             
-            // Add refresh button functionality
-            window.refreshUserData = refreshUserData;
+                    // Add refresh button functionality
+        window.refreshUserData = refreshUserData;
+        
+        // Immediate update functions for real-time UI updates
+        function updateTimelineDisplay() {
+            if (currentUser && document.getElementById('timelineContainer')) {
+                generateTimeline();
+            }
+        }
+        
+        function updateJobStatusDisplay() {
+            if (currentUser && document.getElementById('currentJobsContainer')) {
+                displayCurrentJobs();
+            }
+        }
+        
+        function updatePerformanceReviewDisplay() {
+            if (currentUser && document.getElementById('performanceReviewsContainer')) {
+                displayPerformanceReviews();
+            }
+        }
+        
+        function updatePaymentStatusDisplay() {
+            if (currentUser && document.getElementById('paymentStatusContainer')) {
+                // Update payment status indicators
+                const paymentElements = document.querySelectorAll('[data-payment-status]');
+                paymentElements.forEach(element => {
+                    const status = element.getAttribute('data-payment-status');
+                    element.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                });
+            }
+        }
+        
+        function updateContractStatusDisplay() {
+            if (currentUser && document.getElementById('contractStatusContainer')) {
+                // Update contract status indicators
+                const contractElements = document.querySelectorAll('[data-contract-status]');
+                contractElements.forEach(element => {
+                    const status = element.getAttribute('data-contract-status');
+                    element.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                });
+            }
+        }
+        
+        function checkForNewUserNotifications() {
+            // Quick check for new notifications without full reload
+            fetch('/api/notifications')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.notifications && currentUser) {
+                        const userNotifications = data.notifications.filter(n => 
+                            n.userEmail === currentUser.email || n.userEmail === currentUser.profile?.email
+                        );
+                        updateNotificationCount(userNotifications.length);
+                    }
+                })
+                .catch(error => {
+                    console.warn('Quick notification check failed:', error);
+                });
+        }
             
-            // Set up automatic data refresh every 30 seconds for real-time updates
+            // Set up immediate real-time data updates (every 2 seconds for instant feedback)
             setInterval(() => {
-                console.log('🔄 Auto-refreshing user portal data...');
+                console.log('⚡ Immediate user portal refresh...');
                 loadUsersData().then(() => {
-                    console.log('✅ User portal data auto-refreshed');
-                    // Refresh user display if user is logged in
+                    console.log('✅ User portal data refreshed instantly');
+                    // Immediately update UI if user is logged in
                     if (currentUser) {
                         loadUserData();
+                        updateTimelineDisplay();
+                        updateJobStatusDisplay();
                     }
                 }).catch(error => {
-                    console.warn('⚠️ User portal auto-refresh failed:', error);
+                    console.warn('⚠️ User portal immediate refresh failed:', error);
                 });
                 
                 loadPerformanceReviews().then(() => {
-                    console.log('✅ User portal performance reviews auto-refreshed');
+                    console.log('✅ User portal performance reviews refreshed instantly');
+                    // Immediately update performance review displays
+                    if (currentUser) {
+                        updatePerformanceReviewDisplay();
+                    }
                 }).catch(error => {
-                    console.warn('⚠️ User portal performance auto-refresh failed:', error);
+                    console.warn('⚠️ User portal performance immediate refresh failed:', error);
                 });
-            }, 30000); // 30 seconds
+            }, 2000); // 2 seconds for immediate updates
+            
+            // Additional rapid polling for critical user data (every 1 second)
+            setInterval(() => {
+                if (currentUser) {
+                    // Quick check for new notifications
+                    checkForNewUserNotifications();
+                    
+                    // Quick check for payment status changes
+                    updatePaymentStatusDisplay();
+                    
+                    // Quick check for contract status changes
+                    updateContractStatusDisplay();
+                }
+            }, 1000); // 1 second for critical updates
         });
     </script>
 

@@ -4816,6 +4816,9 @@
                 await updateUsersOnGitHub();
                 console.log('✅ GitHub update completed');
                 
+                // Immediately update UI without waiting for next refresh cycle
+                displayUsers();
+                
                 // Close modal
                 document.querySelector('div[style*="position: fixed"]').remove();
                 
@@ -7313,21 +7316,66 @@
 
         <!-- Auto-refresh functionality -->
         <script>
-            // Set up automatic data refresh every 30 seconds
-            setInterval(() => {
-                console.log('🔄 Auto-refreshing data...');
-                loadUsersData().then(() => {
-                    console.log('✅ Users data auto-refreshed');
-                }).catch(error => {
-                    console.warn('⚠️ Auto-refresh failed:', error);
-                });
-                
-                loadPerformanceReviews().then(() => {
-                    console.log('✅ Performance reviews auto-refreshed');
-                }).catch(error => {
-                    console.warn('⚠️ Performance auto-refresh failed:', error);
-                });
-            }, 30000); // 30 seconds
+                    // Set up immediate real-time data updates (every 2 seconds for instant feedback)
+        setInterval(() => {
+            console.log('⚡ Immediate data refresh...');
+            loadUsersData().then(() => {
+                console.log('✅ Users data refreshed instantly');
+                // Immediately update UI if data changed
+                if (isAuthenticated) {
+                    displayUsers();
+                }
+            }).catch(error => {
+                console.warn('⚠️ Immediate refresh failed:', error);
+            });
+            
+            loadPerformanceReviews().then(() => {
+                console.log('✅ Performance reviews refreshed instantly');
+                // Immediately update performance review displays
+                if (isAuthenticated) {
+                    checkPerformanceReviewAlerts();
+                }
+            }).catch(error => {
+                console.warn('⚠️ Performance immediate refresh failed:', error);
+            });
+        }, 2000); // 2 seconds for immediate updates
+        
+        // Additional rapid polling for critical data (every 1 second)
+        setInterval(() => {
+            // Quick check for new notifications
+            checkForNewNotifications();
+            
+            // Quick check for performance review alerts
+            if (isAuthenticated && Object.keys(users).length > 0) {
+                checkPerformanceReviewAlerts();
+            }
+            
+            // Quick check for user data changes
+            if (isAuthenticated) {
+                updateUserStatusIndicators();
+            }
+        }, 1000); // 1 second for critical updates
+        
+        // Function to update user status indicators without full reload
+        function updateUserStatusIndicators() {
+            // Update payment status indicators
+            const paymentElements = document.querySelectorAll('[data-payment-status]');
+            paymentElements.forEach(element => {
+                const status = element.getAttribute('data-payment-status');
+                if (status) {
+                    element.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                }
+            });
+            
+            // Update project status indicators
+            const projectElements = document.querySelectorAll('[data-project-status]');
+            projectElements.forEach(element => {
+                const status = element.getAttribute('data-project-status');
+                if (status) {
+                    element.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                }
+            });
+        }
         </script>
 
         <!-- Notification Dropdown (Moved outside containers to avoid stacking context issues) -->
