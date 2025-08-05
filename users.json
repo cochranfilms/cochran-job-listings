@@ -1,5 +1,6 @@
 {
   "users": {
+<<<<<<< HEAD
     "Thing Six": {
       "profile": {
         "email": "codylcochran87@gmail.com",
@@ -8,17 +9,48 @@
         "location": "Atlanta, GA",
         "projectStart": "2026-04-04T08:00",
         "rate": "$200/hour",
+=======
+    "Cody Cochran": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": "testing1234",
+        "role": "Editor",
+        "location": "Chicago, IL",
+        "projectStart": "2026-03-10T20:00",
+        "rate": "$100/hour",
+>>>>>>> 240624cd35e64a69e9d4135f94deb3210d84ec56
         "approvedDate": "2025-08-05"
       },
       "contract": {
         "contractUrl": "contract.html",
         "contractStatus": "signed",
+<<<<<<< HEAD
         "contractSignedDate": "8/5/2025, 2:16:19 AM",
         "contractUploadedDate": null,
         "contractId": "CF-1754374579524-1TXMZ"
       },
       "jobs": {},
       "primaryJob": null,
+=======
+        "contractSignedDate": "8/5/2025, 2:47:56 AM",
+        "contractUploadedDate": null,
+        "contractId": "CF-1754376476668-BLMXD"
+      },
+      "jobs": {
+        "job-editor-default": {
+          "id": "job-editor-default",
+          "title": "Editor Position",
+          "date": "2025-08-05",
+          "location": "Chicago, IL",
+          "pay": "$100/hour",
+          "description": "Professional Editor position in Chicago, IL. Details to be provided.",
+          "status": "upcoming",
+          "assignedDate": "2025-08-05",
+          "projectStart": "2026-03-10T20:00"
+        }
+      },
+      "primaryJob": "job-editor-default",
+>>>>>>> 240624cd35e64a69e9d4135f94deb3210d84ec56
       "paymentMethod": null
     }
   },
