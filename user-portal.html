@@ -2300,13 +2300,26 @@
                 // Save to session storage
                 sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(currentUser));
                 
-                // Update freelancers.json on GitHub
+                // Update users.json on GitHub with retry logic
                 try {
+                    console.log('🔄 Starting payment method update to GitHub...');
                     await updateUserPaymentMethod(currentUser.email, paymentMethod);
                     showNotification(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`, 'success');
                 } catch (error) {
                     console.error('❌ Error updating payment method:', error);
-                    showNotification(`⚠️ Payment method saved locally but there was an issue notifying the admin team. Please try again later.`, 'warning');
+                    
+                    // Provide more specific error messages
+                    let errorMessage = '⚠️ Payment method saved locally but there was an issue updating the server.';
+                    
+                    if (error.message.includes('409')) {
+                        errorMessage = '⚠️ Server conflict detected. Your payment method was saved locally. Please try again in a moment.';
+                    } else if (error.message.includes('Failed to load users data')) {
+                        errorMessage = '⚠️ Unable to load user data. Your payment method was saved locally. Please refresh and try again.';
+                    } else if (error.message.includes('User not found')) {
+                        errorMessage = '⚠️ User account not found. Please contact the admin team.';
+                    }
+                    
+                    showNotification(errorMessage, 'warning');
                 }
                 
                 // Refresh user data display
@@ -2316,80 +2329,114 @@
 
         // Update user payment method on GitHub
         async function updateUserPaymentMethod(email, paymentMethod) {
-            try {
-                // Get current users data
-                const response = await fetch('/api/users');
-                if (!response.ok) {
-                    throw new Error('Failed to load users data');
-                }
-                
-                const usersData = await response.json();
-                const users = usersData.users || {};
-                
-                // Find and update the user's payment method
-                let userFound = false;
-                console.log('🔍 Looking for user with email:', email);
-                console.log('📋 Available users:', Object.keys(users));
-                
-                for (const [name, user] of Object.entries(users)) {
-                    console.log(`🔍 Checking user "${name}" with email: "${user.profile?.email}"`);
-                    if (user.profile?.email && user.profile.email.toLowerCase() === email.toLowerCase()) {
-                        console.log(`✅ Found user "${name}" with matching email`);
-                        user.paymentMethod = paymentMethod;
-                        user.paymentStatus = 'configured'; // Mark payment method as configured
-                        userFound = true;
-                        break;
+            const maxRetries = 3;
+            let retryCount = 0;
+            
+            while (retryCount < maxRetries) {
+                try {
+                    console.log(`🔄 Attempt ${retryCount + 1} of ${maxRetries} to update payment method`);
+                    
+                    // Get current users data
+                    const response = await fetch('/api/users');
+                    if (!response.ok) {
+                        throw new Error('Failed to load users data');
                     }
+                    
+                    const usersData = await response.json();
+                    const users = usersData.users || {};
+                    
+                    // Find and update the user's payment method
+                    let userFound = false;
+                    console.log('🔍 Looking for user with email:', email);
+                    console.log('📋 Available users:', Object.keys(users));
+                    
+                    for (const [name, user] of Object.entries(users)) {
+                        console.log(`🔍 Checking user "${name}" with email: "${user.profile?.email}"`);
+                        if (user.profile?.email && user.profile.email.toLowerCase() === email.toLowerCase()) {
+                            console.log(`✅ Found user "${name}" with matching email`);
+                            user.paymentMethod = paymentMethod;
+                            user.paymentStatus = 'configured'; // Mark payment method as configured
+                            userFound = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!userFound) {
+                        throw new Error('User not found in users data');
+                    }
+                    
+                    // Get fresh SHA for users.json (important for conflict resolution)
+                    console.log('📄 Getting fresh SHA for users.json...');
+                    const shaResponse = await fetch('/api/github/file/users.json');
+                    let sha = null;
+                    if (shaResponse.ok) {
+                        const shaData = await shaResponse.json();
+                        sha = shaData.sha;
+                        console.log('📄 Got fresh SHA:', sha.substring(0, 7) + '...');
+                    } else {
+                        console.warn('⚠️ Could not get SHA, proceeding without it');
+                    }
+                    
+                    // Update the users.json file on GitHub
+                    console.log('🔄 Updating users.json with payment method:', paymentMethod);
+                    console.log('📝 Data being sent:', JSON.stringify(usersData, null, 2).substring(0, 200) + '...');
+                    
+                    const updateResponse = await fetch('/api/github/file/users.json', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            content: JSON.stringify(usersData, null, 2),
+                            message: `Update payment method for ${email} to ${paymentMethod} - ${new Date().toLocaleString()}`,
+                            sha: sha
+                        })
+                    });
+                    
+                    if (!updateResponse.ok) {
+                        const errorText = await updateResponse.text();
+                        console.error('❌ GitHub update failed:', updateResponse.status, errorText);
+                        
+                        // If it's a conflict (409), retry with fresh data
+                        if (updateResponse.status === 409) {
+                            console.log('⚠️ Conflict detected, retrying with fresh data...');
+                            retryCount++;
+                            if (retryCount < maxRetries) {
+                                // Wait a moment before retrying
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                continue;
+                            }
+                        }
+                        
+                        throw new Error(`Failed to update users.json on GitHub: ${updateResponse.status} - ${errorText}`);
+                    }
+                    
+                    console.log('✅ Payment method updated on GitHub');
+                    
+                    // Notify admin dashboard if it's open (optional)
+                    if (window.opener && window.opener.location.href.includes('admin-dashboard.html')) {
+                        window.opener.postMessage({
+                            type: 'paymentMethodUpdated',
+                            email: email,
+                            paymentMethod: paymentMethod
+                        }, '*');
+                    }
+                    
+                    // Success - break out of retry loop
+                    break;
+                    
+                } catch (error) {
+                    console.error(`❌ Error updating payment method (attempt ${retryCount + 1}):`, error);
+                    
+                    if (retryCount === maxRetries - 1) {
+                        // Last attempt failed
+                        throw error;
+                    }
+                    
+                    retryCount++;
+                    // Wait before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
-                
-                if (!userFound) {
-                    throw new Error('User not found in users data');
-                }
-                
-                // Get current SHA for users.json
-                const shaResponse = await fetch('/api/github/file/users.json');
-                let sha = null;
-                if (shaResponse.ok) {
-                    const shaData = await shaResponse.json();
-                    sha = shaData.sha;
-                }
-                
-                // Update the users.json file on GitHub
-                console.log('🔄 Updating users.json with payment method:', paymentMethod);
-                console.log('📝 Data being sent:', JSON.stringify(usersData, null, 2).substring(0, 200) + '...');
-                
-                const updateResponse = await fetch('/api/github/file/users.json', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        content: JSON.stringify(usersData, null, 2),
-                        message: `Update payment method for ${email} to ${paymentMethod} - ${new Date().toLocaleString()}`,
-                        sha: sha
-                    })
-                });
-                
-                if (!updateResponse.ok) {
-                    const errorText = await updateResponse.text();
-                    console.error('❌ GitHub update failed:', updateResponse.status, errorText);
-                    throw new Error(`Failed to update users.json on GitHub: ${updateResponse.status} - ${errorText}`);
-                }
-                
-                console.log('✅ Payment method updated on GitHub');
-                
-                // Notify admin dashboard if it's open (optional)
-                if (window.opener && window.opener.location.href.includes('admin-dashboard.html')) {
-                    window.opener.postMessage({
-                        type: 'paymentMethodUpdated',
-                        email: email,
-                        paymentMethod: paymentMethod
-                    }, '*');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error updating payment method:', error);
-                throw error;
             }
         }
 
