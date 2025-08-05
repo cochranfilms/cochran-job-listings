@@ -1009,30 +1009,18 @@
                 let currentYPos = 120;
                 const lineHeight = 10; // INCREASED from 6 to 10 for proper spacing
                 
-                // Process each term with FIXED spacing
+                // Process each term with SIMPLIFIED rendering to prevent text corruption
                 compactTerms.forEach((term, index) => {
                     // Ensure we stay within page bounds
                     if (currentYPos > 180) {
                         currentYPos = 120; // Reset to terms section if needed
                     }
                     
-                    // Split the term into title and description
-                    const colonIndex = term.indexOf(':');
-                    const title = term.substring(0, colonIndex + 1);
-                    const description = term.substring(colonIndex + 1);
-                    
-                    // FIXED: Use proper spacing for two-line layout
-                    // Draw title on first line
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(8); // INCREASED from 7 to 8 for better readability
-                    doc.text(title, 20, currentYPos);
-                    currentYPos += 6; // INCREASED from 4 to 6 for proper spacing
-                    
-                    // Draw description on second line with indent
+                    // FIXED: Render each term as a single line to prevent character corruption
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(7); // INCREASED from 6 to 7 for better readability
-                    doc.text(description, 25, currentYPos);
-                    currentYPos += lineHeight + 4; // INCREASED spacing between terms
+                    doc.setFontSize(8);
+                    doc.text(term, 20, currentYPos);
+                    currentYPos += 12; // Proper spacing between terms
                 });
                 
                 // Fixed signature section position for single page
@@ -1264,30 +1252,18 @@
                 let currentYPos = 125;
                 const lineHeight = 10; // INCREASED from 6 to 10 for proper spacing
                 
-                // Process each term with FIXED spacing
+                // Process each term with SIMPLIFIED rendering to prevent text corruption
                 compactTerms.forEach((term, index) => {
                     // Ensure we stay within page bounds
                     if (currentYPos > 185) {
                         currentYPos = 125; // Reset to terms section if needed
                     }
                     
-                    // Split the term into title and description
-                    const colonIndex = term.indexOf(':');
-                    const title = term.substring(0, colonIndex + 1);
-                    const description = term.substring(colonIndex + 1);
-                    
-                    // FIXED: Use proper spacing for two-line layout
-                    // Draw title on first line
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(8); // INCREASED from 7 to 8 for better readability
-                    doc.text(title, 20, currentYPos);
-                    currentYPos += 6; // INCREASED from 4 to 6 for proper spacing
-                    
-                    // Draw description on second line with indent
+                    // FIXED: Render each term as a single line to prevent character corruption
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(7); // INCREASED from 6 to 7 for better readability
-                    doc.text(description, 25, currentYPos);
-                    currentYPos += lineHeight + 4; // INCREASED spacing between terms
+                    doc.setFontSize(8);
+                    doc.text(term, 20, currentYPos);
+                    currentYPos += 12; // Proper spacing between terms
                 });
                 
                 // ==================== ADVANCED SIGNATURES ====================
