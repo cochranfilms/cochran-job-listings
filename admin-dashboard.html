@@ -2263,6 +2263,7 @@
                     const userEmail = userData?.profile?.email;
                     
                     let firebaseDeleted = false;
+                    let firebaseMessage = '';
                     
                     // 1. Delete from Firebase (if email exists)
                     if (userEmail) {
@@ -2271,13 +2272,21 @@
                             if (firebaseResult.success) {
                                 console.log('✅ Firebase account deleted for:', userEmail);
                                 firebaseDeleted = true;
+                                firebaseMessage = 'Removed from Firebase and GitHub.';
                             } else {
-                                console.warn('⚠️ Could not delete Firebase account:', firebaseResult.error);
-                                showNotification(`⚠️ Firebase account deletion failed: ${firebaseResult.error}`, 'warning');
+                                // Firebase API now returns success: false with a message when Firebase isn't available
+                                // This is expected behavior when Firebase Admin SDK isn't configured
+                                console.warn('⚠️ Firebase account deletion limited:', firebaseResult.error);
+                                firebaseMessage = firebaseResult.message || 'Firebase account may still exist.';
+                                
+                                // Don't show this as a warning since it's expected behavior
+                                // showNotification(`⚠️ Firebase account deletion failed: ${firebaseResult.error}`, 'warning');
                             }
                         } catch (firebaseError) {
                             console.warn('⚠️ Could not delete Firebase account:', firebaseError);
-                            showNotification('⚠️ Firebase account deletion failed. User will still be removed from local data.', 'warning');
+                            firebaseMessage = 'Firebase account may still exist.';
+                            // Don't show this as a warning since it's expected behavior
+                            // showNotification('⚠️ Firebase account deletion failed. User will still be removed from local data.', 'warning');
                         }
                     }
                     
@@ -2293,9 +2302,9 @@
                     
                     // Show appropriate success message
                     if (firebaseDeleted) {
-                        showNotification(`✅ User "${userName}" deleted successfully! Removed from Firebase and GitHub.`, 'success');
+                        showNotification(`✅ User "${userName}" deleted successfully! ${firebaseMessage}`, 'success');
                     } else {
-                        showNotification(`✅ User "${userName}" deleted from local data and GitHub. Firebase account may still exist.`, 'success');
+                        showNotification(`✅ User "${userName}" deleted from local data and GitHub. ${firebaseMessage}`, 'success');
                     }
                     
                 } catch (error) {

@@ -4,6 +4,7 @@ const admin = require('firebase-admin');
 // Note: In production, you'll need to set up Firebase Admin SDK credentials
 // For now, we'll use a service account key or environment variables
 let firebaseApp;
+let firebaseInitialized = false;
 
 try {
     // Try to initialize with service account if available
@@ -13,15 +14,27 @@ try {
             credential: admin.credential.cert(serviceAccount),
             projectId: 'cochran-films'
         });
-    } else {
-        // Fallback to default credentials (for local development)
+        firebaseInitialized = true;
+        console.log('✅ Firebase Admin SDK initialized with service account');
+    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        // Try with environment variable pointing to service account file
         firebaseApp = admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
             projectId: 'cochran-films'
         });
+        firebaseInitialized = true;
+        console.log('✅ Firebase Admin SDK initialized with application default credentials');
+    } else {
+        // For development/testing, we'll skip Firebase initialization
+        // and handle user deletion through other means
+        console.log('⚠️ Firebase Admin SDK not initialized - no credentials available');
+        console.log('ℹ️ User deletion will be handled through local data cleanup only');
+        firebaseInitialized = false;
     }
-    console.log('✅ Firebase Admin SDK initialized');
 } catch (error) {
     console.error('❌ Error initializing Firebase Admin SDK:', error);
+    console.log('ℹ️ Firebase operations will be limited to local data cleanup');
+    firebaseInitialized = false;
 }
 
 module.exports = async (req, res) => {
@@ -43,16 +56,21 @@ module.exports = async (req, res) => {
             return;
         }
 
-        // Check if Firebase Admin SDK is initialized
-        if (!firebaseApp) {
-            res.status(500).json({ error: 'Firebase Admin SDK not initialized' });
-            return;
-        }
-
         const { email } = req.body;
 
         if (!email) {
             res.status(400).json({ error: 'Email is required' });
+            return;
+        }
+
+        // Check if Firebase Admin SDK is properly initialized
+        if (!firebaseInitialized || !firebaseApp) {
+            console.log(`⚠️ Firebase Admin SDK not available for user deletion: ${email}`);
+            res.status(200).json({ 
+                success: false, 
+                error: 'Firebase Admin SDK not configured. User deletion limited to local data cleanup.',
+                message: 'User will be removed from local data only. Firebase account may still exist.'
+            });
             return;
         }
 
@@ -74,23 +92,32 @@ module.exports = async (req, res) => {
             
             // Handle specific Firebase errors
             if (firebaseError.code === 'auth/user-not-found') {
-                res.status(404).json({ 
+                res.status(200).json({ 
                     success: false, 
-                    error: 'User not found in Firebase' 
+                    error: 'User not found in Firebase',
+                    message: 'User was not found in Firebase, but will be removed from local data.'
+                });
+            } else if (firebaseError.code === 'auth/insufficient-permission') {
+                res.status(200).json({ 
+                    success: false, 
+                    error: 'Insufficient permissions to delete Firebase user',
+                    message: 'User will be removed from local data only due to permission restrictions.'
                 });
             } else {
-                res.status(500).json({ 
+                res.status(200).json({ 
                     success: false, 
-                    error: firebaseError.message 
+                    error: firebaseError.message,
+                    message: 'Firebase deletion failed, but user will be removed from local data.'
                 });
             }
         }
 
     } catch (error) {
         console.error('❌ Server error:', error);
-        res.status(500).json({ 
+        res.status(200).json({ 
             success: false, 
-            error: 'Internal server error' 
+            error: 'Internal server error',
+            message: 'User will be removed from local data only due to server error.'
         });
     }
 }; 
