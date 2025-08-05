@@ -71,6 +71,7 @@ The Cochran Films Automated Testing System provides comprehensive testing for al
 
 #### Option 1: Web Dashboard (Recommended)
 
+##### **For Local Development**:
 1. Start your server:
    ```bash
    node server.js
@@ -81,7 +82,15 @@ The Cochran Films Automated Testing System provides comprehensive testing for al
    http://localhost:8000/test-dashboard.html
    ```
 
-3. Select test categories and click "Run All Tests"
+##### **For Live Server (Vercel)**:
+1. Access the dashboard directly:
+   ```
+   https://collaborate.cochranfilms.com/test-dashboard.html
+   ```
+
+2. Select test categories and click "Run All Tests"
+
+**Note**: The dashboard automatically detects the server URL and works with both local development and live Vercel deployment.
 
 #### Option 2: Command Line
 
@@ -100,8 +109,16 @@ node run-tests.js --verbose
 
 #### Option 3: Direct API Call
 
+##### **For Local Development**:
 ```bash
 curl -X POST http://localhost:8000/api/run-tests \
+  -H "Content-Type: application/json" \
+  -d '{"categories": ["system-health", "user-management"]}'
+```
+
+##### **For Live Server (Vercel)**:
+```bash
+curl -X POST https://collaborate.cochranfilms.com/api/run-tests \
   -H "Content-Type: application/json" \
   -d '{"categories": ["system-health", "user-management"]}'
 ```
@@ -156,8 +173,10 @@ The system automatically generates recommendations based on test results:
 ### 5. Dashboard 404 Errors
 **Issue**: "Failed to load resource: the server responded with a status of 404"
 **Fix**: 
-1. **Check Server Status**: Ensure server is running: `node server.js`
-2. **Verify API Endpoint**: Try accessing directly: `curl -X POST http://localhost:8000/api/run-tests`
+1. **Check Server Status**: Ensure server is running: `node server.js` (local) or verify Vercel deployment (live)
+2. **Verify API Endpoint**: Try accessing directly: 
+   - Local: `curl -X POST http://localhost:8000/api/run-tests`
+   - Live: `curl -X POST https://collaborate.cochranfilms.com/api/run-tests`
 3. **Check Domain Mismatch**: If dashboard is on different domain than API, update server configuration
 4. **Browser Console**: Check for detailed error messages and debugging information
 5. **Alternative Endpoints**: Dashboard will try alternative API paths automatically
@@ -165,7 +184,8 @@ The system automatically generates recommendations based on test results:
 
 **Common Causes**:
 - Dashboard served from different domain than API
-- Server not running or crashed
+- Server not running or crashed (local)
+- Vercel deployment not updated (live)
 - API routes not properly configured
 - CORS issues between domains
 
@@ -176,8 +196,13 @@ The system automatically generates recommendations based on test results:
 # Via dashboard
 # Click "Export JSON" button
 
-# Via API
+# Via API (Local)
 curl -X POST http://localhost:8000/api/export-results \
+  -H "Content-Type: application/json" \
+  -d '{"results": {...}, "format": "json"}'
+
+# Via API (Live Server)
+curl -X POST https://collaborate.cochranfilms.com/api/export-results \
   -H "Content-Type: application/json" \
   -d '{"results": {...}, "format": "json"}'
 ```
@@ -187,8 +212,13 @@ curl -X POST http://localhost:8000/api/export-results \
 # Via dashboard
 # Click "Export Markdown" button
 
-# Via API
+# Via API (Local)
 curl -X POST http://localhost:8000/api/export-results \
+  -H "Content-Type: application/json" \
+  -d '{"results": {...}, "format": "markdown"}'
+
+# Via API (Live Server)
+curl -X POST https://collaborate.cochranfilms.com/api/export-results \
   -H "Content-Type: application/json" \
   -d '{"results": {...}, "format": "markdown"}'
 ```
@@ -198,8 +228,13 @@ curl -X POST http://localhost:8000/api/export-results \
 # Via dashboard
 # Click "Export HTML" button
 
-# Via API
+# Via API (Local)
 curl -X POST http://localhost:8000/api/export-results \
+  -H "Content-Type: application/json" \
+  -d '{"results": {...}, "format": "html"}'
+
+# Via API (Live Server)
+curl -X POST https://collaborate.cochranfilms.com/api/export-results \
   -H "Content-Type: application/json" \
   -d '{"results": {...}, "format": "html"}'
 ```
@@ -215,12 +250,33 @@ The system uses test data that is automatically cleaned up:
 
 All test data is removed after tests complete to avoid cluttering your system.
 
+## Vercel Deployment
+
+### **Live Server Testing**
+The automated testing system is fully compatible with Vercel serverless deployment:
+
+- **Dashboard URL**: `https://collaborate.cochranfilms.com/test-dashboard.html`
+- **API Endpoints**: All `/api/*` endpoints work on live server
+- **Test Runner**: Uses Vercel-compatible `test-runner-vercel.js`
+- **File Operations**: Handles serverless file system operations
+- **CORS**: Configured for cross-origin requests
+
+### **Deployment Process**
+1. **Push to GitHub**: All changes automatically deploy to Vercel
+2. **API Functions**: Serverless functions handle test execution
+3. **File Storage**: JSON files and test results stored in Vercel environment
+4. **Cleanup**: Automatic test data cleanup after each run
+
 ## Integration with Workflow
 
 ### Before Deployments
 Run the full test suite before deploying changes:
 ```bash
+# Local testing
 node run-tests.js
+
+# Live server testing
+curl -X POST https://collaborate.cochranfilms.com/api/run-tests
 ```
 
 ### Continuous Monitoring

@@ -87,13 +87,9 @@ class AutomatedTestRunner {
         
         this.testDataLog.push(logEntry);
         
-        // Save to file for cleanup reference
+        // In Vercel environment, we can't write files, so we'll just log to console
         try {
-            const fsSync = require('fs');
-            fsSync.writeFileSync(
-                this.testDataLogFile,
-                JSON.stringify(this.testDataLog, null, 2)
-            );
+            console.log(`📝 Test data logged: ${action}`, logEntry);
         } catch (error) {
             console.error('❌ Failed to log test data:', error.message);
         }
@@ -228,28 +224,21 @@ class AutomatedTestRunner {
                 }
             }
             
-            // Clean up test files
+            // Clean up test files (Vercel environment - files are read-only)
             cleanupData.files.forEach(fileName => {
                 try {
-                    const fsSync = require('fs');
-                    const filePath = path.join('contracts', fileName);
-                    if (fsSync.existsSync(filePath)) {
-                        fsSync.unlinkSync(filePath);
-                        cleanedCount++;
-                    }
+                    console.log(`📄 Test file cleanup skipped (Vercel read-only): ${fileName}`);
+                    // In Vercel environment, we can't delete files, so we just log
                 } catch (error) {
-                    console.log(`⚠️ Could not delete test file: ${fileName}`);
+                    console.log(`⚠️ Could not process test file: ${fileName}`);
                 }
             });
             
             await this.log(`✅ Cleanup completed: ${cleanedCount} items removed`, 'success');
             
-            // Clear the test data log
+            // Clear the test data log (Vercel environment)
             this.testDataLog = [];
-            const fsSync = require('fs');
-            if (fsSync.existsSync(this.testDataLogFile)) {
-                fsSync.unlinkSync(this.testDataLogFile);
-            }
+            console.log('🧹 Test data log cleared (Vercel environment)');
             
         } catch (error) {
             await this.log(`❌ Cleanup failed: ${error.message}`, 'error');
@@ -830,30 +819,61 @@ class AutomatedTestRunner {
         return recommendations;
     }
 
-    async runAllTests() {
+    async runAllTests(categories = null) {
         await this.log('🚀 Starting Automated Test Suite', 'info');
         await this.log('================================', 'info');
         
-        // Run all tests
-        const tests = [
-            this.testServerHealth(),
-            this.testFileSystemAccess(),
-            this.testAllAPIEndpoints(),
-            this.testUserCreation(),
-            this.testUserDeletion(),
-            this.testJobCreation(),
-            this.testJobDeletion(),
-            this.testContractAddition(),
-            this.testContractDeletion(),
-            this.testPerformanceReviewCreation(),
-            this.testPerformanceReviewDeletion(),
-            this.testNotificationCreation(),
-            this.testNotificationDeletion(),
-            this.testProjectTimelineUpdates(),
-            this.testPdfDeletion()
-        ];
+        // Define test categories and their corresponding tests
+        const testCategories = {
+            'system-health': [
+                this.testServerHealth(),
+                this.testFileSystemAccess(),
+                this.testAllAPIEndpoints()
+            ],
+            'user-management': [
+                this.testUserCreation(),
+                this.testUserDeletion()
+            ],
+            'job-management': [
+                this.testJobCreation(),
+                this.testJobDeletion()
+            ],
+            'contract-management': [
+                this.testContractAddition(),
+                this.testContractDeletion()
+            ],
+            'performance-reviews': [
+                this.testPerformanceReviewCreation(),
+                this.testPerformanceReviewDeletion()
+            ],
+            'notifications': [
+                this.testNotificationCreation(),
+                this.testNotificationDeletion()
+            ],
+            'project-timeline': [
+                this.testProjectTimelineUpdates()
+            ],
+            'pdf-deletion': [
+                this.testPdfDeletion()
+            ]
+        };
         
-        const results = await Promise.all(tests);
+        // If no categories specified, run all tests
+        if (!categories || categories.length === 0) {
+            categories = Object.keys(testCategories);
+        }
+        
+        // Build the list of tests to run based on selected categories
+        const testsToRun = [];
+        categories.forEach(category => {
+            if (testCategories[category]) {
+                testsToRun.push(...testCategories[category]);
+            }
+        });
+        
+        await this.log(`📋 Running tests for categories: ${categories.join(', ')}`, 'info');
+        
+        const results = await Promise.all(testsToRun);
         
         // Update summary
         this.testResults.tests = results;
@@ -867,7 +887,7 @@ class AutomatedTestRunner {
         
         // Log test data for cleanup
         await this.log('📝 Test data logged for cleanup', 'info');
-        await this.log(`   Log file: ${this.testDataLogFile}`, 'info');
+        await this.log(`   Vercel environment: In-memory logging`, 'info');
         await this.log(`   Total log entries: ${this.testDataLog.length}`, 'info');
         
         // Log summary
@@ -886,11 +906,12 @@ class AutomatedTestRunner {
         const filename = `test-results-${timestamp}.json`;
         
         try {
-            await fs.writeFile(filename, JSON.stringify(this.testResults, null, 2));
-            await this.log(`💾 Test results saved to: ${filename}`, 'success');
-            return filename;
+            // In Vercel environment, we can't write files, so we'll just return the results
+            // The API will handle returning the results to the client
+            await this.log(`💾 Test results ready for return (Vercel environment)`, 'success');
+            return 'test-results-in-memory.json';
         } catch (error) {
-            await this.log(`❌ Failed to save test results: ${error.message}`, 'error');
+            await this.log(`❌ Failed to prepare test results: ${error.message}`, 'error');
             throw error;
         }
     }

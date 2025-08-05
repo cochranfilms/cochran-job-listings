@@ -22,12 +22,12 @@ module.exports = async (req, res) => {
             // Create test runner instance
             const testRunner = new AutomatedTestRunner();
             
-            // Run all tests
-            const results = await testRunner.runAllTests();
+            // Run tests based on selected categories
+            const results = await testRunner.runAllTests(categories);
             
-            // Save results to file (this will work in Vercel's serverless environment)
+            // Prepare results (Vercel environment doesn't allow file writing)
             const filename = await testRunner.saveTestResults();
-            console.log('💾 Test results saved to:', filename);
+            console.log('💾 Test results prepared:', filename);
             
             // Return results to frontend
             res.status(200).json(results);
