@@ -2477,15 +2477,57 @@
         }
 
         async function deleteUser(userName) {
-            if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+            if (confirm(`Are you sure you want to delete user "${userName}"? This will also delete any associated contract PDF files. This action cannot be undone.`)) {
                 try {
                     const userData = users[userName];
                     const userEmail = userData?.profile?.email;
+                    const contractId = userData?.contract?.contractId;
+                    const contractFileName = userData?.contract?.fileName;
                     
                     let firebaseDeleted = false;
                     let firebaseMessage = '';
+                    let pdfDeleted = false;
+                    let pdfMessage = '';
                     
-                    // 1. Delete from Firebase (if email exists)
+                    // 1. Delete associated PDF file if contract exists
+                    if (contractId && contractFileName) {
+                        try {
+                            console.log(`🗑️ Attempting to delete PDF file: ${contractFileName}`);
+                            
+                            // Try to delete PDF file from GitHub
+                            const deletePdfResponse = await fetch('/api/delete-pdf', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    fileName: contractFileName,
+                                    contractId: contractId,
+                                    userEmail: userEmail
+                                })
+                            });
+                            
+                            if (deletePdfResponse.ok) {
+                                const deleteResult = await deletePdfResponse.json();
+                                if (deleteResult.success) {
+                                    console.log('✅ PDF file deleted successfully:', contractFileName);
+                                    pdfDeleted = true;
+                                    pdfMessage = `PDF file (${contractFileName}) deleted.`;
+                                } else {
+                                    console.warn('⚠️ PDF deletion failed:', deleteResult.error);
+                                    pdfMessage = `PDF file may still exist: ${deleteResult.error}`;
+                                }
+                            } else {
+                                console.warn('⚠️ PDF deletion request failed:', deletePdfResponse.status);
+                                pdfMessage = 'PDF file may still exist on server.';
+                            }
+                        } catch (pdfError) {
+                            console.warn('⚠️ Could not delete PDF file:', pdfError);
+                            pdfMessage = 'PDF file may still exist.';
+                        }
+                    }
+                    
+                    // 2. Delete from Firebase (if email exists)
                     if (userEmail) {
                         try {
                             const firebaseResult = await deleteFirebaseAccount(userEmail);
@@ -2494,38 +2536,31 @@
                                 firebaseDeleted = true;
                                 firebaseMessage = 'Removed from Firebase and GitHub.';
                             } else {
-                                // Firebase API now returns success: false with a message when Firebase isn't configured
-                                // This is expected behavior when Firebase REST API isn't fully configured
                                 console.warn('⚠️ Firebase account deletion limited:', firebaseResult.error);
                                 firebaseMessage = firebaseResult.message || 'Firebase account may still exist.';
-                                
-                                // Don't show this as a warning since it's expected behavior
-                                // showNotification(`⚠️ Firebase account deletion failed: ${firebaseResult.error}`, 'warning');
                             }
                         } catch (firebaseError) {
                             console.warn('⚠️ Could not delete Firebase account:', firebaseError);
                             firebaseMessage = 'Firebase account may still exist.';
-                            // Don't show this as a warning since it's expected behavior
-                            // showNotification('⚠️ Firebase account deletion failed. User will still be removed from local data.', 'warning');
                         }
                     }
                     
-                    // 2. Delete from local users object
+                    // 3. Delete from local users object
                     delete users[userName];
                     localStorage.setItem('users', JSON.stringify(users));
                     
-                    // 3. Update GitHub repository
+                    // 4. Update GitHub repository
                     await updateUsersOnGitHub();
                     
-                    // 4. Refresh display
+                    // 5. Refresh display
                     await displayUsers();
                     
-                    // Show appropriate success message
-                    if (firebaseDeleted) {
-                        showNotification(`✅ User "${userName}" deleted successfully! ${firebaseMessage}`, 'success');
-                    } else {
-                        showNotification(`✅ User "${userName}" deleted from local data and GitHub. ${firebaseMessage}`, 'success');
-                    }
+                    // 6. Show comprehensive success message
+                    let successMessage = `✅ User "${userName}" deleted successfully!`;
+                    if (firebaseDeleted) successMessage += ` ${firebaseMessage}`;
+                    if (pdfDeleted) successMessage += ` ${pdfMessage}`;
+                    
+                    showNotification(successMessage, 'success');
                     
                 } catch (error) {
                     console.error('❌ Error deleting user:', error);

@@ -1,19 +1,399 @@
 {
-  "users": {},
-  "statusOptions": {
-    "projectStatus": [
-      "upcoming",
-      "in-progress",
-      "completed",
-      "cancelled"
-    ],
-    "paymentStatus": [
-      "pending",
-      "processing",
-      "paid",
-      "overdue"
-    ]
+  "users": {
+    "Sophie Anderson": {
+      "profile": {
+        "email": "sophie.anderson@premierevents.com",
+        "password": "Events2025",
+        "approvedDate": "2024-01-25"
+      },
+      "contract": {
+        "fileName": null,
+        "status": "pending",
+        "githubUrl": null,
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "event-sophie-001",
+          "role": "Wedding Coordinator",
+          "location": "Atlanta Botanical Garden, 1345 Piedmont Ave, Atlanta, GA",
+          "projectStart": "December 21, 2025 at 4:00 PM",
+          "rate": "$2,500.00 USD (Flat)",
+          "status": "upcoming",
+          "projectType": "Wedding",
+          "description": "Full wedding coordination and day-of management"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": null,
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    },
+    "Marcus Johnson": {
+      "profile": {
+        "email": "marcus.johnson@premierevents.com",
+        "password": "Corporate2025",
+        "approvedDate": "2024-02-20"
+      },
+      "contract": {
+        "contractId": "CF-EVENT-001",
+        "fileName": "CF-EVENT-001.pdf",
+        "status": "signed",
+        "signedDate": "2024-02-25",
+        "uploadDate": "2024-02-27",
+        "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-EVENT-001.pdf",
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "event-marcus-001",
+          "role": "Corporate Event Manager",
+          "location": "Georgia World Congress Center, 285 Andrew Young Intl Blvd, Atlanta, GA",
+          "projectStart": "December 16, 2025 at 8:00 AM",
+          "rate": "$3,500.00 USD (Flat)",
+          "status": "upcoming",
+          "projectType": "Corporate",
+          "description": "Annual corporate conference with 500+ attendees"
+        },
+        {
+          "id": "event-marcus-002",
+          "role": "Trade Show Coordinator",
+          "location": "Cobb Galleria Centre, 2 Galleria Pkwy SE, Atlanta, GA",
+          "projectStart": "December 23, 2025 at 9:00 AM",
+          "rate": "$2,800.00 USD (Flat)",
+          "status": "upcoming",
+          "projectType": "Trade Show",
+          "description": "Technology trade show with vendor coordination"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": null,
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    },
+    "Elena Rodriguez": {
+      "profile": {
+        "email": "elena.rodriguez@premierevents.com",
+        "password": "Elena2025",
+        "approvedDate": "2024-03-15"
+      },
+      "contract": {
+        "contractId": "CF-EVENT-002",
+        "fileName": "CF-EVENT-002.pdf",
+        "status": "uploaded",
+        "signedDate": "2024-03-20",
+        "uploadDate": "2024-03-22",
+        "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-EVENT-002.pdf",
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "event-elena-001",
+          "role": "Luxury Event Designer",
+          "location": "The St. Regis Atlanta, 88 West Paces Ferry Rd, Atlanta, GA",
+          "projectStart": "December 19, 2025 at 6:00 PM",
+          "rate": "$4,200.00 USD (Flat)",
+          "status": "upcoming",
+          "projectType": "Luxury",
+          "description": "High-end gala dinner with custom design elements"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": null,
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    },
+    "Dr. Sarah Johnson": {
+      "profile": {
+        "email": "sarah.johnson@medstaffpro.com",
+        "password": "Healthcare2025",
+        "approvedDate": "2024-01-15"
+      },
+      "contract": {
+        "fileName": null,
+        "status": "pending",
+        "githubUrl": null,
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "shift-sarah-001",
+          "role": "Emergency Room Physician",
+          "location": "Atlanta Medical Center, 1234 Peachtree St, Atlanta, GA",
+          "projectStart": "December 20, 2025 at 7:00 PM",
+          "rate": "$150.00 USD per hour",
+          "status": "upcoming",
+          "projectType": "Emergency Medicine",
+          "description": "Overnight ER coverage for 12-hour shift"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": null,
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    },
+    "Nurse Maria Rodriguez": {
+      "profile": {
+        "email": "maria.rodriguez@medstaffpro.com",
+        "password": "Nursing2025",
+        "approvedDate": "2024-02-10"
+      },
+      "contract": {
+        "contractId": "CF-HEALTH-001",
+        "fileName": "CF-HEALTH-001.pdf",
+        "status": "signed",
+        "signedDate": "2024-02-15",
+        "uploadDate": "2024-02-16",
+        "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-HEALTH-001.pdf",
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "shift-maria-001",
+          "role": "ICU Registered Nurse",
+          "location": "Emory University Hospital, 1364 Clifton Rd, Atlanta, GA",
+          "projectStart": "December 18, 2025 at 6:00 AM",
+          "rate": "$85.00 USD per hour",
+          "status": "upcoming",
+          "projectType": "Critical Care",
+          "description": "Day shift ICU nursing with patient care responsibilities"
+        },
+        {
+          "id": "shift-maria-002",
+          "role": "ICU Registered Nurse",
+          "location": "Piedmont Atlanta Hospital, 1968 Peachtree Rd, Atlanta, GA",
+          "projectStart": "December 22, 2025 at 6:00 PM",
+          "rate": "$95.00 USD per hour",
+          "status": "upcoming",
+          "projectType": "Critical Care",
+          "description": "Night shift ICU nursing with critical patient monitoring"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": null,
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    },
+    "Dr. Michael Chen": {
+      "profile": {
+        "email": "michael.chen@medstaffpro.com",
+        "password": "Cardiology2025",
+        "approvedDate": "2024-03-05"
+      },
+      "contract": {
+        "contractId": "CF-HEALTH-002",
+        "fileName": "CF-HEALTH-002.pdf",
+        "status": "uploaded",
+        "signedDate": "2024-03-10",
+        "uploadDate": "2024-03-12",
+        "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-HEALTH-002.pdf",
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "shift-michael-001",
+          "role": "Cardiologist",
+          "location": "Northside Hospital, 1000 Johnson Ferry Rd, Atlanta, GA",
+          "projectStart": "December 19, 2025 at 8:00 AM",
+          "rate": "$200.00 USD per hour",
+          "status": "upcoming",
+          "projectType": "Cardiology",
+          "description": "Cardiology consultation and patient rounds"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": null,
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    },
+    "Jennifer Martinez": {
+      "profile": {
+        "email": "jennifer.martinez@eliteproperties.com",
+        "password": "RealEstate2025",
+        "approvedDate": "2024-01-20"
+      },
+      "contract": {
+        "fileName": null,
+        "status": "pending",
+        "githubUrl": null,
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "listing-jennifer-001",
+          "role": "Luxury Home Specialist",
+          "location": "Buckhead, Atlanta, GA",
+          "projectStart": "December 15, 2025 at 10:00 AM",
+          "rate": "3% Commission",
+          "status": "upcoming",
+          "projectType": "Luxury Residential",
+          "description": "Show luxury home listing to high-net-worth clients"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": null,
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    },
+    "David Thompson": {
+      "profile": {
+        "email": "david.thompson@eliteproperties.com",
+        "password": "Properties2025",
+        "approvedDate": "2024-02-15"
+      },
+      "contract": {
+        "contractId": "CF-REAL-001",
+        "fileName": "CF-REAL-001.pdf",
+        "status": "signed",
+        "signedDate": "2024-02-20",
+        "uploadDate": "2024-02-22",
+        "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-REAL-001.pdf",
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "listing-david-001",
+          "role": "Commercial Property Agent",
+          "location": "Midtown Atlanta, GA",
+          "projectStart": "December 17, 2025 at 2:00 PM",
+          "rate": "4% Commission",
+          "status": "upcoming",
+          "projectType": "Commercial",
+          "description": "Office building lease negotiation and client meeting"
+        },
+        {
+          "id": "listing-david-002",
+          "role": "Investment Property Specialist",
+          "location": "Alpharetta, GA",
+          "projectStart": "December 20, 2025 at 11:00 AM",
+          "rate": "3.5% Commission",
+          "status": "upcoming",
+          "projectType": "Investment",
+          "description": "Multi-family property investment presentation"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": null,
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    },
+    "Amanda Wilson": {
+      "profile": {
+        "email": "amanda.wilson@eliteproperties.com",
+        "password": "Wilson2025",
+        "approvedDate": "2024-03-10"
+      },
+      "contract": {
+        "contractId": "CF-REAL-002",
+        "fileName": "CF-REAL-002.pdf",
+        "status": "uploaded",
+        "signedDate": "2024-03-15",
+        "uploadDate": "2024-03-18",
+        "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-REAL-002.pdf",
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "listing-amanda-001",
+          "role": "First-Time Home Buyer Specialist",
+          "location": "Sandy Springs, Atlanta, GA",
+          "projectStart": "December 18, 2025 at 1:00 PM",
+          "rate": "2.5% Commission",
+          "status": "upcoming",
+          "projectType": "Residential",
+          "description": "First-time buyer consultation and property tour"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": null,
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    },
+    "Test User": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": "Test1234",
+        "role": "Videographer",
+        "location": "Los Angeles, CA",
+        "projectStart": "2025-10-10T19:00",
+        "rate": "$50/hour",
+        "approvedDate": "2025-08-03"
+      },
+      "contract": {
+        "contractId": "CF-1754276968364-P766Y",
+        "fileName": "CF-1754276968364-P766Y.pdf",
+        "status": "signed",
+        "signedDate": "8/3/2025, 11:09:28 PM",
+        "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754276968364-P766Y.pdf",
+        "notes": "Migrated from legacy data"
+      },
+      "jobs": [
+        {
+          "id": "job-test-user-1754276911229",
+          "role": "Videographer",
+          "location": "Los Angeles, CA",
+          "projectStart": "2025-10-10T19:00",
+          "rate": "$50/hour",
+          "status": "upcoming",
+          "projectType": "Videographer Project",
+          "description": "Primary assignment for Test User"
+        }
+      ],
+      "performance": null,
+      "payment": {
+        "method": "check",
+        "status": "pending",
+        "lastPayment": null
+      },
+      "notifications": []
+    }
   },
-  "lastUpdated": "2025-08-05",
-  "totalUsers": 0
+  "system": {
+    "statusOptions": {
+      "projectStatus": [
+        "upcoming",
+        "in-progress",
+        "completed",
+        "cancelled"
+      ],
+      "paymentStatus": [
+        "pending",
+        "processing",
+        "paid",
+        "overdue"
+      ]
+    },
+    "lastUpdated": "2025-08-05",
+    "totalUsers": 10,
+    "totalContracts": 7,
+    "totalReviews": 0,
+    "exportDate": "2025-08-05T23:36:04.647Z"
+  }
 }

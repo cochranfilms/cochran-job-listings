@@ -36,24 +36,42 @@ module.exports = async (req, res) => {
             }
 
             let jsonUpdated = false;
-            const contractsPath = path.join(__dirname, '../uploaded-contracts.json');
+            
+            // Update centralized users.json instead of uploaded-contracts.json
+            const usersPath = path.join(__dirname, '../users.json');
             
             try {
-                const contractsData = JSON.parse(await fs.readFile(contractsPath, 'utf8'));
-                const initialCount = contractsData.uploadedContracts.length;
+                const usersData = JSON.parse(await fs.readFile(usersPath, 'utf8'));
+                let contractsRemoved = 0;
                 
-                contractsData.uploadedContracts = contractsData.uploadedContracts.filter(
-                    contract => contract.fileName !== fileName
-                );
+                // Remove contract data from all users
+                for (const [userName, user] of Object.entries(usersData.users)) {
+                    if (user.contract && user.contract.fileName === fileName) {
+                        console.log(`🗑️ Removing contract from user: ${userName}`);
+                        user.contract = {
+                            contractId: null,
+                            fileName: null,
+                            status: 'pending',
+                            signedDate: null,
+                            uploadDate: null,
+                            githubUrl: null,
+                            notes: 'Contract deleted'
+                        };
+                        contractsRemoved++;
+                    }
+                }
                 
-                contractsData.totalContracts = contractsData.uploadedContracts.length;
-                contractsData.lastUpdated = new Date().toISOString().split('T')[0];
-                
-                await fs.writeFile(contractsPath, JSON.stringify(contractsData, null, 2));
-                jsonUpdated = true;
-                console.log(`✅ Contract removed from JSON: ${fileName} (${initialCount} → ${contractsData.totalContracts})`);
+                // Update system totals
+                if (contractsRemoved > 0) {
+                    usersData.system.totalContracts = Math.max(0, usersData.system.totalContracts - contractsRemoved);
+                    usersData.system.lastUpdated = new Date().toISOString().split('T')[0];
+                    
+                    await fs.writeFile(usersPath, JSON.stringify(usersData, null, 2));
+                    jsonUpdated = true;
+                    console.log(`✅ Contract removed from centralized data: ${fileName} (${contractsRemoved} user(s) updated)`);
+                }
             } catch (jsonError) {
-                console.error(`❌ Error updating JSON:`, jsonError.message);
+                console.error(`❌ Error updating centralized JSON:`, jsonError.message);
             }
 
             let githubDeleted = false;
@@ -89,11 +107,12 @@ module.exports = async (req, res) => {
                             })
                         });
                     
-                    if (githubResponse.ok) {
-                        githubDeleted = true;
-                        console.log(`✅ GitHub file deleted: ${fileName}`);
-                    } else {
-                        console.log(`⚠️ GitHub deletion failed: ${fileName}`);
+                        if (githubResponse.ok) {
+                            githubDeleted = true;
+                            console.log(`✅ GitHub file deleted: ${fileName}`);
+                        } else {
+                            console.log(`⚠️ GitHub deletion failed: ${fileName}`);
+                        }
                     }
                 } catch (githubError) {
                     console.log(`⚠️ GitHub deletion error: ${githubError.message}`);
