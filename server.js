@@ -244,19 +244,49 @@ app.delete('/api/github/file/:filename', async (req, res) => {
             return res.status(400).json({ error: 'message and sha are required for deletion' });
         }
 
-        // For local testing, just log the deletion
-        console.log(`🗑️ Local GitHub delete: ${filename}`);
+        console.log(`🗑️ Deleting file from GitHub: ${filename}`);
         console.log(`📝 Message: ${message}`);
         console.log(`🔗 SHA: ${sha.substring(0, 7)}`);
-        
-        // In a real environment, this would delete the file from GitHub
-        // For local testing, we'll just return success
-        res.status(200).json({
-            commit: {
-                sha: 'local-delete-sha',
-                message: message
-            }
+
+        // GitHub configuration from environment variables
+        const GITHUB_CONFIG = {
+            token: process.env.GITHUB_TOKEN,
+            owner: process.env.GITHUB_OWNER || 'cochranfilms',
+            repo: process.env.GITHUB_REPO || 'cochran-job-listings',
+            branch: process.env.GITHUB_BRANCH || 'main'
+        };
+
+        if (!GITHUB_CONFIG.token) {
+            console.error('❌ GITHUB_TOKEN environment variable not set');
+            return res.status(500).json({ error: 'GitHub token not configured' });
+        }
+
+        const requestBody = {
+            message: message,
+            sha: sha,
+            branch: GITHUB_CONFIG.branch
+        };
+
+        const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `token ${GITHUB_CONFIG.token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json',
+                'User-Agent': 'Cochran-Films-Contract-System'
+            },
+            body: JSON.stringify(requestBody)
         });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log(`✅ ${filename} deleted successfully from GitHub (SHA: ${result.commit.sha.substring(0, 7)})`);
+            res.json(result);
+        } else {
+            const error = await response.json();
+            console.error(`❌ GitHub API error:`, error);
+            res.status(response.status).json({ error: error.message || 'GitHub API error' });
+        }
         
     } catch (error) {
         console.error('❌ Error in GitHub file delete API:', error);
