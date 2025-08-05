@@ -874,7 +874,7 @@ class AutomatedTestRunner {
             
             // Step 1: Create a test PDF file via GitHub API
             console.log('📄 Creating test PDF file...');
-            const createPdfResponse = await fetch(`${this.baseUrl}/api/github/file/${testFileName}`, {
+            const createPdfResponse = await fetch(`${this.baseUrl}/api/github/file/contracts/${testFileName}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -943,7 +943,7 @@ class AutomatedTestRunner {
             
             // Step 4: Test GitHub API deletion endpoint
             console.log('🗑️ Testing GitHub API deletion...');
-            const githubDeleteResponse = await fetch(`${this.baseUrl}/api/github/file/${testFileName}`, {
+            const githubDeleteResponse = await fetch(`${this.baseUrl}/api/github/file/contracts/${testFileName}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'

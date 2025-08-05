@@ -58,6 +58,8 @@ The Cochran Films Automated Testing System provides comprehensive testing for al
 - **GitHub Integration**: Tests GitHub file deletion via API
 - **Cleanup Process**: Automatically removes test PDF files and records after testing
 
+**Note**: This test validates your actual workflow implementation. If it fails, it indicates an issue with your real PDF deletion system, not the test system itself.
+
 ## Getting Started
 
 ### Prerequisites

@@ -59,15 +59,35 @@ module.exports = async (req, res) => {
             let githubDeleted = false;
             if (contractId) {
                 try {
-                    // Simplified GitHub deletion for testing. In production, SHA would be fetched.
-                    const githubResponse = await fetch(`/api/github/file/contracts/${fileName}`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            message: `Delete contract ${contractId} - ${fileName}`, 
-                            sha: 'latest' 
-                        })
+                    // First, get the file SHA from GitHub
+                    const getFileResponse = await fetch(`https://api.github.com/repos/${process.env.GITHUB_OWNER || 'cochranfilms'}/${process.env.GITHUB_REPO || 'cochran-job-listings'}/contents/contracts/${fileName}?ref=${process.env.GITHUB_BRANCH || 'main'}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'User-Agent': 'Cochran-Films-Contract-System'
+                        }
                     });
+                    
+                    if (getFileResponse.ok) {
+                        const fileData = await getFileResponse.json();
+                        const fileSHA = fileData.sha;
+                        
+                        // Now delete the file with the correct SHA
+                        const githubResponse = await fetch(`https://api.github.com/repos/${process.env.GITHUB_OWNER || 'cochranfilms'}/${process.env.GITHUB_REPO || 'cochran-job-listings'}/contents/contracts/${fileName}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+                                'Accept': 'application/vnd.github.v3+json',
+                                'Content-Type': 'application/json',
+                                'User-Agent': 'Cochran-Films-Contract-System'
+                            },
+                            body: JSON.stringify({ 
+                                message: `Delete contract ${contractId} - ${fileName}`, 
+                                sha: fileSHA,
+                                branch: process.env.GITHUB_BRANCH || 'main'
+                            })
+                        });
                     
                     if (githubResponse.ok) {
                         githubDeleted = true;
