@@ -74,6 +74,11 @@
     
     <!-- EmailJS for automated job acceptance emails -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("p4pF3OWvh-DXtae4c");
+        })();
+    </script>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -91,7 +96,7 @@
         const EMAILJS_CONFIG = {
             publicKey: 'p4pF3OWvh-DXtae4c',
             serviceId: 'service_t11yvru',
-            jobAcceptanceTemplateId: 'template_job_acceptance' // ⚠️ This template ID doesn't exist - create it in EmailJS dashboard
+            jobAcceptanceTemplateId: 'template_job_acceptance' // You need to create this template in EmailJS dashboard
         };
 
         // Firebase Configuration (secure)
@@ -2251,18 +2256,24 @@
 
                 // Send email using EmailJS
                 if (typeof emailjs !== 'undefined') {
-                    await emailjs.send(
-                        EMAILJS_CONFIG.serviceId, 
-                        EMAILJS_CONFIG.jobAcceptanceTemplateId, 
-                        emailParams
-                    );
-                    
-                    console.log('✅ Job acceptance email sent successfully');
-                    
-                    // Show success message
-                    setTimeout(() => {
-                        showNotification(`🎉 User approved and email sent!\n\n📧 Email sent to: ${userData.profile.email}\n📄 Contract ID: ${contractId}\n\n✅ The user will receive the job acceptance email with contract signing instructions.`, 'success');
-                    }, 1000);
+                    try {
+                        const response = await emailjs.send(
+                            EMAILJS_CONFIG.serviceId, 
+                            EMAILJS_CONFIG.jobAcceptanceTemplateId, 
+                            emailParams
+                        );
+                        
+                        console.log('✅ Job acceptance email sent successfully:', response);
+                        
+                        // Show success message
+                        setTimeout(() => {
+                            showNotification(`🎉 User approved and email sent!\n\n📧 Email sent to: ${userData.profile.email}\n📄 Contract ID: ${contractId}\n\n✅ The user will receive the job acceptance email with contract signing instructions.`, 'success');
+                        }, 1000);
+                        
+                    } catch (emailError) {
+                        console.error('❌ EmailJS error:', emailError);
+                        showNotification(`✅ User saved successfully!\n\n⚠️ Email failed to send: ${emailError.message}\n\nPlease check EmailJS template configuration.`, 'warning');
+                    }
                     
                 } else {
                     console.warn('⚠️ EmailJS not available, skipping email send');
