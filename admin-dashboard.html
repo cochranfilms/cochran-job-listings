@@ -3505,6 +3505,12 @@
         
         // Show performance review modal (works with both username and email)
         function showPerformanceReviewModal(userNameOrEmail) {
+            // Immediately dismiss any performance review alerts/popups
+            const performanceAlert = document.getElementById('performanceReviewAlert');
+            if (performanceAlert) {
+                performanceAlert.remove();
+            }
+            
             let userData = users[userNameOrEmail];
             let userEmail = userNameOrEmail;
             let userName = userNameOrEmail;
@@ -3604,14 +3610,7 @@
                             <textarea name="admin_notes" rows="3" placeholder="Internal notes for admin reference (not visible to freelancer)..." style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px; resize: vertical;">${existingReview?.adminNotes || ''}</textarea>
                         </div>
                         
-                        <div style="margin-bottom: 1.5rem;">
-                            <h3 style="color: #FFB200; margin-bottom: 1rem;">Status</h3>
-                            <select name="status" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 4px;">
-                                <option value="completed" ${existingReview?.status === 'completed' ? 'selected' : ''}>Completed</option>
-                                <option value="pending" ${existingReview?.status === 'pending' ? 'selected' : ''}>Pending</option>
-                                <option value="overdue" ${existingReview?.status === 'overdue' ? 'selected' : ''}>Overdue</option>
-                            </select>
-                        </div>
+
                         
                         <div style="display: flex; gap: 1rem; justify-content: flex-end;">
                             <button type="button" onclick="closeModal(this)" 
@@ -3638,7 +3637,7 @@
         }
 
         // Save performance review
-        function savePerformanceReview(userEmail, form) {
+        async function savePerformanceReview(userEmail, form) {
             const formData = new FormData(form);
             const categories = {};
             
@@ -3658,7 +3657,6 @@
                 categories: categories,
                 comments: formData.get('comments') || '',
                 adminNotes: formData.get('admin_notes') || '',
-                status: formData.get('status') || 'completed',
                 reviewedBy: 'admin',
                 lastUpdated: new Date().toISOString()
             };
@@ -3666,8 +3664,8 @@
             // Save to performance reviews
             performanceReviews[userEmail] = reviewData;
             
-            // Update GitHub
-            updatePerformanceReviewsOnGitHub();
+            // Update performance.json file
+            await updatePerformanceReviewsFile();
             
             // Close modal
             closeModal(form);
@@ -3679,6 +3677,49 @@
             notifyJSONUpdate('performance.json', 'created', `for ${userEmail}`);
             
             console.log('✅ Performance review saved for:', userEmail);
+        }
+        
+        // Update performance reviews file
+        async function updatePerformanceReviewsFile() {
+            try {
+                const performanceData = {
+                    performanceReviews: performanceReviews,
+                    reviewOptions: {
+                        rating: [1, 2, 3, 4, 5],
+                        categories: [
+                            "Professionalism",
+                            "Quality", 
+                            "Communication",
+                            "Reliability",
+                            "Overall Performance"
+                        ],
+                        status: ["pending", "completed", "overdue"]
+                    },
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    totalReviews: Object.keys(performanceReviews).length
+                };
+                
+                // Save to performance.json via API
+                const response = await fetch('/api/performance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(performanceData)
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Performance reviews updated successfully');
+                } else {
+                    console.warn('⚠️ Could not update performance reviews via API, saving locally');
+                    // Fallback: save to localStorage
+                    localStorage.setItem('performanceReviews', JSON.stringify(performanceReviews));
+                }
+            } catch (error) {
+                console.error('❌ Error updating performance reviews:', error);
+                // Fallback: save to localStorage
+                localStorage.setItem('performanceReviews', JSON.stringify(performanceReviews));
+            }
         }
 
         // Show job assignment modal
@@ -4495,7 +4536,7 @@
                         }
                         
                         // Update GitHub with the modified data
-                        await updatePerformanceReviewsOnGitHub();
+                        await updatePerformanceReviewsFile();
                         
                         showNotification(`Performance review for ${email} deleted successfully!`, 'success');
                         
@@ -4919,7 +4960,7 @@
             }
             
             list.innerHTML = notifications.map(notification => `
-                <div class="notification-item ${notification.read ? 'read' : 'unread'}" onclick="markAsRead(${notification.id})">
+                <div class="notification-item ${notification.read ? 'read' : 'unread'}" onclick="handleNotificationClick(${JSON.stringify(notification).replace(/"/g, '&quot;')})">
                     <div class="notification-title">
                         <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
                         ${notification.title}
@@ -4936,6 +4977,39 @@
                 dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
                 updateNotificationList();
             }
+        }
+        
+        // Handle notification clicks to navigate to relevant screens
+        function handleNotificationClick(notification) {
+            if (notification.type === 'performance') {
+                // Navigate to performance review for the specific user
+                const userEmail = notification.userEmail;
+                if (userEmail) {
+                    showPerformanceReviewModal(userEmail);
+                    // Mark as read and remove notification
+                    markAsRead(notification.id);
+                    removeNotification(notification.id);
+                }
+            } else if (notification.type === 'payment') {
+                // Navigate to payment management
+                switchTab('contracts');
+                // Mark as read and remove notification
+                markAsRead(notification.id);
+                removeNotification(notification.id);
+            } else if (notification.type === 'contract') {
+                // Navigate to contract management
+                switchTab('contracts');
+                // Mark as read and remove notification
+                markAsRead(notification.id);
+                removeNotification(notification.id);
+            }
+        }
+        
+        function removeNotification(notificationId) {
+            notifications = notifications.filter(n => n.id !== notificationId);
+            localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+            updateNotificationBadge();
+            updateNotificationList();
         }
         
         function markAsRead(notificationId) {
@@ -5666,7 +5740,7 @@
             border: 1px solid rgba(255, 178, 0, 0.3);
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            z-index: 9999;
             margin-top: 0.5rem;
         }
 

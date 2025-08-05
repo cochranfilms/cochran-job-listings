@@ -49,7 +49,13 @@
             if (user) {
                 console.log('✅ User authenticated:', user.email);
                 // User is signed in, check if they exist in our system
-                checkUserInSystem(user.email);
+                // Only check if user is properly authenticated and not just a temporary state
+                if (user.email && user.emailVerified !== false) {
+                    checkUserInSystem(user.email);
+                } else {
+                    console.log('⚠️ User not fully authenticated, waiting for proper auth...');
+                    showLoginScreen();
+                }
             } else {
                 console.log('❌ User signed out');
                 showLoginScreen();
@@ -918,6 +924,13 @@
         // Check if authenticated user exists in our system (simplified)
         async function checkUserInSystem(email) {
             console.log('🔍 Checking user in system:', email);
+            
+            // Validate email before proceeding
+            if (!email || !email.trim()) {
+                console.warn('⚠️ Invalid email provided');
+                return;
+            }
+            
             await loadUsersData();
             
             // Try to find user by email (case-insensitive)
@@ -932,7 +945,10 @@
                 // User not found in our system
                 console.warn('⚠️ User not found in system:', email);
                 console.log('📋 Available users:', users.map(u => ({ name: u.name, email: u.email })));
-                showNotification('Account not found in system. Please contact support.', 'error');
+                // Only show error if user is actually trying to access the system
+                if (document.getElementById('userPortal').style.display !== 'block') {
+                    showNotification('Account not found in system. Please contact support.', 'error');
+                }
             }
         }
 
@@ -1367,14 +1383,14 @@
 
             // Display the selected job's information
             const jobInfo = {
-                role: selectedJob.role,
-                location: selectedJob.location,
-                projectStart: selectedJob.projectStart,
-                rate: selectedJob.rate,
+                role: selectedJob.title || selectedJob.role || 'Assistant Position',
+                location: selectedJob.location || 'New York, NY',
+                projectStart: selectedJob.projectStart || selectedJob.date || '2026-10-10T20:00',
+                rate: selectedJob.pay || selectedJob.rate || '$75/hour',
                 status: jobProjectStatus.projectStatus || getJobStatus(selectedJob.projectStart),
                 paymentStatus: jobProjectStatus.paymentStatus || 'pending',
-                projectType: selectedJob.projectType,
-                description: selectedJob.description
+                projectType: selectedJob.projectType || 'Assistant',
+                description: selectedJob.description || 'Professional Assistant position. Details to be provided.'
             };
 
             // Add job selector if user has multiple jobs
@@ -1805,11 +1821,7 @@
                             text: 'View Performance Review',
                             onclick: 'viewPerformanceReview()',
                             icon: 'fas fa-star'
-                        } : {
-                            text: 'Performance Review Pending',
-                            onclick: 'showNotification("Performance review is being prepared by admin.", "info")',
-                            icon: 'fas fa-clock'
-                        };
+                        } : null; // No action needed when waiting on admin
                     })()
                 }
             ];
