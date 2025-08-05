@@ -240,6 +240,43 @@ app.use('/api/performance', performanceRouter);
 // Firebase API routes
 app.use('/api/firebase', firebaseRouter);
 
+// Local file deletion endpoint for contracts
+app.post('/api/contracts/delete-local', async (req, res) => {
+    try {
+        const { fileName } = req.body;
+        
+        if (!fileName) {
+            return res.status(400).json({ error: 'fileName is required' });
+        }
+        
+        const filePath = path.join(__dirname, 'contracts', fileName);
+        
+        // Check if file exists
+        if (fs.existsSync(filePath)) {
+            // Delete the file
+            fs.unlinkSync(filePath);
+            console.log(`✅ Local PDF file deleted: ${fileName}`);
+            res.status(200).json({ 
+                success: true, 
+                message: `File ${fileName} deleted successfully` 
+            });
+        } else {
+            console.log(`📄 Local PDF file not found: ${fileName}`);
+            res.status(200).json({ 
+                success: false, 
+                message: `File ${fileName} not found locally` 
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error deleting local file:', error);
+        res.status(500).json({ 
+            error: 'Internal server error',
+            message: error.message 
+        });
+    }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.status(200).json({

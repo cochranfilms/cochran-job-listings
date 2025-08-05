@@ -29,6 +29,7 @@ try {
         // and handle user deletion through other means
         console.log('⚠️ Firebase Admin SDK not initialized - no credentials available');
         console.log('ℹ️ User deletion will be handled through local data cleanup only');
+        console.log('ℹ️ To enable Firebase user deletion, set FIREBASE_SERVICE_ACCOUNT environment variable');
         firebaseInitialized = false;
     }
 } catch (error) {
@@ -66,10 +67,12 @@ module.exports = async (req, res) => {
         // Check if Firebase Admin SDK is properly initialized
         if (!firebaseInitialized || !firebaseApp) {
             console.log(`⚠️ Firebase Admin SDK not available for user deletion: ${email}`);
+            console.log(`ℹ️ To enable Firebase user deletion, configure FIREBASE_SERVICE_ACCOUNT environment variable`);
             res.status(200).json({ 
                 success: false, 
                 error: 'Firebase Admin SDK not configured. User deletion limited to local data cleanup.',
-                message: 'User will be removed from local data only. Firebase account may still exist.'
+                message: 'User will be removed from local data only. Firebase account may still exist.',
+                instructions: 'To enable Firebase user deletion, set FIREBASE_SERVICE_ACCOUNT environment variable with your Firebase service account JSON'
             });
             return;
         }

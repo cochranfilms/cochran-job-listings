@@ -582,6 +582,7 @@
                     let successCount = 0;
                     let errorCount = 0;
                     let pdfDeletedCount = 0;
+                    let localFileDeletedCount = 0;
                     
                     // Sort by index in descending order to maintain correct indices during deletion
                     selectedContracts.sort((a, b) => b.index - a.index);
@@ -594,6 +595,8 @@
                             // 2. Try to delete PDF file from GitHub
                             if (contract.fileName) {
                                 try {
+                                    console.log(`🗑️ Attempting to delete PDF file: ${contract.fileName}`);
+                                    
                                     // First, get the file's SHA
                                     const getResponse = await fetch('/api/github/file/contracts/' + contract.fileName);
                                     let sha = null;
@@ -603,12 +606,50 @@
                                         sha = fileData.sha;
                                         console.log('📄 Got PDF file SHA:', sha.substring(0, 7));
                                     } else if (getResponse.status === 404) {
-                                        console.log('📄 PDF file not found on GitHub, skipping deletion');
+                                        console.log('📄 PDF file not found on GitHub, attempting local cleanup');
+                                        // Try to delete from local contracts folder if it exists
+                                        try {
+                                            const localDeleteResponse = await fetch('/api/contracts/delete-local', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json'
+                                                },
+                                                body: JSON.stringify({
+                                                    fileName: contract.fileName
+                                                })
+                                            });
+                                            
+                                            if (localDeleteResponse.ok) {
+                                                console.log('✅ Local PDF file deleted:', contract.fileName);
+                                                localFileDeletedCount++;
+                                            }
+                                        } catch (localError) {
+                                            console.warn('⚠️ Could not delete local PDF file:', localError);
+                                        }
                                     } else {
-                                        console.warn('⚠️ Could not get PDF file SHA, skipping deletion');
+                                        console.warn('⚠️ Could not get PDF file SHA, attempting local cleanup');
+                                        // Try local deletion as fallback
+                                        try {
+                                            const localDeleteResponse = await fetch('/api/contracts/delete-local', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json'
+                                                },
+                                                body: JSON.stringify({
+                                                    fileName: contract.fileName
+                                                })
+                                            });
+                                            
+                                            if (localDeleteResponse.ok) {
+                                                console.log('✅ Local PDF file deleted:', contract.fileName);
+                                                localFileDeletedCount++;
+                                            }
+                                        } catch (localError) {
+                                            console.warn('⚠️ Could not delete local PDF file:', localError);
+                                        }
                                     }
                                     
-                                    // If we have the SHA, proceed with deletion
+                                    // If we have the SHA, proceed with GitHub deletion
                                     if (sha) {
                                         const deleteResponse = await fetch('/api/github/file/contracts/' + contract.fileName, {
                                             method: 'DELETE',
@@ -627,10 +668,50 @@
                                         } else {
                                             const errorData = await deleteResponse.json().catch(() => ({}));
                                             console.warn('⚠️ Could not delete PDF file from GitHub:', contract.fileName, errorData);
+                                            
+                                            // Try local deletion as fallback
+                                            try {
+                                                const localDeleteResponse = await fetch('/api/contracts/delete-local', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json'
+                                                    },
+                                                    body: JSON.stringify({
+                                                        fileName: contract.fileName
+                                                    })
+                                                });
+                                                
+                                                if (localDeleteResponse.ok) {
+                                                    console.log('✅ Local PDF file deleted as fallback:', contract.fileName);
+                                                    localFileDeletedCount++;
+                                                }
+                                            } catch (localError) {
+                                                console.warn('⚠️ Could not delete local PDF file as fallback:', localError);
+                                            }
                                         }
                                     }
                                 } catch (pdfError) {
                                     console.warn('⚠️ Error deleting PDF file:', pdfError);
+                                    
+                                    // Try local deletion as final fallback
+                                    try {
+                                        const localDeleteResponse = await fetch('/api/contracts/delete-local', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({
+                                                fileName: contract.fileName
+                                            })
+                                        });
+                                        
+                                        if (localDeleteResponse.ok) {
+                                            console.log('✅ Local PDF file deleted as final fallback:', contract.fileName);
+                                            localFileDeletedCount++;
+                                        }
+                                    } catch (localError) {
+                                        console.warn('⚠️ Could not delete local PDF file as final fallback:', localError);
+                                    }
                                 }
                             }
                             
@@ -652,6 +733,8 @@
                     if (errorCount === 0 && gitHubUpdateSuccess) {
                         if (pdfDeletedCount === selectedContracts.length) {
                             showNotification(`✅ Successfully deleted ${successCount} contract(s)! Removed from GitHub and all PDF files deleted.`, 'success');
+                        } else if (localFileDeletedCount > 0) {
+                            showNotification(`✅ Successfully deleted ${successCount} contract(s) from data. ${pdfDeletedCount} PDF files deleted from GitHub, ${localFileDeletedCount} local files cleaned up.`, 'success');
                         } else {
                             showNotification(`✅ Successfully deleted ${successCount} contract(s) from data. ${pdfDeletedCount}/${selectedContracts.length} PDF files deleted from GitHub.`, 'success');
                         }
@@ -1506,7 +1589,7 @@
                 
                 // Initialize with default options
                 window.dropdownOptions = {
-                    roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Photographer', 'Full Stack Designer', 'Video Editor', 'Corporate Videographer'],
+                    roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Douglasville, GA', 'Atlanta, GA', 'Atlanta Area'],
                     locations: ['6695 Church Street, Douglasville, GA 30134', 'Sandy Springs, GA', 'Douglasville, GA', 'Atlanta, GA', 'Atlanta Area'],
                     rates: ['$400.00 USD (Flat)', '$450.00 USD (Flat)', '$500.00 USD (Flat)', '$750.00 USD (Flat)', '$900.00 USD (Flat)', '$150/day', '$200/day'],
                     projectTypes: ['Photography', 'Video', 'Editor Project', 'Corporate Video', 'Event Coverage', 'Product Photography', 'Real Estate', 'Wedding', 'Commercial'],
@@ -2405,7 +2488,7 @@
                                 firebaseDeleted = true;
                                 firebaseMessage = 'Removed from Firebase and GitHub.';
                             } else {
-                                // Firebase API now returns success: false with a message when Firebase isn't available
+                                // Firebase API now returns success: false with a message when Firebase Admin SDK isn't configured
                                 // This is expected behavior when Firebase Admin SDK isn't configured
                                 console.warn('⚠️ Firebase account deletion limited:', firebaseResult.error);
                                 firebaseMessage = firebaseResult.message || 'Firebase account may still exist.';

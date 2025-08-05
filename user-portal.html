@@ -461,6 +461,7 @@
         // Load freelancer data from JSON file
         async function loadUsersData() {
             try {
+                console.log('🔄 Loading users data...');
                 // First, try to load directly from users API
                 try {
                     const response = await fetch('/api/users');
@@ -498,14 +499,14 @@
                                 primaryJob: user.primaryJob || 'legacy-job'
                             }));
                             
-                            console.log('✅ Users data loaded from JSON file:', users.length, 'users');
-                                            console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
-                    name: u.name, 
-                    email: u.email, 
-                    jobCount: Object.keys(u.jobs || {}).length,
-                    contractStatus: u.contractStatus,
-                    contractId: u.contractId
-                })));
+                            console.log('✅ Users data loaded from API:', users.length, 'users');
+                            console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
+                                name: u.name, 
+                                email: u.email, 
+                                jobCount: Object.keys(u.jobs || {}).length,
+                                contractStatus: u.contractStatus,
+                                contractId: u.contractId
+                            })));
                             
                             // Now merge with uploaded contracts data to get the most up-to-date contract information
                             await mergeUsersDataWithUploadedContracts();
@@ -916,17 +917,21 @@
 
         // Check if authenticated user exists in our system (simplified)
         async function checkUserInSystem(email) {
+            console.log('🔍 Checking user in system:', email);
             await loadUsersData();
             
-            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+            // Try to find user by email (case-insensitive)
+            const user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
             
             if (user) {
+                console.log('✅ User found in system:', user.name);
                 currentUser = user;
                 sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
                 showUserPortal();
             } else {
                 // User not found in our system
                 console.warn('⚠️ User not found in system:', email);
+                console.log('📋 Available users:', users.map(u => ({ name: u.name, email: u.email })));
                 showNotification('Account not found in system. Please contact support.', 'error');
             }
         }
