@@ -1,5 +1,22 @@
 {
-  "uploadedContracts": [],
-  "lastUpdated": "2025-08-05",
-  "totalContracts": 0
+  "uploadedContracts": [
+    {
+      "contractId": "CF-1754429680143-4UJUZ",
+      "freelancerName": "Black Widow",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Producer",
+      "rate": "$125/hour",
+      "location": "Atlanta, GA",
+      "fileName": "CF-1754429680143-4UJUZ.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-05T21:34:51.809Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754429680143-4UJUZ.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2026-08-05",
+      "signedDate": "2025-08-05"
+    }
+  ],
+  "lastUpdated": "2025-08-05T21:34:51.809Z",
+  "totalContracts": 1
 }
