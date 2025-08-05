@@ -1307,7 +1307,7 @@
                 container.innerHTML = `
                     <div class="contract-card">
                         <div class="contract-header">
-                            <h4><i class="fas fa-file-contract"></i> ${currentUser.jobs ? Object.values(currentUser.jobs)[0]?.role : currentUser.role}</h4>
+                            <h4><i class="fas fa-file-contract"></i> ${currentUser.jobs ? Object.values(currentUser.jobs)[0]?.title || Object.values(currentUser.jobs)[0]?.role || 'Assistant Position' : currentUser.role || 'Assistant Position'}</h4>
                             <span class="status-badge signed">✅ CONTRACT COMPLETE</span>
                         </div>
                         <div class="contract-details">
@@ -1315,7 +1315,7 @@
                                 <div><strong>Contract ID:</strong> ${contractId}</div>
                                 <div><strong>Signed Date:</strong> ${signedDate}</div>
                                 <div><strong>Uploaded Date:</strong> ${userContract ? new Date(userContract.signedDate).toLocaleDateString() : 'N/A'}</div>
-                                <div><strong>Rate:</strong> ${currentUser.jobs ? Object.values(currentUser.jobs)[0]?.rate : currentUser.rate}</div>
+                                <div><strong>Rate:</strong> ${currentUser.jobs ? Object.values(currentUser.jobs)[0]?.pay || Object.values(currentUser.jobs)[0]?.rate || '$75/hour' : currentUser.rate || '$75/hour'}</div>
                             </div>
                             <div style="background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
                                 <p style="color: #22c55e; margin: 0; font-weight: 600;">
