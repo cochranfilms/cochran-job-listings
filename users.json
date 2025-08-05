@@ -1,42 +1,5 @@
 {
-  "users": {
-    "thing one": {
-      "profile": {
-        "email": "dedejackson727@gmail.com",
-        "password": "testuser1",
-        "role": "Assistant",
-        "location": "New York, NY",
-        "projectStart": "2026-10-10T20:00",
-        "rate": "$75/hour",
-        "approvedDate": "2025-08-05"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/5/2025, 4:40:01 AM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754383201595-64YZ7"
-      },
-      "jobs": {
-        "job-assistant-default": {
-          "id": "job-assistant-default",
-          "title": "Assistant Position",
-          "date": "2025-08-05",
-          "location": "New York, NY",
-          "pay": "$75/hour",
-          "description": "Professional Assistant position in New York, NY. Details to be provided.",
-          "status": "upcoming",
-          "projectStatus": "completed",
-          "paymentStatus": "paid",
-          "assignedDate": "2025-08-05",
-          "projectStart": "2026-10-10T20:00"
-        }
-      },
-      "primaryJob": "job-assistant-default",
-      "paymentMethod": "zelle",
-      "paymentStatus": "configured"
-    }
-  },
+  "users": {},
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -52,5 +15,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 1
+  "totalUsers": 0
 }

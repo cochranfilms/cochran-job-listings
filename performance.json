@@ -1,22 +1,5 @@
 {
-  "performanceReviews": {
-    "dedejackson727@gmail.com": {
-      "userEmail": "dedejackson727@gmail.com",
-      "reviewDate": "2025-08-05",
-      "overallRating": 2,
-      "categories": {
-        "Professionalism": 5,
-        "Quality": 3,
-        "Communication": 3,
-        "Reliability": 4,
-        "Overall Performance": 2
-      },
-      "comments": "Test Comment",
-      "adminNotes": "Test Notes",
-      "reviewedBy": "admin",
-      "lastUpdated": "2025-08-05T11:01:26.960Z"
-    }
-  },
+  "performanceReviews": {},
   "reviewOptions": {
     "rating": [
       1,
@@ -39,5 +22,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalReviews": 1
+  "totalReviews": 0
 }
