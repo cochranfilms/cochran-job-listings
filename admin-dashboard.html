@@ -4743,8 +4743,7 @@
                         'performance'
                     );
                     
-                    // Show immediate alert
-                    showImmediatePerformanceReviewAlert(freelancerName);
+                    // Performance review alerts are now handled by the notification system
                     
                     // Trigger immediate performance review check
                     setTimeout(async () => {
@@ -5060,12 +5059,15 @@
                     const reviews = performanceData.performanceReviews || {};
                     
                     for (const [email, review] of Object.entries(reviews)) {
+                        // Check if we already have a notification for this review
                         const existingNotification = notifications.find(n => 
                             n.type === 'performance_review_completed' && 
-                            n.data.userEmail === email
+                            n.data.userEmail === email &&
+                            n.data.reviewDate === review.reviewDate
                         );
                         
-                        if (!existingNotification && review.overallRating) {
+                        // Only create notification if it doesn't exist and review is completed
+                        if (!existingNotification && review.overallRating && review.reviewDate) {
                             const userResponse = await fetch('/api/users');
                             if (userResponse.ok) {
                                 const usersData = await userResponse.json();
@@ -5082,6 +5084,7 @@
                                             userEmail: email,
                                             userName: user.profile?.name || 'Unknown User',
                                             rating: review.overallRating,
+                                            reviewDate: review.reviewDate,
                                             actionRequired: true,
                                             priority: 'high'
                                         }
@@ -5272,12 +5275,12 @@
                 <div class="notification-item ${notification.read ? 'read' : 'unread'} ${notification.priority}" 
                      onclick="handleNotificationClick(${notification.id})">
                     <div class="notification-header">
-                        <div class="notification-title">
-                            <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
-                            ${notification.title}
+                    <div class="notification-title">
+                        <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
+                        ${notification.title}
                             ${notification.actionRequired ? '<span class="action-required">Action Required</span>' : ''}
-                        </div>
-                        <div class="notification-time">${formatNotificationTime(notification.timestamp)}</div>
+                    </div>
+                    <div class="notification-time">${formatNotificationTime(notification.timestamp)}</div>
                     </div>
                     <div class="notification-message">${notification.message}</div>
                     ${notification.data.actionRequired ? `
@@ -5317,8 +5320,8 @@
                     break;
                     
                 case 'contract_signed':
-                    console.log('✅ Switching to contracts tab for contract management');
-                    switchTab('contracts');
+                console.log('✅ Switching to contracts tab for contract management');
+                switchTab('contracts');
                     break;
                     
                 case 'payment_method_updated':
@@ -5660,8 +5663,7 @@
                         'performance'
                     );
                     
-                    // Show immediate alert
-                    showImmediatePerformanceReviewAlert(userName);
+                    // Performance review alerts are now handled by the notification system
                     
                     // Trigger immediate performance review check
                     setTimeout(async () => {
@@ -5680,55 +5682,7 @@
             displayUsers();
         }
         
-        // Show immediate performance review alert
-        function showImmediatePerformanceReviewAlert(userName) {
-            const alertContainer = document.createElement('div');
-            alertContainer.id = 'immediatePerformanceAlert';
-            alertContainer.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, #f59e0b, #d97706);
-                color: white;
-                padding: 2rem;
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-                z-index: 10001;
-                max-width: 400px;
-                text-align: center;
-                animation: pulse 2s infinite;
-            `;
-            
-            alertContainer.innerHTML = `
-                <div style="margin-bottom: 1rem;">
-                    <i class="fas fa-star" style="font-size: 3rem; color: #FFD700;"></i>
-                </div>
-                <h3 style="margin: 0 0 1rem 0; color: white;">Performance Review Required</h3>
-                <p style="margin: 0 0 1.5rem 0; font-size: 1.1rem;">
-                    ${userName} has completed a paid project and needs a performance review.
-                </p>
-                <div style="display: flex; gap: 1rem; justify-content: center;">
-                    <button onclick="showPerformanceReviewModal('${userName}'); this.closest('div').remove();" 
-                            style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer;">
-                        Review Now
-                    </button>
-                    <button onclick="this.closest('div').remove()" 
-                            style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer;">
-                        Later
-                    </button>
-                </div>
-            `;
-            
-            document.body.appendChild(alertContainer);
-            
-            // Auto-hide after 15 seconds
-            setTimeout(() => {
-                if (alertContainer.parentNode) {
-                    alertContainer.remove();
-                }
-            }, 15000);
-        }
+        // Performance review alerts are now handled by the notification system
         
         // Real-time monitoring functions removed - not needed for admin purposes
         
@@ -6878,7 +6832,7 @@
                             <button class="action-btn notification-bell" onclick="toggleNotifications()" id="notificationBell">
                                 <i class="fas fa-bell"></i>
                                 <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
-                            </button>
+                                    </button>
                         </div>
                         
                         <button class="action-btn logout-btn" onclick="logout()">
