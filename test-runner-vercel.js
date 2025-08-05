@@ -986,7 +986,7 @@ class AutomatedTestRunner {
             
             // Step 4: Test the delete-pdf API (which handles GitHub deletion internally)
             console.log('🗑️ Testing delete-pdf API...');
-            const deletePdfResponse = await fetch(`${this.baseUrl}/api/delete-pdf`, {
+            const deletePdfResponse2 = await fetch(`${this.baseUrl}/api/delete-pdf`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -997,14 +997,14 @@ class AutomatedTestRunner {
                 })
             });
             
-            const deletePdfResult = await deletePdfResponse.json();
-            console.log('🗑️ Delete PDF result:', deletePdfResult);
-            console.log('🗑️ Delete PDF status:', deletePdfResponse.status);
+            const deletePdfResult2 = await deletePdfResponse2.json();
+            console.log('🗑️ Delete PDF result:', deletePdfResult2);
+            console.log('🗑️ Delete PDF status:', deletePdfResponse2.status);
             
             // Determine success based on API responses
             const pdfCreated = createPdfResponse.status === 200 || createPdfResponse.status === 201;
-            const deletePdfApiWorking = deletePdfResponse.status === 200;
-            const githubDeleteWorking = deletePdfResult.githubDeleted || false;
+            const deletePdfApiWorking = deletePdfResponse2.status === 200;
+            const githubDeleteWorking = deletePdfResult2.githubDeleted || false;
             
             // Create detailed success message
             let successMessage = 'Complete PDF lifecycle test: ';
@@ -1033,9 +1033,9 @@ class AutomatedTestRunner {
                     pdfCreated: pdfCreated,
                     createPdfStatus: createPdfResponse.status,
                     createPdfResult: createPdfResult,
-                    deletePdfApiWorking: deletePdfApiWorking,
-                    deletePdfStatus: deletePdfResponse.status,
-                    deletePdfResult: deletePdfResult,
+                                    deletePdfApiWorking: deletePdfApiWorking,
+                deletePdfStatus: deletePdfResponse2.status,
+                deletePdfResult: deletePdfResult2,
                     githubDeleteWorking: githubDeleteWorking,
                     testFileName: testFileName,
                     testContractId: testContractId,
@@ -1043,7 +1043,7 @@ class AutomatedTestRunner {
                     // Add specific error details
                     errors: {
                         pdfCreationFailed: !pdfCreated ? `Status: ${createPdfResponse.status}, Result: ${JSON.stringify(createPdfResult)}` : null,
-                        deleteApiFailed: !deletePdfApiWorking ? `Status: ${deletePdfResponse.status}, Result: ${JSON.stringify(deletePdfResult)}` : null,
+                        deleteApiFailed: !deletePdfApiWorking ? `Status: ${deletePdfResponse2.status}, Result: ${JSON.stringify(deletePdfResult2)}` : null,
                         githubDeleteFailed: !githubDeleteWorking ? `GitHub deletion failed in delete-pdf API` : null
                     }
                 }
