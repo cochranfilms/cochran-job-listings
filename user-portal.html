@@ -1226,13 +1226,13 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             
+            // Show loading state
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Signing in...';
+            submitBtn.disabled = true;
+            
             try {
-                // Show loading state
-                const submitBtn = event.target.querySelector('button[type="submit"]');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Signing in...';
-                submitBtn.disabled = true;
-                
                 // Quick user validation first (without heavy data loading)
                 const user = await validateUserQuickly(email, password);
                 
@@ -1271,7 +1271,6 @@
                 document.getElementById('loginError').style.display = 'block';
             } finally {
                 // Reset button state
-                const submitBtn = event.target.querySelector('button[type="submit"]');
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             }
@@ -1288,9 +1287,13 @@
                         const jsonData = await response.json();
                         if (jsonData.users) {
                             // Quick user lookup without full data transformation
-                            const userEntry = Object.entries(jsonData.users).find(([name, user]) => 
-                                user.profile?.email && user.profile.email.toLowerCase() === email.toLowerCase()
-                            );
+                            const userEntry = Object.entries(jsonData.users).find(([name, user]) => {
+                                // Safely check if user and profile exist
+                                if (!user || !user.profile || !user.profile.email) {
+                                    return false;
+                                }
+                                return user.profile.email.toLowerCase() === email.toLowerCase();
+                            });
                             
                             if (userEntry) {
                                 const [name, user] = userEntry;
@@ -1329,7 +1332,13 @@
                     }
                 } else {
                     // Use cached data if available
-                    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+                    const user = users.find(u => {
+                        // Safely check if user and email exist
+                        if (!u || !u.email) {
+                            return false;
+                        }
+                        return u.email.toLowerCase() === email.toLowerCase();
+                    });
                     if (user && user.password === password) {
                         return user;
                     }
