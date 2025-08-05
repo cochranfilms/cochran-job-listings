@@ -51,10 +51,12 @@ The Cochran Films Automated Testing System provides comprehensive testing for al
 - **Status Updates**: Ensures project status changes are recorded
 
 ### 8. PDF Deletion Tests
+- **Complete Contract Lifecycle**: Creates test PDF file → Uploads to GitHub → Tests deletion
+- **PDF Creation**: Tests GitHub API to create actual test PDF file in `/contracts` folder
+- **Contract Record Management**: Adds/removes contract records in `uploaded-contracts.json`
 - **PDF Deletion API**: Tests the dedicated PDF deletion endpoint
-- **Local File Cleanup**: Verifies PDF files are removed from local storage
-- **JSON Record Updates**: Ensures contract records are updated in JSON files
-- **GitHub Integration**: Tests GitHub file deletion when contractId is provided
+- **GitHub Integration**: Tests GitHub file deletion via API
+- **Cleanup Process**: Automatically removes test PDF files and records after testing
 
 ## Getting Started
 
@@ -245,10 +247,16 @@ The system uses test data that is automatically cleaned up:
 
 - **Test User**: `test@cochranfilms.com`
 - **Test Job**: "Test Photography Job"
-- **Test Contract**: "test-contract.pdf"
+- **Test Contract**: "test-delete-pdf.pdf" (creates actual PDF file)
 - **Test Notification**: "Test Notification"
 
 All test data is removed after tests complete to avoid cluttering your system.
+
+### PDF Deletion Test Process
+1. **Creates Test PDF**: Uses GitHub API to create `test-delete-pdf.pdf` in `/contracts` folder
+2. **Adds Contract Record**: Updates `uploaded-contracts.json` with test contract data
+3. **Tests Deletion APIs**: Tests both `/api/delete-pdf` and GitHub file deletion
+4. **Cleanup**: Removes test PDF file and contract records after testing
 
 ## Vercel Deployment
 

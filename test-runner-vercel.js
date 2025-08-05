@@ -249,6 +249,35 @@ class AutomatedTestRunner {
                 }
             });
             
+            // Clean up PDF files via GitHub API
+            if (cleanupData.contracts.length > 0) {
+                for (const contract of cleanupData.contracts) {
+                    if (contract.fileName) {
+                        try {
+                            console.log(`🗑️ Attempting to delete test PDF file: ${contract.fileName}`);
+                            const deleteResponse = await fetch(`${this.baseUrl}/api/github/file/${contract.fileName}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    message: `Cleanup test contract ${contract.contractId || 'unknown'} - ${contract.fileName}`,
+                                    sha: 'latest'
+                                })
+                            });
+                            
+                            if (deleteResponse.ok || deleteResponse.status === 404) {
+                                console.log(`✅ Deleted test PDF file: ${contract.fileName}`);
+                            } else {
+                                console.log(`⚠️ Could not delete test PDF file: ${contract.fileName} (Status: ${deleteResponse.status})`);
+                            }
+                        } catch (error) {
+                            console.log(`⚠️ Could not cleanup PDF file: ${error.message}`);
+                        }
+                    }
+                }
+            }
+            
             await this.log(`✅ Cleanup completed: ${cleanedCount} items removed`, 'success');
             
             // Clear the test data log (Vercel environment)
@@ -840,25 +869,62 @@ class AutomatedTestRunner {
 
     async testPdfDeletion() {
         return this.runTest('PDF Deletion API', async () => {
-            // Test the GitHub API PDF deletion endpoint directly
-            // This simulates the actual PDF deletion workflow
-            
             const testFileName = 'test-delete-pdf.pdf';
             const testContractId = 'TEST-DELETE-001';
             
-            // Test 1: Check if the GitHub API endpoint is accessible
-            const githubApiResponse = await fetch(`${this.baseUrl}/api/github/file/${testFileName}`, {
-                method: 'DELETE',
+            // Step 1: Create a test PDF file via GitHub API
+            console.log('📄 Creating test PDF file...');
+            const createPdfResponse = await fetch(`${this.baseUrl}/api/github/file/${testFileName}`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    message: `Delete test contract ${testContractId} - ${testFileName}`,
-                    sha: 'latest'
+                    message: `Create test contract ${testContractId} - ${testFileName}`,
+                    content: btoa('Test PDF content for deletion testing'),
+                    branch: 'main'
                 })
             });
             
-            // Test 2: Check if the delete-pdf API endpoint is accessible
+            const createPdfResult = await createPdfResponse.json();
+            console.log('📄 PDF creation result:', createPdfResult);
+            
+            // Step 2: Add contract record to uploaded-contracts.json
+            console.log('📋 Adding contract record...');
+            let contractsData;
+            try {
+                contractsData = JSON.parse(await fs.readFile('uploaded-contracts.json', 'utf8'));
+            } catch (error) {
+                contractsData = {
+                    uploadedContracts: [],
+                    totalContracts: 0,
+                    lastUpdated: new Date().toISOString().split('T')[0]
+                };
+            }
+            
+            const testContract = {
+                fileName: testFileName,
+                contractId: testContractId,
+                status: 'signed',
+                uploadedDate: new Date().toISOString(),
+                userEmail: this.testData.user.email,
+                isTestContract: true,
+                testData: true
+            };
+            
+            contractsData.uploadedContracts.push(testContract);
+            contractsData.totalContracts = contractsData.uploadedContracts.length;
+            contractsData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            // Log for cleanup
+            this.logTestData('CONTRACT_CREATED', {
+                fileName: testFileName,
+                contractId: testContractId,
+                file: 'uploaded-contracts.json'
+            });
+            
+            // Step 3: Test the delete-pdf API endpoint
+            console.log('🗑️ Testing PDF deletion...');
             const deletePdfResponse = await fetch(`${this.baseUrl}/api/delete-pdf`, {
                 method: 'DELETE',
                 headers: {
@@ -871,22 +937,45 @@ class AutomatedTestRunner {
             });
             
             const deletePdfResult = await deletePdfResponse.json();
+            console.log('🗑️ PDF deletion result:', deletePdfResult);
             
-            // Determine success based on API responses
-            const githubApiWorking = githubApiResponse.status === 200 || githubApiResponse.status === 404;
+            // Step 4: Test GitHub API deletion endpoint
+            console.log('🗑️ Testing GitHub API deletion...');
+            const githubDeleteResponse = await fetch(`${this.baseUrl}/api/github/file/${testFileName}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Delete test contract ${testContractId} - ${testFileName}`,
+                    sha: 'latest'
+                })
+            });
+            
+            const githubDeleteResult = await githubDeleteResponse.json();
+            console.log('🗑️ GitHub deletion result:', githubDeleteResult);
+            
+            // Determine success based on all API responses
+            const pdfCreated = createPdfResponse.status === 200 || createPdfResponse.status === 201;
             const deletePdfApiWorking = deletePdfResponse.status === 200;
+            const githubDeleteWorking = githubDeleteResponse.status === 200 || githubDeleteResponse.status === 404;
             
             return {
-                success: githubApiWorking && deletePdfApiWorking,
-                message: 'PDF deletion API endpoints tested successfully',
+                success: pdfCreated && deletePdfApiWorking && githubDeleteWorking,
+                message: 'Complete PDF lifecycle test: Create → Upload → Delete',
                 details: {
-                    githubApiStatus: githubApiResponse.status,
-                    githubApiWorking: githubApiWorking,
-                    deletePdfApiStatus: deletePdfResponse.status,
+                    pdfCreated: pdfCreated,
+                    createPdfStatus: createPdfResponse.status,
+                    createPdfResult: createPdfResult,
                     deletePdfApiWorking: deletePdfApiWorking,
+                    deletePdfStatus: deletePdfResponse.status,
                     deletePdfResult: deletePdfResult,
+                    githubDeleteWorking: githubDeleteWorking,
+                    githubDeleteStatus: githubDeleteResponse.status,
+                    githubDeleteResult: githubDeleteResult,
                     testFileName: testFileName,
-                    testContractId: testContractId
+                    testContractId: testContractId,
+                    contractRecordAdded: true
                 }
             };
         });

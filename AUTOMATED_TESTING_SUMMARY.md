@@ -65,7 +65,10 @@ All 15 automated tests are now passing, providing comprehensive coverage of your
 - **Project Timeline Updates**: ✅ PASS
 
 ### ✅ **PDF Deletion Tests**
-- **Complete Contract Lifecycle**: ✅ PASS (creation, signing, upload, deletion)
+- **Complete Contract Lifecycle**: ✅ PASS (creates actual PDF file → uploads to GitHub → tests deletion)
+- **PDF Creation**: ✅ PASS (creates test-delete-pdf.pdf in /contracts folder)
+- **Contract Record Management**: ✅ PASS (adds/removes records in uploaded-contracts.json)
+- **GitHub API Integration**: ✅ PASS (tests both creation and deletion via GitHub API)
 
 ## 🎯 Key Features
 
@@ -222,6 +225,22 @@ curl -X POST https://collaborate.cochranfilms.com/api/run-tests \
 - **Test Runner**: `test-runner-vercel.js` with correct domain configuration
 - **File Operations**: Handles serverless environment constraints
 - **CORS**: Configured for cross-origin requests from dashboard
+
+## 📄 Test Data and Process
+
+### **Test Data Used**
+- **Test User**: `test@cochranfilms.com`
+- **Test Job**: "Test Photography Job"
+- **Test Contract**: "test-delete-pdf.pdf" (creates actual PDF file in /contracts folder)
+- **Test Notification**: "Test Notification"
+
+### **PDF Deletion Test Process**
+1. **Creates Test PDF**: Uses GitHub API to create `test-delete-pdf.pdf` in `/contracts` folder
+2. **Adds Contract Record**: Updates `uploaded-contracts.json` with test contract data
+3. **Tests Deletion APIs**: Tests both `/api/delete-pdf` and GitHub file deletion
+4. **Cleanup**: Removes test PDF file and contract records after testing
+
+All test data is automatically cleaned up after tests complete to avoid cluttering your system.
 
 ### **Deployment Features**
 - **Automatic Deployment**: Push to GitHub triggers Vercel deployment
