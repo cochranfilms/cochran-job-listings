@@ -16,17 +16,21 @@
         "contractId": "TEST-DELETE-001"
       },
       "jobs": {
-        "test-job-001": {
-          "id": "test-job-001",
-          "title": "Test Project",
-          "status": "in-progress",
-          "startDate": "2025-01-15",
-          "endDate": "2025-02-15",
-          "progress": 50,
-          "lastUpdated": "2025-08-05T20:18:22.375Z"
+        "job-producer-default": {
+          "id": "job-producer-default",
+          "title": "Producer Position",
+          "date": "2025-08-05",
+          "location": "Atlanta, GA",
+          "pay": "$200/hour",
+          "description": "Professional Producer position in Atlanta, GA. Details to be provided.",
+          "status": "upcoming",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-05",
+          "projectStart": "TBD"
         }
       },
-      "primaryJob": null,
+      "primaryJob": "job-producer-default",
       "paymentMethod": null
     }
   },
@@ -45,5 +49,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 0
+  "totalUsers": 1
 }
