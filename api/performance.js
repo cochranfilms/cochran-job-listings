@@ -33,10 +33,26 @@ async function loadPerformanceData() {
 // Save performance reviews data
 async function savePerformanceData(data) {
     try {
+        console.log('💾 Attempting to save performance data to:', PERFORMANCE_FILE);
+        console.log('📊 Data to save:', JSON.stringify(data, null, 2));
+        
+        // Ensure the directory exists
+        const dir = path.dirname(PERFORMANCE_FILE);
+        try {
+            await fs.access(dir);
+            console.log('✅ Directory exists:', dir);
+        } catch (dirError) {
+            console.log('⚠️ Directory does not exist, creating:', dir);
+            await fs.mkdir(dir, { recursive: true });
+        }
+        
         await fs.writeFile(PERFORMANCE_FILE, JSON.stringify(data, null, 2));
+        console.log('✅ Performance data saved successfully');
         return true;
     } catch (error) {
-        console.error('Error saving performance data:', error);
+        console.error('❌ Error saving performance data:', error);
+        console.error('❌ Error details:', error.message);
+        console.error('❌ File path:', PERFORMANCE_FILE);
         return false;
     }
 }
@@ -107,22 +123,31 @@ module.exports = async (req, res) => {
 
         // POST /api/performance - Create/Update performance reviews
         if (method === 'POST' && pathSegments.length === 0) {
+            console.log('📝 Processing POST request for performance reviews');
             const requestData = req.body;
+            console.log('📥 Received request data:', JSON.stringify(requestData, null, 2));
             
             if (!requestData || !requestData.performanceReviews) {
+                console.error('❌ Invalid request data - missing performanceReviews');
                 return res.status(400).json({ error: 'Invalid request data' });
             }
             
+            console.log('📖 Loading existing performance data...');
             const data = await loadPerformanceData();
+            console.log('📊 Existing data loaded:', Object.keys(data.performanceReviews).length, 'reviews');
+            
             data.performanceReviews = requestData.performanceReviews;
             data.lastUpdated = new Date().toISOString();
             data.totalReviews = Object.keys(requestData.performanceReviews).length;
             
+            console.log('💾 Attempting to save updated data...');
             const success = await savePerformanceData(data);
             
             if (success) {
+                console.log('✅ Performance reviews updated successfully');
                 res.json({ message: 'Performance reviews updated successfully', totalReviews: data.totalReviews });
             } else {
+                console.error('❌ Failed to save performance reviews');
                 res.status(500).json({ error: 'Failed to save performance reviews' });
             }
             return;
