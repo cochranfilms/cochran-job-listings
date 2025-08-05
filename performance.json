@@ -1,5 +1,22 @@
 {
-  "performanceReviews": {},
+  "performanceReviews": {
+    "codylcochran89@gmail.com": {
+      "userEmail": "codylcochran89@gmail.com",
+      "reviewDate": "2025-08-05",
+      "overallRating": 4,
+      "categories": {
+        "Professionalism": 3,
+        "Quality": 4,
+        "Communication": 5,
+        "Reliability": 4,
+        "Overall Performance": 3
+      },
+      "comments": "You did good kid",
+      "adminNotes": "internally",
+      "reviewedBy": "admin",
+      "lastUpdated": "2025-08-05T18:22:37.527Z"
+    }
+  },
   "reviewOptions": {
     "rating": [
       1,
@@ -22,5 +39,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalReviews": 0
+  "totalReviews": 1
 }
