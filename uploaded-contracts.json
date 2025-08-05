@@ -1,24 +1,7 @@
 {
-  "exportDate": "2025-08-05T12:51:18.109Z",
-  "totalContracts": 1,
+  "exportDate": "2025-08-05T12:55:18.501Z",
+  "totalContracts": 0,
   "contracts": [],
-  "uploadedContracts": [
-    {
-      "contractId": "CF-1754397809602-KXKFK",
-      "freelancerName": "Thing Two",
-      "freelancerEmail": "codylcochran89@gmail.com",
-      "role": "Backdrop Photographer Base",
-      "rate": "$250/hour",
-      "location": "Atlanta, GA",
-      "fileName": "CF-1754397809602-KXKFK.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-05T12:43:41.441Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754397809602-KXKFK.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-05",
-      "signedDate": "2025-08-05"
-    }
-  ],
-  "lastUpdated": "2025-08-05T12:51:18.109Z"
+  "uploadedContracts": [],
+  "lastUpdated": "2025-08-05T12:55:18.501Z"
 }
