@@ -581,11 +581,39 @@
                 try {
                     let successCount = 0;
                     let errorCount = 0;
+                    let pdfDeletedCount = 0;
+                    
+                    // Sort by index in descending order to maintain correct indices during deletion
+                    selectedContracts.sort((a, b) => b.index - a.index);
                     
                     for (const { index, contract } of selectedContracts) {
                         try {
-                            // Remove from local array (in reverse order to maintain indices)
+                            // 1. Remove from local array
                             uploadedContracts.splice(index, 1);
+                            
+                            // 2. Try to delete PDF file from GitHub
+                            if (contract.fileName) {
+                                try {
+                                    const deleteResponse = await fetch('/api/github/file/contracts/' + contract.fileName, {
+                                        method: 'DELETE',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            message: `Delete contract PDF: ${contract.fileName} - ${contract.freelancerName}`
+                                        })
+                                    });
+                                    
+                                    if (deleteResponse.ok) {
+                                        console.log('✅ PDF file deleted from GitHub:', contract.fileName);
+                                        pdfDeletedCount++;
+                                    } else {
+                                        console.warn('⚠️ Could not delete PDF file from GitHub:', contract.fileName);
+                                    }
+                                } catch (pdfError) {
+                                    console.warn('⚠️ Error deleting PDF file:', pdfError);
+                                }
+                            }
                             
                             successCount++;
                         } catch (error) {
@@ -594,13 +622,22 @@
                         }
                     }
                     
-
+                    // 3. Update uploaded-contracts.json on GitHub
+                    const gitHubUpdateSuccess = await updateUploadedContractsOnGitHub();
                     
+                    // 4. Update display
                     displayUploadedContracts();
                     updateContractAnalytics();
                     
-                    if (errorCount === 0) {
-                        showNotification(`✅ Successfully deleted ${successCount} contract(s)!\n\nBoth contract data and PDF files have been removed from GitHub.`, 'success');
+                    // 5. Show appropriate success message
+                    if (errorCount === 0 && gitHubUpdateSuccess) {
+                        if (pdfDeletedCount === selectedContracts.length) {
+                            showNotification(`✅ Successfully deleted ${successCount} contract(s)! Removed from GitHub and all PDF files deleted.`, 'success');
+                        } else {
+                            showNotification(`✅ Successfully deleted ${successCount} contract(s) from data. ${pdfDeletedCount}/${selectedContracts.length} PDF files deleted from GitHub.`, 'success');
+                        }
+                    } else if (errorCount === 0) {
+                        showNotification(`⚠️ Deleted ${successCount} contract(s) locally but GitHub update failed. Check console for details.`, 'warning');
                     } else {
                         showNotification(`⚠️ Deleted ${successCount} contract(s), but ${errorCount} failed.\n\nCheck the console for details.`, 'warning');
                     }
@@ -722,18 +759,114 @@
             document.body.appendChild(modal);
         }
 
+        // Update uploaded-contracts.json on GitHub
+        async function updateUploadedContractsOnGitHub() {
+            try {
+                console.log('🔄 Updating uploaded-contracts.json on GitHub...');
+                
+                const uploadedContractsData = {
+                    exportDate: new Date().toISOString(),
+                    totalContracts: uploadedContracts.length,
+                    contracts: [],
+                    uploadedContracts: uploadedContracts,
+                    lastUpdated: new Date().toISOString()
+                };
+                
+                // First, get the current file SHA
+                const getResponse = await fetch('/api/github/file/uploaded-contracts.json');
+                let sha = null;
+                
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                    console.log('📄 Got current file SHA:', sha.substring(0, 7));
+                } else if (getResponse.status === 404) {
+                    console.log('📄 File does not exist, will create new file');
+                } else {
+                    console.warn('⚠️ Could not get current file SHA, proceeding without it');
+                }
+                
+                const updateBody = {
+                    content: JSON.stringify(uploadedContractsData, null, 2),
+                    message: `Update uploaded-contracts.json - Admin dashboard update - ${new Date().toLocaleString()}`
+                };
+                
+                // Include SHA if we have it (for updates)
+                if (sha) {
+                    updateBody.sha = sha;
+                }
+                
+                const response = await fetch('/api/github/file/uploaded-contracts.json', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateBody)
+                });
+                
+                if (response.ok) {
+                    console.log('✅ uploaded-contracts.json updated on GitHub successfully');
+                    return true;
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ Failed to update uploaded-contracts.json on GitHub:', response.status, errorData);
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error('❌ Error updating uploaded-contracts.json on GitHub:', error);
+                return false;
+            }
+        }
+
         // Delete uploaded contract
         async function deleteUploadedContract(index) {
             const contract = uploadedContracts[index];
             if (confirm(`Are you sure you want to delete the contract for ${contract.freelancerName}?\n\nContract ID: ${contract.contractId}\n\nThis will delete both the contract data AND the PDF file from GitHub.\n\nThis action cannot be undone.`)) {
                 try {
-                    // Remove from local array
+                    // 1. Remove from local array
                     uploadedContracts.splice(index, 1);
                     
+                    // 2. Update uploaded-contracts.json on GitHub
+                    const gitHubUpdateSuccess = await updateUploadedContractsOnGitHub();
+                    
+                    // 3. Delete PDF file from GitHub (if filename exists)
+                    let pdfDeleted = false;
+                    if (contract.fileName) {
+                        try {
+                            const deleteResponse = await fetch('/api/github/file/contracts/' + contract.fileName, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    message: `Delete contract PDF: ${contract.fileName} - ${contract.freelancerName}`
+                                })
+                            });
+                            
+                            if (deleteResponse.ok) {
+                                console.log('✅ PDF file deleted from GitHub:', contract.fileName);
+                                pdfDeleted = true;
+                            } else {
+                                console.warn('⚠️ Could not delete PDF file from GitHub:', contract.fileName);
+                            }
+                        } catch (pdfError) {
+                            console.warn('⚠️ Error deleting PDF file:', pdfError);
+                        }
+                    }
+                    
+                    // 4. Update display
                     displayUploadedContracts();
                     updateContractAnalytics();
                     
-                    showNotification(`✅ Contract for ${contract.freelancerName} deleted successfully!`, 'success');
+                    // 5. Show appropriate success message
+                    if (gitHubUpdateSuccess && pdfDeleted) {
+                        showNotification(`✅ Contract for ${contract.freelancerName} deleted successfully! Removed from GitHub and PDF file deleted.`, 'success');
+                    } else if (gitHubUpdateSuccess) {
+                        showNotification(`✅ Contract for ${contract.freelancerName} deleted from data. PDF file may still exist on GitHub.`, 'success');
+                    } else {
+                        showNotification(`⚠️ Contract deleted locally but GitHub update failed. Check console for details.`, 'warning');
+                    }
                     
                 } catch (error) {
                     console.error('❌ Error deleting contract:', error);
