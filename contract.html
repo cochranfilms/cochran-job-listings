@@ -1012,41 +1012,23 @@
                         currentYPos = 120; // Reset to terms section if needed
                     }
                     
-                    // Draw the entire term as a single line with proper formatting
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(7);
-                    
                     // Split the term into title and description
                     const colonIndex = term.indexOf(':');
                     const title = term.substring(0, colonIndex + 1);
                     const description = term.substring(colonIndex + 1);
                     
-                    // Calculate total width to ensure it fits
-                    const titleWidth = doc.getTextWidth(title);
-                    doc.setFont('helvetica', 'normal');
-                    const descWidth = doc.getTextWidth(description);
-                    const totalWidth = titleWidth + descWidth + 3; // 3mm spacing
+                    // Always use two-line layout to prevent overlapping
+                    // Draw title on first line
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7);
+                    doc.text(title, 20, currentYPos);
+                    currentYPos += 4;
                     
-                    // If total width exceeds page width, wrap to next line
-                    if (totalWidth > 160) {
-                        // Draw title on first line
-                        doc.setFont('helvetica', 'bold');
-                        doc.text(title, 20, currentYPos);
-                        currentYPos += 4;
-                        
-                        // Draw description on second line with indent
-                        doc.setFont('helvetica', 'normal');
-                        doc.text(description, 25, currentYPos);
-                        currentYPos += lineHeight + 2;
-                    } else {
-                        // Draw title and description on same line
-                        doc.setFont('helvetica', 'bold');
-                        doc.text(title, 20, currentYPos);
-                        
-                        doc.setFont('helvetica', 'normal');
-                        doc.text(description, 20 + titleWidth + 3, currentYPos); // 3mm spacing
-                        currentYPos += lineHeight;
-                    }
+                    // Draw description on second line with indent
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(6); // Slightly smaller for description
+                    doc.text(description, 25, currentYPos);
+                    currentYPos += lineHeight + 2;
                 });
                 
                 // Fixed signature section position for single page
@@ -1258,41 +1240,23 @@
                         currentYPos = 125; // Reset to terms section if needed
                     }
                     
-                    // Draw the entire term as a single line with proper formatting
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(7);
-                    
                     // Split the term into title and description
                     const colonIndex = term.indexOf(':');
                     const title = term.substring(0, colonIndex + 1);
                     const description = term.substring(colonIndex + 1);
                     
-                    // Calculate total width to ensure it fits
-                    const titleWidth = doc.getTextWidth(title);
-                    doc.setFont('helvetica', 'normal');
-                    const descWidth = doc.getTextWidth(description);
-                    const totalWidth = titleWidth + descWidth + 3; // 3mm spacing
+                    // Always use two-line layout to prevent overlapping
+                    // Draw title on first line
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7);
+                    doc.text(title, 20, currentYPos);
+                    currentYPos += 4;
                     
-                    // If total width exceeds page width, wrap to next line
-                    if (totalWidth > 160) {
-                        // Draw title on first line
-                        doc.setFont('helvetica', 'bold');
-                        doc.text(title, 20, currentYPos);
-                        currentYPos += 4;
-                        
-                        // Draw description on second line with indent
-                        doc.setFont('helvetica', 'normal');
-                        doc.text(description, 25, currentYPos);
-                        currentYPos += lineHeight + 2;
-                    } else {
-                        // Draw title and description on same line
-                        doc.setFont('helvetica', 'bold');
-                        doc.text(title, 20, currentYPos);
-                        
-                        doc.setFont('helvetica', 'normal');
-                        doc.text(description, 20 + titleWidth + 3, currentYPos); // 3mm spacing
-                        currentYPos += lineHeight;
-                    }
+                    // Draw description on second line with indent
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(6); // Slightly smaller for description
+                    doc.text(description, 25, currentYPos);
+                    currentYPos += lineHeight + 2;
                 });
                 
                 // ==================== ADVANCED SIGNATURES ====================

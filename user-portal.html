@@ -859,7 +859,7 @@
 
 
 
-        // Handle login with Firebase
+        // Handle login with custom authentication (not Firebase)
         async function handleLogin(event) {
             event.preventDefault();
             
@@ -873,29 +873,35 @@
                 submitBtn.textContent = 'Signing in...';
                 submitBtn.disabled = true;
                 
-                // Firebase authentication
-                await auth.signInWithEmailAndPassword(email, password);
+                // Load users data first
+                await loadUsersData();
                 
-                // The auth state observer will handle the rest
+                // Find user in our system
+                const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+                
+                if (!user) {
+                    throw new Error('User not found');
+                }
+                
+                // Check password
+                if (user.password !== password) {
+                    throw new Error('Incorrect password');
+                }
+                
+                // Set current user and show portal
+                currentUser = user;
+                sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
+                showUserPortal();
                 
             } catch (error) {
                 console.error('Login error:', error);
                 
-                // Handle specific Firebase errors
+                // Handle specific errors
                 let errorMessage = 'Login failed. Please try again.';
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                        errorMessage = 'User not found. Please check your email.';
-                        break;
-                    case 'auth/wrong-password':
-                        errorMessage = 'Incorrect password. Please try again.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMessage = 'Invalid email format.';
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMessage = 'Too many failed attempts. Please try again later.';
-                        break;
+                if (error.message === 'User not found') {
+                    errorMessage = 'User not found. Please check your email.';
+                } else if (error.message === 'Incorrect password') {
+                    errorMessage = 'Incorrect password. Please try again.';
                 }
                 
                 document.getElementById('loginError').textContent = errorMessage;
@@ -908,7 +914,7 @@
             }
         }
 
-        // Check if authenticated user exists in our system
+        // Check if authenticated user exists in our system (simplified)
         async function checkUserInSystem(email) {
             await loadUsersData();
             
@@ -919,10 +925,9 @@
                 sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
                 showUserPortal();
             } else {
-                // User authenticated with Firebase but not in our system
-                console.warn('⚠️ User authenticated but not found in system:', email);
+                // User not found in our system
+                console.warn('⚠️ User not found in system:', email);
                 showNotification('Account not found in system. Please contact support.', 'error');
-                await auth.signOut();
             }
         }
 
