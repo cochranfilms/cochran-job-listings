@@ -1,40 +1,24 @@
 {
-  "exportDate": "2025-08-05T02:38:05.005Z",
-  "totalContracts": 2,
+  "exportDate": "2025-08-05T06:14:14.292Z",
+  "totalContracts": 1,
   "contracts": [],
   "uploadedContracts": [
     {
-      "contractId": "CF-1754363094793-DADAL",
-      "freelancerName": "Thing Three",
-      "freelancerEmail": "codylcochran89@gmail.com",
-      "role": "Editor",
-      "rate": "$100/hour",
-      "location": "Miami, FL",
-      "fileName": "CF-1754363094793-DADAL.pdf",
+      "contractId": "CF-1754374579524-1TXMZ",
+      "freelancerName": "Thing Six",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Producer",
+      "rate": "$200/hour",
+      "location": "Atlanta, GA",
+      "fileName": "CF-1754374579524-1TXMZ.pdf",
       "fileSize": 0,
-      "uploadDate": "2025-08-05T03:05:06.831Z",
+      "uploadDate": "2025-08-05T06:16:31.536Z",
       "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754363094793-DADAL.pdf",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754374579524-1TXMZ.pdf",
       "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
-    },
-    {
-      "contractId": "CF-1754364806149-P6K90",
-      "freelancerName": "Chance Jarrard",
-      "freelancerEmail": "chancejarrard@gmail.com",
-      "role": "Videographer",
-      "rate": "$100/hour",
-      "location": "Los Angeles, CA",
-      "fileName": "CF-1754364806149-P6K90.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-05T03:33:38.999Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754364806149-P6K90.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-04",
-      "signedDate": "2025-08-04"
+      "contractDate": "2025-08-05",
+      "signedDate": "2025-08-05"
     }
   ],
-  "lastUpdated": "2025-08-05T03:33:38.999Z"
+  "lastUpdated": "2025-08-05T06:16:31.536Z"
 }

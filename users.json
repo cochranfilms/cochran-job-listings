@@ -1,26 +1,25 @@
 {
   "users": {
-    "Chance Jarrard": {
+    "Thing Six": {
       "profile": {
-        "email": "chancejarrard@gmail.com",
-        "password": "zujwi9-Hihdov-hubwug",
-        "role": "Videographer",
-        "location": "Los Angeles, CA",
-        "projectStart": "2025-10-11T17:00",
-        "rate": "$100/hour",
-        "approvedDate": "2025-08-04"
+        "email": "codylcochran87@gmail.com",
+        "password": "newuser1234",
+        "role": "Producer",
+        "location": "Atlanta, GA",
+        "projectStart": "2026-04-04T08:00",
+        "rate": "$200/hour",
+        "approvedDate": "2025-08-05"
       },
       "contract": {
         "contractUrl": "contract.html",
         "contractStatus": "signed",
-        "contractSignedDate": "8/4/2025, 11:33:26 PM",
+        "contractSignedDate": "8/5/2025, 2:16:19 AM",
         "contractUploadedDate": null,
-        "contractId": "CF-1754364806149-P6K90"
+        "contractId": "CF-1754374579524-1TXMZ"
       },
       "jobs": {},
       "primaryJob": null,
-      "paymentMethod": "check",
-      "paymentStatus": "configured"
+      "paymentMethod": null
     }
   },
   "statusOptions": {
