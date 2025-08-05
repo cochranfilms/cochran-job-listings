@@ -1,5 +1,27 @@
 {
-  "users": {},
+  "users": {
+    "Thing Two": {
+      "profile": {
+        "email": "clc.collective2025@gmail.com",
+        "password": "YrXirwe0aQNI",
+        "role": "Videographer",
+        "location": "New York, NY",
+        "projectStart": "2025-10-10T20:00",
+        "rate": "$125/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {},
+      "primaryJob": null,
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +37,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 0
+  "totalUsers": 1
 }
