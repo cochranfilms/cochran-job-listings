@@ -3,7 +3,7 @@
     "Thing Six": {
       "profile": {
         "email": "codylcochran87@gmail.com",
-        "password": "qkvMYRI0tDkv",
+        "password": "newuser1234",
         "role": "Producer",
         "location": "Atlanta, GA",
         "projectStart": "2026-04-04T08:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/5/2025, 2:16:19 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754374579524-1TXMZ"
       },
       "jobs": {},
       "primaryJob": null,
