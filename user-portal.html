@@ -2360,6 +2360,14 @@
             const projectStatus = userJob ? userJob.projectStatus : 'upcoming';
             const paymentStatus = userJob ? userJob.paymentStatus : (currentUser.paymentStatus || 'pending');
             
+            console.log('🔍 User portal timeline data:', {
+                selectedJob: selectedJob,
+                userJob: userJob,
+                projectStatus: projectStatus,
+                paymentStatus: paymentStatus,
+                currentUserPaymentStatus: currentUser.paymentStatus
+            });
+            
             // Get job data from jobs-data.json
             const jobData = jobsData.find(job => job.id === selectedJob?.id);
             
@@ -3704,6 +3712,26 @@
             
             // Add refresh button functionality
             window.refreshUserData = refreshUserData;
+            
+            // Set up automatic data refresh every 30 seconds for real-time updates
+            setInterval(() => {
+                console.log('🔄 Auto-refreshing user portal data...');
+                loadUsersData().then(() => {
+                    console.log('✅ User portal data auto-refreshed');
+                    // Refresh user display if user is logged in
+                    if (currentUser) {
+                        loadUserData();
+                    }
+                }).catch(error => {
+                    console.warn('⚠️ User portal auto-refresh failed:', error);
+                });
+                
+                loadPerformanceReviews().then(() => {
+                    console.log('✅ User portal performance reviews auto-refreshed');
+                }).catch(error => {
+                    console.warn('⚠️ User portal performance auto-refresh failed:', error);
+                });
+            }, 30000); // 30 seconds
         });
     </script>
 

@@ -2046,9 +2046,14 @@
 
         // Get performance review button
         function getPerformanceReviewButton(userData) {
-            // Try multiple ways to get the email
+            // Try multiple ways to get the email - handle both data structures
             const userEmail = userData.profile?.email || userData.email || userData.profile?.userEmail;
             const existingReview = performanceReviews[userEmail];
+            
+            // Debug logging
+            console.log('🔍 Performance review button - User data:', userData);
+            console.log('🔍 Performance review button - User email:', userEmail);
+            console.log('🔍 Performance review button - Available reviews:', Object.keys(performanceReviews));
             
             // Get the user name properly
             const userName = userData.name || userData.profile?.name || 'Unknown';
@@ -3406,6 +3411,19 @@
                 console.log('🔄 Loading performance reviews...');
                 console.log('🔍 Current performanceReviews object:', performanceReviews);
                 
+                // Check for cached data first (5-minute cache)
+                const cachedData = sessionStorage.getItem('cachedPerformanceReviews');
+                const cacheTimestamp = sessionStorage.getItem('cachedPerformanceReviewsTimestamp');
+                const now = Date.now();
+                const cacheAge = now - (parseInt(cacheTimestamp) || 0);
+                const cacheValid = cacheAge < 5 * 60 * 1000; // 5 minutes
+                
+                if (cachedData && cacheValid) {
+                    console.log('✅ Using cached performance reviews (age:', Math.round(cacheAge / 1000), 'seconds)');
+                    performanceReviews = JSON.parse(cachedData);
+                    return;
+                }
+                
                 // Try API endpoint first
                 try {
                     const apiResponse = await fetch('/api/performance');
@@ -3413,6 +3431,11 @@
                         const apiData = await apiResponse.json();
                         performanceReviews = apiData.performanceReviews || {};
                         console.log('✅ Performance reviews loaded from API:', Object.keys(performanceReviews).length, 'reviews');
+                        
+                        // Cache the data
+                        sessionStorage.setItem('cachedPerformanceReviews', JSON.stringify(performanceReviews));
+                        sessionStorage.setItem('cachedPerformanceReviewsTimestamp', now.toString());
+                        
                         return;
                     } else if (apiResponse.status === 404) {
                         console.warn('⚠️ Performance API endpoint not found (404), trying direct JSON file...');
@@ -3429,6 +3452,10 @@
                     const jsonData = await response.json();
                     performanceReviews = jsonData.performanceReviews || {};
                     console.log('✅ Performance reviews loaded from JSON file:', Object.keys(performanceReviews).length, 'reviews');
+                    
+                    // Cache the data
+                    sessionStorage.setItem('cachedPerformanceReviews', JSON.stringify(performanceReviews));
+                    sessionStorage.setItem('cachedPerformanceReviewsTimestamp', now.toString());
                 } else {
                     console.warn('⚠️ Could not load performance.json, trying embedded data...');
                     // Try embedded data as fallback
@@ -3542,6 +3569,9 @@
                 performanceAlert.remove();
             }
             
+            console.log('🔍 Performance review modal - Input:', userNameOrEmail);
+            console.log('🔍 Performance review modal - Available users:', Object.keys(users));
+            
             let userData = users[userNameOrEmail];
             let userEmail = userNameOrEmail;
             let userName = userNameOrEmail;
@@ -3550,16 +3580,22 @@
             if (!userData) {
                 // Search for user by email
                 for (const [name, data] of Object.entries(users)) {
-                    if (data.profile?.email === userNameOrEmail) {
+                    // Handle both data structures: data.profile?.email and data.email
+                    const email = data.profile?.email || data.email;
+                    if (email === userNameOrEmail) {
                         userData = data;
                         userName = name;
                         break;
                     }
                 }
             } else {
-                // If found by username, get the email
-                userEmail = userData.profile?.email || userNameOrEmail;
+                // If found by username, get the email - handle both data structures
+                userEmail = userData.profile?.email || userData.email || userNameOrEmail;
             }
+            
+            console.log('🔍 Performance review modal - User data:', userData);
+            console.log('🔍 Performance review modal - User email:', userEmail);
+            console.log('🔍 Performance review modal - User name:', userName);
             
             // If still no user data, try to get review directly by email
             const existingReview = userData ? performanceReviews[userData.profile?.email] : performanceReviews[userNameOrEmail];
@@ -3669,6 +3705,15 @@
 
         // Save performance review
         async function savePerformanceReview(userEmail, form) {
+            // Validate userEmail is not undefined
+            if (!userEmail || userEmail === 'undefined') {
+                console.error('❌ Invalid user email for performance review:', userEmail);
+                showNotification('Error: Could not determine user email for performance review', 'error');
+                return;
+            }
+            
+            console.log('💾 Saving performance review for user email:', userEmail);
+            
             const formData = new FormData(form);
             const categories = {};
             
@@ -3962,7 +4007,7 @@
             if (jobs.length > 0) {
                 jobsHTML = jobs.map(job => `
                     <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.2);">
-                        <h4 style="color: #FFB200; margin-bottom: 0.5rem;">${job.role}</h4>
+                        <h4 style="color: #FFB200; margin-bottom: 0.5rem;">${job.title || job.role || 'Untitled Project'}</h4>
                         <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">${job.description || 'No description'}</p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                             <div>
@@ -4734,6 +4779,8 @@
         
         // Update job status from modal
         async function updateJobStatus(freelancerName, jobId) {
+            console.log('🔍 Updating job status for:', freelancerName, jobId);
+            
             const projectStatusSelect = document.getElementById(`projectStatus_${jobId}`);
             const paymentStatusSelect = document.getElementById(`paymentStatus_${jobId}`);
             
@@ -4744,6 +4791,13 @@
             
             const newProjectStatus = projectStatusSelect.value;
             const newPaymentStatus = paymentStatusSelect ? paymentStatusSelect.value : null;
+            
+            console.log('📊 New status values:', {
+                projectStatus: newProjectStatus,
+                paymentStatus: newPaymentStatus,
+                freelancerName: freelancerName,
+                jobId: jobId
+            });
             
             // Update the job in the user's jobs
             if (users[freelancerName] && users[freelancerName].jobs && users[freelancerName].jobs[jobId]) {
@@ -4758,7 +4812,9 @@
                 localStorage.setItem('users', JSON.stringify(users));
                 
                 // Update GitHub
+                console.log('🔄 Saving to GitHub...');
                 await updateUsersOnGitHub();
+                console.log('✅ GitHub update completed');
                 
                 // Close modal
                 document.querySelector('div[style*="position: fixed"]').remove();
@@ -7254,6 +7310,25 @@
 
 
         </div>
+
+        <!-- Auto-refresh functionality -->
+        <script>
+            // Set up automatic data refresh every 30 seconds
+            setInterval(() => {
+                console.log('🔄 Auto-refreshing data...');
+                loadUsersData().then(() => {
+                    console.log('✅ Users data auto-refreshed');
+                }).catch(error => {
+                    console.warn('⚠️ Auto-refresh failed:', error);
+                });
+                
+                loadPerformanceReviews().then(() => {
+                    console.log('✅ Performance reviews auto-refreshed');
+                }).catch(error => {
+                    console.warn('⚠️ Performance auto-refresh failed:', error);
+                });
+            }, 30000); // 30 seconds
+        </script>
 
         <!-- Notification Dropdown (Moved outside containers to avoid stacking context issues) -->
         <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
