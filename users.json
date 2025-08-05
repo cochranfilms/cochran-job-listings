@@ -26,8 +26,8 @@
           "pay": "$75/hour",
           "description": "Professional Assistant position in New York, NY. Details to be provided.",
           "status": "upcoming",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
+          "projectStatus": "completed",
+          "paymentStatus": "paid",
           "assignedDate": "2025-08-05",
           "projectStart": "2026-10-10T20:00"
         }
