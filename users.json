@@ -17,8 +17,20 @@
         "contractUploadedDate": null,
         "contractId": "CF-1754364806149-P6K90"
       },
-      "jobs": {},
-      "primaryJob": null,
+      "jobs": {
+        "job-videographer-default": {
+          "id": "job-videographer-default",
+          "title": "Videographer Position",
+          "date": "2025-08-05",
+          "location": "Los Angeles, CA",
+          "pay": "$200/hour",
+          "description": "Professional Videographer position in Los Angeles, CA. Details to be provided.",
+          "status": "upcoming",
+          "assignedDate": "2025-08-05",
+          "projectStart": "TBD"
+        }
+      },
+      "primaryJob": "job-videographer-default",
       "paymentMethod": "check",
       "paymentStatus": "configured"
     }
