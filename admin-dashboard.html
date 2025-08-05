@@ -1510,6 +1510,9 @@
             // Check for performance review alerts
             checkPerformanceReviewAlerts();
             
+            // Update existing users with missing job data
+            await updateExistingUsersWithJobData();
+            
             // Show status in the interface
             const statusElement = document.getElementById('freelancerStatus');
             if (statusElement) {
@@ -2578,16 +2581,21 @@
         async function saveFreelancer() {
             const userName = document.getElementById('freelancerName').value;
             const userEmail = document.getElementById('freelancerEmail').value;
+            const userRole = document.getElementById('freelancerRole').value;
+            const userLocation = document.getElementById('freelancerLocation').value;
             
             // Generate a temporary password for Firebase account creation
             const tempPassword = generateTempPassword();
+            
+            // Assign job data based on role and location
+            const assignedJobs = await assignJobsToUser(userRole, userLocation);
             
             const userData = {
                 profile: {
                     email: userEmail,
                     password: tempPassword, // Temporary password for Firebase account
-                    role: document.getElementById('freelancerRole').value,
-                    location: document.getElementById('freelancerLocation').value,
+                    role: userRole,
+                    location: userLocation,
                     projectStart: document.getElementById('projectStart').value,
                     rate: document.getElementById('freelancerRate').value,
                     approvedDate: document.getElementById('approvedDate').value
@@ -2599,8 +2607,8 @@
                     contractUploadedDate: null,
                     contractId: null
                 },
-                jobs: {},
-                primaryJob: null,
+                jobs: assignedJobs.jobs,
+                primaryJob: assignedJobs.primaryJob,
                 paymentMethod: null
             };
             
@@ -2641,6 +2649,95 @@
             }
         }
         
+        // Assign jobs to user based on role and location
+        async function assignJobsToUser(role, location) {
+            try {
+                // Load jobs data
+                const jobsResponse = await fetch('jobs-data.json');
+                const jobsData = await jobsResponse.json();
+                
+                const assignedJobs = {};
+                let primaryJob = null;
+                
+                // Match jobs based on role and location
+                jobsData.jobs.forEach(job => {
+                    // Check if job matches user's role and location
+                    if (job.title.toLowerCase().includes(role.toLowerCase()) || 
+                        role.toLowerCase().includes(job.title.toLowerCase())) {
+                        
+                        // Create job ID
+                        const jobId = `job-${job.title.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+                        
+                        assignedJobs[jobId] = {
+                            id: jobId,
+                            title: job.title,
+                            date: job.date,
+                            location: job.location,
+                            pay: job.pay,
+                            description: job.description,
+                            status: job.status,
+                            assignedDate: new Date().toISOString().split('T')[0],
+                            projectStart: document.getElementById('projectStart').value || 'TBD'
+                        };
+                        
+                        // Set as primary job if it's the first match
+                        if (!primaryJob) {
+                            primaryJob = jobId;
+                        }
+                    }
+                });
+                
+                // If no specific job matches, create a default job based on role
+                if (Object.keys(assignedJobs).length === 0) {
+                    const defaultJobId = `job-${role.toLowerCase().replace(/\s+/g, '-')}-default`;
+                    
+                    assignedJobs[defaultJobId] = {
+                        id: defaultJobId,
+                        title: `${role} Position`,
+                        date: new Date().toISOString().split('T')[0],
+                        location: location,
+                        pay: document.getElementById('freelancerRate').value || '$200/hour',
+                        description: `Professional ${role} position in ${location}. Details to be provided.`,
+                        status: 'upcoming',
+                        assignedDate: new Date().toISOString().split('T')[0],
+                        projectStart: document.getElementById('projectStart').value || 'TBD'
+                    };
+                    
+                    primaryJob = defaultJobId;
+                }
+                
+                console.log('✅ Assigned jobs to user:', assignedJobs);
+                console.log('✅ Primary job:', primaryJob);
+                
+                return {
+                    jobs: assignedJobs,
+                    primaryJob: primaryJob
+                };
+                
+            } catch (error) {
+                console.error('❌ Error assigning jobs to user:', error);
+                
+                // Fallback: create a default job
+                const defaultJobId = `job-${role.toLowerCase().replace(/\s+/g, '-')}-fallback`;
+                const defaultJob = {
+                    id: defaultJobId,
+                    title: `${role} Position`,
+                    date: new Date().toISOString().split('T')[0],
+                    location: location,
+                    pay: document.getElementById('freelancerRate').value || '$200/hour',
+                    description: `Professional ${role} position in ${location}. Details to be provided.`,
+                    status: 'upcoming',
+                    assignedDate: new Date().toISOString().split('T')[0],
+                    projectStart: document.getElementById('projectStart').value || 'TBD'
+                };
+                
+                return {
+                    jobs: { [defaultJobId]: defaultJob },
+                    primaryJob: defaultJobId
+                };
+            }
+        }
+        
         // Generate temporary password for Firebase account
         function generateTempPassword() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -2670,6 +2767,51 @@
             });
             
             console.log('✅ Freelancer form cleared');
+        }
+        
+        // Update existing users with missing job data
+        async function updateExistingUsersWithJobData() {
+            try {
+                console.log('🔄 Updating existing users with missing job data...');
+                
+                let updatedCount = 0;
+                
+                for (const [userName, userData] of Object.entries(users)) {
+                    // Check if user has empty jobs object or null primaryJob
+                    if (!userData.jobs || Object.keys(userData.jobs).length === 0 || !userData.primaryJob) {
+                        console.log(`🔄 Updating job data for user: ${userName}`);
+                        
+                        const role = userData.profile?.role || 'Producer';
+                        const location = userData.profile?.location || 'Atlanta, GA';
+                        
+                        // Assign job data
+                        const assignedJobs = await assignJobsToUser(role, location);
+                        
+                        // Update user data
+                        users[userName].jobs = assignedJobs.jobs;
+                        users[userName].primaryJob = assignedJobs.primaryJob;
+                        
+                        updatedCount++;
+                        console.log(`✅ Updated job data for ${userName}`);
+                    }
+                }
+                
+                if (updatedCount > 0) {
+                    // Update localStorage
+                    localStorage.setItem('users', JSON.stringify(users));
+                    
+                    // Update GitHub repository
+                    await updateUsersOnGitHub();
+                    
+                    showNotification(`✅ Updated job data for ${updatedCount} existing users`, 'success');
+                } else {
+                    console.log('✅ All users already have job data');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error updating existing users with job data:', error);
+                showNotification('❌ Error updating existing users with job data', 'error');
+            }
         }
         
         // Update users.json on GitHub
