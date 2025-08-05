@@ -1,40 +1,5 @@
 {
   "users": {
-    "Thing Six": {
-      "profile": {
-        "email": "codylcochran87@gmail.com",
-        "password": "newuser1234",
-        "role": "Producer",
-        "location": "Atlanta, GA",
-        "projectStart": "2026-04-04T08:00",
-        "rate": "$200/hour",
-        "approvedDate": "2025-08-05"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/5/2025, 2:16:19 AM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754374579524-1TXMZ"
-      },
-      "jobs": {
-        "job-producer-default": {
-          "id": "job-producer-default",
-          "title": "Producer Position",
-          "date": "2025-08-05",
-          "location": "Atlanta, GA",
-          "pay": "$200/hour",
-          "description": "Professional Producer position in Atlanta, GA. Details to be provided.",
-          "status": "upcoming",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "assignedDate": "2025-08-05",
-          "projectStart": "2026-04-04T08:00"
-        }
-      },
-      "primaryJob": "job-producer-default",
-      "paymentMethod": null
-    },
     "Cody Cochran": {
       "profile": {
         "email": "codylcochran89@gmail.com",
@@ -86,5 +51,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 2
+  "totalUsers": 1
 }
