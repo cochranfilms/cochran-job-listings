@@ -1465,126 +1465,61 @@
             try {
                 console.log('📄 Starting HTML-based PDF generation for contract:', contractData.contractId);
                 
-                // Create HTML template for the contract
-                const contractHTML = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <style>
-                        body {
-                            font-family: 'Arial', sans-serif;
-                            margin: 0;
-                            padding: 15px;
-                            background: white;
-                            color: black;
-                            line-height: 1.3;
+                // Use the main PDF content generator for consistent formatting
+                const contractHTML = generatePDFContent(contractData);
+                
+                // Create jsPDF document
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'letter');
+                
+                // Use html2canvas to render the HTML properly
+                const element = document.createElement('div');
+                element.innerHTML = contractHTML;
+                element.style.position = 'absolute';
+                element.style.left = '-9999px';
+                element.style.top = '0';
+                document.body.appendChild(element);
+                
+                // Convert HTML to canvas and then to PDF
+                return new Promise((resolve, reject) => {
+                    html2canvas(element, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff'
+                    }).then(canvas => {
+                        document.body.removeChild(element);
+                        
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new jsPDF('p', 'mm', 'letter');
+                        
+                        const imgWidth = 210;
+                        const pageHeight = 295;
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                        let heightLeft = imgHeight;
+                        let position = 0;
+                        
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                        
+                        while (heightLeft >= 0) {
+                            position = heightLeft - imgHeight;
+                            pdf.addPage();
+                            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                            heightLeft -= pageHeight;
                         }
-                        .header {
-                            background: #FFB200;
-                            color: black;
-                            padding: 15px;
-                            text-align: center;
-                            margin-bottom: 15px;
-                        }
-                        .header h1 {
-                            margin: 0;
-                            font-size: 20px;
-                            font-weight: bold;
-                        }
-                        .header h2 {
-                            margin: 3px 0 0 0;
-                            font-size: 14px;
-                            font-weight: normal;
-                        }
-                        .metadata {
-                            margin-bottom: 15px;
-                            font-size: 10px;
-                            color: #666;
-                        }
-                        .section {
-                            margin-bottom: 15px;
-                        }
-                        .section-header {
-                            background: #FFB200;
-                            color: black;
-                            padding: 6px 12px;
-                            font-weight: bold;
-                            font-size: 12px;
-                        }
-                        .info-boxes {
-                            display: flex;
-                            gap: 15px;
-                            margin-bottom: 15px;
-                        }
-                        .info-box {
-                            flex: 1;
-                            border: 2px solid #FFB200;
-                            padding: 10px;
-                            background: #f8f9fa;
-                        }
-                        .info-box h3 {
-                            margin: 0 0 8px 0;
-                            font-size: 10px;
-                            font-weight: bold;
-                            color: black;
-                        }
-                        .info-box p {
-                            margin: 3px 0;
-                            font-size: 9px;
-                            color: black;
-                        }
-                        .terms {
-                            margin-bottom: 15px;
-                        }
-                        .term {
-                            margin-bottom: 6px;
-                            font-size: 9px;
-                            line-height: 1.2;
-                        }
-                        .term strong {
-                            color: black;
-                        }
-                        .signatures {
-                            display: flex;
-                            gap: 15px;
-                            margin-bottom: 15px;
-                        }
-                        .signature-box {
-                            flex: 1;
-                            border: 2px solid #FFB200;
-                            padding: 10px;
-                            background: #f8f9fa;
-                        }
-                        .signature-box h3 {
-                            margin: 0 0 8px 0;
-                            font-size: 10px;
-                            font-weight: bold;
-                            color: black;
-                        }
-                        .signature-box p {
-                            margin: 3px 0;
-                            font-size: 9px;
-                            color: black;
-                        }
-                        .footer {
-                            margin-top: 20px;
-                            padding: 10px;
-                            background: #f8f9fa;
-                            border: 1px solid #FFB200;
-                            text-align: center;
-                            font-size: 8px;
-                            color: #666;
-                        }
-                        @media print {
-                            body { margin: 0; }
-                            .section { page-break-inside: avoid; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>COCHRAN FILMS</h1>
+                        
+                                                 resolve(pdf);
+                     }).catch(error => {
+                         document.body.removeChild(element);
+                         reject(error);
+                     });
+                 });
+            } catch (error) {
+                console.error('❌ Error in HTML-based PDF generation:', error);
+                throw error;
+            }
+        }
                         <h2>FREELANCE CONTRACT AGREEMENT</h2>
                     </div>
                     
