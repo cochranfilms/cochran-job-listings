@@ -28,7 +28,10 @@ class AutomatedTestRunner {
                 location: 'Atlanta, GA',
                 rate: '$400.00 USD (Flat)',
                 projectStart: '2025-01-15',
-                approvedDate: new Date().toISOString().split('T')[0]
+                approvedDate: new Date().toISOString().split('T')[0],
+                // Ensure test user doesn't interfere with real data
+                isTestUser: true,
+                testData: true
             },
             job: {
                 title: 'Test Photography Job',
@@ -36,26 +39,38 @@ class AutomatedTestRunner {
                 location: 'Atlanta, GA',
                 pay: '$500',
                 description: 'Test job for automated testing',
-                status: 'Active'
+                status: 'Active',
+                // Ensure test job doesn't interfere with real data
+                isTestJob: true,
+                testData: true
             },
             contract: {
                 fileName: 'test-contract.pdf',
                 contractId: 'TEST-001',
                 status: 'pending',
-                uploadedDate: new Date().toISOString()
+                uploadedDate: new Date().toISOString(),
+                // Ensure test contract doesn't interfere with real data
+                isTestContract: true,
+                testData: true
             },
             performance: {
                 rating: 4,
                 category: 'Professionalism',
                 notes: 'Test performance review',
-                status: 'completed'
+                status: 'completed',
+                // Ensure test performance review doesn't interfere with real data
+                isTestReview: true,
+                testData: true
             },
             notification: {
                 title: 'Test Notification',
                 message: 'This is a test notification',
                 type: 'info',
                 read: false,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                // Ensure test notification doesn't interfere with real data
+                isTestNotification: true,
+                testData: true
             }
         };
         
@@ -385,9 +400,11 @@ class AutomatedTestRunner {
             const usersData = JSON.parse(await fs.readFile('users.json', 'utf8'));
             const initialCount = usersData.users.length;
             
-            // Remove test user
+            // Remove test users (by email and test data flag)
             usersData.users = usersData.users.filter(user => 
-                user.email !== this.testData.user.email
+                user.email !== this.testData.user.email && 
+                !user.isTestUser && 
+                !user.testData
             );
             usersData.totalUsers = usersData.users.length;
             usersData.lastUpdated = new Date().toISOString().split('T')[0];
@@ -452,9 +469,11 @@ class AutomatedTestRunner {
             const jobsData = JSON.parse(await fs.readFile('jobs-data.json', 'utf8'));
             const initialCount = jobsData.jobs.length;
             
-            // Remove test job
+            // Remove test jobs (by title and test data flag)
             jobsData.jobs = jobsData.jobs.filter(job => 
-                job.title !== this.testData.job.title
+                job.title !== this.testData.job.title && 
+                !job.isTestJob && 
+                !job.testData
             );
             jobsData.totalJobs = jobsData.jobs.length;
             jobsData.lastUpdated = new Date().toISOString().split('T')[0];
