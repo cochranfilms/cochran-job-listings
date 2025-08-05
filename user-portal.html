@@ -44,32 +44,38 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         
-        // Set Firebase persistence to LOCAL to maintain session across page refreshes
-        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        // Set Firebase persistence to LOCAL BEFORE any auth operations
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             .then(() => {
                 console.log('✅ Firebase persistence set to LOCAL');
+                // Only set up auth state observer after persistence is set
+                setupAuthStateObserver();
             })
             .catch((error) => {
                 console.error('❌ Error setting Firebase persistence:', error);
+                // Still set up auth state observer even if persistence fails
+                setupAuthStateObserver();
             });
 
-        // Authentication state observer
-        auth.onAuthStateChanged(function(user) {
-            if (user) {
-                console.log('✅ User authenticated:', user.email);
-                // User is signed in, check if they exist in our system
-                // Only check if user is properly authenticated and not just a temporary state
-                if (user.email && user.emailVerified !== false) {
-                    checkUserInSystem(user.email);
+        // Setup authentication state observer
+        function setupAuthStateObserver() {
+            auth.onAuthStateChanged(function(user) {
+                if (user) {
+                    console.log('✅ User authenticated:', user.email);
+                    // User is signed in, check if they exist in our system
+                    // Only check if user is properly authenticated and not just a temporary state
+                    if (user.email && user.emailVerified !== false) {
+                        checkUserInSystem(user.email);
+                    } else {
+                        console.log('⚠️ User not fully authenticated, waiting for proper auth...');
+                        showLoginScreen();
+                    }
                 } else {
-                    console.log('⚠️ User not fully authenticated, waiting for proper auth...');
+                    console.log('❌ User signed out');
                     showLoginScreen();
                 }
-            } else {
-                console.log('❌ User signed out');
-                showLoginScreen();
-            }
-        });
+            });
+        }
 
         // Load performance reviews from API
         async function loadPerformanceReviews() {
