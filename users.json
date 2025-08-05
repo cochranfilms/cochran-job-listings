@@ -1,5 +1,27 @@
 {
-  "users": {},
+  "users": {
+    "Thing One": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "password": "SG0V6Is8mJNU",
+        "role": "Assistant",
+        "location": "New York, NY",
+        "projectStart": "2026-11-12T10:00",
+        "rate": "$100/hour",
+        "approvedDate": "2025-08-04"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {},
+      "primaryJob": null,
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -14,6 +36,6 @@
       "overdue"
     ]
   },
-  "lastUpdated": "2025-08-04",
-  "totalUsers": 0
+  "lastUpdated": "2025-08-05",
+  "totalUsers": 1
 }
