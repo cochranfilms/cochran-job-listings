@@ -716,12 +716,19 @@
         // Toggle notification dropdown
         function toggleNotifications() {
             const dropdown = document.getElementById('notificationDropdown');
-            if (!dropdown) return;
+            const bell = document.getElementById('notificationBell');
+            
+            if (!dropdown || !bell) return;
             
             const isVisible = dropdown.style.display === 'block';
             dropdown.style.display = isVisible ? 'none' : 'block';
             
             if (!isVisible) {
+                // Position the dropdown relative to the bell button
+                const bellRect = bell.getBoundingClientRect();
+                dropdown.style.top = (bellRect.bottom + 10) + 'px';
+                dropdown.style.right = (window.innerWidth - bellRect.right) + 'px';
+                
                 updateNotificationList();
                 // Mark all as read when opened
                 notifications.forEach(n => n.read = true);
@@ -3910,9 +3917,9 @@
         }
 
         .notification-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
+            position: fixed;
+            top: 120px;
+            right: 2rem;
             width: 350px;
             max-height: 400px;
             background: #1a1a1a;
@@ -3920,7 +3927,6 @@
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
             z-index: 9999999;
-            margin-top: 0.5rem;
             pointer-events: auto;
         }
 
