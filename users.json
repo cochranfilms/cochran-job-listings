@@ -3,7 +3,7 @@
     "Thing Two": {
       "profile": {
         "email": "codylcochran89@gmail.com",
-        "password": "2hiDgxOA6iY5",
+        "password": "testing1234",
         "role": "Backdrop Photographer Base",
         "location": "Atlanta, GA",
         "projectStart": "2026-04-20T21:09",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/5/2025, 8:43:29 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754397809602-KXKFK"
       },
       "jobs": {
         "job-backdrop-photographer-base-1754397713067": {
