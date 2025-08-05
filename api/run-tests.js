@@ -38,9 +38,11 @@ module.exports = async (req, res) => {
         
     } catch (error) {
         console.error('❌ Test runner API error:', error);
+        console.error('❌ Error stack:', error.stack);
         res.status(500).json({
             error: 'Internal server error',
-            message: error.message
+            message: error.message,
+            stack: error.stack
         });
     }
 }; 
