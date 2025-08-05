@@ -1520,16 +1520,6 @@
                 throw error;
             }
         }
-                
-                // For now, we'll use the advanced PDF method since HTML-to-PDF conversion
-                // would require additional libraries. The advanced method provides excellent results.
-                return generateAdvancedContractPDF(contractData);
-                
-            } catch (error) {
-                console.error('❌ Error generating HTML-based PDF:', error);
-                throw error;
-            }
-        }
         
         // Download PDF directly to user's device
         function downloadContractPDF(contractData) {
