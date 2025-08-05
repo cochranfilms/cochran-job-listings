@@ -489,17 +489,30 @@
                 this.showLogOutput();
 
                 try {
-                    const response = await fetch('/api/run-tests', {
+                    // Get the current host and port
+                    const baseUrl = window.location.origin;
+                    const url = `${baseUrl}/api/run-tests`;
+                    const body = JSON.stringify({
+                        categories: this.getSelectedCategories()
+                    });
+                    
+                    console.log('🔍 Making request to:', url);
+                    console.log('📦 Request body:', body);
+                    
+                    const response = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            categories: this.getSelectedCategories()
-                        })
+                        body: body
                     });
 
+                    console.log('📡 Response status:', response.status);
+                    console.log('📡 Response headers:', response.headers);
+
                     if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('❌ Response error:', errorText);
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
 
@@ -638,7 +651,8 @@
                 }
 
                 try {
-                    const response = await fetch('/api/export-results', {
+                    const baseUrl = window.location.origin;
+                    const response = await fetch(`${baseUrl}/api/export-results`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

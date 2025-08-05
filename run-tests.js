@@ -20,6 +20,12 @@ async function main() {
         // Generate summary report
         await generateSummaryReport(results, filename);
         
+        // Cleanup if requested
+        if (args.includes('--cleanup')) {
+            console.log('\n🧹 Cleaning up test data...');
+            await testRunner.cleanupTestData();
+        }
+        
         // Exit with appropriate code
         process.exit(results.summary.failed > 0 ? 1 : 0);
         
@@ -83,14 +89,30 @@ Options:
   --verbose, -v  Show detailed output
   --save-md      Save results as Markdown report
   --save-html    Save results as HTML report
+  --cleanup      Clean up all test data
+  --cleanup-only Only clean up test data (don't run tests)
 
 Examples:
   node run-tests.js                    # Run all tests
   node run-tests.js --quick           # Run only critical tests
   node run-tests.js --verbose         # Show detailed output
   node run-tests.js --save-md         # Save as Markdown report
+  node run-tests.js --cleanup         # Run tests and clean up
+  node run-tests.js --cleanup-only    # Only clean up test data
 `);
     process.exit(0);
+}
+
+// Handle cleanup-only mode
+if (args.includes('--cleanup-only')) {
+    const testRunner = new AutomatedTestRunner();
+    testRunner.cleanupTestData().then(() => {
+        console.log('✅ Test data cleanup completed');
+        process.exit(0);
+    }).catch(error => {
+        console.error('❌ Cleanup failed:', error);
+        process.exit(1);
+    });
 }
 
 // Run the main function

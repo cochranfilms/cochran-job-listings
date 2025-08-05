@@ -153,6 +153,14 @@ The system automatically generates recommendations based on test results:
 **Issue**: Cannot write test results
 **Fix**: Ensure write permissions in the project directory
 
+### 5. Dashboard 404 Errors
+**Issue**: "Failed to load resource: the server responded with a status of 404"
+**Fix**: 
+1. Ensure server is running: `node server.js`
+2. Check browser console for detailed error messages
+3. Verify the dashboard is being served from the correct port
+4. Try accessing the API directly: `curl -X POST http://localhost:8000/api/run-tests`
+
 ## Export Options
 
 ### JSON Export

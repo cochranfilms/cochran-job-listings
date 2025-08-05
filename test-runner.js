@@ -57,6 +57,10 @@ class AutomatedTestRunner {
                 timestamp: new Date().toISOString()
             }
         };
+        
+        // Initialize test data tracking for cleanup
+        this.testDataLog = [];
+        this.testDataLogFile = `test-data-log-${new Date().toISOString().split('T')[0]}.json`;
     }
 
     async log(message, type = 'info') {
@@ -70,6 +74,215 @@ class AutomatedTestRunner {
         }[type] || 'ℹ️';
         
         console.log(`${prefix} [${timestamp}] ${message}`);
+    }
+
+    // Internal logging for test data tracking and cleanup
+    logTestData(action, data) {
+        const logEntry = {
+            action: action,
+            timestamp: new Date().toISOString(),
+            data: data
+        };
+        
+        this.testDataLog.push(logEntry);
+        
+        // Save to file for cleanup reference
+        try {
+            const fsSync = require('fs');
+            fsSync.writeFileSync(
+                this.testDataLogFile,
+                JSON.stringify(this.testDataLog, null, 2)
+            );
+        } catch (error) {
+            console.error('❌ Failed to log test data:', error.message);
+        }
+    }
+
+    // Get all test data for cleanup
+    getTestDataForCleanup() {
+        const cleanupData = {
+            users: [],
+            jobs: [],
+            contracts: [],
+            performance: [],
+            notifications: [],
+            files: []
+        };
+        
+        this.testDataLog.forEach(entry => {
+            switch (entry.action) {
+                case 'USER_CREATED':
+                    cleanupData.users.push(entry.data.email);
+                    break;
+                case 'JOB_CREATED':
+                    cleanupData.jobs.push(entry.data.title);
+                    break;
+                case 'CONTRACT_CREATED':
+                    cleanupData.contracts.push({
+                        fileName: entry.data.fileName,
+                        contractId: entry.data.contractId
+                    });
+                    cleanupData.files.push(entry.data.fileName);
+                    break;
+                case 'PERFORMANCE_CREATED':
+                    cleanupData.performance.push(entry.data.email);
+                    break;
+                case 'NOTIFICATION_CREATED':
+                    cleanupData.notifications.push(entry.data.title);
+                    break;
+            }
+        });
+        
+        return cleanupData;
+    }
+
+    // Cleanup all test data
+    async cleanupTestData() {
+        await this.log('🧹 Starting test data cleanup...', 'info');
+        
+        const cleanupData = this.getTestDataForCleanup();
+        let cleanedCount = 0;
+        
+        try {
+            // Clean up users
+            if (cleanupData.users.length > 0) {
+                const usersResponse = await fetch(`${this.baseUrl}/api/users`);
+                const usersData = await usersResponse.json();
+                
+                cleanupData.users.forEach(email => {
+                    if (usersData.users[email]) {
+                        delete usersData.users[email];
+                        cleanedCount++;
+                    }
+                });
+                
+                usersData.totalUsers = Object.keys(usersData.users).length;
+                usersData.lastUpdated = new Date().toISOString().split('T')[0];
+                
+                await fs.writeFile(
+                    path.join(__dirname, 'users.json'),
+                    JSON.stringify(usersData, null, 2)
+                );
+            }
+            
+            // Clean up jobs
+            if (cleanupData.jobs.length > 0) {
+                const jobsResponse = await fetch(`${this.baseUrl}/api/jobs-data`);
+                const jobsData = await jobsResponse.json();
+                
+                cleanupData.jobs.forEach(title => {
+                    const jobIndex = jobsData.jobs.findIndex(job => job.title === title);
+                    if (jobIndex !== -1) {
+                        jobsData.jobs.splice(jobIndex, 1);
+                        cleanedCount++;
+                    }
+                });
+                
+                jobsData.totalJobs = jobsData.jobs.length;
+                jobsData.lastUpdated = new Date().toISOString().split('T')[0];
+                
+                await fs.writeFile(
+                    path.join(__dirname, 'jobs-data.json'),
+                    JSON.stringify(jobsData, null, 2)
+                );
+            }
+            
+            // Clean up contracts
+            if (cleanupData.contracts.length > 0) {
+                const contractsResponse = await fetch(`${this.baseUrl}/api/uploaded-contracts`);
+                const contractsData = await contractsResponse.json();
+                
+                cleanupData.contracts.forEach(contract => {
+                    const contractIndex = contractsData.uploadedContracts.findIndex(
+                        c => c.fileName === contract.fileName
+                    );
+                    if (contractIndex !== -1) {
+                        contractsData.uploadedContracts.splice(contractIndex, 1);
+                        cleanedCount++;
+                    }
+                });
+                
+                contractsData.totalContracts = contractsData.uploadedContracts.length;
+                contractsData.lastUpdated = new Date().toISOString().split('T')[0];
+                
+                await fs.writeFile(
+                    path.join(__dirname, 'uploaded-contracts.json'),
+                    JSON.stringify(contractsData, null, 2)
+                );
+            }
+            
+            // Clean up performance reviews
+            if (cleanupData.performance.length > 0) {
+                const performanceResponse = await fetch(`${this.baseUrl}/api/performance`);
+                const performanceData = await performanceResponse.json();
+                
+                cleanupData.performance.forEach(email => {
+                    if (performanceData.performanceReviews[email]) {
+                        delete performanceData.performanceReviews[email];
+                        cleanedCount++;
+                    }
+                });
+                
+                performanceData.totalReviews = Object.keys(performanceData.performanceReviews).length;
+                performanceData.lastUpdated = new Date().toISOString();
+                
+                await fs.writeFile(
+                    path.join(__dirname, 'performance.json'),
+                    JSON.stringify(performanceData, null, 2)
+                );
+            }
+            
+            // Clean up notifications
+            if (cleanupData.notifications.length > 0) {
+                const notificationsResponse = await fetch(`${this.baseUrl}/api/notifications`);
+                const notificationsData = await notificationsResponse.json();
+                
+                cleanupData.notifications.forEach(title => {
+                    const notificationIndex = notificationsData.notifications.findIndex(
+                        n => n.title === title
+                    );
+                    if (notificationIndex !== -1) {
+                        notificationsData.notifications.splice(notificationIndex, 1);
+                        cleanedCount++;
+                    }
+                });
+                
+                notificationsData.totalNotifications = notificationsData.notifications.length;
+                notificationsData.unreadCount = notificationsData.notifications.filter(n => !n.read).length;
+                notificationsData.lastUpdated = new Date().toISOString();
+                
+                await fs.writeFile(
+                    path.join(__dirname, 'notifications.json'),
+                    JSON.stringify(notificationsData, null, 2)
+                );
+            }
+            
+            // Clean up test files
+            cleanupData.files.forEach(fileName => {
+                try {
+                    const fsSync = require('fs');
+                    const filePath = path.join(__dirname, 'contracts', fileName);
+                    if (fsSync.existsSync(filePath)) {
+                        fsSync.unlinkSync(filePath);
+                        cleanedCount++;
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Could not delete test file: ${fileName}`);
+                }
+            });
+            
+            await this.log(`✅ Cleanup completed: ${cleanedCount} items removed`, 'success');
+            
+            // Clear the test data log
+            this.testDataLog = [];
+            const fsSync = require('fs');
+            if (fsSync.existsSync(this.testDataLogFile)) {
+                fsSync.unlinkSync(this.testDataLogFile);
+            }
+            
+        } catch (error) {
+            await this.log(`❌ Cleanup failed: ${error.message}`, 'error');
+        }
     }
 
     async runTest(testName, testFunction) {
@@ -218,6 +431,13 @@ class AutomatedTestRunner {
                 JSON.stringify(usersData, null, 2)
             );
             
+            // Log test user creation for cleanup
+            this.logTestData('USER_CREATED', {
+                email: testUser.email,
+                timestamp: new Date().toISOString(),
+                file: 'users.json'
+            });
+            
             const duration = Date.now() - startTime;
             
             return {
@@ -303,6 +523,13 @@ class AutomatedTestRunner {
                 path.join(__dirname, 'jobs-data.json'),
                 JSON.stringify(jobsData, null, 2)
             );
+            
+            // Log test job creation for cleanup
+            this.logTestData('JOB_CREATED', {
+                title: this.testData.job.title,
+                timestamp: new Date().toISOString(),
+                file: 'jobs-data.json'
+            });
             
             const duration = Date.now() - startTime;
             
@@ -397,6 +624,14 @@ class AutomatedTestRunner {
                 path.join(__dirname, 'uploaded-contracts.json'),
                 JSON.stringify(contractsData, null, 2)
             );
+            
+            // Log test contract creation for cleanup
+            this.logTestData('CONTRACT_CREATED', {
+                fileName: testContract.fileName,
+                contractId: testContract.contractId,
+                timestamp: new Date().toISOString(),
+                file: 'uploaded-contracts.json'
+            });
             
             const duration = Date.now() - startTime;
             
@@ -498,6 +733,13 @@ class AutomatedTestRunner {
                 JSON.stringify(performanceData, null, 2)
             );
             
+            // Log test performance review creation for cleanup
+            this.logTestData('PERFORMANCE_CREATED', {
+                email: testReview.email,
+                timestamp: new Date().toISOString(),
+                file: 'performance.json'
+            });
+            
             const duration = Date.now() - startTime;
             
             return {
@@ -589,6 +831,13 @@ class AutomatedTestRunner {
                 path.join(__dirname, 'notifications.json'),
                 JSON.stringify(notificationsData, null, 2)
             );
+            
+            // Log test notification creation for cleanup
+            this.logTestData('NOTIFICATION_CREATED', {
+                title: testNotification.title,
+                timestamp: new Date().toISOString(),
+                file: 'notifications.json'
+            });
             
             const duration = Date.now() - startTime;
             
@@ -783,11 +1032,103 @@ class AutomatedTestRunner {
         const startTime = Date.now();
         
         try {
-            // Test the PDF deletion API
+            // Test the complete contract lifecycle: creation, signing, upload, and deletion
             const testFileName = 'test-delete-pdf.pdf';
             const testContractId = 'TEST-DELETE-001';
+            const testUserEmail = 'test@cochranfilms.com';
             
-            const response = await fetch(`${this.baseUrl}/api/delete-pdf`, {
+            // Step 1: Create test user with contract
+            const usersResponse = await fetch(`${this.baseUrl}/api/users`);
+            const usersData = await usersResponse.json();
+            
+            // Create test user if it doesn't exist
+            if (!usersData.users[testUserEmail]) {
+                const testUser = {
+                    ...this.testData.user,
+                    contract: {
+                        contractUrl: null,
+                        contractStatus: 'pending',
+                        contractSignedDate: null,
+                        contractUploadedDate: null,
+                        contractId: null
+                    },
+                    jobs: {},
+                    primaryJob: null,
+                    paymentMethod: null
+                };
+                usersData.users[testUserEmail] = testUser;
+                usersData.totalUsers = Object.keys(usersData.users).length;
+                usersData.lastUpdated = new Date().toISOString().split('T')[0];
+                
+                await fs.writeFile(
+                    path.join(__dirname, 'users.json'),
+                    JSON.stringify(usersData, null, 2)
+                );
+                
+                // Log test user creation for cleanup
+                this.logTestData('USER_CREATED', {
+                    email: testUserEmail,
+                    timestamp: new Date().toISOString(),
+                    file: 'users.json'
+                });
+            }
+            
+            // Step 2: Simulate contract signing and upload
+            const contractsResponse = await fetch(`${this.baseUrl}/api/uploaded-contracts`);
+            const contractsData = await contractsResponse.json();
+            
+            const testContract = {
+                fileName: testFileName,
+                contractId: testContractId,
+                userEmail: testUserEmail,
+                status: 'signed',
+                uploadedDate: new Date().toISOString(),
+                signedDate: new Date().toISOString(),
+                contractUrl: `/contracts/${testFileName}`
+            };
+            
+            contractsData.uploadedContracts.push(testContract);
+            contractsData.totalContracts = contractsData.uploadedContracts.length;
+            contractsData.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            await fs.writeFile(
+                path.join(__dirname, 'uploaded-contracts.json'),
+                JSON.stringify(contractsData, null, 2)
+            );
+            
+            // Log contract creation for cleanup
+            this.logTestData('CONTRACT_CREATED', {
+                fileName: testFileName,
+                contractId: testContractId,
+                userEmail: testUserEmail,
+                timestamp: new Date().toISOString(),
+                file: 'uploaded-contracts.json'
+            });
+            
+            // Step 3: Update user's contract status
+            usersData.users[testUserEmail].contract = {
+                contractUrl: testContract.contractUrl,
+                contractStatus: 'signed',
+                contractSignedDate: testContract.signedDate,
+                contractUploadedDate: testContract.uploadedDate,
+                contractId: testContractId
+            };
+            
+            await fs.writeFile(
+                path.join(__dirname, 'users.json'),
+                JSON.stringify(usersData, null, 2)
+            );
+            
+            // Log user contract update for cleanup
+            this.logTestData('USER_CONTRACT_UPDATED', {
+                email: testUserEmail,
+                contractId: testContractId,
+                timestamp: new Date().toISOString(),
+                file: 'users.json'
+            });
+            
+            // Step 4: Test PDF deletion API
+            const deleteResponse = await fetch(`${this.baseUrl}/api/delete-pdf`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -798,28 +1139,42 @@ class AutomatedTestRunner {
                 })
             });
             
-            const result = await response.json();
+            const deleteResult = await deleteResponse.json();
             const duration = Date.now() - startTime;
             
-            if (response.ok) {
+            if (deleteResponse.ok && deleteResult.success) {
+                // Log successful deletion for cleanup verification
+                this.logTestData('CONTRACT_DELETED', {
+                    fileName: testFileName,
+                    contractId: testContractId,
+                    userEmail: testUserEmail,
+                    timestamp: new Date().toISOString(),
+                    result: deleteResult
+                });
+                
                 return {
                     success: true,
-                    message: 'PDF deletion API is working correctly',
-                    details: result,
+                    message: 'Complete contract lifecycle test passed (creation, signing, upload, deletion)',
+                    details: {
+                        contractCreated: true,
+                        userUpdated: true,
+                        contractDeleted: true,
+                        result: deleteResult
+                    },
                     duration
                 };
             } else {
                 return {
                     success: false,
                     message: 'PDF deletion API returned an error',
-                    details: result,
+                    details: deleteResult,
                     duration
                 };
             }
         } catch (error) {
             return {
                 success: false,
-                message: 'Failed to test PDF deletion API',
+                message: 'Failed to test complete contract lifecycle',
                 details: { error: error.message }
             };
         }
@@ -945,6 +1300,11 @@ class AutomatedTestRunner {
                 await this.log(`   ${index + 1}. ${rec.title} (${rec.priority} priority)`, 'warning');
             }
         }
+        
+        // Log test data for cleanup
+        await this.log('📝 Test data logged for cleanup', 'info');
+        await this.log(`   Log file: ${this.testDataLogFile}`, 'info');
+        await this.log(`   Total log entries: ${this.testDataLog.length}`, 'info');
         
         return this.testResults;
     }

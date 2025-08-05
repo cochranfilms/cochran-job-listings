@@ -1,0 +1,90 @@
+[
+  {
+    "action": "USER_CREATED",
+    "timestamp": "2025-08-05T19:59:02.237Z",
+    "data": {
+      "email": "test@cochranfilms.com",
+      "timestamp": "2025-08-05T19:59:02.237Z",
+      "file": "users.json"
+    }
+  },
+  {
+    "action": "JOB_CREATED",
+    "timestamp": "2025-08-05T19:59:02.240Z",
+    "data": {
+      "title": "Test Photography Job",
+      "timestamp": "2025-08-05T19:59:02.240Z",
+      "file": "jobs-data.json"
+    }
+  },
+  {
+    "action": "CONTRACT_CREATED",
+    "timestamp": "2025-08-05T19:59:02.244Z",
+    "data": {
+      "fileName": "test-contract.pdf",
+      "contractId": "TEST-001",
+      "timestamp": "2025-08-05T19:59:02.244Z",
+      "file": "uploaded-contracts.json"
+    }
+  },
+  {
+    "action": "PERFORMANCE_CREATED",
+    "timestamp": "2025-08-05T19:59:02.247Z",
+    "data": {
+      "email": "test@cochranfilms.com",
+      "timestamp": "2025-08-05T19:59:02.247Z",
+      "file": "performance.json"
+    }
+  },
+  {
+    "action": "NOTIFICATION_CREATED",
+    "timestamp": "2025-08-05T19:59:02.249Z",
+    "data": {
+      "title": "Test Notification",
+      "timestamp": "2025-08-05T19:59:02.249Z",
+      "file": "notifications.json"
+    }
+  },
+  {
+    "action": "CONTRACT_CREATED",
+    "timestamp": "2025-08-05T19:59:02.252Z",
+    "data": {
+      "fileName": "test-delete-pdf.pdf",
+      "contractId": "TEST-DELETE-001",
+      "userEmail": "test@cochranfilms.com",
+      "timestamp": "2025-08-05T19:59:02.252Z",
+      "file": "uploaded-contracts.json"
+    }
+  },
+  {
+    "action": "USER_CONTRACT_UPDATED",
+    "timestamp": "2025-08-05T19:59:02.252Z",
+    "data": {
+      "email": "test@cochranfilms.com",
+      "contractId": "TEST-DELETE-001",
+      "timestamp": "2025-08-05T19:59:02.252Z",
+      "file": "users.json"
+    }
+  },
+  {
+    "action": "CONTRACT_DELETED",
+    "timestamp": "2025-08-05T19:59:02.262Z",
+    "data": {
+      "fileName": "test-delete-pdf.pdf",
+      "contractId": "TEST-DELETE-001",
+      "userEmail": "test@cochranfilms.com",
+      "timestamp": "2025-08-05T19:59:02.262Z",
+      "result": {
+        "success": true,
+        "message": "PDF deleted successfully",
+        "details": {
+          "fileName": "test-delete-pdf.pdf",
+          "contractId": "TEST-DELETE-001",
+          "localDeleted": false,
+          "jsonUpdated": true,
+          "githubDeleted": false
+        }
+      }
+    }
+  }
+]
