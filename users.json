@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Thing Two": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": "2hiDgxOA6iY5",
+        "role": "Backdrop Photographer Base",
+        "location": "Atlanta, GA",
+        "projectStart": "2026-04-20T21:09",
+        "rate": "$250/hour",
+        "approvedDate": "2025-08-05"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-backdrop-photographer-base-1754397713067": {
+          "id": "job-backdrop-photographer-base-1754397713067",
+          "title": "Backdrop Photographer Base",
+          "date": "2025-11-08",
+          "location": "Douglasville, GA",
+          "pay": "$400",
+          "description": "You will be taking pictures for on-site printing at the 2nd annual Stranger Things block party from 4-9pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+          "status": "Inactive",
+          "projectStatus": "Inactive",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-05",
+          "projectStart": "2026-04-20T21:09"
+        }
+      },
+      "primaryJob": "job-backdrop-photographer-base-1754397713067",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +51,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 0
+  "totalUsers": 1
 }
