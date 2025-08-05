@@ -1,5 +1,39 @@
 {
-  "users": {},
+  "users": {
+    "Cody Cochran": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": "I6yPwNMmR5SW",
+        "role": "Editor",
+        "location": "Chicago, IL",
+        "projectStart": "2026-03-10T20:00",
+        "rate": "$100/hour",
+        "approvedDate": "2025-08-05"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-editor-default": {
+          "id": "job-editor-default",
+          "title": "Editor Position",
+          "date": "2025-08-05",
+          "location": "Chicago, IL",
+          "pay": "$100/hour",
+          "description": "Professional Editor position in Chicago, IL. Details to be provided.",
+          "status": "upcoming",
+          "assignedDate": "2025-08-05",
+          "projectStart": "2026-03-10T20:00"
+        }
+      },
+      "primaryJob": "job-editor-default",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,5 +49,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 0
+  "totalUsers": 1
 }
