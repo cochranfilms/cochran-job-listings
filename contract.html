@@ -1009,18 +1009,15 @@
                 let currentYPos = 120;
                 const lineHeight = 10; // INCREASED from 6 to 10 for proper spacing
                 
-                // Process each term with SIMPLIFIED rendering to prevent text corruption
+                // Process each term with FIXED coordinates to prevent corruption
                 compactTerms.forEach((term, index) => {
-                    // Ensure we stay within page bounds
-                    if (currentYPos > 180) {
-                        currentYPos = 120; // Reset to terms section if needed
-                    }
+                    // Use fixed Y positions to prevent coordinate corruption
+                    const fixedYPos = 120 + (index * 12);
                     
-                    // FIXED: Render each term as a single line to prevent character corruption
+                    // FIXED: Render each term with fixed coordinates
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(8);
-                    doc.text(term, 20, currentYPos);
-                    currentYPos += 12; // Proper spacing between terms
+                    doc.text(term, 20, fixedYPos);
                 });
                 
                 // Fixed signature section position for single page
@@ -1252,18 +1249,15 @@
                 let currentYPos = 125;
                 const lineHeight = 10; // INCREASED from 6 to 10 for proper spacing
                 
-                // Process each term with SIMPLIFIED rendering to prevent text corruption
+                // Process each term with FIXED coordinates to prevent corruption
                 compactTerms.forEach((term, index) => {
-                    // Ensure we stay within page bounds
-                    if (currentYPos > 185) {
-                        currentYPos = 125; // Reset to terms section if needed
-                    }
+                    // Use fixed Y positions to prevent coordinate corruption
+                    const fixedYPos = 125 + (index * 12);
                     
-                    // FIXED: Render each term as a single line to prevent character corruption
+                    // FIXED: Render each term with fixed coordinates
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(8);
-                    doc.text(term, 20, currentYPos);
-                    currentYPos += 12; // Proper spacing between terms
+                    doc.text(term, 20, fixedYPos);
                 });
                 
                 // ==================== ADVANCED SIGNATURES ====================
