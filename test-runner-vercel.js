@@ -888,6 +888,7 @@ class AutomatedTestRunner {
             
             const createPdfResult = await createPdfResponse.json();
             console.log('📄 PDF creation result:', createPdfResult);
+            console.log('📄 PDF creation status:', createPdfResponse.status);
             
             // Step 2: Add contract record to uploaded-contracts.json
             console.log('📋 Adding contract record...');
@@ -938,6 +939,7 @@ class AutomatedTestRunner {
             
             const deletePdfResult = await deletePdfResponse.json();
             console.log('🗑️ PDF deletion result:', deletePdfResult);
+            console.log('🗑️ PDF deletion status:', deletePdfResponse.status);
             
             // Step 4: Test GitHub API deletion endpoint
             console.log('🗑️ Testing GitHub API deletion...');
@@ -954,15 +956,36 @@ class AutomatedTestRunner {
             
             const githubDeleteResult = await githubDeleteResponse.json();
             console.log('🗑️ GitHub deletion result:', githubDeleteResult);
+            console.log('🗑️ GitHub deletion status:', githubDeleteResponse.status);
             
             // Determine success based on all API responses
             const pdfCreated = createPdfResponse.status === 200 || createPdfResponse.status === 201;
             const deletePdfApiWorking = deletePdfResponse.status === 200;
             const githubDeleteWorking = githubDeleteResponse.status === 200 || githubDeleteResponse.status === 404;
             
+            // Create detailed success message
+            let successMessage = 'Complete PDF lifecycle test: ';
+            if (pdfCreated) {
+                successMessage += '✅ PDF Created → ';
+            } else {
+                successMessage += '❌ PDF Creation Failed → ';
+            }
+            
+            if (deletePdfApiWorking) {
+                successMessage += '✅ Delete API Working → ';
+            } else {
+                successMessage += '❌ Delete API Failed → ';
+            }
+            
+            if (githubDeleteWorking) {
+                successMessage += '✅ GitHub Delete Working';
+            } else {
+                successMessage += '❌ GitHub Delete Failed';
+            }
+            
             return {
                 success: pdfCreated && deletePdfApiWorking && githubDeleteWorking,
-                message: 'Complete PDF lifecycle test: Create → Upload → Delete',
+                message: successMessage,
                 details: {
                     pdfCreated: pdfCreated,
                     createPdfStatus: createPdfResponse.status,
@@ -975,7 +998,13 @@ class AutomatedTestRunner {
                     githubDeleteResult: githubDeleteResult,
                     testFileName: testFileName,
                     testContractId: testContractId,
-                    contractRecordAdded: true
+                    contractRecordAdded: true,
+                    // Add specific error details
+                    errors: {
+                        pdfCreationFailed: !pdfCreated ? `Status: ${createPdfResponse.status}, Result: ${JSON.stringify(createPdfResult)}` : null,
+                        deleteApiFailed: !deletePdfApiWorking ? `Status: ${deletePdfResponse.status}, Result: ${JSON.stringify(deletePdfResult)}` : null,
+                        githubDeleteFailed: !githubDeleteWorking ? `Status: ${githubDeleteResponse.status}, Result: ${JSON.stringify(githubDeleteResult)}` : null
+                    }
                 }
             };
         });
