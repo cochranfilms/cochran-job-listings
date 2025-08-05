@@ -1121,11 +1121,23 @@
         // Load dropdown options from API or use defaults
         async function loadDropdownOptions() {
             try {
-                const response = await fetch('/api/dropdown-options');
+                console.log('🔄 Loading dropdown options...');
+                
+                // Add timeout to prevent hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                
+                const response = await fetch('/api/dropdown-options', {
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
                 if (response.ok) {
                     window.dropdownOptions = await response.json();
                     console.log('📋 Loaded dropdown options from API:', window.dropdownOptions);
                 } else {
+                    console.warn(`⚠️ API returned status ${response.status}, using defaults`);
                     // Initialize with default options if API fails
                     window.dropdownOptions = {
                         roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Photographer', 'Full Stack Designer', 'Video Editor', 'Corporate Videographer'],
@@ -1139,7 +1151,12 @@
                     console.log('📋 Initialized default dropdown options (API failed):', window.dropdownOptions);
                 }
             } catch (error) {
-                console.error('❌ Error loading dropdown options from API:', error);
+                if (error.name === 'AbortError') {
+                    console.warn('⚠️ Dropdown options request timed out, using defaults');
+                } else {
+                    console.error('❌ Error loading dropdown options from API:', error);
+                }
+                
                 // Initialize with default options
                 window.dropdownOptions = {
                     roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Photographer', 'Full Stack Designer', 'Video Editor', 'Corporate Videographer'],
@@ -2180,6 +2197,27 @@
                 password += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             return password;
+        }
+        
+        // Clear freelancer form fields
+        function clearFreelancerForm() {
+            document.getElementById('freelancerName').value = '';
+            document.getElementById('freelancerEmail').value = '';
+            document.getElementById('freelancerRole').value = '';
+            document.getElementById('freelancerLocation').value = '';
+            document.getElementById('projectStart').value = '';
+            document.getElementById('freelancerRate').value = '';
+            document.getElementById('approvedDate').value = '';
+            
+            // Reset any dropdowns or selects
+            const selects = document.querySelectorAll('#creator-management select');
+            selects.forEach(select => {
+                if (select.value !== '') {
+                    select.value = '';
+                }
+            });
+            
+            console.log('✅ Freelancer form cleared');
         }
         
         // Update users.json on GitHub
