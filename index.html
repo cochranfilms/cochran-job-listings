@@ -116,6 +116,28 @@
       line-height: 1.7;
     }
     
+    .header-links {
+      margin-top: 2rem;
+    }
+    
+    .header-link {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: var(--black);
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255,178,0,0.3);
+    }
+    
+    .header-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255,178,0,0.4);
+    }
+    
     /* Slideshow Styles */
     .slideshow-container {
       position: relative;
@@ -1437,6 +1459,11 @@
         Join our dynamic team of creatives, where every project pushes boundaries and every collaboration 
         creates something unforgettable.
       </p>
+      <div class="header-links">
+        <a href="read-me.html" class="header-link">
+          <i class="fas fa-film"></i> Platform Showcase
+        </a>
+      </div>
     </div>
   </header>
 
