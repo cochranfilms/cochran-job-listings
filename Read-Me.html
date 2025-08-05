@@ -1171,18 +1171,58 @@
     <section class="cta-section">
         <div class="container">
             <div class="cta-content" data-aos="fade-up" data-aos-duration="1000">
-                <h2><i class="fas fa-star"></i> Ready to Transform Your Workflow?</h2>
-                <p>
-                    Experience the future of creator management with our sophisticated, 
-                    fully-automated platform designed for production companies that demand excellence.
+                <h2><i class="fas fa-crown"></i> Ready to Own Your Creator Management Empire?</h2>
+                <p class="cta-subtitle">
+                    Stop managing creators manually. Start scaling your production company with enterprise-grade automation that pays for itself.
                 </p>
+                
+                <div class="cta-highlights">
+                    <div class="highlight-item">
+                        <i class="fas fa-rocket"></i>
+                        <span>Deploy in 24 hours</span>
+                    </div>
+                    <div class="highlight-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>White-label ready</span>
+                    </div>
+                    <div class="highlight-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Scale infinitely</span>
+                    </div>
+                </div>
+                
+                <div class="cta-benefits">
+                    <div class="benefit-card">
+                        <h4><i class="fas fa-dollar-sign"></i> ROI Guarantee</h4>
+                        <p>Recoup your investment within 30 days through automated efficiency gains</p>
+                    </div>
+                    <div class="benefit-card">
+                        <h4><i class="fas fa-users"></i> Creator Network</h4>
+                        <p>Access our proven creator onboarding system that scales with your growth</p>
+                    </div>
+                    <div class="benefit-card">
+                        <h4><i class="fas fa-cogs"></i> Zero Maintenance</h4>
+                        <p>Set it and forget it - our platform runs itself while you focus on creativity</p>
+                    </div>
+                </div>
+                
+                <div class="cta-urgency">
+                    <p><i class="fas fa-exclamation-triangle"></i> <strong>Limited Availability:</strong> Only 5 white-label licenses available this quarter</p>
+                </div>
+                
                 <div class="cta-buttons">
-                    <a href="admin-dashboard.html" class="btn btn-primary">
-                        <i class="fas fa-tachometer-alt"></i> View Live Demo
+                    <a href="https://www.cochranfilms.com/contact" class="btn btn-primary cta-main-btn">
+                        <i class="fas fa-crown"></i> Claim Your White-Label License
                     </a>
-                    <a href="contract.html" class="btn btn-secondary">
-                        <i class="fas fa-file-contract"></i> Try Contract Portal
+                    <a href="admin-dashboard.html" class="btn btn-secondary">
+                        <i class="fas fa-eye"></i> See Platform in Action
                     </a>
+                </div>
+                
+                <div class="cta-trust">
+                    <p><i class="fas fa-check-circle"></i> Trusted by production companies worldwide</p>
+                    <p><i class="fas fa-lock"></i> Enterprise-grade security & compliance</p>
+                    <p><i class="fas fa-headset"></i> 24/7 white-label support included</p>
                 </div>
             </div>
         </div>
@@ -1196,9 +1236,10 @@
                     <h3><i class="fas fa-film"></i> Cochran Films</h3>
                     <p>Next-generation creator management platform</p>
                     <div class="social-links">
-                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+                        <a href="https://www.facebook.com/cochranfilmsllc/" class="social-link" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.instagram.com/cochran.films" class="social-link" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.linkedin.com/company/cochranfilms" class="social-link" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="https://www.youtube.com/@cochranfilmsllc" class="social-link" target="_blank"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
                 <div class="footer-section">
@@ -1222,7 +1263,7 @@
                 <div class="footer-section">
                     <h4>Contact</h4>
                     <p>Ready to get started?</p>
-                    <a href="mailto:ceo@cochranfilms.com" class="btn btn-primary">
+                    <a href="https://www.cochranfilms.com/contact" class="btn btn-primary">
                         <i class="fas fa-envelope"></i> Contact Us
                     </a>
                 </div>
@@ -1531,11 +1572,138 @@
             margin-bottom: 3rem;
         }
 
+        .cta-subtitle {
+            font-size: clamp(1.2rem, 3.5vw, 1.6rem) !important;
+            color: var(--text-secondary) !important;
+            margin-bottom: 2rem !important;
+            font-weight: 500;
+        }
+
+        .cta-highlights {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 3rem 0;
+        }
+
+        .highlight-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 178, 0, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .highlight-item i {
+            font-size: 1.2rem;
+        }
+
+        .cta-benefits {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .benefit-card {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(255, 178, 0, 0.2);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow);
+        }
+
+        .benefit-card h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .benefit-card p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .cta-urgency {
+            background: linear-gradient(135deg, rgba(255, 178, 0, 0.1), rgba(220, 38, 38, 0.1));
+            border: 2px solid rgba(255, 178, 0, 0.3);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin: 3rem 0;
+            text-align: center;
+        }
+
+        .cta-urgency p {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .cta-main-btn {
+            background: linear-gradient(135deg, var(--primary-color), #FF8C00) !important;
+            color: var(--dark-bg) !important;
+            font-size: 1.2rem !important;
+            padding: 1.5rem 3rem !important;
+            font-weight: 700 !important;
+            box-shadow: 0 10px 30px rgba(255, 178, 0, 0.4) !important;
+            animation: pulse 2s infinite !important;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .cta-trust {
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .cta-trust p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .cta-trust i {
+            color: var(--secondary-color);
+        }
+
         .cta-buttons {
             display: flex;
             gap: 2rem;
             justify-content: center;
             flex-wrap: wrap;
+            margin: 3rem 0;
         }
 
         /* Footer */
