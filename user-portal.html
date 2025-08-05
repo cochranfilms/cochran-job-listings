@@ -1388,19 +1388,92 @@
                 const userReview = performanceData.performanceReviews[userEmail];
                 
                 if (!userReview) {
+                    const userName = currentUser?.profile?.name || currentUser?.profile?.email?.split('@')[0] || 'Team Member';
+                    const userJob = getSelectedJob();
+                    const jobTitle = userJob ? userJob.title : 'your position';
+                    
                     container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="status-icon" style="font-size: 3rem; color: #FFB200; margin-bottom: 1rem;">
-                                <i class="fas fa-clock"></i>
+                        <div class="empty-state" style="background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(20,20,20,0.9) 100%); border: 1px solid rgba(255,178,0,0.3); border-radius: 16px; padding: 2rem; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+                            
+                            <!-- Personalized Welcome Header -->
+                            <div style="margin-bottom: 2rem;">
+                                <div style="font-size: 3rem; color: #FFB200; margin-bottom: 1rem;">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <h2 style="color: #FFB200; margin-bottom: 0.5rem; font-family: 'Cinzel', serif; font-size: 1.8rem;">
+                                    Welcome, ${userName}! 
+                                </h2>
+                                <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 1rem;">
+                                    We're excited to have you on the Cochran Films team
+                                </p>
                             </div>
-                            <h3>⏳ No Performance Review Yet</h3>
-                            <p>Your performance review hasn't been completed yet. Check back later!</p>
-                            <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 1px solid rgba(255,178,0,0.3);">
-                                <h4 style="color: #FFB200; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> What to Expect</h4>
-                                <div style="color: rgba(255,255,255,0.9);">
-                                    <div><strong>Review Process:</strong> Performance reviews are completed by admin after project milestones</div>
-                                    <div><strong>Timeline:</strong> Reviews typically completed within 1-2 weeks of project completion</div>
-                                    <div><strong>Categories:</strong> Professionalism, Quality, Communication, Reliability, Overall Performance</div>
+                            
+                            <!-- Status Icon and Message -->
+                            <div style="margin-bottom: 2rem;">
+                                <div class="status-icon" style="font-size: 4rem; color: #FFB200; margin-bottom: 1rem;">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <h3 style="color: #FFB200; margin-bottom: 1rem; font-size: 1.4rem;">
+                                    ⏳ Performance Review Coming Soon
+                                </h3>
+                                <p style="color: rgba(255,255,255,0.9); line-height: 1.6; margin-bottom: 1.5rem;">
+                                    Your performance review for <strong style="color: #FFB200;">${jobTitle}</strong> hasn't been completed yet. 
+                                    We're committed to providing you with detailed, constructive feedback to support your growth.
+                                </p>
+                            </div>
+                            
+                            <!-- Information Cards -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                                <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2);">
+                                    <div style="font-size: 2rem; color: #FFB200; margin-bottom: 0.5rem;">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                    <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Review Timeline</h4>
+                                    <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin: 0;">
+                                        Reviews typically completed within 1-2 weeks of project completion
+                                    </p>
+                                </div>
+                                
+                                <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2);">
+                                    <div style="font-size: 2rem; color: #FFB200; margin-bottom: 0.5rem;">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </div>
+                                    <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Review Categories</h4>
+                                    <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin: 0;">
+                                        Professionalism, Quality, Communication, Reliability, Overall Performance
+                                    </p>
+                                </div>
+                                
+                                <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2);">
+                                    <div style="font-size: 2rem; color: #FFB200; margin-bottom: 0.5rem;">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <h4 style="color: #FFB200; margin-bottom: 0.5rem;">Review Process</h4>
+                                    <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin: 0;">
+                                        Completed by admin after project milestones and key deliverables
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Encouragement Section -->
+                            <div style="background: linear-gradient(135deg, rgba(255,178,0,0.1) 0%, rgba(255,178,0,0.05) 100%); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(255,178,0,0.2);">
+                                <h4 style="color: #FFB200; margin-bottom: 1rem; font-size: 1.2rem;">
+                                    <i class="fas fa-seedling"></i> Your Growth Journey
+                                </h4>
+                                <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem; line-height: 1.6;">
+                                    At Cochran Films, we believe in continuous improvement and are committed to supporting your professional development. 
+                                    Your performance review will provide valuable insights to help you excel in your role.
+                                </p>
+                                <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                                    <div style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem;">
+                                        <i class="fas fa-lightbulb"></i> Learning Focus
+                                    </div>
+                                    <div style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem;">
+                                        <i class="fas fa-rocket"></i> Growth Mindset
+                                    </div>
+                                    <div style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem;">
+                                        <i class="fas fa-handshake"></i> Team Support
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1408,56 +1481,123 @@
                     return;
                 }
 
+                // Get user's job information for personalized header
+                const userJob = getSelectedJob();
+                const jobTitle = userJob ? userJob.title : 'Your Position';
+                const userName = currentUser?.profile?.name || currentUser?.profile?.email?.split('@')[0] || 'Team Member';
+                
                 // Display the performance review
                 const reviewDate = userReview.reviewDate ? new Date(userReview.reviewDate).toLocaleDateString() : 'N/A';
                 const overallRating = userReview.overallRating || 'Not rated';
                 const categories = userReview.categories || {};
                 
                 container.innerHTML = `
-                    <div class="performance-review-card">
-                        <div class="review-header">
-                            <h3><i class="fas fa-star"></i> Performance Review</h3>
-                            <span class="review-date">${reviewDate}</span>
-                        </div>
+                    <div class="performance-review-card" style="background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(20,20,20,0.9) 100%); border: 1px solid rgba(255,178,0,0.3); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
                         
-                        <div class="review-summary">
-                            <div class="overall-rating">
-                                <h4>Overall Rating</h4>
-                                <div class="rating-display">
-                                    <span class="rating-number">${overallRating}/5</span>
-                                    <div class="rating-stars">
-                                        ${generateStarRating(overallRating)}
-                                    </div>
-                                </div>
+                        <!-- Personalized Welcome Header -->
+                        <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid rgba(255,178,0,0.2);">
+                            <div style="font-size: 2.5rem; color: #FFB200; margin-bottom: 0.5rem;">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <h2 style="color: #FFB200; margin-bottom: 0.5rem; font-family: 'Cinzel', serif; font-size: 1.8rem;">
+                                Welcome back, ${userName}! 
+                            </h2>
+                            <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 1rem;">
+                                We're committed to your growth and success at Cochran Films
+                            </p>
+                            <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.2);">
+                                <p style="color: rgba(255,255,255,0.9); margin: 0; font-style: italic;">
+                                    <i class="fas fa-quote-left" style="color: #FFB200; margin-right: 0.5rem;"></i>
+                                    Your performance review helps us understand how we can better support your professional development and ensure your continued success with our team.
+                                    <i class="fas fa-quote-right" style="color: #FFB200; margin-left: 0.5rem;"></i>
+                                </p>
                             </div>
                         </div>
                         
-                        <div class="review-categories">
-                            <h4>Category Ratings</h4>
-                            ${Object.entries(categories).map(([category, rating]) => `
-                                <div class="category-item">
-                                    <div class="category-name">${category}</div>
-                                    <div class="category-rating">
-                                        <span class="rating-number">${rating}/5</span>
-                                        <div class="rating-stars">
-                                            ${generateStarRating(rating)}
+                        <!-- Job-Specific Review Card -->
+                        <div style="background: rgba(0,0,0,0.4); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(255,178,0,0.2);">
+                            <div class="review-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <h3 style="color: #FFB200; margin: 0; font-size: 1.4rem;">
+                                    <i class="fas fa-star"></i> ${jobTitle} Performance Review
+                                </h3>
+                                <span class="review-date" style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600;">
+                                    ${reviewDate}
+                                </span>
+                            </div>
+                            
+                            <div class="review-summary" style="margin-bottom: 2rem;">
+                                <div class="overall-rating">
+                                    <h4 style="color: #FFB200; margin-bottom: 1rem; font-size: 1.2rem;">
+                                        <i class="fas fa-trophy"></i> Overall Performance Rating
+                                    </h4>
+                                    <div class="rating-display" style="display: flex; align-items: center; gap: 1rem; background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px;">
+                                        <span class="rating-number" style="font-size: 2rem; font-weight: bold; color: #FFB200;">${overallRating}/5</span>
+                                        <div class="rating-stars" style="font-size: 1.5rem;">
+                                            ${generateStarRating(overallRating)}
                                         </div>
                                     </div>
                                 </div>
-                            `).join('')}
+                            </div>
+                            
+                            <div class="review-categories">
+                                <h4 style="color: #FFB200; margin-bottom: 1rem; font-size: 1.2rem;">
+                                    <i class="fas fa-chart-bar"></i> Detailed Category Ratings
+                                </h4>
+                                <div style="display: grid; gap: 1rem;">
+                                    ${Object.entries(categories).map(([category, rating]) => `
+                                        <div class="category-item" style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,178,0,0.1);">
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div class="category-name" style="color: rgba(255,255,255,0.9); font-weight: 600;">${category}</div>
+                                                <div class="category-rating" style="display: flex; align-items: center; gap: 0.5rem;">
+                                                    <span class="rating-number" style="color: #FFB200; font-weight: bold;">${rating}/5</span>
+                                                    <div class="rating-stars" style="font-size: 1rem;">
+                                                        ${generateStarRating(rating)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
                         </div>
                         
                         ${userReview.comments ? `
-                            <div class="review-comments">
-                                <h4>Comments</h4>
-                                <div class="comments-text">${userReview.comments}</div>
+                            <div class="review-comments" style="background: rgba(0,0,0,0.4); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(255,178,0,0.2);">
+                                <h4 style="color: #FFB200; margin-bottom: 1rem; font-size: 1.2rem;">
+                                    <i class="fas fa-comments"></i> Feedback & Comments
+                                </h4>
+                                <div class="comments-text" style="color: rgba(255,255,255,0.9); line-height: 1.6; font-style: italic; background: rgba(255,178,0,0.05); padding: 1rem; border-radius: 8px; border-left: 4px solid #FFB200;">
+                                    "${userReview.comments}"
+                                </div>
                             </div>
                         ` : ''}
                         
-                        <div class="review-footer">
-                            <div class="review-status">
+                        <div class="review-footer" style="text-align: center; padding-top: 1.5rem; border-top: 2px solid rgba(255,178,0,0.2);">
+                            <div class="review-status" style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(34,197,94,0.2); color: #22c55e; padding: 0.75rem 1.5rem; border-radius: 8px; border: 1px solid rgba(34,197,94,0.3);">
                                 <i class="fas fa-check-circle"></i>
-                                <span>Review Completed</span>
+                                <span style="font-weight: 600;">Review Completed</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Growth Encouragement Section -->
+                        <div style="background: linear-gradient(135deg, rgba(255,178,0,0.1) 0%, rgba(255,178,0,0.05) 100%); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; border: 1px solid rgba(255,178,0,0.2); text-align: center;">
+                            <h4 style="color: #FFB200; margin-bottom: 1rem; font-size: 1.2rem;">
+                                <i class="fas fa-seedling"></i> Your Growth Journey
+                            </h4>
+                            <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem; line-height: 1.6;">
+                                We believe in continuous improvement and are here to support your professional development. 
+                                Use this feedback to identify areas for growth and celebrate your strengths!
+                            </p>
+                            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                                <div style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem;">
+                                    <i class="fas fa-lightbulb"></i> Learning Opportunity
+                                </div>
+                                <div style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem;">
+                                    <i class="fas fa-rocket"></i> Growth Focus
+                                </div>
+                                <div style="background: rgba(255,178,0,0.2); color: #FFB200; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem;">
+                                    <i class="fas fa-handshake"></i> Team Support
+                                </div>
                             </div>
                         </div>
                     </div>
