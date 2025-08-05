@@ -49,6 +49,8 @@ function authenticateRequest(req, res) {
 }
 
 module.exports = async (req, res) => {
+    console.log('🔍 Performance API called:', req.method, req.url);
+    
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -56,6 +58,7 @@ module.exports = async (req, res) => {
     
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
+        console.log('✅ Handling preflight request');
         res.status(200).end();
         return;
     }
@@ -67,7 +70,9 @@ module.exports = async (req, res) => {
 
         // GET /api/performance - Get all performance reviews
         if (method === 'GET' && pathSegments.length === 1) {
+            console.log('📖 Loading performance data...');
             const data = await loadPerformanceData();
+            console.log('✅ Performance data loaded:', Object.keys(data.performanceReviews).length, 'reviews');
             res.json(data);
             return;
         }
