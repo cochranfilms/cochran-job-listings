@@ -43,10 +43,15 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-
-        // Session persistence timer (5 minutes)
-        const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
-        let sessionTimer = null;
+        
+        // Set Firebase persistence to LOCAL to maintain session across page refreshes
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .then(() => {
+                console.log('✅ Firebase persistence set to LOCAL');
+            })
+            .catch((error) => {
+                console.error('❌ Error setting Firebase persistence:', error);
+            });
 
         // Authentication state observer
         auth.onAuthStateChanged(function(user) {
@@ -56,8 +61,6 @@
                 // Only check if user is properly authenticated and not just a temporary state
                 if (user.email && user.emailVerified !== false) {
                     checkUserInSystem(user.email);
-                    // Set session timer
-                    startSessionTimer();
                 } else {
                     console.log('⚠️ User not fully authenticated, waiting for proper auth...');
                     showLoginScreen();
@@ -65,38 +68,8 @@
             } else {
                 console.log('❌ User signed out');
                 showLoginScreen();
-                clearSessionTimer();
             }
         });
-
-        // Start session timer
-        function startSessionTimer() {
-            clearSessionTimer();
-            sessionTimer = setTimeout(() => {
-                console.log('⏰ Session timeout - logging out user');
-                logout();
-            }, SESSION_TIMEOUT);
-        }
-
-        // Clear session timer
-        function clearSessionTimer() {
-            if (sessionTimer) {
-                clearTimeout(sessionTimer);
-                sessionTimer = null;
-            }
-        }
-
-        // Reset session timer on user activity
-        function resetSessionTimer() {
-            if (currentUser) {
-                startSessionTimer();
-            }
-        }
-
-        // Add activity listeners to reset timer
-        document.addEventListener('click', resetSessionTimer);
-        document.addEventListener('keypress', resetSessionTimer);
-        document.addEventListener('scroll', resetSessionTimer);
 
         // Load performance reviews from API
         async function loadPerformanceReviews() {
