@@ -26,6 +26,8 @@
           "pay": "$200/hour",
           "description": "Professional Producer position in Atlanta, GA. Details to be provided.",
           "status": "upcoming",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
           "assignedDate": "2025-08-05",
           "projectStart": "2026-04-04T08:00"
         }
@@ -59,6 +61,8 @@
           "pay": "$100/hour",
           "description": "Professional Editor position in Chicago, IL. Details to be provided.",
           "status": "upcoming",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
           "assignedDate": "2025-08-05",
           "projectStart": "2026-03-10T20:00"
         }

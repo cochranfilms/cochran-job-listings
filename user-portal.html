@@ -1060,8 +1060,8 @@
                             ${userJobs.map((job, index) => {
                                 // Get project status from users data
                                 const userJob = currentUser.jobs[job.id];
-                                const projectStatus = userJob ? userJob.projectStatus : 'upcoming';
-                                const paymentStatus = userJob ? userJob.paymentStatus : 'pending';
+                                const projectStatus = userJob && userJob.projectStatus ? userJob.projectStatus : 'upcoming';
+                                const paymentStatus = userJob && userJob.paymentStatus ? userJob.paymentStatus : 'pending';
                                 
                                 return `
                                 <div class="job-option ${job.id === primaryJobId ? 'active' : ''}" onclick="selectJob(${index}, '${job.id}')">

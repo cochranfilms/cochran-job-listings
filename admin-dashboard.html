@@ -2676,6 +2676,8 @@
                             pay: job.pay,
                             description: job.description,
                             status: job.status,
+                            projectStatus: job.status || 'upcoming',
+                            paymentStatus: 'pending',
                             assignedDate: new Date().toISOString().split('T')[0],
                             projectStart: document.getElementById('projectStart').value || 'TBD'
                         };
@@ -2699,6 +2701,8 @@
                         pay: document.getElementById('freelancerRate').value || '$200/hour',
                         description: `Professional ${role} position in ${location}. Details to be provided.`,
                         status: 'upcoming',
+                        projectStatus: 'upcoming',
+                        paymentStatus: 'pending',
                         assignedDate: new Date().toISOString().split('T')[0],
                         projectStart: document.getElementById('projectStart').value || 'TBD'
                     };
@@ -2727,6 +2731,8 @@
                     pay: document.getElementById('freelancerRate').value || '$200/hour',
                     description: `Professional ${role} position in ${location}. Details to be provided.`,
                     status: 'upcoming',
+                    projectStatus: 'upcoming',
+                    paymentStatus: 'pending',
                     assignedDate: new Date().toISOString().split('T')[0],
                     projectStart: document.getElementById('projectStart').value || 'TBD'
                 };
