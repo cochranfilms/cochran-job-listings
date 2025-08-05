@@ -19,7 +19,8 @@
       },
       "jobs": {},
       "primaryJob": null,
-      "paymentMethod": null
+      "paymentMethod": "check",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
