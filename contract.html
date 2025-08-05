@@ -1619,10 +1619,10 @@
                             <div class="term"><strong>1. INDEPENDENT CONTRACTOR:</strong> Not an employee of Cochran Films.</div>
                             <div class="term"><strong>2. SERVICES:</strong> Provide professional ${contractData.role} services as specified.</div>
                             <div class="term"><strong>3. COMPENSATION:</strong> Payment within 24 hours of project completion.</div>
-                            <div class="term"><strong>4. STANDARDS:</strong> All work must meet Cochran Films quality standards.</div>
-                            <div class="term"><strong>5. ATTIRE:</strong> Professional attire (all black) required on set.</div>
-                            <div class="term"><strong>6. PUNCTUALITY:</strong> Arrive 15 minutes before scheduled start time.</div>
-                            <div class="term"><strong>7. DOCUMENTATION:</strong> Bring valid ID and signed contract to all projects.</div>
+                            <div class="term"><strong>PROFESSIONAL STANDARDS:</strong> All work must meet Cochran Films quality standards.</div>
+                            <div class="term"><strong>ATTIRE:</strong> Professional attire (all black) required on set.</div>
+                            <div class="term"><strong>PUNCTUALITY:</strong> Arrive 15 minutes before scheduled start time.</div>
+                            <div class="term"><strong>DOCUMENTATION:</strong> Bring valid ID and signed contract to all projects.</div>
                         </div>
                     </div>
                     
@@ -2382,14 +2382,29 @@
         
         // Show beautiful contract signing notification
         function showContractSigningNotification() {
+            // Add background blur overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'contract-signing-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(8px);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            document.body.appendChild(overlay);
+            
             // Create notification container
             const notification = document.createElement('div');
             notification.id = 'contract-signing-notification';
             notification.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
+                position: relative;
                 background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
                 border: 2px solid #FFB200;
                 border-radius: 16px;
@@ -2423,7 +2438,7 @@
                 </div>
             `;
             
-            document.body.appendChild(notification);
+            overlay.appendChild(notification);
         }
         
         // Update notification progress
@@ -2474,9 +2489,10 @@
                 `;
             }
             
-            // Update main UI
+            // Hide the old success message - don't show it anymore
             document.getElementById('success-message').classList.add('hidden');
-            document.getElementById('signed-message').style.display = 'block';
+            // Don't show the old signed-message either
+            // document.getElementById('signed-message').style.display = 'block';
         }
         
         // Show error notification
@@ -2500,8 +2516,12 @@
         // Close notification
         function closeNotification() {
             const notification = document.getElementById('contract-signing-notification');
+            const overlay = document.getElementById('contract-signing-overlay');
             if (notification) {
                 notification.remove();
+            }
+            if (overlay) {
+                overlay.remove();
             }
         }
         
