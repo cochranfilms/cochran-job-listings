@@ -33,7 +33,7 @@
         }
       },
       "primaryJob": "job-assistant-default",
-      "paymentMethod": "check",
+      "paymentMethod": "zelle",
       "paymentStatus": "configured"
     }
   },
