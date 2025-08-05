@@ -989,7 +989,7 @@
                 
                 // Professional compact terms list - FIXED SPACING
                 const compactTerms = [
-                    'INDEPENDENT CONTRACTOR: Not an employee of Cochran Films.',
+                    'INDEPENDENT CONTRACTOR: Not an employee of\nCochran Films.',
                     'SERVICES: Provide professional services as specified.',
                     'COMPENSATION: Payment within 24 hours of completion.',
                     'STANDARDS: All work must meet Cochran Films quality.',
@@ -1017,10 +1017,19 @@
                     const xPos = isLeftColumn ? 20 : 110; // Left column at x=20, right column at x=110
                     const fixedYPos = 120 + (columnIndex * 8);
                     
-                    // FIXED: Render each term with two-column layout
+                    // FIXED: Render each term with two-column layout and text wrapping
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(8);
-                    doc.text(term, xPos, fixedYPos);
+                    
+                    // Handle multi-line terms (like term #1)
+                    if (term.includes('\n')) {
+                        const lines = term.split('\n');
+                        lines.forEach((line, lineIndex) => {
+                            doc.text(line, xPos, fixedYPos + (lineIndex * 4));
+                        });
+                    } else {
+                        doc.text(term, xPos, fixedYPos);
+                    }
                 });
                 
                 // Calculate signature position AFTER all terms are rendered (two-column layout)
@@ -1111,7 +1120,7 @@
                 // ==================== PROFESSIONAL LEGAL FOOTER ====================
                 
                 // Footer - positioned with proper spacing to fit in container
-                const footerY = 240; // MOVED UP from 275 to 240 since terms are now more compact
+                const footerY = 260; // MOVED DOWN from 240 to 260 to avoid overlapping signature boxes
                 
                 doc.setFillColor(248, 249, 250);
                 doc.rect(20, footerY - 5, 170, 20, 'F'); // Increased height to 20mm
@@ -1262,10 +1271,19 @@
                     const xPos = isLeftColumn ? 20 : 110; // Left column at x=20, right column at x=110
                     const fixedYPos = 125 + (columnIndex * 8);
                     
-                    // FIXED: Render each term with two-column layout
+                    // FIXED: Render each term with two-column layout and text wrapping
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(8);
-                    doc.text(term, xPos, fixedYPos);
+                    
+                    // Handle multi-line terms (like term #1)
+                    if (term.includes('\n')) {
+                        const lines = term.split('\n');
+                        lines.forEach((line, lineIndex) => {
+                            doc.text(line, xPos, fixedYPos + (lineIndex * 4));
+                        });
+                    } else {
+                        doc.text(term, xPos, fixedYPos);
+                    }
                 });
                 
                 // ==================== ADVANCED SIGNATURES ====================
@@ -1352,7 +1370,7 @@
                 doc.text('Date: ' + contractData.signatureDate, 115, signatureY + 42);
                 
                 // Footer - positioned with proper spacing to fit in container
-                const footerY = 240; // MOVED UP from 275 to 240 since terms are now more compact
+                const footerY = 260; // MOVED DOWN from 240 to 260 to avoid overlapping signature boxes
                 
                 doc.setFillColor(248, 249, 250);
                 doc.rect(20, footerY - 5, 170, 20, 'F'); // Increased height to 20mm
