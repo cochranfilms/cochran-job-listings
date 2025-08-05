@@ -1,40 +1,5 @@
 {
-  "users": {
-    "Chance Jarrard": {
-      "profile": {
-        "email": "chancejarrard@gmail.com",
-        "password": "zujwi9-Hihdov-hubwug",
-        "role": "Videographer",
-        "location": "Los Angeles, CA",
-        "projectStart": "2025-10-11T17:00",
-        "rate": "$100/hour",
-        "approvedDate": "2025-08-04"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/4/2025, 11:33:26 PM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754364806149-P6K90"
-      },
-      "jobs": {
-        "job-videographer-default": {
-          "id": "job-videographer-default",
-          "title": "Videographer Position",
-          "date": "2025-08-05",
-          "location": "Los Angeles, CA",
-          "pay": "$200/hour",
-          "description": "Professional Videographer position in Los Angeles, CA. Details to be provided.",
-          "status": "upcoming",
-          "assignedDate": "2025-08-05",
-          "projectStart": "TBD"
-        }
-      },
-      "primaryJob": "job-videographer-default",
-      "paymentMethod": "check",
-      "paymentStatus": "configured"
-    }
-  },
+  "users": {},
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -50,5 +15,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 1
+  "totalUsers": 0
 }
