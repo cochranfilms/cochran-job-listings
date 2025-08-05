@@ -1017,6 +1017,7 @@
             displayUserInfo();
             displayUserContracts();
             displayUserJobs();
+            displayUserPerformanceReviews();
         }
 
         // Refresh user data manually
@@ -1337,6 +1338,159 @@
             }
             
 
+        }
+
+        // Display user performance reviews
+        function displayUserPerformanceReviews() {
+            const container = document.getElementById('userPerformanceReviews');
+            
+            if (!currentUser) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>❌ User Data Missing</h3>
+                        <p>Unable to load performance review information.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Load performance reviews from API
+            loadUserPerformanceReviews(currentUser.email);
+        }
+
+        // Load and display user's performance reviews
+        async function loadUserPerformanceReviews(userEmail) {
+            const container = document.getElementById('userPerformanceReviews');
+            
+            try {
+                console.log('🔍 Loading performance reviews for:', userEmail);
+                
+                // Try to load from API first
+                const response = await fetch('/api/performance');
+                let performanceData = null;
+                
+                if (response.ok) {
+                    performanceData = await response.json();
+                    console.log('✅ Performance data loaded from API:', performanceData);
+                } else {
+                    console.warn('⚠️ API failed, trying direct JSON file...');
+                    // Fallback to direct JSON file
+                    const fallbackResponse = await fetch('/performance.json');
+                    if (fallbackResponse.ok) {
+                        performanceData = await fallbackResponse.json();
+                        console.log('✅ Performance data loaded from JSON file:', performanceData);
+                    } else {
+                        console.warn('⚠️ JSON file also failed, using empty data');
+                        performanceData = { performanceReviews: {} };
+                    }
+                }
+
+                const userReview = performanceData.performanceReviews[userEmail];
+                
+                if (!userReview) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="status-icon" style="font-size: 3rem; color: #FFB200; margin-bottom: 1rem;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h3>⏳ No Performance Review Yet</h3>
+                            <p>Your performance review hasn't been completed yet. Check back later!</p>
+                            <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 1px solid rgba(255,178,0,0.3);">
+                                <h4 style="color: #FFB200; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> What to Expect</h4>
+                                <div style="color: rgba(255,255,255,0.9);">
+                                    <div><strong>Review Process:</strong> Performance reviews are completed by admin after project milestones</div>
+                                    <div><strong>Timeline:</strong> Reviews typically completed within 1-2 weeks of project completion</div>
+                                    <div><strong>Categories:</strong> Professionalism, Quality, Communication, Reliability, Overall Performance</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Display the performance review
+                const reviewDate = userReview.reviewDate ? new Date(userReview.reviewDate).toLocaleDateString() : 'N/A';
+                const overallRating = userReview.overallRating || 'Not rated';
+                const categories = userReview.categories || {};
+                
+                container.innerHTML = `
+                    <div class="performance-review-card">
+                        <div class="review-header">
+                            <h3><i class="fas fa-star"></i> Performance Review</h3>
+                            <span class="review-date">${reviewDate}</span>
+                        </div>
+                        
+                        <div class="review-summary">
+                            <div class="overall-rating">
+                                <h4>Overall Rating</h4>
+                                <div class="rating-display">
+                                    <span class="rating-number">${overallRating}/5</span>
+                                    <div class="rating-stars">
+                                        ${generateStarRating(overallRating)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="review-categories">
+                            <h4>Category Ratings</h4>
+                            ${Object.entries(categories).map(([category, rating]) => `
+                                <div class="category-item">
+                                    <div class="category-name">${category}</div>
+                                    <div class="category-rating">
+                                        <span class="rating-number">${rating}/5</span>
+                                        <div class="rating-stars">
+                                            ${generateStarRating(rating)}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        ${userReview.comments ? `
+                            <div class="review-comments">
+                                <h4>Comments</h4>
+                                <div class="comments-text">${userReview.comments}</div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="review-footer">
+                            <div class="review-status">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Review Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('❌ Error loading performance reviews:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>❌ Error Loading Reviews</h3>
+                        <p>Unable to load performance review data. Please try again later.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Generate star rating display
+        function generateStarRating(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 !== 0;
+            const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+            
+            let stars = '';
+            for (let i = 0; i < fullStars; i++) {
+                stars += '<i class="fas fa-star" style="color: #FFB200;"></i>';
+            }
+            if (hasHalfStar) {
+                stars += '<i class="fas fa-star-half-alt" style="color: #FFB200;"></i>';
+            }
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '<i class="far fa-star" style="color: #FFB200;"></i>';
+            }
+            return stars;
         }
 
         // Display user jobs
@@ -5058,6 +5212,184 @@
                 text-align: center;
             }
         }
+
+        /* Performance Review Styles */
+        .performance-review-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .review-header h3 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .review-date {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            background: rgba(255, 178, 0, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+        }
+
+        .review-summary {
+            margin-bottom: 2rem;
+        }
+
+        .overall-rating {
+            background: rgba(255, 178, 0, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .overall-rating h4 {
+            color: #FFB200;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .rating-display {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .rating-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #FFB200;
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .rating-stars i {
+            font-size: 1.5rem;
+        }
+
+        .review-categories {
+            margin-bottom: 2rem;
+        }
+
+        .review-categories h4 {
+            color: #FFB200;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .category-name {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .category-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .category-rating .rating-number {
+            font-size: 1rem;
+            color: #FFB200;
+        }
+
+        .category-rating .rating-stars i {
+            font-size: 1rem;
+        }
+
+        .review-comments {
+            margin-bottom: 2rem;
+        }
+
+        .review-comments h4 {
+            color: #FFB200;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .comments-text {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .review-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .review-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #22c55e;
+            font-weight: 500;
+        }
+
+        .review-status i {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .performance-review-card {
+                padding: 1.5rem;
+            }
+
+            .review-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .rating-display {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .category-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -5148,6 +5480,9 @@
                 <button class="tab-btn" onclick="switchPortalTab('contracts')">
                     <i class="fas fa-file-contract"></i> Contracts
                 </button>
+                <button class="tab-btn" onclick="switchPortalTab('performance')">
+                    <i class="fas fa-star"></i> Performance Reviews
+                </button>
             </div>
 
             <!-- Profile Tab -->
@@ -5227,6 +5562,14 @@
                 <h2 style="color: #FFB200; margin-bottom: 1rem; font-family: 'Cinzel', serif;">📋 Your Contracts</h2>
                 <div id="userContracts">
                     <!-- Contracts will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Performance Reviews Tab -->
+            <div id="performance-tab" class="portal-tab">
+                <h2 style="color: #FFB200; margin-bottom: 1rem; font-family: 'Cinzel', serif;">⭐ Your Performance Reviews</h2>
+                <div id="userPerformanceReviews">
+                    <!-- Performance reviews will be populated here -->
                 </div>
             </div>
         </div>
