@@ -1093,15 +1093,12 @@
                                     <div class="job-info">
                                         <div class="job-title">
                                             <i class="fas fa-${getJobIcon(job.projectType)}"></i>
-                                            <strong>${job.role}</strong>
+                                            <strong>${job.title || job.role || 'Assistant Position'}</strong>
                                             ${job.id === primaryJobId ? '<span class="primary-badge">Primary</span>' : ''}
                                         </div>
                                         <div class="job-type">
                                             <i class="fas fa-tag"></i>
-                                            <span>${job.projectType}</span>
-                                        </div>
-                                        <div class="job-description">
-                                            <p>${job.description}</p>
+                                            <span>${job.projectType || 'Assistant'}</span>
                                         </div>
                                         <div class="job-details-grid">
                                             <div class="job-detail">
@@ -2336,10 +2333,7 @@
                                         <span class="label">Rate:</span>
                                         <span class="value highlight">${data.job.pay || data.job.rate || '$75/hour'}</span>
                                     </div>
-                                    <div class="info-item">
-                                        <span class="label">Description:</span>
-                                        <span class="value">${data.job.description || 'Professional Assistant position. Details to be provided.'}</span>
-                                    </div>
+
                                 </div>
                             </div>
                             
