@@ -1,6 +1,5 @@
 {
   "users": {
-<<<<<<< HEAD
     "Thing Six": {
       "profile": {
         "email": "codylcochran87@gmail.com",
@@ -9,7 +8,31 @@
         "location": "Atlanta, GA",
         "projectStart": "2026-04-04T08:00",
         "rate": "$200/hour",
-=======
+        "approvedDate": "2025-08-05"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "signed",
+        "contractSignedDate": "8/5/2025, 2:16:19 AM",
+        "contractUploadedDate": null,
+        "contractId": "CF-1754374579524-1TXMZ"
+      },
+      "jobs": {
+        "job-producer-default": {
+          "id": "job-producer-default",
+          "title": "Producer Position",
+          "date": "2025-08-05",
+          "location": "Atlanta, GA",
+          "pay": "$200/hour",
+          "description": "Professional Producer position in Atlanta, GA. Details to be provided.",
+          "status": "upcoming",
+          "assignedDate": "2025-08-05",
+          "projectStart": "2026-04-04T08:00"
+        }
+      },
+      "primaryJob": "job-producer-default",
+      "paymentMethod": null
+    },
     "Cody Cochran": {
       "profile": {
         "email": "codylcochran89@gmail.com",
@@ -18,20 +41,11 @@
         "location": "Chicago, IL",
         "projectStart": "2026-03-10T20:00",
         "rate": "$100/hour",
->>>>>>> 240624cd35e64a69e9d4135f94deb3210d84ec56
         "approvedDate": "2025-08-05"
       },
       "contract": {
         "contractUrl": "contract.html",
         "contractStatus": "signed",
-<<<<<<< HEAD
-        "contractSignedDate": "8/5/2025, 2:16:19 AM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754374579524-1TXMZ"
-      },
-      "jobs": {},
-      "primaryJob": null,
-=======
         "contractSignedDate": "8/5/2025, 2:47:56 AM",
         "contractUploadedDate": null,
         "contractId": "CF-1754376476668-BLMXD"
@@ -50,7 +64,6 @@
         }
       },
       "primaryJob": "job-editor-default",
->>>>>>> 240624cd35e64a69e9d4135f94deb3210d84ec56
       "paymentMethod": null
     }
   },
@@ -69,5 +82,5 @@
     ]
   },
   "lastUpdated": "2025-08-05",
-  "totalUsers": 1
+  "totalUsers": 2
 }
