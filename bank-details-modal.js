@@ -263,8 +263,86 @@ class SecureBankModal {
             savedAt: new Date().toISOString()
         };
 
-        // Save to backend
-        await updateUserPaymentMethod(currentUser.email, 'bank', encryptedData);
+        // First update payment method
+        await updateUserPaymentMethod(currentUser.email, 'bank');
+        
+        // Then update the bank data in users.json
+        await this.updateBankDataInUsersJson(encryptedData);
+    }
+
+    // Update bank data in users.json
+    async updateBankDataInUsersJson(encryptedData) {
+        try {
+            console.log('🔄 Updating bank data in users.json...');
+            
+            // Get current users data
+            const response = await fetch('/api/users');
+            if (!response.ok) {
+                throw new Error('Failed to load users data');
+            }
+            
+            const usersData = await response.json();
+            const users = usersData.users || {};
+            
+            // Find and update the user's bank data
+            let userFound = false;
+            for (const [name, user] of Object.entries(users)) {
+                if (user.profile?.email && user.profile.email.toLowerCase() === currentUser.email.toLowerCase()) {
+                    console.log(`✅ Found user "${name}" to update bank data`);
+                    
+                    // Update bank data
+                    user.bankData = {
+                        encrypted: encryptedData.encrypted,
+                        lastFour: encryptedData.lastFour,
+                        bankName: encryptedData.bankName,
+                        accountType: encryptedData.accountType,
+                        hash: encryptedData.hash,
+                        savedAt: new Date().toISOString()
+                    };
+                    
+                    userFound = true;
+                    break;
+                }
+            }
+            
+            if (!userFound) {
+                throw new Error('User not found in users data');
+            }
+            
+            // Get fresh SHA for users.json
+            const shaResponse = await fetch('/api/github/file/users.json');
+            let sha = null;
+            if (shaResponse.ok) {
+                const shaData = await shaResponse.json();
+                sha = shaData.sha;
+                console.log('📄 Got fresh SHA for bank data update');
+            }
+            
+            // Update the users.json file on GitHub
+            const updateResponse = await fetch('/api/github/file/users.json', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content: JSON.stringify(usersData, null, 2),
+                    message: `Update bank data for ${currentUser.email} - ${new Date().toLocaleString()}`,
+                    sha: sha
+                })
+            });
+            
+            if (!updateResponse.ok) {
+                const errorText = await updateResponse.text();
+                console.error('❌ GitHub bank data update failed:', updateResponse.status, errorText);
+                throw new Error(`Failed to update bank data on GitHub: ${updateResponse.status} - ${errorText}`);
+            }
+            
+            console.log('✅ Bank data updated on GitHub successfully');
+            
+        } catch (error) {
+            console.error('❌ Error updating bank data:', error);
+            throw error;
+        }
     }
 }
 
