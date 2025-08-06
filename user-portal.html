@@ -4850,7 +4850,8 @@
                 };
                 console.log('✅ Found flattened contract data on currentUser:', userContract);
             }
-                
+            
+            if (userContract) {
                 // Check if contract is signed
                 if (userContract.contractStatus !== 'signed') {
                     console.log('❌ Contract not signed yet');
