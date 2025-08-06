@@ -4,7 +4,6 @@ const path = require('path');
 const fs = require('fs');
 
 // Import API routes
-const performanceRouter = require('./api/performance');
 const firebaseRouter = require('./api/firebase');
 const notificationsRouter = require('./api/notifications');
 const testRunnerRouter = require('./api/test-runner');
@@ -135,28 +134,7 @@ app.get('/api/jobs-data', async (req, res) => {
     }
 });
 
-app.get('/api/uploaded-contracts', async (req, res) => {
-    try {
-        const contractsPath = path.join(__dirname, 'uploaded-contracts.json');
-        
-        if (fs.existsSync(contractsPath)) {
-            const contractsData = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
-            res.status(200).json(contractsData);
-        } else {
-            res.status(200).json({
-                uploadedContracts: [],
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalContracts: 0
-            });
-        }
-    } catch (error) {
-        console.error('❌ Error in contracts API:', error);
-        res.status(500).json({ 
-            error: 'Internal server error',
-            message: error.message 
-        });
-    }
-});
+
 
 app.get('/api/dropdown-options', async (req, res) => {
     try {
@@ -300,8 +278,7 @@ app.delete('/api/github/file/:filename', async (req, res) => {
     }
 });
 
-// Performance API routes
-app.use('/api/performance', performanceRouter);
+
 
 // Firebase API routes
 app.use('/api/firebase', firebaseRouter);
@@ -368,13 +345,8 @@ app.listen(PORT, () => {
     console.log(`📊 API endpoints available:`);
     console.log(`   - GET  /api/users`);
     console.log(`   - GET  /api/jobs-data`);
-    console.log(`   - GET  /api/uploaded-contracts`);
     console.log(`   - GET  /api/dropdown-options`);
     console.log(`   - GET  /api/health`);
-    console.log(`   - GET  /api/performance`);
-    console.log(`   - POST /api/performance`);
-    console.log(`   - PUT  /api/performance/:email`);
-    console.log(`   - DELETE /api/performance/:email`);
     console.log(`   - DELETE /api/firebase (delete user)`);
     console.log(`   - PUT  /api/github/file/:filename`);
     console.log(`   - DELETE /api/github/file/:filename`);

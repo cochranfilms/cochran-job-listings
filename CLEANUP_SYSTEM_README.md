@@ -93,15 +93,7 @@ runner.cleanupTestData().then(() => console.log('✅ Cleanup completed'));
 - Updates total job count
 - Updates last modified timestamp
 
-### **Contracts (`uploaded-contracts.json`)**
-- Removes test contracts: "test-contract.pdf", "test-delete-pdf.pdf"
-- Updates total contract count
-- Updates last modified timestamp
 
-### **Performance Reviews (`performance.json`)**
-- Removes test performance reviews for `test@cochranfilms.com`
-- Updates total review count
-- Updates last modified timestamp
 
 ### **Notifications (`notifications.json`)**
 - Removes test notification: "Test Notification"
@@ -122,11 +114,7 @@ The system reads the test data log and categorizes items for cleanup:
 const cleanupData = {
     users: ['test@cochranfilms.com'],
     jobs: ['Test Photography Job'],
-    contracts: [
-        { fileName: 'test-contract.pdf', contractId: 'TEST-001' },
-        { fileName: 'test-delete-pdf.pdf', contractId: 'TEST-DELETE-001' }
-    ],
-    performance: ['test@cochranfilms.com'],
+
     notifications: ['Test Notification'],
     files: ['test-contract.pdf', 'test-delete-pdf.pdf']
 };
@@ -152,9 +140,7 @@ For each category, the system:
 ```
 1. Test creates user → Logged as USER_CREATED
 2. Test creates job → Logged as JOB_CREATED
-3. Test creates contract → Logged as CONTRACT_CREATED
-4. Test creates performance review → Logged as PERFORMANCE_CREATED
-5. Test creates notification → Logged as NOTIFICATION_CREATED
+3. Test creates notification → Logged as NOTIFICATION_CREATED
 ```
 
 ### **During Cleanup**
@@ -162,9 +148,7 @@ For each category, the system:
 1. Read test data log
 2. Remove users from users.json
 3. Remove jobs from jobs-data.json
-4. Remove contracts from uploaded-contracts.json
-5. Remove performance reviews from performance.json
-6. Remove notifications from notifications.json
+4. Remove notifications from notifications.json
 7. Delete physical files from /contracts/
 8. Clear test data log
 ```

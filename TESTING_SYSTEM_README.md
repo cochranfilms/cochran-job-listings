@@ -161,9 +161,7 @@ The system automatically generates recommendations based on test results:
 **Fix**: Check that all required JSON files exist:
 - `users.json`
 - `jobs-data.json`
-- `uploaded-contracts.json`
 - `dropdown-options.json`
-- `performance.json`
 - `notifications.json`
 
 ### 3. API Endpoint Errors

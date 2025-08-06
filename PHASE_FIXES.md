@@ -172,6 +172,7 @@ This document tracks the fixes for various issues in the Cochran Films landing p
 2. PDF deletion logic only checked uploaded-contracts.json, not user-specific contract data
 3. No centralized data management causing data consistency issues
 4. Multiple data sources creating complex relationships and maintenance overhead
+5. **RESOLVED**: Removed uploaded-contracts.json and performance.json files as they are no longer needed with centralized users.json structure
 
 **Enhancement**: Implemented complete data centralization with enhanced PDF deletion system:
 - **Centralized Data Structure**: Migrated all user data, contracts, performance reviews, and system metadata into single `users.json` file
