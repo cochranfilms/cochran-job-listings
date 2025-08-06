@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Black Widow": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": "JrSXiqmYLQud",
+        "role": "Editor",
+        "location": "New York, NY",
+        "projectStart": "2025-10-10T14:00",
+        "rate": "$150/hour",
+        "approvedDate": "2025-08-06"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-editor-default": {
+          "id": "job-editor-default",
+          "title": "Editor Position",
+          "date": "2025-08-06",
+          "location": "New York, NY",
+          "pay": "$150/hour",
+          "description": "Professional Editor position in New York, NY. Details to be provided.",
+          "status": "upcoming",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-06",
+          "projectStart": "2025-10-10T14:00"
+        }
+      },
+      "primaryJob": "job-editor-default",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,7 +51,7 @@
     ]
   },
   "lastUpdated": "2025-08-06",
-  "totalUsers": 0,
+  "totalUsers": 1,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-06"
