@@ -1834,6 +1834,14 @@
                 userNameElement.textContent = currentUser.name;
             } else {
                 console.warn('⚠️ userName element not found in DOM');
+                // Try again after a short delay in case DOM isn't ready
+                setTimeout(() => {
+                    const retryElement = document.getElementById('userName');
+                    if (retryElement) {
+                        retryElement.textContent = currentUser.name;
+                        console.log('✅ userName element updated on retry');
+                    }
+                }, 100);
             }
             
             // Display user info
@@ -3308,7 +3316,11 @@
 
         // Display jobs with project status
         function displayJobsWithStatus() {
-            const container = document.getElementById('userJobs');
+            const container = document.getElementById('jobsContent');
+            if (!container) {
+                console.warn('⚠️ jobsContent container not found in DOM');
+                return;
+            }
             
             console.log('🔍 Debugging displayJobsWithStatus:');
             console.log('Current user:', currentUser);
