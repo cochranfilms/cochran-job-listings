@@ -26,8 +26,8 @@
           "pay": "$150/hour",
           "description": "Professional Assistant position in Miami, FL. Details to be provided.",
           "status": "upcoming",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
+          "projectStatus": "completed",
+          "paymentStatus": "paid",
           "assignedDate": "2025-08-06",
           "projectStart": "2025-08-08T06:30"
         }
