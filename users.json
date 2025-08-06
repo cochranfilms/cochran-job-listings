@@ -38,7 +38,7 @@
     "Thing Two": {
       "profile": {
         "email": "codylcochran89@gmail.com",
-        "password": "uHuFh2V5b4tr",
+        "password": "testical",
         "role": "Assistant",
         "location": "New York, NY",
         "projectStart": "2025-08-06T00:04",
@@ -47,10 +47,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/5/2025, 11:59:30 PM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754452770885-4LWOV"
       },
       "jobs": {
         "job-assistant-default": {
