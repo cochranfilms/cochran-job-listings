@@ -34,6 +34,41 @@
       },
       "primaryJob": "job-producer-default",
       "paymentMethod": null
+    },
+    "Thing Two": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": "uHuFh2V5b4tr",
+        "role": "Assistant",
+        "location": "New York, NY",
+        "projectStart": "2025-08-06T00:04",
+        "rate": "$125/hour",
+        "approvedDate": "2025-08-05"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-assistant-default": {
+          "id": "job-assistant-default",
+          "title": "Assistant Position",
+          "date": "2025-08-06",
+          "location": "New York, NY",
+          "pay": "$125/hour",
+          "description": "Professional Assistant position in New York, NY. Details to be provided.",
+          "status": "upcoming",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-06",
+          "projectStart": "2025-08-06T00:04"
+        }
+      },
+      "primaryJob": "job-assistant-default",
+      "paymentMethod": null
     }
   },
   "statusOptions": {
@@ -51,5 +86,5 @@
     ]
   },
   "lastUpdated": "2025-08-06",
-  "totalUsers": 1
+  "totalUsers": 2
 }
