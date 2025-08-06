@@ -1799,3 +1799,182 @@ if (currentUser.contract) {
 - **Better Debugging**: Comprehensive logging for troubleshooting
 - **System Reliability**: Handles edge cases and data structure variations
 - **Professional Experience**: Working PDF downloads with beautiful formatting
+
+## Phase 26 Fix - User Portal Login Form Issues
+**Date**: 2025-08-06
+**Context**: User portal login failing silently due to form submission issues
+
+### Issues Identified
+1. **Silent Login Failures**: User portal login failing without error messages
+2. **Form Submission Issues**: Form doing GET submission instead of triggering JavaScript authentication
+3. **Missing Event Handlers**: No onsubmit handler preventing custom authentication logic
+4. **API Working But Login Failing**: API endpoint working correctly but login function never called
+
+### Root Cause Analysis
+**Form Submission Problems**:
+- **Missing Form Attributes**: HTML form missing `method="post"` and `onsubmit` attributes
+- **GET Method Default**: Form defaulting to GET method causing page reload instead of JavaScript execution
+- **No Event Handler**: Form submission not triggering `handleLogin` function
+- **Custom Authentication Bypassed**: `validateUserQuickly` function never executed
+
+**Authentication Flow Issues**:
+- **API Working**: `/api/users` endpoint returning correct data
+- **Function Not Called**: `handleLogin` function never triggered due to form submission method
+- **Silent Failures**: No error messages shown to users
+- **User Experience**: Users see form submit but no login success
+
+### Solution Implemented
+**Complete Login Form Fix**:
+
+#### **1. Fixed Form HTML Attributes**
+- ✅ **Added Method**: `method="post"` to prevent GET submission
+- ✅ **Added Event Handler**: `onsubmit="handleLogin(event); return false;"` to trigger custom authentication
+- ✅ **Prevented Default**: `return false;` prevents default form submission
+- ✅ **JavaScript Execution**: Ensures `handleLogin` function is called
+
+#### **2. Enhanced Form Submission**
+- ✅ **Custom Authentication**: Form now calls `validateUserQuickly` function
+- ✅ **API Integration**: Proper integration with `/api/users` endpoint
+- ✅ **Error Handling**: Proper error messages displayed to users
+- ✅ **User Experience**: Clear feedback on login success/failure
+
+#### **3. Maintained API Compatibility**
+- ✅ **Existing API**: No changes needed to `/api/users` endpoint
+- ✅ **Data Structure**: Maintains compatibility with existing users.json structure
+- ✅ **Authentication Logic**: Preserves existing `validateUserQuickly` function
+- ✅ **Session Management**: Maintains existing session storage logic
+
+### Implementation Details
+```html
+<!-- Fixed form with proper attributes -->
+<form id="loginForm" class="login-form" method="post" onsubmit="handleLogin(event); return false;">
+    <div class="form-group">
+        <div class="input-container">
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            <div class="input-line"></div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="input-container">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            <div class="input-line"></div>
+        </div>
+    </div>
+    <button type="submit" class="login-btn">
+        <i class="fas fa-sign-in-alt"></i>
+        <span>LOGIN</span>
+    </button>
+</form>
+```
+
+### Results Achieved
+- ✅ **Login Functionality Working**: User portal login now works correctly
+- ✅ **Custom Authentication**: `validateUserQuickly` function properly executed
+- ✅ **API Integration**: Proper integration with `/api/users` endpoint
+- ✅ **Error Handling**: Clear error messages for failed login attempts
+- ✅ **User Experience**: Proper feedback on login success/failure
+- ✅ **Form Submission**: Form now triggers JavaScript instead of GET submission
+- ✅ **Session Management**: Proper session storage and user portal display
+
+### Technical Benefits
+- **Proper Form Handling**: Form submission now triggers JavaScript authentication
+- **Custom Authentication**: Maintains existing authentication logic
+- **API Compatibility**: No changes needed to existing API endpoints
+- **Better User Experience**: Clear feedback on login attempts
+- **Robust Error Handling**: Proper error messages for debugging
+- **Session Management**: Maintains existing session storage functionality
+- **System Reliability**: Login process now works as intended
+
+## Phase 27 Fix - PDF Download & Contract Date Display Issues
+**Date**: 2025-08-06
+**Context**: PDF download failing and contract dates showing "Processing..." instead of actual dates
+
+### Issues Identified
+1. **PDF Download Failure**: Download button existed but PDF generation was blocked by contract status check
+2. **Contract Status Mismatch**: System checking for 'signed' status but actual status was 'uploaded'
+3. **Date Display Issues**: Contract signed date showing "Processing..." instead of actual date
+4. **Unused Data Fields**: `contractUploadedDate` field in users.json causing confusion
+
+### Root Cause Analysis
+**PDF Download Issues**:
+- **Status Check Too Restrictive**: Only allowing 'signed' status, but 'uploaded' status is also valid
+- **Date Format Issues**: Contract signed date format "8/6/2025, 5:23:17 AM" not being parsed correctly
+- **Unused Fields**: `contractUploadedDate` field no longer needed but still present in data structure
+
+**Date Display Problems**:
+- **Date Parsing**: The specific date format "8/6/2025, 5:23:17 AM" wasn't being parsed correctly
+- **Fallback Logic**: When date parsing failed, system showed "Processing..." instead of actual date
+
+### Solution Implemented
+**Complete PDF Download & Date Display Fix**:
+
+#### **1. Fixed PDF Download Status Check**
+- ✅ **Allow Multiple Statuses**: Changed from `!== 'signed'` to `!== 'signed' && !== 'uploaded'`
+- ✅ **Support Both Statuses**: Both 'signed' and 'uploaded' contracts can now be downloaded
+- ✅ **Maintain Security**: Still blocks downloads for 'pending' or invalid statuses
+
+#### **2. Enhanced Date Parsing**
+- ✅ **Specific Format Support**: Updated `formatContractSignedDate` to handle "8/6/2025, 5:23:17 AM" format
+- ✅ **Robust Parsing**: Split date string and parse date/time parts separately
+- ✅ **Fallback Handling**: Display original date string if parsing fails
+- ✅ **Better Error Handling**: Clear error messages for debugging
+
+#### **3. Cleaned Up Data Structure**
+- ✅ **Removed Unused Field**: Eliminated `contractUploadedDate` from users.json
+- ✅ **Simplified Structure**: Cleaner contract data structure
+- ✅ **Reduced Confusion**: No more unused fields causing display issues
+
+### Implementation Details
+```javascript
+// Fixed PDF download status check
+if (userContract.contractStatus !== 'signed' && userContract.contractStatus !== 'uploaded') {
+    console.log('❌ Contract not signed yet');
+    showNotification('❌ Your contract has not been signed yet. Please wait for admin approval.', 'error');
+    return;
+}
+
+// Enhanced date parsing for specific format
+function formatContractSignedDate(dateString) {
+    if (!dateString) return 'Processing...';
+    
+    try {
+        // Handle the specific format "8/6/2025, 5:23:17 AM"
+        let date;
+        if (dateString.includes(',')) {
+            // Parse the specific format
+            const parts = dateString.split(',');
+            const datePart = parts[0].trim();
+            const timePart = parts[1].trim();
+            date = new Date(`${datePart} ${timePart}`);
+        } else {
+            date = new Date(dateString);
+        }
+        
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString();
+        } else {
+            return dateString; // Display as is
+        }
+    } catch (error) {
+        return dateString; // Display as is
+    }
+}
+```
+
+### Results Achieved
+- ✅ **PDF Downloads Working**: Both 'signed' and 'uploaded' contracts can be downloaded
+- ✅ **Correct Date Display**: Contract signed dates now show actual dates instead of "Processing..."
+- ✅ **Clean Data Structure**: Removed unused `contractUploadedDate` field
+- ✅ **Better User Experience**: Users can now download their contracts successfully
+- ✅ **Robust Date Handling**: System handles various date formats gracefully
+- ✅ **No More Confusion**: Eliminated unused fields that were causing display issues
+
+### Technical Benefits
+- **Flexible Status Handling**: Supports multiple valid contract statuses
+- **Robust Date Parsing**: Handles specific date formats used in the system
+- **Cleaner Data Structure**: Removed unused fields to prevent confusion
+- **Better Error Handling**: Clear fallbacks when date parsing fails
+- **Improved User Experience**: Users can successfully download their contracts
+- **System Reliability**: More robust contract status and date handling

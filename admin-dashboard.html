@@ -90,6 +90,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
+    <!-- Secure Bank Storage -->
+    <script src="secure-bank-storage.js"></script>
+    <script src="admin-bank-viewer.js"></script>
+    
     <script>
         // Simple admin dashboard configuration
         let uploadedContracts = [];
@@ -2788,6 +2792,10 @@
                             <button onclick="console.log('🔍 Button clicked for user:', '${userName}'); downloadUserContract('${userName}')" style="background: #8b5cf6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                 📄 Download Contract
                             </button>
+                            
+                            <button onclick="showUserBankDetails('${userName}')" style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                                🏦 Bank Details
+                            </button>
 
                             ${shouldShowPerformanceReview(userData) ? `
                             <button onclick="showPerformanceReviewModal('${userName}')" style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
@@ -5390,6 +5398,9 @@
                 // Initialize sophisticated notification system
                 await initializeNotificationSystem();
                 
+                // Initialize bank viewer
+                window.adminBankViewer = new AdminBankViewer();
+                
                 // Close notification dropdown when clicking outside
                 document.addEventListener('click', function(event) {
                     const container = document.querySelector('.notification-container');
@@ -5400,6 +5411,26 @@
                 });
             }
         });
+
+        // Show user bank details
+        async function showUserBankDetails(userName) {
+            try {
+                const userData = users[userName];
+                if (!userData) {
+                    showNotification('User not found', 'error');
+                    return;
+                }
+                
+                if (window.adminBankViewer) {
+                    await window.adminBankViewer.showUserBankDetails(userName, userData);
+                } else {
+                    showNotification('Bank viewer not initialized', 'error');
+                }
+            } catch (error) {
+                console.error('Error showing bank details:', error);
+                showNotification('Error loading bank details', 'error');
+            }
+        }
 
         // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
         
