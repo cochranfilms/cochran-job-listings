@@ -60,6 +60,16 @@ The Cochran Films Automated Testing System provides comprehensive testing for al
 
 **Note**: This test validates your actual workflow implementation. If it fails, it indicates an issue with your real PDF deletion system, not the test system itself.
 
+### 9. PDF Download Tests
+- **API Endpoint Testing**: Tests the new PDF download API endpoint
+- **File Serving**: Verifies PDF files are properly served from `/contracts` directory
+- **Download Functionality**: Tests download functions in admin dashboard and user portal
+- **Fallback Mechanisms**: Tests multiple download methods (API, GitHub, local data)
+- **Error Handling**: Verifies proper error messages when files are not found
+- **Security**: Ensures only PDF files can be downloaded and proper file validation
+
+**Note**: This test validates the PDF download functionality that was recently fixed to resolve download issues in both admin dashboard and user portal.
+
 ## Getting Started
 
 ### Prerequisites

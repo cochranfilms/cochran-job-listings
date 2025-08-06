@@ -3,7 +3,7 @@ module.exports = async (req, res) => {
     
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
     if (req.method === 'OPTIONS') {
@@ -21,6 +21,50 @@ module.exports = async (req, res) => {
     if (!GITHUB_CONFIG.token) {
         console.error('❌ GITHUB_TOKEN environment variable not set');
         return res.status(500).json({ error: 'GitHub token not configured' });
+    }
+
+    // Handle GET requests for downloading PDF files
+    if (req.method === 'GET') {
+        try {
+            const { filename } = req.query;
+            
+            if (!filename) {
+                return res.status(400).json({ error: 'filename parameter is required' });
+            }
+
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Ensure the filename is safe and only allows PDF files
+            const safeFilename = path.basename(filename);
+            if (!safeFilename.endsWith('.pdf')) {
+                return res.status(400).json({ error: 'Only PDF files are allowed' });
+            }
+
+            const filePath = path.join(__dirname, '..', 'contracts', safeFilename);
+            
+            // Check if file exists
+            if (!fs.existsSync(filePath)) {
+                console.log(`❌ PDF file not found: ${filePath}`);
+                return res.status(404).json({ error: 'PDF file not found' });
+            }
+
+            // Set appropriate headers for PDF download
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+            res.setHeader('Cache-Control', 'no-cache');
+            
+            // Stream the file
+            const fileStream = fs.createReadStream(filePath);
+            fileStream.pipe(res);
+            
+            console.log(`✅ PDF file served: ${safeFilename}`);
+            
+        } catch (error) {
+            console.error(`❌ Error serving PDF file:`, error);
+            res.status(500).json({ error: 'Failed to serve PDF file', details: error.message });
+        }
+        return;
     }
 
     if (req.method === 'POST') {

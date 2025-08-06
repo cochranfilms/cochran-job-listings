@@ -777,21 +777,77 @@
         }
 
         // Download uploaded contract
-        function downloadUploadedContract(index) {
+        async function downloadUploadedContract(index) {
             const contract = uploadedContracts[index];
-            if (!contract || !contract.fileData) {
+            if (!contract || !contract.fileName) {
                 showNotification('❌ Contract file not found.', 'error');
                 return;
             }
             
-            const link = document.createElement('a');
-            link.href = contract.fileData;
-            link.download = contract.fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            console.log('📄 Downloaded contract:', contract.fileName);
+            try {
+                console.log('📤 Attempting to download contract:', contract.fileName);
+                
+                // Try to download from the API endpoint first
+                const apiUrl = `/api/contracts?filename=${encodeURIComponent(contract.fileName)}`;
+                console.log('📤 API URL:', apiUrl);
+                
+                const response = await fetch(apiUrl);
+                if (response.ok) {
+                    // Create blob from response
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = contract.fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clean up
+                    window.URL.revokeObjectURL(url);
+                    
+                    console.log('📄 Downloaded contract via API:', contract.fileName);
+                    showNotification('✅ Contract downloaded successfully!', 'success');
+                    return;
+                }
+                
+                // Fallback to GitHub URL if available
+                if (contract.githubUrl) {
+                    console.log('📤 Attempting to download from GitHub URL:', contract.githubUrl);
+                    const link = document.createElement('a');
+                    link.href = contract.githubUrl;
+                    link.download = contract.fileName;
+                    link.target = '_blank';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    console.log('📄 Downloaded contract from GitHub:', contract.fileName);
+                    showNotification('✅ Contract downloaded successfully!', 'success');
+                    return;
+                }
+                
+                // Fallback to local file data if available
+                if (contract.fileData) {
+                    console.log('📤 Downloading from local data');
+                    const link = document.createElement('a');
+                    link.href = contract.fileData;
+                    link.download = contract.fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    console.log('📄 Downloaded contract from local data:', contract.fileName);
+                    showNotification('✅ Contract downloaded successfully!', 'success');
+                    return;
+                }
+                
+                showNotification('❌ Contract file not available. Please contact admin.', 'error');
+                
+            } catch (error) {
+                console.error('❌ Error downloading contract:', error);
+                showNotification('❌ Error downloading contract. Please try again or contact admin.', 'error');
+            }
         }
 
         // View uploaded contract details

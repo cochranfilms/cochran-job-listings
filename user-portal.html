@@ -3583,10 +3583,40 @@
             console.log('📄 Contract fileData:', userContract.fileData ? 'Present' : 'Not present');
             
             try {
-                // Try to download from GitHub first
+                // Try to download from the API endpoint first
+                if (userContract.fileName) {
+                    console.log('📤 Attempting to download from API endpoint:', userContract.fileName);
+                    const apiUrl = `/api/contracts?filename=${encodeURIComponent(userContract.fileName)}`;
+                    console.log('📤 API URL:', apiUrl);
+                    
+                    const response = await fetch(apiUrl);
+                    if (response.ok) {
+                        // Create blob from response
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        
+                        // Create download link
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = userContract.fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // Clean up
+                        window.URL.revokeObjectURL(url);
+                        
+                        console.log('📄 Downloaded contract via API:', userContract.fileName);
+                        showNotification('✅ Contract downloaded successfully!', 'success');
+                        return;
+                    } else {
+                        console.warn('⚠️ API endpoint failed, trying fallback methods');
+                    }
+                }
+                
+                // Fallback to GitHub URL if available
                 if (userContract.githubUrl) {
-                    console.log('📤 Downloading from GitHub URL:', userContract.githubUrl);
-                    // Direct download from GitHub
+                    console.log('📤 Attempting to download from GitHub URL:', userContract.githubUrl);
                     const link = document.createElement('a');
                     link.href = userContract.githubUrl;
                     link.download = userContract.fileName;
@@ -3599,7 +3629,7 @@
                     return;
                 }
                 
-                // Fallback to local file data
+                // Fallback to local file data if available
                 if (userContract.fileData) {
                     console.log('📤 Downloading from local data');
                     const link = document.createElement('a');
@@ -3609,75 +3639,11 @@
                     link.click();
                     document.body.removeChild(link);
                     console.log('📄 Downloaded contract from local data:', userContract.fileName);
+                    showNotification('✅ Contract downloaded successfully!', 'success');
                     return;
                 }
                 
-                // Try to download from contracts directory
-                if (userContract.fileName) {
-                    console.log('📤 Attempting to download from contracts directory:', userContract.fileName);
-                    const contractUrl = `contracts/${userContract.fileName}`;
-                    
-                    // Also try with contract ID as filename
-                    if (userContract.contractId) {
-                        const possibleContractIds = [userContract.contractId];
-                        
-                        // If the contract ID contains "UPLOAD", also try without it
-                        if (userContract.contractId.includes('CF-UPLOAD-')) {
-                            possibleContractIds.push(userContract.contractId.replace('CF-UPLOAD-', 'CF-'));
-                        }
-                        // If the contract ID doesn't contain "UPLOAD", also try with it
-                        else if (userContract.contractId.includes('CF-') && !userContract.contractId.includes('CF-UPLOAD-')) {
-                            possibleContractIds.push(userContract.contractId.replace('CF-', 'CF-UPLOAD-'));
-                        }
-
-                        for (const idToTry of possibleContractIds) {
-                            const contractIdFileName = `${idToTry}.pdf`;
-                            const contractIdUrl = `contracts/${contractIdFileName}`;
-                            console.log(`📤 Trying with contract ID filename: ${contractIdFileName}`);
-                            
-                            try {
-                                const response = await fetch(contractIdUrl, { method: 'HEAD' });
-                                if (response.ok) {
-                                    console.log('📄 File found in contracts directory with contract ID, downloading...');
-                                    const link = document.createElement('a');
-                                    link.href = contractIdUrl;
-                                    link.download = contractIdFileName;
-                                    link.target = '_blank';
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    console.log('📄 Downloaded contract from contracts directory:', contractIdFileName);
-                                    return;
-                                } else {
-                                    console.warn(`⚠️ File not found in local directory with ID ${idToTry}: ${contractIdUrl}`);
-                                }
-                            } catch (fetchError) {
-                                console.warn(`⚠️ Could not access file with contract ID ${idToTry} in contracts directory:`, fetchError);
-                            }
-                        }
-                    }
-                    
-                    // Test if file exists by making a HEAD request
-                    try {
-                        const response = await fetch(contractUrl, { method: 'HEAD' });
-                        if (response.ok) {
-                            console.log('📄 File found in contracts directory, downloading...');
-                            const link = document.createElement('a');
-                            link.href = contractUrl;
-                            link.download = userContract.fileName;
-                            link.target = '_blank';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            console.log('📄 Downloaded contract from contracts directory:', userContract.fileName);
-                            return;
-                        }
-                    } catch (fetchError) {
-                        console.warn('⚠️ Could not access file in contracts directory:', fetchError);
-                    }
-                }
-                
-                // Try to construct GitHub URL from contract ID
+                // Try to construct GitHub URL from contract ID as final fallback
                 if (userContract.contractId && userContract.fileName) {
                     console.log('📤 Attempting to download from GitHub using contract ID:', userContract.contractId);
                     
@@ -3709,6 +3675,7 @@
                                 link.click();
                                 document.body.removeChild(link);
                                 console.log('📄 Downloaded contract from GitHub:', userContract.fileName);
+                                showNotification('✅ Contract downloaded successfully!', 'success');
                                 return;
                             } else {
                                 console.warn(`⚠️ File not found on GitHub with ID ${idToTry}:`, githubRawUrl);
@@ -3716,30 +3683,6 @@
                         } catch (fetchError) {
                             console.warn(`⚠️ Could not access file on GitHub with ID ${idToTry}:`, fetchError);
                         }
-                    }
-                }
-                
-                // Try to use GitHub download URL if available (from automated upload)
-                if (userContract.githubUrl) {
-                    console.log('📤 Attempting to download from GitHub URL:', userContract.githubUrl);
-                    try {
-                        const response = await fetch(userContract.githubUrl, { method: 'HEAD' });
-                        if (response.ok) {
-                            console.log('📄 File found on GitHub via direct URL, downloading...');
-                            const link = document.createElement('a');
-                            link.href = userContract.githubUrl;
-                            link.download = userContract.fileName;
-                            link.target = '_blank';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            console.log('📄 Downloaded contract from GitHub direct URL:', userContract.fileName);
-                            return;
-                        } else {
-                            console.warn('⚠️ File not found on GitHub via direct URL:', userContract.githubUrl);
-                        }
-                    } catch (fetchError) {
-                        console.warn('⚠️ Could not access file on GitHub via direct URL:', fetchError);
                     }
                 }
                 

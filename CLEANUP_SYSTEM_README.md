@@ -104,6 +104,8 @@ runner.cleanupTestData().then(() => console.log('✅ Cleanup completed'));
 ### **Files (`/contracts/` directory)**
 - Removes test PDF files from contracts directory
 - Handles missing files gracefully
+- **PDF Download API**: Ensures the PDF download API endpoint is properly configured
+- **Download Functions**: Verifies download functions in admin dashboard and user portal are working
 
 ## Cleanup Process
 
