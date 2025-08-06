@@ -1855,6 +1855,10 @@
         // Display user information for modern layout
         function displayUserInfo() {
             const container = document.getElementById('userInfo');
+            if (!container) {
+                console.warn('⚠️ userInfo container not found in DOM');
+                return;
+            }
             
             // Debug current user data
             console.log('🔍 Displaying user info for:', currentUser.name);
@@ -2805,7 +2809,11 @@
 
         // Display user contracts (integrated with uploaded-contracts.json)
         function displayUserContracts() {
-            const container = document.getElementById('userContracts');
+            const container = document.getElementById('contractsContent');
+            if (!container) {
+                console.warn('⚠️ contractsContent container not found in DOM');
+                return;
+            }
             
             if (!currentUser) {
                 container.innerHTML = `
@@ -2967,7 +2975,11 @@
 
         // Display user performance reviews
         function displayUserPerformanceReviews() {
-            const container = document.getElementById('userPerformanceReviews');
+            const container = document.getElementById('performanceContent');
+            if (!container) {
+                console.warn('⚠️ performanceContent container not found in DOM');
+                return;
+            }
             
             if (!currentUser) {
                 container.innerHTML = `
@@ -2985,7 +2997,11 @@
 
         // Load and display user's performance reviews
         async function loadUserPerformanceReviews(userEmail) {
-            const container = document.getElementById('userPerformanceReviews');
+            const container = document.getElementById('performanceContent');
+            if (!container) {
+                console.warn('⚠️ performanceContent container not found in DOM');
+                return;
+            }
             
             try {
                 console.log('🔍 Loading performance reviews for:', userEmail);
