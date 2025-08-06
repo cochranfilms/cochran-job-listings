@@ -2063,7 +2063,7 @@
         function getPerformanceReviewStatus(userData) {
             // Try multiple ways to get the email
             const userEmail = userData.profile?.email || userData.email || userData.profile?.userEmail;
-            console.log('🔍 Checking performance review for user:', userData.name, 'Email:', userEmail);
+            console.log('🔍 Checking performance review for user:', userData.profile?.name || 'Unknown', 'Email:', userEmail);
             console.log('🔍 Available performance reviews:', Object.keys(performanceReviews));
             
             const existingReview = performanceReviews[userEmail];
@@ -2121,7 +2121,7 @@
             console.log('🔍 Performance review button - Available reviews:', Object.keys(performanceReviews));
             
             // Get the user name properly
-            const userName = userData.name || userData.profile?.name || 'Unknown';
+            const userName = userData.profile?.name || 'Unknown';
             
             if (existingReview) {
                 return `
@@ -2912,13 +2912,22 @@
             };
             
             try {
-                // 1. Create Firebase account
-                const firebaseResult = await createFirebaseAccount(userEmail, tempPassword);
+                // Check if user already exists
+                const existingUser = users[userName];
+                let firebaseResult = { success: true }; // Default success for existing users
+                
+                if (!existingUser) {
+                    // Only create Firebase account for new users
+                    console.log('🔄 Creating new Firebase account for:', userEmail);
+                    firebaseResult = await createFirebaseAccount(userEmail, tempPassword);
+                } else {
+                    console.log('✅ User already exists, skipping Firebase account creation for:', userEmail);
+                }
                 
                 if (firebaseResult.success) {
-                    console.log('✅ Firebase account created for:', userEmail);
+                    console.log('✅ User data updated for:', userEmail);
                     
-                    // 2. Add user to local users object
+                    // 2. Add/Update user in local users object
                     users[userName] = userData;
                     
                     // 3. Update localStorage
@@ -2927,16 +2936,19 @@
                     // 4. Update GitHub repository
                     await updateUsersOnGitHub();
                     
-                    // 5. Send job acceptance email
-                    await sendJobAcceptanceEmail(userName, userData);
+                    // 5. Send job acceptance email (only for new users)
+                    if (!existingUser) {
+                        await sendJobAcceptanceEmail(userName, userData);
+                    }
                     
                     // 6. Refresh display
                     await displayUsers();
                     
                     // Add notification to centralized system
+                    const action = existingUser ? 'updated' : 'created';
                     await addNotification(
-                        'User Created Successfully',
-                        `User "${userName}" has been created with Firebase account and job acceptance email sent.`,
+                        `User ${action.charAt(0).toUpperCase() + action.slice(1)} Successfully`,
+                        `User "${userName}" has been ${action} ${existingUser ? '' : 'with Firebase account and job acceptance email sent.'}`,
                         'user_created',
                         {
                             userName: userName,
