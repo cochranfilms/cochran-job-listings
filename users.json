@@ -50,57 +50,6 @@
         "reviewedBy": "admin",
         "lastUpdated": "2025-08-04T03:30:40.070Z"
       }
-    },
-    "Dede Jackson": {
-      "profile": {
-        "email": "dedejackson727@gmail.com",
-        "password": "test1234",
-        "role": "Photographer",
-        "location": "Atlanta, GA",
-        "projectStart": "2025-08-10T09:00",
-        "rate": "$200/hour",
-        "approvedDate": "2025-08-05"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/5/2025, 8:20:00 PM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754439320000-J9HF5"
-      },
-      "jobs": {
-        "job-photographer-default": {
-          "id": "job-photographer-default",
-          "title": "Photographer Position",
-          "date": "2025-08-10",
-          "location": "Atlanta, GA",
-          "pay": "$200/hour",
-          "description": "Professional Photography position in Atlanta, GA. Details to be provided.",
-          "status": "upcoming",
-          "projectStatus": "in-progress",
-          "paymentStatus": "pending",
-          "assignedDate": "2025-08-06",
-          "projectStart": "2025-08-10T09:00"
-        }
-      },
-      "primaryJob": "job-photographer-default",
-      "paymentMethod": "paypal",
-      "paymentStatus": "configured",
-      "performance": {
-        "reviewDate": "2025-08-04",
-        "overallRating": 4,
-        "categories": {
-          "Professionalism": 5,
-          "Quality": 3,
-          "Communication": 3,
-          "Reliability": 2,
-          "Overall Performance": 2
-        },
-        "comments": "Hi There",
-        "adminNotes": "Test hide",
-        "reviewedBy": "admin",
-        "lastUpdated": "2025-08-04T09:17:36.515Z"
-      }
     }
   },
   "statusOptions": {
@@ -118,9 +67,9 @@
     ]
   },
   "lastUpdated": "2025-08-06",
-  "totalUsers": 2,
+  "totalUsers": 1,
   "system": {
-    "totalReviews": 2,
+    "totalReviews": 1,
     "lastUpdated": "2025-08-06"
   }
 }
