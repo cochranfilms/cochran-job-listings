@@ -1418,13 +1418,36 @@
 
         // Get user's contract status from centralized system
         function getUserContractStatus(userEmail, jobId = null) {
+            console.log('🔍 Getting contract status for user:', currentUser?.name);
+            console.log('📄 Current user structure:', currentUser);
+            
             // Check if current user has contract data in centralized system
-            if (!currentUser || !currentUser.contract) {
+            if (!currentUser) {
+                console.log('❌ No current user found');
+                return null;
+            }
+            
+            // The contract data might be directly on currentUser or in a nested structure
+            let userContract = null;
+            
+            // Check if contract data is directly on currentUser
+            if (currentUser.contract) {
+                userContract = currentUser.contract;
+                console.log('✅ Found contract data directly on currentUser');
+            } else if (currentUser.contractStatus) {
+                // Contract data might be flattened
+                userContract = {
+                    contractStatus: currentUser.contractStatus,
+                    contractSignedDate: currentUser.contractSignedDate,
+                    contractId: currentUser.contractId || currentUser.name,
+                    contractUploadedDate: currentUser.contractUploadedDate
+                };
+                console.log('✅ Found flattened contract data on currentUser');
+            } else {
                 console.log('❌ No contract data found for user in centralized system');
                 return null;
             }
             
-            const userContract = currentUser.contract;
             console.log('📄 Contract data from centralized system:', userContract);
             
             // Return contract data in the expected format
@@ -1435,12 +1458,12 @@
                 fileName: `${currentUser.name}.pdf`,
                 notes: null,
                 githubUrl: null,
-                role: currentUser.profile?.role,
-                rate: currentUser.profile?.rate,
-                location: currentUser.profile?.location,
+                role: currentUser.role || currentUser.profile?.role,
+                rate: currentUser.rate || currentUser.profile?.rate,
+                location: currentUser.location || currentUser.profile?.location,
                 jobId: jobId || 'legacy-job',
-                jobRole: currentUser.profile?.role,
-                jobDescription: currentUser.profile?.description
+                jobRole: currentUser.role || currentUser.profile?.role,
+                jobDescription: currentUser.description || currentUser.profile?.description
             };
         }
 
@@ -4522,13 +4545,34 @@
             console.log('🎯 Requested job ID:', jobId);
             
             // Check if user has contract data in centralized system
-            if (!currentUser || !currentUser.contract) {
+            if (!currentUser) {
+                console.log('❌ No current user found');
+                showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
+                return;
+            }
+            
+            // The contract data might be directly on currentUser or in a nested structure
+            let userContract = null;
+            
+            // Check if contract data is directly on currentUser
+            if (currentUser.contract) {
+                userContract = currentUser.contract;
+                console.log('✅ Found contract data directly on currentUser');
+            } else if (currentUser.contractStatus) {
+                // Contract data might be flattened
+                userContract = {
+                    contractStatus: currentUser.contractStatus,
+                    contractSignedDate: currentUser.contractSignedDate,
+                    contractId: currentUser.contractId || currentUser.name,
+                    contractUploadedDate: currentUser.contractUploadedDate
+                };
+                console.log('✅ Found flattened contract data on currentUser');
+            } else {
                 console.log('❌ No contract data found for user');
                 showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
                 return;
             }
             
-            const userContract = currentUser.contract;
             console.log('📄 Contract data from centralized system:', userContract);
             
             // Check if contract is signed
