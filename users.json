@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Thing One": {
+      "profile": {
+        "email": "dedejackson727@gmail.com",
+        "password": "1mGvo5HOBOgR",
+        "role": "Producer",
+        "location": "Atlanta, GA",
+        "projectStart": "2025-10-10T20:00",
+        "rate": "$75/hour",
+        "approvedDate": "2025-08-05"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-producer-default": {
+          "id": "job-producer-default",
+          "title": "Producer Position",
+          "date": "2025-08-06",
+          "location": "Atlanta, GA",
+          "pay": "$75/hour",
+          "description": "Professional Producer position in Atlanta, GA. Details to be provided.",
+          "status": "upcoming",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-06",
+          "projectStart": "2025-10-10T20:00"
+        }
+      },
+      "primaryJob": "job-producer-default",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,10 +51,5 @@
     ]
   },
   "lastUpdated": "2025-08-06",
-  "totalUsers": 0,
-  "system": {
-    "totalReviews": 0,
-    "lastUpdated": "2025-08-06",
-    "totalContracts": 0
-  }
+  "totalUsers": 1
 }
