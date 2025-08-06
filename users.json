@@ -32,7 +32,8 @@
         }
       },
       "primaryJob": "job-editor-default",
-      "paymentMethod": null
+      "paymentMethod": "paypal",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
