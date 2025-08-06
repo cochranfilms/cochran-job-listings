@@ -2213,6 +2213,21 @@
         async function downloadUserContract(userName) {
             console.log('🔍 downloadUserContract function called with:', userName);
             
+            // Force refresh users data from centralized source
+            try {
+                console.log('🔄 Refreshing users data from centralized source...');
+                const response = await fetch('users.json');
+                if (response.ok) {
+                    const freshData = await response.json();
+                    users = freshData.users;
+                    console.log('✅ Users data refreshed from centralized source');
+                } else {
+                    console.warn('⚠️ Could not refresh users data');
+                }
+            } catch (error) {
+                console.warn('⚠️ Error refreshing users data:', error);
+            }
+            
             const userData = users[userName];
             if (!userData) {
                 console.log('❌ User not found:', userName);
@@ -2361,6 +2376,19 @@
         
         // Make function globally accessible
         window.downloadUserContract = downloadUserContract;
+        
+        // Test function to verify GitHub URL accessibility
+        async function testGitHubUrl(url) {
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                console.log(`🔍 GitHub URL test: ${url} - Status: ${response.status}`);
+                return response.ok;
+            } catch (error) {
+                console.log(`🔍 GitHub URL test failed: ${url} - Error: ${error.message}`);
+                return false;
+            }
+        }
+        window.testGitHubUrl = testGitHubUrl;
 
         // Check if performance review should be shown for a user
         function shouldShowPerformanceReview(userData) {
