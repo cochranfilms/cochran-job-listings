@@ -19,7 +19,23 @@
         "githubUrl": "https://github.com/cochranfilms/cochran-job-listings/blob/main/contracts/Test%20User.pdf"
       },
       "paymentMethod": "paypal",
-      "paymentStatus": "configured"
+      "paymentStatus": "configured",
+      "jobs": {
+        "job-editor-default": {
+          "id": "job-editor-default",
+          "title": "Editor Position",
+          "date": "2025-08-06",
+          "location": "Test City, GA",
+          "pay": "$200/hour",
+          "description": "Professional Editor position in Test City, GA. Details to be provided.",
+          "status": "upcoming",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-06",
+          "projectStart": "TBD"
+        }
+      },
+      "primaryJob": "job-editor-default"
     }
   },
   "statusOptions": {
