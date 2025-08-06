@@ -3,7 +3,7 @@
     "Cody Cochran": {
       "profile": {
         "email": "codylcochran89@gmail.com",
-        "password": "Mz2c2xFmvz1D",
+        "password": "test1234",
         "role": "Assistant",
         "location": "Miami, FL",
         "projectStart": "2025-08-08T06:30",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/5/2025, 8:15:17 PM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754439317321-J8HF4"
       },
       "jobs": {
         "job-assistant-default": {
