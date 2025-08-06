@@ -99,7 +99,11 @@
                         }
                     }
                     
-                    console.log('✅ Performance reviews loaded from centralized users.json:', Object.keys(performanceReviews).length, 'reviews');
+                    // Reduced logging - only log once per session
+                    if (!sessionStorage.getItem('performanceReviewsLogged')) {
+                        console.log('✅ Performance reviews loaded from centralized users.json:', Object.keys(performanceReviews).length, 'reviews');
+                        sessionStorage.setItem('performanceReviewsLogged', 'true');
+                    }
                 } else {
                     console.warn('⚠️ Could not load users.json, using empty object');
                     performanceReviews = {};
@@ -132,10 +136,10 @@
                 }
             }
             
-            // If still no match, log for debugging (but only once per session)
-            if (!review && !sessionStorage.getItem('performanceReviewNotFoundLogged')) {
+            // If still no match, log for debugging (but only once per session per email)
+            if (!review && !sessionStorage.getItem(`performanceReviewNotFound_${userEmail}`)) {
                 console.warn('⚠️ No performance review found for email:', userEmail);
-                sessionStorage.setItem('performanceReviewNotFoundLogged', 'true');
+                sessionStorage.setItem(`performanceReviewNotFound_${userEmail}`, 'true');
             }
             
             return review;
@@ -154,7 +158,12 @@
                 const cacheValid = cacheAge < 2 * 60 * 1000; // 2 minutes for more responsive updates
                 
                 if (cachedData && cacheValid) {
+                    // Reduced logging - only log cache usage occasionally
+                if (!sessionStorage.getItem('cacheUsageLogged') || Date.now() - parseInt(sessionStorage.getItem('lastCacheLog') || '0') > 30000) {
                     console.log('✅ Using cached users data (age:', Math.round(cacheAge / 1000), 'seconds)');
+                    sessionStorage.setItem('cacheUsageLogged', 'true');
+                    sessionStorage.setItem('lastCacheLog', Date.now().toString());
+                }
                     users = JSON.parse(cachedData);
                     return;
                 }
@@ -1941,15 +1950,35 @@
             if (userNameElement) {
                 userNameElement.textContent = currentUser.name;
             } else {
-                console.warn('⚠️ userName element not found in DOM');
-                // Try again after a short delay in case DOM isn't ready
-                setTimeout(() => {
-                    const retryElement = document.getElementById('userName');
-                    if (retryElement) {
-                        retryElement.textContent = currentUser.name;
-                        console.log('✅ userName element updated on retry');
+                // Try multiple selectors and retry with delay
+                const alternativeSelectors = [
+                    '#userName',
+                    '.user-name',
+                    '[data-user-name]',
+                    'h1 span'
+                ];
+                
+                let found = false;
+                for (const selector of alternativeSelectors) {
+                    const element = document.querySelector(selector);
+                    if (element) {
+                        element.textContent = currentUser.name;
+                        found = true;
+                        break;
                     }
-                }, 100);
+                }
+                
+                if (!found) {
+                    console.warn('⚠️ userName element not found in DOM');
+                    // Try again after a short delay in case DOM isn't ready
+                    setTimeout(() => {
+                        const retryElement = document.getElementById('userName');
+                        if (retryElement) {
+                            retryElement.textContent = currentUser.name;
+                            console.log('✅ userName element updated on retry');
+                        }
+                    }, 100);
+                }
             }
             
             // Display user info
@@ -3492,10 +3521,14 @@
                 return;
             }
             
-            console.log('🔍 Debugging displayJobsWithStatus:');
-            console.log('Current user:', currentUser);
-            console.log('Current user jobs:', currentUser?.jobs);
-            console.log('Selected job index:', selectedJobIndex);
+            // Reduced logging - only log once per session
+            if (!sessionStorage.getItem('displayJobsDebugLogged')) {
+                console.log('🔍 Debugging displayJobsWithStatus:');
+                console.log('Current user:', currentUser);
+                console.log('Current user jobs:', currentUser?.jobs);
+                console.log('Selected job index:', selectedJobIndex);
+                sessionStorage.setItem('displayJobsDebugLogged', 'true');
+            }
             
             // Ensure performance reviews are loaded before displaying timeline
             if (Object.keys(performanceReviews).length === 0) {
@@ -3793,13 +3826,17 @@
             const projectStatus = userJob ? userJob.projectStatus : 'upcoming';
             const paymentStatus = userJob ? userJob.paymentStatus : (currentUser.paymentStatus || 'pending');
             
-            console.log('🔍 User portal timeline data:', {
-                selectedJob: selectedJob,
-                userJob: userJob,
-                projectStatus: projectStatus,
-                paymentStatus: paymentStatus,
-                currentUserPaymentStatus: currentUser.paymentStatus
-            });
+            // Reduced timeline logging - only log once per session
+            if (!sessionStorage.getItem('timelineDataLogged')) {
+                console.log('🔍 User portal timeline data:', {
+                    selectedJob: selectedJob,
+                    userJob: userJob,
+                    projectStatus: projectStatus,
+                    paymentStatus: paymentStatus,
+                    currentUserPaymentStatus: currentUser.paymentStatus
+                });
+                sessionStorage.setItem('timelineDataLogged', 'true');
+            }
             
             // Get job data from jobs-data.json
             const jobData = jobsData.find(job => job.id === selectedJob?.id);
@@ -3818,16 +3855,20 @@
             // Get approved date from freelancers.json
             const approvedDate = currentUser.approvedDate ? new Date(currentUser.approvedDate) : null;
             
-            console.log('📊 Timeline Data Sources:', {
-                userContract: userContract,
-                contractSigned: contractSigned,
-                userJob: userJob,
-                projectStatus: projectStatus,
-                paymentStatus: paymentStatus,
-                jobData: jobData,
-                selectedJob: selectedJob,
-                approvedDate: approvedDate
-            });
+            // Reduced timeline sources logging - only log once per session
+            if (!sessionStorage.getItem('timelineSourcesLogged')) {
+                console.log('📊 Timeline Data Sources:', {
+                    userContract: userContract,
+                    contractSigned: contractSigned,
+                    userJob: userJob,
+                    projectStatus: projectStatus,
+                    paymentStatus: paymentStatus,
+                    jobData: jobData,
+                    selectedJob: selectedJob,
+                    approvedDate: approvedDate
+                });
+                sessionStorage.setItem('timelineSourcesLogged', 'true');
+            }
             
             const timeline = [
                 {
@@ -5460,10 +5501,15 @@
                     });
             }
             
-            // Set up real-time data updates (every 3 seconds to prevent bouncing)
+            // Set up real-time data updates (every 30 seconds to reduce performance impact)
             setInterval(() => {
                 if (currentUser) {
-                    console.log('⚡ User portal refresh...');
+                    // Reduced logging - only log refresh activity occasionally
+                    if (!sessionStorage.getItem('refreshLogged') || Date.now() - parseInt(sessionStorage.getItem('lastRefreshLog') || '0') > 60000) {
+                        console.log('⚡ User portal refresh...');
+                        sessionStorage.setItem('refreshLogged', 'true');
+                        sessionStorage.setItem('lastRefreshLog', Date.now().toString());
+                    }
                     
                     // Load data and update UI
                     loadUsersData().then(() => {
@@ -5486,7 +5532,7 @@
                     updatePaymentStatusDisplay();
                     updateContractStatusDisplay();
                 }
-            }, 3000); // 3 seconds to prevent bouncing
+            }, 30000); // 30 seconds to reduce performance impact
         });
 
         // Missing functions from backup file - UPDATED FOR CENTRALIZED SYSTEM
