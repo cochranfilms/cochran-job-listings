@@ -3440,10 +3440,10 @@
 
         // ==================== PROJECT STATUS MANAGEMENT ====================
         
-        // Load performance reviews from JSON file with fallbacks
+        // Load performance reviews from centralized users.json
         async function loadPerformanceReviews() {
             try {
-                console.log('🔄 Loading performance reviews...');
+                console.log('🔄 Loading performance reviews from centralized users.json...');
                 console.log('🔍 Current performanceReviews object:', performanceReviews);
                 
                 // Check for cached data first (5-minute cache)
@@ -3459,58 +3459,32 @@
                     return;
                 }
                 
-                // Try API endpoint first
-                try {
-                    const apiResponse = await fetch('/api/performance');
-                    if (apiResponse.ok) {
-                        const apiData = await apiResponse.json();
-                        performanceReviews = apiData.performanceReviews || {};
-                        console.log('✅ Performance reviews loaded from API:', Object.keys(performanceReviews).length, 'reviews');
-                        
-                        // Cache the data
-                        sessionStorage.setItem('cachedPerformanceReviews', JSON.stringify(performanceReviews));
-                        sessionStorage.setItem('cachedPerformanceReviewsTimestamp', now.toString());
-                        
-                        return;
-                    } else if (apiResponse.status === 404) {
-                        console.warn('⚠️ Performance API endpoint not found (404), trying direct JSON file...');
-                    } else {
-                        console.warn(`⚠️ API endpoint failed with status ${apiResponse.status}, trying direct JSON file...`);
-                    }
-                } catch (apiError) {
-                    console.warn('⚠️ API endpoint failed, trying direct JSON file...', apiError);
-                }
-                
-                // Try direct JSON file
-                const response = await fetch('performance.json');
+                // Load from centralized users.json
+                const response = await fetch('users.json');
                 if (response.ok) {
-                    const jsonData = await response.json();
-                    performanceReviews = jsonData.performanceReviews || {};
-                    console.log('✅ Performance reviews loaded from JSON file:', Object.keys(performanceReviews).length, 'reviews');
+                    const usersData = await response.json();
+                    performanceReviews = {};
+                    
+                    // Extract performance reviews from users data
+                    for (const [userName, userData] of Object.entries(usersData.users)) {
+                        if (userData.performance && userData.profile && userData.profile.email) {
+                            performanceReviews[userData.profile.email] = userData.performance;
+                            console.log(`✅ Found performance review for: ${userName} (${userData.profile.email})`);
+                        }
+                    }
+                    
+                    console.log('✅ Performance reviews loaded from centralized users.json:', Object.keys(performanceReviews).length, 'reviews');
                     
                     // Cache the data
                     sessionStorage.setItem('cachedPerformanceReviews', JSON.stringify(performanceReviews));
                     sessionStorage.setItem('cachedPerformanceReviewsTimestamp', now.toString());
                 } else {
-                    console.warn('⚠️ Could not load performance.json, trying embedded data...');
-                    // Try embedded data as fallback
-                    if (window.performanceData && window.performanceData.performanceReviews) {
-                        performanceReviews = window.performanceData.performanceReviews;
-                        console.log('✅ Performance reviews loaded from embedded data:', Object.keys(performanceReviews).length, 'reviews');
-                    } else {
-                        console.warn('⚠️ No fallback data available, using empty object');
-                        performanceReviews = {};
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error loading performance reviews:', error);
-                // Try embedded data as final fallback
-                if (window.performanceData && window.performanceData.performanceReviews) {
-                    performanceReviews = window.performanceData.performanceReviews;
-                    console.log('✅ Performance reviews loaded from embedded data:', Object.keys(performanceReviews).length, 'reviews');
-                } else {
+                    console.warn('⚠️ Could not load users.json, using empty object');
                     performanceReviews = {};
                 }
+            } catch (error) {
+                console.error('❌ Error loading performance reviews from centralized data:', error);
+                performanceReviews = {};
             }
         }
 

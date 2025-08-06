@@ -34,21 +34,7 @@
       },
       "primaryJob": "job-assistant-default",
       "paymentMethod": "zelle",
-      "paymentStatus": "configured",
-      "performance": {
-        "reviewDate": "2025-08-06",
-        "overallRating": 2,
-        "categories": {
-          "Professionalism": 4,
-          "Quality": 4,
-          "Communication": 4,
-          "Overall Performance": 4
-        },
-        "comments": "Test in here",
-        "adminNotes": "backend test",
-        "reviewedBy": "admin",
-        "lastUpdated": "2025-08-06T00:20:51.505Z"
-      }
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
@@ -66,9 +52,5 @@
     ]
   },
   "lastUpdated": "2025-08-06",
-  "totalUsers": 1,
-  "system": {
-    "totalReviews": 1,
-    "lastUpdated": "2025-08-06"
-  }
+  "totalUsers": 1
 }
