@@ -4852,8 +4852,8 @@
             }
             
             if (userContract) {
-                // Check if contract is signed
-                if (userContract.contractStatus !== 'signed') {
+                // Check if contract is signed or uploaded (both are valid for download)
+                if (userContract.contractStatus !== 'signed' && userContract.contractStatus !== 'uploaded') {
                     console.log('❌ Contract not signed yet');
                     showNotification('❌ Your contract has not been signed yet. Please wait for admin approval.', 'error');
                     return;
