@@ -817,6 +817,20 @@
                     window.URL.revokeObjectURL(url);
                     
                     console.log('📄 Downloaded contract via API:', contract.fileName);
+                    
+                    // Add notification to sophisticated notification system
+                    await addNotification(
+                        'Contract Downloaded Successfully',
+                        `Contract "${contract.fileName}" was downloaded via API endpoint.`,
+                        'contract_downloaded',
+                        {
+                            contractId: contract.contractId,
+                            fileName: contract.fileName,
+                            freelancerName: contract.freelancerName,
+                            actionRequired: false,
+                            priority: 'normal'
+                        }
+                    );
                     return;
                 }
                 
@@ -831,6 +845,20 @@
                     link.click();
                     document.body.removeChild(link);
                     console.log('📄 Downloaded contract from GitHub:', contract.fileName);
+                    
+                    // Add notification to sophisticated notification system
+                    await addNotification(
+                        'Contract Downloaded Successfully',
+                        `Contract "${contract.fileName}" was downloaded from GitHub.`,
+                        'contract_downloaded',
+                        {
+                            contractId: contract.contractId,
+                            fileName: contract.fileName,
+                            freelancerName: contract.freelancerName,
+                            actionRequired: false,
+                            priority: 'normal'
+                        }
+                    );
                     return;
                 }
                 
@@ -844,6 +872,20 @@
                     link.click();
                     document.body.removeChild(link);
                     console.log('📄 Downloaded contract from local data:', contract.fileName);
+                    
+                    // Add notification to sophisticated notification system
+                    await addNotification(
+                        'Contract Downloaded Successfully',
+                        `Contract "${contract.fileName}" was downloaded from local data.`,
+                        'contract_downloaded',
+                        {
+                            contractId: contract.contractId,
+                            fileName: contract.fileName,
+                            freelancerName: contract.freelancerName,
+                            actionRequired: false,
+                            priority: 'normal'
+                        }
+                    );
                     return;
                 }
                 
