@@ -2219,6 +2219,18 @@
 
             console.log('📄 Attempting to download contract for:', userName);
             console.log('📄 User data:', userData);
+            
+            // Test: List all files in contracts directory
+            try {
+                const contractsResponse = await fetch('contracts/');
+                console.log('📁 Contracts directory response:', contractsResponse.status);
+                if (contractsResponse.ok) {
+                    const contractsText = await contractsResponse.text();
+                    console.log('📁 Contracts directory contents:', contractsText);
+                }
+            } catch (error) {
+                console.log('📁 Could not access contracts directory:', error);
+            }
 
             // Check if contract exists in uploaded contracts
             const userContract = uploadedContracts.find(contract => 
@@ -2261,10 +2273,14 @@
                     const contractIdFileName = `${idToTry}.pdf`;
                     const contractUrl = `contracts/${contractIdFileName}`;
                     console.log(`📤 Trying to download: ${contractUrl}`);
+                    console.log(`📤 Full URL: ${window.location.origin}/${contractUrl}`);
                     
                     try {
                         // Check if file exists first
                         const response = await fetch(contractUrl, { method: 'HEAD' });
+                        console.log(`📤 Response status: ${response.status}`);
+                        console.log(`📤 Response headers:`, response.headers);
+                        
                         if (response.ok) {
                             console.log('📄 File found, downloading...');
                             const link = document.createElement('a');
@@ -2278,7 +2294,27 @@
                             showNotification('✅ Contract downloaded successfully!', 'success');
                             return;
                         } else {
-                            console.warn(`⚠️ File not found: ${contractUrl}`);
+                            console.warn(`⚠️ File not found: ${contractUrl} (Status: ${response.status})`);
+                            
+                            // Try with absolute path
+                            const absoluteUrl = `${window.location.origin}/${contractUrl}`;
+                            console.log(`📤 Trying absolute URL: ${absoluteUrl}`);
+                            const absoluteResponse = await fetch(absoluteUrl, { method: 'HEAD' });
+                            if (absoluteResponse.ok) {
+                                console.log('📄 File found with absolute URL, downloading...');
+                                const link = document.createElement('a');
+                                link.href = absoluteUrl;
+                                link.download = contractIdFileName;
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                console.log('✅ Contract downloaded successfully:', contractIdFileName);
+                                showNotification('✅ Contract downloaded successfully!', 'success');
+                                return;
+                            } else {
+                                console.warn(`⚠️ File not found with absolute URL: ${absoluteUrl} (Status: ${absoluteResponse.status})`);
+                            }
                         }
                     } catch (fetchError) {
                         console.warn(`⚠️ Could not access file: ${contractUrl}`, fetchError);
@@ -5361,12 +5397,12 @@
         
         // Start notification polling
         function startNotificationPolling() {
-            // Check for new notifications every 30 seconds
-            notificationUpdateInterval = setInterval(async () => {
-                await triggerSmartNotifications();
-            }, 30000);
+            // DISABLED: Notification polling to prevent flickering
+            // Notifications will be checked manually or on page load
+            console.log('🔄 Notification polling disabled to prevent flickering');
             
-            console.log('🔄 Started notification polling (30s interval)');
+            // Only check once on page load
+            triggerSmartNotifications();
         }
         
         // Stop notification polling
@@ -7367,56 +7403,15 @@
 
         <!-- Auto-refresh functionality -->
         <script>
-        let lastUsersData = null;
-        let lastPerformanceData = null;
+        // DISABLED: Auto-refresh to prevent flickering
+        // Users can manually refresh when needed
+        console.log('🔄 Auto-refresh disabled to prevent flickering');
         
-        // Set up intelligent real-time data updates (every 10 seconds, only if data changed)
+        // Only background notification polling (every 60 seconds)
         setInterval(() => {
-            console.log('🔄 Checking for data updates...');
-            
-            // Load users data and only update if changed
-            loadUsers().then(() => {
-                const currentUsersData = JSON.stringify(users);
-                if (currentUsersData !== lastUsersData) {
-                    console.log('✅ Users data changed, updating display...');
-                    lastUsersData = currentUsersData;
-                    if (isAuthenticated) {
-                        displayUsers();
-                    }
-                } else {
-                    console.log('📊 No user data changes detected');
-                }
-            }).catch(error => {
-                console.warn('⚠️ Users refresh failed:', error);
-            });
-            
-            // Load performance reviews and only update if changed
-            loadPerformanceReviews().then(() => {
-                const currentPerformanceData = JSON.stringify(performanceReviews);
-                if (currentPerformanceData !== lastPerformanceData) {
-                    console.log('✅ Performance data changed, updating alerts...');
-                    lastPerformanceData = currentPerformanceData;
-                    if (isAuthenticated) {
-                        checkPerformanceReviewAlerts();
-                    }
-                } else {
-                    console.log('📊 No performance data changes detected');
-                }
-            }).catch(error => {
-                console.warn('⚠️ Performance refresh failed:', error);
-            });
-        }, 10000); // 10 seconds for intelligent updates
-        
-        // Background notification polling (every 30 seconds)
-        setInterval(() => {
-            // Check for new notifications
+            // Check for new notifications in background
             checkForNewPerformanceReviews();
-            
-            // Check for performance review alerts
-            if (isAuthenticated && Object.keys(users).length > 0) {
-                checkPerformanceReviewAlerts();
-            }
-        }, 30000); // 30 seconds for background checks
+        }, 60000); // 60 seconds for background checks only
         
         // Function to update user status indicators without full reload
         function updateUserStatusIndicators() {
