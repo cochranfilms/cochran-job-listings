@@ -7328,7 +7328,7 @@
                     // Set up immediate real-time data updates (every 2 seconds for instant feedback)
         setInterval(() => {
             console.log('⚡ Immediate data refresh...');
-            loadUsersData().then(() => {
+            loadUsers().then(() => {
                 console.log('✅ Users data refreshed instantly');
                 // Immediately update UI if data changed
                 if (isAuthenticated) {
@@ -7352,7 +7352,7 @@
         // Additional rapid polling for critical data (every 1 second)
         setInterval(() => {
             // Quick check for new notifications
-            checkForNewNotifications();
+            checkForNewPerformanceReviews();
             
             // Quick check for performance review alerts
             if (isAuthenticated && Object.keys(users).length > 0) {
