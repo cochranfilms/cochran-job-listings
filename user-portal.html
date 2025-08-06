@@ -1059,32 +1059,48 @@
             }
         }
 
-        // Load uploaded contracts from JSON file
+        // Load uploaded contracts from centralized users.json
         async function loadUploadedContracts() {
             try {
-                // Try to load from uploaded-contracts.json file
-                const response = await fetch('uploaded-contracts.json');
+                console.log('🔄 Loading contracts from centralized users.json...');
+                const response = await fetch('users.json');
                 if (response.ok) {
-                    const jsonData = await response.json();
-                    // The JSON file has contracts in 'uploadedContracts' array
-                    uploadedContracts = jsonData.uploadedContracts || [];
-                    console.log('✅ Uploaded contracts loaded from JSON file:', uploadedContracts.length, 'contracts');
+                    const usersData = await response.json();
+                    uploadedContracts = [];
+                    
+                    // Extract contract data from centralized users data
+                    for (const [userName, userData] of Object.entries(usersData.users)) {
+                        if (userData.contract && userData.contract.contractId) {
+                            // Convert user contract data to uploaded contracts format
+                            const contractData = {
+                                contractId: userData.contract.contractId,
+                                freelancerName: userData.contract.freelancerName || userName,
+                                freelancerEmail: userData.contract.freelancerEmail || userData.profile?.email,
+                                role: userData.contract.role || userData.profile?.role,
+                                rate: userData.contract.rate || userData.profile?.rate,
+                                location: userData.contract.location || userData.profile?.location,
+                                fileName: userData.contract.fileName,
+                                fileSize: userData.contract.fileSize,
+                                uploadDate: userData.contract.uploadDate,
+                                status: userData.contract.status,
+                                githubUrl: userData.contract.githubUrl,
+                                notes: userData.contract.notes,
+                                contractDate: userData.contract.contractDate,
+                                signedDate: userData.contract.signedDate
+                            };
+                            uploadedContracts.push(contractData);
+                            console.log(`✅ Found contract for: ${userName} (${contractData.fileName})`);
+                        }
+                    }
+                    
+                    console.log('✅ Contracts loaded from centralized users.json:', uploadedContracts.length, 'contracts');
                 } else {
-                    console.warn('⚠️ Could not load uploaded-contracts.json, falling back to localStorage');
-                    const data = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
-                    uploadedContracts = data;
-                    console.log('✅ Uploaded contracts loaded from localStorage:', uploadedContracts.length, 'contracts');
-                }
-            } catch (error) {
-                console.warn('⚠️ Error loading uploaded-contracts.json:', error);
-                try {
-                    const data = JSON.parse(localStorage.getItem('uploadedContracts') || '[]');
-                    uploadedContracts = data;
-                    console.log('✅ Uploaded contracts loaded from localStorage fallback:', uploadedContracts.length, 'contracts');
-                } catch (localStorageError) {
-                    console.error('❌ Error loading uploaded contracts:', localStorageError);
+                    console.warn('⚠️ Could not load users.json, using empty array');
                     uploadedContracts = [];
                 }
+            } catch (error) {
+                console.error('❌ Error loading contracts from centralized data:', error);
+                uploadedContracts = [];
             }
         }
 
