@@ -1463,6 +1463,9 @@
                 });
             }
 
+            // Check for automatic project status updates
+            await checkAutomaticProjectStatusUpdates();
+
             // Update welcome message
             document.getElementById('userName').textContent = currentUser.name;
             
@@ -2601,7 +2604,64 @@
                         }
                     })()
                 },
-
+                {
+                    id: 'project-status',
+                    title: 'Project Status',
+                    description: (() => {
+                        switch (projectStatus) {
+                            case 'upcoming': return 'Project scheduled ⏳';
+                            case 'in-progress': return 'Project in progress 🔄';
+                            case 'completed': return 'Project completed ✅';
+                            case 'cancelled': return 'Project cancelled ❌';
+                            default: return 'Project status pending';
+                        }
+                    })(),
+                    icon: 'fas fa-tasks',
+                    status: (() => {
+                        switch (projectStatus) {
+                            case 'upcoming': return 'current';
+                            case 'in-progress': return 'current';
+                            case 'completed': return 'completed';
+                            case 'cancelled': return 'cancelled';
+                            default: return 'pending';
+                        }
+                    })(),
+                    date: (() => {
+                        // Use project start date if available
+                        if (selectedJob?.projectStart && selectedJob.projectStart !== 'TBD') {
+                            try {
+                                return new Date(selectedJob.projectStart);
+                            } catch (e) {
+                                console.warn('Could not parse project start date:', selectedJob.projectStart);
+                            }
+                        }
+                        return null;
+                    })(),
+                    details: (() => {
+                        switch (projectStatus) {
+                            case 'upcoming': 
+                                return `📅 Your project is scheduled to begin on ${selectedJob?.projectStart ? new Date(selectedJob.projectStart).toLocaleDateString() : 'the scheduled date'}. Please prepare for your assignment.`;
+                            case 'in-progress': 
+                                return `🔄 Your project is currently in progress. Please check in regularly for updates and complete all assigned tasks.`;
+                            case 'completed': 
+                                return `✅ Your project has been completed successfully! Payment will be processed within 24 hours.`;
+                            case 'cancelled': 
+                                return `❌ This project has been cancelled. Please contact Cochran Films for more information about this cancellation.`;
+                            default: 
+                                return `Your project status is being determined. Please check back for updates.`;
+                        }
+                    })(),
+                    action: (() => {
+                        if (projectStatus === 'cancelled') {
+                            return {
+                                text: 'Contact Support',
+                                onclick: 'contactSupport()',
+                                icon: 'fas fa-headset'
+                            };
+                        }
+                        return null;
+                    })()
+                },
                 {
                     id: 'payment',
                     title: 'Payment Processing',
@@ -2631,17 +2691,18 @@
                         return null;
                     })(),
                     details: (() => {
+                        const paymentAmount = selectedJob?.pay || selectedJob?.rate || currentUser.rate || '$75/hour';
                         switch (paymentStatus) {
                             case 'pending': 
-                                return `⏳ Payment of ${selectedJob?.rate || currentUser.rate} is pending. Payment will be processed within 24 hours of project completion.`;
+                                return `⏳ Payment of ${paymentAmount} is pending. Payment will be processed within 24 hours of project completion.`;
                             case 'processing': 
-                                return `🔄 Payment of ${selectedJob?.rate || currentUser.rate} is being processed. You will receive payment within 24 hours.`;
+                                return `🔄 Payment of ${paymentAmount} is being processed. You will receive payment within 24 hours.`;
                             case 'paid': 
-                                return `✅ Payment of ${selectedJob?.rate || currentUser.rate} has been processed successfully on ${userJob?.paymentDate ? new Date(userJob.paymentDate).toLocaleDateString() : 'recent date'}.`;
+                                return `✅ Payment of ${paymentAmount} has been processed successfully on ${userJob?.paymentDate ? new Date(userJob.paymentDate).toLocaleDateString() : 'recent date'}.`;
                             case 'overdue': 
-                                return `⚠️ Payment of ${selectedJob?.rate || currentUser.rate} is overdue. Please contact admin for assistance.`;
+                                return `⚠️ Payment of ${paymentAmount} is overdue. Please contact admin for assistance.`;
                             default: 
-                                return `You will receive payment of ${selectedJob?.rate || currentUser.rate} within 24 hours of project completion.`;
+                                return `You will receive payment of ${paymentAmount} within 24 hours of project completion.`;
                         }
                     })()
                 },
@@ -2706,19 +2767,83 @@
             return currentStep || timeline[timeline.length - 1];
         }
 
-        // Calculate overall progress percentage (0%, 25%, 50%, 75%, 100%)
+        // Calculate overall progress percentage (0%, 20%, 40%, 60%, 80%, 100%)
         function getProjectProgress() {
             const timeline = getProjectTimeline();
             const completedSteps = timeline.filter(step => step.status === 'completed').length;
             const currentSteps = timeline.filter(step => step.status === 'current').length;
             
-            // Each step is worth 25% (4 total steps: Application=25%, Contract=50%, Payment=75%, Performance=100%)
-            const baseProgress = completedSteps * 25;
+            // Each step is worth 20% (5 total steps: Application=20%, Contract=40%, Project Status=60%, Payment=80%, Performance=100%)
+            const baseProgress = completedSteps * 20;
             
-            // If there's a current step, add 50% of its value (12.5% for partial progress)
-            const partialProgress = currentSteps > 0 ? 12.5 : 0;
+            // If there's a current step, add 50% of its value (10% for partial progress)
+            const partialProgress = currentSteps > 0 ? 10 : 0;
             
             return Math.min(100, baseProgress + partialProgress);
+        }
+
+        // Contact support function
+        function contactSupport() {
+            showNotification('Please contact Cochran Films at support@cochranfilms.com or call (555) 123-4567 for assistance.', 'info');
+        }
+
+        // Check for automatic project status updates
+        async function checkAutomaticProjectStatusUpdates() {
+            if (!currentUser || !currentUser.jobs) return;
+            
+            try {
+                // Get contract status
+                const userContract = getUserContractStatus(currentUser.email);
+                const contractSigned = userContract ? true : (currentUser.contractStatus === 'uploaded');
+                const paymentComplete = currentUser.paymentStatus === 'configured' || (currentUser.paymentMethod && currentUser.paymentMethod !== 'pending');
+                
+                // Check each job for automatic status updates
+                for (const [jobId, job] of Object.entries(currentUser.jobs)) {
+                    let needsUpdate = false;
+                    let newStatus = job.projectStatus;
+                    
+                    // Auto-set to 'upcoming' if contract is signed and payment is configured
+                    if (contractSigned && paymentComplete && job.projectStatus === 'pending') {
+                        newStatus = 'upcoming';
+                        needsUpdate = true;
+                        console.log('🔄 Auto-updating job status to upcoming:', jobId);
+                    }
+                    
+                    // Auto-set to 'in-progress' if project start date has passed
+                    if (job.projectStatus === 'upcoming' && job.projectStart) {
+                        try {
+                            const projectStartDate = new Date(job.projectStart);
+                            const now = new Date();
+                            
+                            if (projectStartDate <= now) {
+                                newStatus = 'in-progress';
+                                needsUpdate = true;
+                                console.log('🔄 Auto-updating job status to in-progress:', jobId);
+                            }
+                        } catch (e) {
+                            console.warn('Could not parse project start date for auto-update:', job.projectStart);
+                        }
+                    }
+                    
+                    // Update the job status if needed
+                    if (needsUpdate) {
+                        job.projectStatus = newStatus;
+                        console.log('✅ Updated job status:', jobId, 'to', newStatus);
+                        
+                        // Show notification for status change
+                        const statusMessages = {
+                            'upcoming': 'Your project has been scheduled and is now in the upcoming phase.',
+                            'in-progress': 'Your project has started and is now in progress.'
+                        };
+                        
+                        if (statusMessages[newStatus]) {
+                            showNotification(statusMessages[newStatus], 'success');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error checking automatic project status updates:', error);
+            }
         }
 
         // View performance review
@@ -5320,6 +5445,15 @@
 
         .timeline-item.pending .timeline-icon i {
             color: rgba(255, 178, 0, 0.6);
+        }
+
+        .timeline-item.cancelled .timeline-icon i {
+            color: #ef4444;
+        }
+
+        .timeline-item.cancelled .timeline-content {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.3);
         }
 
         .timeline-content {
