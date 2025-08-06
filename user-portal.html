@@ -1537,13 +1537,129 @@
                     errorMessage = 'Invalid email or password. Please try again.';
                 }
                 
-                document.getElementById('loginError').textContent = errorMessage;
-                document.getElementById('loginError').style.display = 'block';
+                const errorElement = document.getElementById('loginError');
+                if (errorElement) {
+                    errorElement.textContent = errorMessage;
+                    errorElement.style.display = 'block';
+                }
             } finally {
                 // Reset button state
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             }
+        }
+
+        // Quick user validation without heavy data loading
+        async function validateUserQuickly(email, password) {
+            try {
+                // Try to get cached users data first
+                if (users.length === 0) {
+                    // Quick API call without heavy processing
+                    const response = await fetch('/api/users');
+                    if (response.ok) {
+                        const jsonData = await response.json();
+                        if (jsonData.users) {
+                            // Quick user lookup without full data transformation
+                            const userEntry = Object.entries(jsonData.users).find(([name, user]) => {
+                                // Safely check if user and profile exist
+                                if (!user || !user.profile || !user.profile.email) {
+                                    return false;
+                                }
+                                return user.profile.email.toLowerCase() === email.toLowerCase();
+                            });
+                            
+                            if (userEntry) {
+                                const [name, user] = userEntry;
+                                // Check password
+                                if (user.profile?.password === password) {
+                                    // Return minimal user object for immediate login
+                                    return {
+                                        name: name,
+                                        email: user.profile.email,
+                                        password: user.profile.password,
+                                        approvedDate: user.profile.approvedDate,
+                                        contractUrl: user.contract?.contractUrl || 'contract.html',
+                                        contractStatus: user.contract?.contractStatus || 'pending',
+                                        contractSignedDate: user.contract?.contractSignedDate,
+                                        contractUploadedDate: user.contract?.contractUploadedDate,
+                                        contractId: user.contract?.contractId,
+                                        paymentMethod: user.paymentMethod || null,
+                                        paymentStatus: user.paymentStatus || 'pending',
+                                        jobs: user.jobs || {
+                                            'legacy-job': {
+                                                id: 'legacy-job',
+                                                role: user.profile?.role,
+                                                location: user.profile?.location,
+                                                projectStart: user.profile?.projectStart,
+                                                rate: user.profile?.rate,
+                                                status: 'upcoming',
+                                                projectType: 'Legacy Job',
+                                                description: `${user.profile?.role} position`
+                                            }
+                                        },
+                                        primaryJob: user.primaryJob || 'legacy-job'
+                                    };
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Use cached data if available
+                    const user = users.find(u => {
+                        // Safely check if user and email exist
+                        if (!u || !u.email) {
+                            return false;
+                        }
+                        return u.email.toLowerCase() === email.toLowerCase();
+                    });
+                    if (user && user.password === password) {
+                        return user;
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Quick validation error:', error);
+                return null;
+            }
+        }
+
+        // Check if authenticated user exists in our system (simplified)
+        async function checkUserInSystem(email) {
+            console.log('🔍 Checking user in system:', email);
+            
+            // Validate email before proceeding
+            if (!email || !email.trim()) {
+                console.warn('⚠️ Invalid email provided');
+                return;
+            }
+            
+            await loadUsersData();
+            
+            // Try to find user by email (case-insensitive)
+            const user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+            
+            if (user) {
+                console.log('✅ User found in system:', user.name);
+                currentUser = user;
+                sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
+                showUserPortal();
+            } else {
+                // User not found in our system
+                console.warn('⚠️ User not found in system:', email);
+                console.log('📋 Available users:', users.map(u => ({ name: u.name, email: u.email })));
+                // Only show error if user is actually trying to access the system
+                if (document.getElementById('userPortal').style.display !== 'block') {
+                    showNotification('Account not found in system. Please contact support.', 'error');
+                }
+            }
+        }
+
+        // Show user portal
+        function showUserPortal() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('userPortal').style.display = 'block';
+            loadUserData();
         }
 
         // Quick user validation without heavy data loading
@@ -2427,7 +2543,7 @@
             };
             return iconMap[projectType] || 'briefcase';
         }
-        
+
         // Track selected job
         let selectedJobIndex = 0;
         
@@ -2452,7 +2568,7 @@
             // Refresh timeline data from JSON files
             refreshTimelineData();
         }
-        
+
         // Refresh timeline data from all JSON sources
         function refreshTimelineData() {
             console.log('🔄 Refreshing timeline data from JSON files...');
@@ -2466,42 +2582,225 @@
             ]).then(() => {
                 console.log('✅ Timeline data refreshed from all JSON sources');
                 
-                // Update current user data if needed
+                // Update timeline display
                 if (currentUser) {
-                    const updatedUser = users.find(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
-                    if (updatedUser) {
-                        currentUser = updatedUser;
-                        console.log('✅ User data updated:', currentUser);
-                    }
+                    displayUserJobs();
                 }
-                
-                // Refresh displays
-                displayUserInfo();
-                displayUserJobs();
-                displayUserContracts();
             }).catch(error => {
                 console.error('❌ Error refreshing timeline data:', error);
             });
         }
-        
+
         // Get the currently selected job
         function getSelectedJob() {
-            console.log('🔍 Debugging getSelectedJob:');
-            console.log('Current user:', currentUser);
-            console.log('Current user jobs:', currentUser?.jobs);
-            console.log('Selected job index:', selectedJobIndex);
-            
             if (!currentUser || !currentUser.jobs) {
-                console.log('❌ No current user or jobs');
                 return null;
             }
-            const userJobsArray = Object.values(currentUser.jobs);
-            console.log('User jobs array:', userJobsArray);
-            console.log('Selected job index:', selectedJobIndex);
-            console.log('Job at selected index:', userJobsArray[selectedJobIndex]);
-            console.log('First job:', userJobsArray[0]);
             
-            return userJobsArray[selectedJobIndex] || userJobsArray[0];
+            const userJobs = Object.values(currentUser.jobs);
+            if (userJobs.length === 0) {
+                return null;
+            }
+            
+            // Return the selected job or the primary job
+            const selectedJob = userJobs[selectedJobIndex] || userJobs[0];
+            return selectedJob;
+        }
+
+        // Fix timezone issues with date strings
+        function fixTimezone(dateString) {
+            if (!dateString) return null;
+            
+            try {
+                // If it's already a valid date, return as is
+                const date = new Date(dateString);
+                if (!isNaN(date.getTime())) {
+                    return dateString;
+                }
+                
+                // Handle various date formats
+                let fixedDate = dateString;
+                
+                // If it's a date without time, add default time
+                if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    fixedDate = dateString + 'T00:00:00';
+                }
+                
+                // If it's a date with time but no timezone, assume local
+                if (dateString.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/)) {
+                    fixedDate = dateString + 'Z';
+                }
+                
+                // Test if the fixed date is valid
+                const testDate = new Date(fixedDate);
+                if (!isNaN(testDate.getTime())) {
+                    return fixedDate;
+                }
+                
+                return dateString; // Return original if all fixes fail
+            } catch (error) {
+                console.warn('⚠️ Error fixing timezone for date:', dateString, error);
+                return dateString;
+            }
+        }
+
+        // Get job status based on project start date
+        function getJobStatus(projectStart) {
+            if (!projectStart) return 'upcoming';
+            
+            try {
+                const startDate = new Date(projectStart);
+                const now = new Date();
+                
+                if (isNaN(startDate.getTime())) {
+                    return 'upcoming';
+                }
+                
+                if (startDate > now) {
+                    return 'upcoming';
+                } else if (startDate <= now && startDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)) {
+                    return 'in-progress';
+                } else {
+                    return 'completed';
+                }
+            } catch (error) {
+                console.warn('⚠️ Error determining job status:', error);
+                return 'upcoming';
+            }
+        }
+
+        // Get contract signed status
+        function getContractSignedStatus() {
+            if (!currentUser) return 'No contract found';
+            
+            const contract = currentUser.contract;
+            if (!contract) return 'No contract found';
+            
+            if (contract.contractStatus === 'signed') {
+                return 'Contract signed';
+            } else if (contract.contractStatus === 'pending') {
+                return 'Contract pending';
+            } else {
+                return 'Contract not found';
+            }
+        }
+
+        // Get project timeline
+        function getProjectTimeline() {
+            const selectedJob = getSelectedJob();
+            if (!selectedJob) return [];
+            
+            const timeline = [
+                {
+                    id: 'contract',
+                    title: 'Contract Review',
+                    description: 'Review and sign your freelance contract',
+                    icon: 'fas fa-file-contract',
+                    status: currentUser.contract?.contractStatus === 'signed' ? 'completed' : 'pending',
+                    date: currentUser.contract?.contractSignedDate,
+                    details: 'Your contract has been prepared and is ready for review.',
+                    action: 'Sign contract to proceed'
+                },
+                {
+                    id: 'payment',
+                    title: 'Payment Setup',
+                    description: 'Configure your preferred payment method',
+                    icon: 'fas fa-credit-card',
+                    status: currentUser.paymentMethod ? 'completed' : 'pending',
+                    date: null,
+                    details: 'Set up your preferred payment method for project payments.',
+                    action: 'Configure payment method'
+                },
+                {
+                    id: 'project',
+                    title: 'Project Start',
+                    description: 'Begin your assigned project',
+                    icon: 'fas fa-play-circle',
+                    status: getJobStatus(selectedJob.projectStart),
+                    date: selectedJob.projectStart,
+                    details: 'Your project is ready to begin. Review project details and start working.',
+                    action: 'View project details'
+                },
+                {
+                    id: 'completion',
+                    title: 'Project Completion',
+                    description: 'Submit final deliverables',
+                    icon: 'fas fa-check-circle',
+                    status: 'upcoming',
+                    date: null,
+                    details: 'Submit your final deliverables and project documentation.',
+                    action: 'Submit deliverables'
+                }
+            ];
+            
+            return timeline;
+        }
+
+        // Get current timeline step
+        function getCurrentTimelineStep() {
+            const timeline = getProjectTimeline();
+            const currentStep = timeline.find(step => step.status === 'pending' || step.status === 'in-progress');
+            
+            if (currentStep) {
+                return {
+                    title: currentStep.title,
+                    description: currentStep.description,
+                    icon: currentStep.icon,
+                    details: currentStep.details
+                };
+            }
+            
+            // Default to first step if no current step found
+            return {
+                title: 'Getting Started',
+                description: 'Welcome to your project!',
+                icon: 'fas fa-rocket',
+                details: 'Your project is being set up. Please review your contract and configure payment.'
+            };
+        }
+
+        // Get project progress percentage
+        function getProjectProgress() {
+            const timeline = getProjectTimeline();
+            const completedSteps = timeline.filter(step => step.status === 'completed').length;
+            const totalSteps = timeline.length;
+            
+            return Math.round((completedSteps / totalSteps) * 100);
+        }
+
+        // Contact support function
+        function contactSupport() {
+            const supportEmail = 'support@cochranfilms.com';
+            const supportPhone = '(555) 123-4567';
+            
+            showNotification(`Contact support at ${supportEmail} or call ${supportPhone}`, 'info');
+        }
+
+        // Check for automatic project status updates
+        async function checkAutomaticProjectStatusUpdates() {
+            if (!currentUser || !currentUser.jobs) return;
+            
+            const userJobs = Object.values(currentUser.jobs);
+            for (const job of userJobs) {
+                const currentStatus = job.projectStatus || 'upcoming';
+                const calculatedStatus = getJobStatus(job.projectStart);
+                
+                if (currentStatus !== calculatedStatus) {
+                    console.log(`🔄 Auto-updating job status to ${calculatedStatus}: ${job.id}`);
+                    
+                    // Update the job status
+                    job.projectStatus = calculatedStatus;
+                    
+                    // Show notification for status change
+                    if (calculatedStatus === 'in-progress') {
+                        showNotification('Your project has started and is now in progress.', 'success');
+                    } else if (calculatedStatus === 'completed') {
+                        showNotification('Your project has been completed!', 'success');
+                    }
+                    
+                    console.log(`✅ Updated job status: ${job.id} to ${calculatedStatus}`);
+                }
+            }
         }
 
         // Display user contracts (integrated with uploaded-contracts.json)
@@ -4927,6 +5226,330 @@
                 }
             }, 3000); // 3 seconds to prevent bouncing
         });
+
+        // Missing functions from backup file
+        function getUserContractStatus(userEmail, jobId = null) {
+            if (!uploadedContracts || uploadedContracts.length === 0) {
+                return null;
+            }
+            
+            // Find contracts for this user
+            const userContracts = uploadedContracts.filter(contract => 
+                contract.userEmail === userEmail
+            );
+            
+            if (userContracts.length === 0) {
+                return null;
+            }
+            
+            // If jobId is specified, try to find job-specific contract
+            if (jobId) {
+                const jobSpecificContract = userContracts.find(contract => 
+                    contract.jobId === jobId
+                );
+                if (jobSpecificContract) {
+                    return jobSpecificContract;
+                }
+            }
+            
+            // Return the most recent contract
+            return userContracts.sort((a, b) => 
+                new Date(b.uploadDate) - new Date(a.uploadDate)
+            )[0];
+        }
+
+        function viewJobDetails() {
+            const selectedJob = getSelectedJob();
+            if (!selectedJob) {
+                showNotification('No job details available', 'warning');
+                return;
+            }
+            
+            showJobDetailsModal(selectedJob);
+        }
+
+        function showJobDetailsModal(data) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                backdrop-filter: blur(10px);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: #1a1a2e;
+                    border-radius: 20px;
+                    padding: 2rem;
+                    max-width: 600px;
+                    width: 100%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    position: relative;
+                ">
+                    <button onclick="closeJobDetailsModal()" style="
+                        position: absolute;
+                        top: 1rem;
+                        right: 1rem;
+                        background: none;
+                        border: none;
+                        color: rgba(255,255,255,0.7);
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        padding: 0.5rem;
+                        border-radius: 50%;
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                        ×
+                    </button>
+                    
+                    <h2 style="color: #FFB200; margin-bottom: 1.5rem; font-family: 'Cinzel', serif;">
+                        <i class="fas fa-briefcase"></i> Job Details
+                    </h2>
+                    
+                    <div style="display: grid; gap: 1.5rem;">
+                        <div>
+                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Position</h3>
+                            <p style="color: rgba(255,255,255,0.9);">${data.title || data.role || 'Assistant Position'}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Location</h3>
+                            <p style="color: rgba(255,255,255,0.9);">${data.location || 'N/A'}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Project Start</h3>
+                            <p style="color: rgba(255,255,255,0.9);">${data.projectStart || data.date || 'TBD'}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Rate</h3>
+                            <p style="color: rgba(255,255,255,0.9);">${data.pay || data.rate || '$75/hour'}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Project Type</h3>
+                            <p style="color: rgba(255,255,255,0.9);">${data.projectType || 'Assistant'}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Description</h3>
+                            <p style="color: rgba(255,255,255,0.9);">${data.description || 'Professional position with detailed responsibilities to be provided.'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeJobDetailsModal();
+                }
+            });
+        }
+
+        function closeJobDetailsModal() {
+            const modal = document.querySelector('div[style*="position: fixed"][style*="z-index: 1000"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        async function downloadUserContract(jobId = null) {
+            if (!currentUser) {
+                showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
+                return;
+            }
+            
+            try {
+                // Get contract from uploaded contracts
+                const userContract = getUserContractStatus(currentUser.email, jobId);
+                
+                if (!userContract) {
+                    showNotification('❌ Contract file not available. Please contact admin.', 'error');
+                    return;
+                }
+                
+                // Try to download from API first
+                const response = await fetch(`/api/contracts/download/${userContract.contractId}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${userContract.contractId}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showNotification('✅ Contract downloaded successfully!', 'success');
+                } else {
+                    throw new Error('API download failed');
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                showNotification('❌ Error downloading contract. Please try again or contact admin.', 'error');
+            }
+        }
+
+        function viewContractDetails() {
+            const selectedJob = getSelectedJob();
+            if (!selectedJob) {
+                showNotification('No contract details available', 'warning');
+                return;
+            }
+            
+            const userContract = getUserContractStatus(currentUser.email, selectedJob.id);
+            
+            if (!userContract) {
+                showNotification('No contract found for this job', 'warning');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                backdrop-filter: blur(10px);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: #1a1a2e;
+                    border-radius: 20px;
+                    padding: 2rem;
+                    max-width: 600px;
+                    width: 100%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    position: relative;
+                ">
+                    <button onclick="closeContractDetailsModal()" style="
+                        position: absolute;
+                        top: 1rem;
+                        right: 1rem;
+                        background: none;
+                        border: none;
+                        color: rgba(255,255,255,0.7);
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        padding: 0.5rem;
+                        border-radius: 50%;
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                        ×
+                    </button>
+                    
+                    <h2 style="color: #FFB200; margin-bottom: 1.5rem; font-family: 'Cinzel', serif;">
+                        <i class="fas fa-file-contract"></i> Contract Details
+                    </h2>
+                    
+                    <div style="display: grid; gap: 1.5rem;">
+                        <div>
+                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Contract ID</h3>
+                            <p style="color: rgba(255,255,255,0.9);">${userContract.contractId}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Upload Date</h3>
+                            <p style="color: rgba(255,255,255,0.9);">${new Date(userContract.uploadDate).toLocaleDateString()}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Status</h3>
+                            <p style="color: #22c55e; font-weight: bold;">Signed</p>
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem;">
+                            <button onclick="downloadUserContract('${selectedJob.id}')" style="
+                                background: linear-gradient(135deg, #FFB200, #FF8C00);
+                                color: #000;
+                                border: none;
+                                padding: 1rem 2rem;
+                                border-radius: 10px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <i class="fas fa-download"></i>
+                                Download Contract
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeContractDetailsModal();
+                }
+            });
+        }
+
+        function closeContractDetailsModal() {
+            const modal = document.querySelector('div[style*="position: fixed"][style*="z-index: 1000"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function switchPortalTab(tabName) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Show selected section
+            const selectedSection = document.getElementById(`${tabName}-section`);
+            if (selectedSection) {
+                selectedSection.classList.add('active');
+            }
+            
+            // Update navigation
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => link.classList.remove('active'));
+            
+            const activeLink = document.querySelector(`[onclick="showSection('${tabName}')"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+            
+            console.log('📑 Switched to section:', tabName);
+        }
+
+        function showSection(sectionName) {
+            switchPortalTab(sectionName);
+        }
+
     </script>
 
     <style>
