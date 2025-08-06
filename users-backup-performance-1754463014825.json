@@ -34,22 +34,7 @@
       },
       "primaryJob": "job-assistant-default",
       "paymentMethod": "zelle",
-      "paymentStatus": "configured",
-      "performance": {
-        "reviewDate": "2025-08-04",
-        "overallRating": 3,
-        "categories": {
-          "Professionalism": 2,
-          "Quality": 4,
-          "Communication": 3,
-          "Reliability": 2,
-          "Overall Performance": 1
-        },
-        "comments": "kjbkkkj",
-        "adminNotes": "lkhkhlhlhlkhlknlpopkp;km;pp;",
-        "reviewedBy": "admin",
-        "lastUpdated": "2025-08-04T03:30:40.070Z"
-      }
+      "paymentStatus": "configured"
     },
     "Dede Jackson": {
       "profile": {
@@ -85,22 +70,7 @@
       },
       "primaryJob": "job-photographer-default",
       "paymentMethod": "paypal",
-      "paymentStatus": "configured",
-      "performance": {
-        "reviewDate": "2025-08-04",
-        "overallRating": 4,
-        "categories": {
-          "Professionalism": 5,
-          "Quality": 3,
-          "Communication": 3,
-          "Reliability": 2,
-          "Overall Performance": 2
-        },
-        "comments": "Hi There",
-        "adminNotes": "Test hide",
-        "reviewedBy": "admin",
-        "lastUpdated": "2025-08-04T09:17:36.515Z"
-      }
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
@@ -120,7 +90,7 @@
   "lastUpdated": "2025-08-06",
   "totalUsers": 2,
   "system": {
-    "totalReviews": 2,
+    "totalReviews": 0,
     "lastUpdated": "2025-08-06"
   }
 }

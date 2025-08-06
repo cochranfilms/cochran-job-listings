@@ -70,7 +70,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Performance Data Script -->
-    <script src="performance-data.js"></script>
+
     
     <!-- EmailJS for automated job acceptance emails -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -3358,6 +3358,14 @@
             try {
                 console.log('🔄 Updating users.json on GitHub...');
                 
+                // Count performance reviews in users
+                let totalReviews = 0;
+                for (const user of Object.values(users)) {
+                    if (user.performance) {
+                        totalReviews++;
+                    }
+                }
+                
                 const usersData = {
                     users: users,
                     statusOptions: {
@@ -3365,7 +3373,11 @@
                         paymentStatus: ["pending", "processing", "paid", "overdue"]
                     },
                     lastUpdated: new Date().toISOString().split('T')[0],
-                    totalUsers: Object.keys(users).length
+                    totalUsers: Object.keys(users).length,
+                    system: {
+                        totalReviews: totalReviews,
+                        lastUpdated: new Date().toISOString().split('T')[0]
+                    }
                 };
                 
                 // First, get the current file SHA
@@ -4226,8 +4238,24 @@
             // Save to performance reviews
             performanceReviews[userEmail] = reviewData;
             
-            // Update performance.json file
-            await updatePerformanceReviewsFile();
+            // Find user by email and update their performance data in centralized system
+            let userFound = false;
+            for (const [userName, userData] of Object.entries(users)) {
+                if (userData.profile && userData.profile.email === userEmail) {
+                    // Update user's performance data in centralized system
+                    users[userName].performance = reviewData;
+                    userFound = true;
+                    console.log(`✅ Updated performance data for user: ${userName} (${userEmail})`);
+                    break;
+                }
+            }
+            
+            if (!userFound) {
+                console.warn(`⚠️ Could not find user with email: ${userEmail}`);
+            }
+            
+            // Update centralized users.json on GitHub
+            await updateUsersOnGitHub();
             
             // Close modal
             closeModal(form);
@@ -4236,90 +4264,12 @@
             displayUsers();
             
             // Show notification
-            notifyJSONUpdate('performance.json', 'created', `for ${userEmail}`);
+            notifyJSONUpdate('users.json', 'created', `performance review for ${userEmail}`);
             
             console.log('✅ Performance review saved for:', userEmail);
         }
         
-        // Update performance reviews file
-        async function updatePerformanceReviewsFile() {
-            try {
-                console.log('🔄 Starting performance reviews update to GitHub...');
-                console.log('📊 Current performance reviews:', performanceReviews);
-                
-                const performanceData = {
-                    performanceReviews: performanceReviews,
-                    reviewOptions: {
-                        rating: [1, 2, 3, 4, 5],
-                        categories: [
-                            "Professionalism",
-                            "Quality", 
-                            "Communication",
-                            "Reliability",
-                            "Overall Performance"
-                        ],
-                        status: ["pending", "completed", "overdue"]
-                    },
-                    lastUpdated: new Date().toISOString().split('T')[0],
-                    totalReviews: Object.keys(performanceReviews).length
-                };
-                
-                console.log('📤 Preparing performance data for GitHub:', performanceData);
-                
-                // First, get the current file SHA
-                const getResponse = await fetch('/api/github/file/performance.json');
-                let sha = null;
-                
-                if (getResponse.ok) {
-                    const fileData = await getResponse.json();
-                    sha = fileData.sha;
-                    console.log('📄 Got current performance.json SHA:', sha.substring(0, 7));
-                } else if (getResponse.status === 404) {
-                    console.log('📄 performance.json does not exist, will create new file');
-                } else {
-                    console.warn('⚠️ Could not get current file SHA, proceeding without it');
-                }
-                
-                const updateBody = {
-                    content: JSON.stringify(performanceData, null, 2),
-                    message: `Update performance.json - Performance review saved - ${new Date().toLocaleString()}`
-                };
-                
-                // Include SHA if we have it (for updates)
-                if (sha) {
-                    updateBody.sha = sha;
-                }
-                
-                console.log('📤 Sending performance data to GitHub API...');
-                
-                const response = await fetch('/api/github/file/performance.json', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(updateBody)
-                });
-                
-                console.log('📡 GitHub API response status:', response.status);
-                
-                if (response.ok) {
-                    const responseData = await response.json();
-                    console.log('✅ Performance reviews updated on GitHub successfully:', responseData);
-                    showNotification('Performance review saved to GitHub successfully!', 'success');
-                } else {
-                    const errorData = await response.json().catch(() => ({}));
-                    console.error('❌ Failed to update performance.json on GitHub:', response.status, errorData);
-                    // Fallback: save to localStorage
-                    localStorage.setItem('performanceReviews', JSON.stringify(performanceReviews));
-                    showNotification('Performance review saved locally (GitHub API unavailable)', 'warning');
-                }
-            } catch (error) {
-                console.error('❌ Error updating performance reviews on GitHub:', error);
-                // Fallback: save to localStorage
-                localStorage.setItem('performanceReviews', JSON.stringify(performanceReviews));
-                showNotification('Performance review saved locally (Network error)', 'warning');
-            }
-        }
+
 
         // Show job assignment modal
         function showJobAssignmentModal(userName) {
