@@ -5028,12 +5028,7 @@
                     }
                 }
                 
-                try {
-                    showNotification('❌ Contract file not available. Please contact admin.', 'error');
-                } catch (error) {
-                    console.error('❌ Error downloading contract:', error);
-                    showNotification('❌ Error downloading contract. Please try again or contact admin.', 'error');
-                }
+                showNotification('❌ Contract file not available. Please contact admin.', 'error');
         }
 
         // View contract details
