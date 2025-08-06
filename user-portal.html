@@ -420,23 +420,32 @@
         async function checkPaymentMethodNotifications() {
             try {
                 if (currentUser && currentUser.paymentMethod) {
-                    const existingNotification = notifications.find(n => 
-                        n.type === 'payment_method_updated' && 
-                        n.data.userEmail === currentUser.email
-                    );
+                    // Check if we've already shown this notification for this user
+                    const notificationKey = `payment_method_${currentUser.email}_${currentUser.paymentMethod}`;
+                    const alreadyShown = sessionStorage.getItem(notificationKey);
                     
-                    if (!existingNotification) {
-                        await addNotification(
-                            'Payment Method Updated',
-                            `Your payment method has been updated to ${currentUser.paymentMethod}`,
-                            'payment_method_updated',
-                            {
-                                userEmail: currentUser.email,
-                                paymentMethod: currentUser.paymentMethod,
-                                actionRequired: false,
-                                priority: 'normal'
-                            }
+                    if (!alreadyShown) {
+                        const existingNotification = notifications.find(n => 
+                            n.type === 'payment_method_updated' && 
+                            n.data.userEmail === currentUser.email
                         );
+                        
+                        if (!existingNotification) {
+                            await addNotification(
+                                'Payment Method Updated',
+                                `Your payment method has been updated to ${currentUser.paymentMethod}`,
+                                'payment_method_updated',
+                                {
+                                    userEmail: currentUser.email,
+                                    paymentMethod: currentUser.paymentMethod,
+                                    actionRequired: false,
+                                    priority: 'normal'
+                                }
+                            );
+                            
+                            // Mark this notification as shown
+                            sessionStorage.setItem(notificationKey, 'true');
+                        }
                     }
                 }
             } catch (error) {
@@ -450,23 +459,32 @@
                 if (currentUser && currentUser.contract) {
                     const contract = currentUser.contract;
                     if (contract.contractStatus === 'signed') {
-                        const existingNotification = notifications.find(n => 
-                            n.type === 'contract_signed' && 
-                            n.data.userEmail === currentUser.email
-                        );
+                        // Check if we've already shown this notification for this user
+                        const notificationKey = `contract_signed_${currentUser.email}_${contract.contractId}`;
+                        const alreadyShown = sessionStorage.getItem(notificationKey);
                         
-                        if (!existingNotification) {
-                            await addNotification(
-                                'Contract Signed',
-                                `Your contract has been signed and is being processed by admin`,
-                                'contract_signed',
-                                {
-                                    userEmail: currentUser.email,
-                                    contractId: contract.contractId,
-                                    actionRequired: false,
-                                    priority: 'normal'
-                                }
+                        if (!alreadyShown) {
+                            const existingNotification = notifications.find(n => 
+                                n.type === 'contract_signed' && 
+                                n.data.userEmail === currentUser.email
                             );
+                            
+                            if (!existingNotification) {
+                                await addNotification(
+                                    'Contract Signed',
+                                    `Your contract has been signed and is being processed by admin`,
+                                    'contract_signed',
+                                    {
+                                        userEmail: currentUser.email,
+                                        contractId: contract.contractId,
+                                        actionRequired: false,
+                                        priority: 'normal'
+                                    }
+                                );
+                                
+                                // Mark this notification as shown
+                                sessionStorage.setItem(notificationKey, 'true');
+                            }
                         }
                     }
                 }
@@ -481,25 +499,34 @@
                 if (currentUser && currentUser.jobs) {
                     for (const [jobId, job] of Object.entries(currentUser.jobs)) {
                         if (job.projectStatus === 'completed' && job.paymentStatus === 'paid') {
-                            const existingNotification = notifications.find(n => 
-                                n.type === 'job_completed' && 
-                                n.data.userEmail === currentUser.email &&
-                                n.data.jobId === jobId
-                            );
+                            // Check if we've already shown this notification for this job
+                            const notificationKey = `job_completed_${currentUser.email}_${jobId}`;
+                            const alreadyShown = sessionStorage.getItem(notificationKey);
                             
-                            if (!existingNotification) {
-                                await addNotification(
-                                    'Job Completed',
-                                    `Your job "${job.title}" has been completed and payment has been processed`,
-                                    'job_completed',
-                                    {
-                                        userEmail: currentUser.email,
-                                        jobId: jobId,
-                                        jobTitle: job.title,
-                                        actionRequired: false,
-                                        priority: 'normal'
-                                    }
+                            if (!alreadyShown) {
+                                const existingNotification = notifications.find(n => 
+                                    n.type === 'job_completed' && 
+                                    n.data.userEmail === currentUser.email &&
+                                    n.data.jobId === jobId
                                 );
+                                
+                                if (!existingNotification) {
+                                    await addNotification(
+                                        'Job Completed',
+                                        `Your job "${job.title}" has been completed and payment has been processed`,
+                                        'job_completed',
+                                        {
+                                            userEmail: currentUser.email,
+                                            jobId: jobId,
+                                            jobTitle: job.title,
+                                            actionRequired: false,
+                                            priority: 'normal'
+                                        }
+                                    );
+                                    
+                                    // Mark this notification as shown
+                                    sessionStorage.setItem(notificationKey, 'true');
+                                }
                             }
                         }
                     }
@@ -1559,7 +1586,7 @@
                                             </div>
                                             <div class="job-detail">
                                                 <i class="fas fa-dollar-sign"></i>
-                                                <span>${job.rate}</span>
+                                                <span>${job.pay || job.rate || '$75/hour'}</span>
                                             </div>
                                             <div class="job-detail">
                                                 <i class="fas fa-clock"></i>
@@ -3926,45 +3953,33 @@
                 });
         }
             
-            // Set up immediate real-time data updates (every 1 second for instant feedback)
+            // Set up real-time data updates (every 3 seconds to prevent bouncing)
             setInterval(() => {
-                console.log('⚡ Immediate user portal refresh...');
-                loadUsersData().then(() => {
-                    console.log('✅ User portal data refreshed instantly');
-                    // Immediately update UI if user is logged in
-                    if (currentUser) {
+                if (currentUser) {
+                    console.log('⚡ User portal refresh...');
+                    
+                    // Load data and update UI
+                    loadUsersData().then(() => {
                         loadUserData();
                         updateTimelineDisplay();
                         updateJobStatusDisplay();
-                    }
-                }).catch(error => {
-                    console.warn('⚠️ User portal immediate refresh failed:', error);
-                });
-                
-                loadPerformanceReviews().then(() => {
-                    console.log('✅ User portal performance reviews refreshed instantly');
-                    // Immediately update performance review displays
-                    if (currentUser) {
+                    }).catch(error => {
+                        console.warn('⚠️ User portal refresh failed:', error);
+                    });
+                    
+                    // Load performance reviews
+                    loadPerformanceReviews().then(() => {
                         updatePerformanceReviewDisplay();
-                    }
-                }).catch(error => {
-                    console.warn('⚠️ User portal performance immediate refresh failed:', error);
-                });
-            }, 1000); // 1 second for immediate updates
-            
-            // Additional rapid polling for critical user data (every 1 second)
-            setInterval(() => {
-                if (currentUser) {
-                    // Quick check for new notifications
+                    }).catch(error => {
+                        console.warn('⚠️ Performance reviews refresh failed:', error);
+                    });
+                    
+                    // Quick checks
                     checkForNewUserNotifications();
-                    
-                    // Quick check for payment status changes
                     updatePaymentStatusDisplay();
-                    
-                    // Quick check for contract status changes
                     updateContractStatusDisplay();
                 }
-            }, 1000); // 1 second for critical updates
+            }, 3000); // 3 seconds to prevent bouncing
         });
     </script>
 
