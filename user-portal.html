@@ -2609,20 +2609,8 @@
             const userName = currentUser ? currentUser.name : 'User';
             const welcomeText = `Welcome back, ${userName}!`;
             
-            // Clear the element and start typing
-            welcomeElement.textContent = '';
-            
-            let i = 0;
-            const typeInterval = setInterval(() => {
-                welcomeElement.textContent += welcomeText.charAt(i);
-                i++;
-                
-                if (i >= welcomeText.length) {
-                    clearInterval(typeInterval);
-                    // Add cursor blink effect with better visibility
-                    welcomeElement.innerHTML += '<span class="typing-cursor">|</span>';
-                }
-            }, 80); // Slightly slower for better readability
+            // Set the welcome message directly without typing animation to avoid conflicts
+            welcomeElement.textContent = welcomeText;
         }
 
         // Add cursor animation to CSS - IMPROVED
@@ -5669,6 +5657,157 @@
             if (modal) {
                 modal.remove();
             }
+        }
+
+        // Payment modal functionality
+        function showPaymentModal() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                backdrop-filter: blur(10px);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: #1a1a2e;
+                    border-radius: 20px;
+                    padding: 2rem;
+                    max-width: 500px;
+                    width: 100%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    position: relative;
+                ">
+                    <button onclick="closePaymentModal()" style="
+                        position: absolute;
+                        top: 1rem;
+                        right: 1rem;
+                        background: none;
+                        border: none;
+                        color: rgba(255,255,255,0.7);
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        padding: 0.5rem;
+                        border-radius: 50%;
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                        ×
+                    </button>
+                    
+                    <h2 style="color: #FFB200; margin-bottom: 1.5rem; font-family: 'Cinzel', serif;">
+                        <i class="fas fa-credit-card"></i> Set Payment Method
+                    </h2>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem;">
+                            Please select your preferred payment method for receiving payments.
+                        </p>
+                        
+                        <div style="display: grid; gap: 1rem;">
+                            <button onclick="setPaymentMethod('paypal')" style="
+                                background: linear-gradient(135deg, #0070ba, #1546a0);
+                                color: white;
+                                border: none;
+                                padding: 1rem;
+                                border-radius: 10px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <i class="fab fa-paypal"></i>
+                                PayPal
+                            </button>
+                            
+                            <button onclick="setPaymentMethod('bank')" style="
+                                background: linear-gradient(135deg, #22c55e, #16a34a);
+                                color: white;
+                                border: none;
+                                padding: 1rem;
+                                border-radius: 10px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <i class="fas fa-university"></i>
+                                Bank Transfer
+                            </button>
+                            
+                            <button onclick="setPaymentMethod('stripe')" style="
+                                background: linear-gradient(135deg, #6772e5, #5469d4);
+                                color: white;
+                                border: none;
+                                padding: 1rem;
+                                border-radius: 10px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <i class="fab fa-stripe"></i>
+                                Stripe
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0;">
+                            <i class="fas fa-info-circle"></i>
+                            Your payment method will be securely stored and used for all future payments.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closePaymentModal();
+                }
+            });
+        }
+
+        function closePaymentModal() {
+            const modal = document.querySelector('div[style*="position: fixed"][style*="z-index: 1000"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function setPaymentMethod(method) {
+            if (!currentUser) return;
+            
+            // Update user's payment method
+            currentUser.paymentMethod = method;
+            
+            // Show success notification
+            showNotification(`✅ Payment method set to ${method.charAt(0).toUpperCase() + method.slice(1)}`, 'success');
+            
+            // Close modal
+            closePaymentModal();
+            
+            // Refresh the payment display
+            displayUserInfo();
         }
 
         function switchPortalTab(tabName) {
