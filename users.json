@@ -33,7 +33,8 @@
         }
       },
       "primaryJob": "job-backdrop-photographer-base-1754521842040",
-      "paymentMethod": null
+      "paymentMethod": "bank",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
