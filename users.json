@@ -3,7 +3,7 @@
     "Black Widow": {
       "profile": {
         "email": "codylcochran89@gmail.com",
-        "password": "JrSXiqmYLQud",
+        "password": "test12345",
         "role": "Editor",
         "location": "New York, NY",
         "projectStart": "2025-10-10T14:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/6/2025, 4:54:05 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754470445338-SU9R7"
       },
       "jobs": {
         "job-editor-default": {
