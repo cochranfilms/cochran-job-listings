@@ -3,7 +3,7 @@
     "Erica Cochran": {
       "profile": {
         "email": "dedejackson727@gmail.com",
-        "password": "ss4bNyyBnDls",
+        "password": "test1234",
         "role": "Backdrop Photographer Base",
         "location": "Los Angeles, CA",
         "projectStart": "2025-10-10T21:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/6/2025, 7:12:01 PM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754521921258-HS362"
       },
       "jobs": {
         "job-backdrop-photographer-base-1754521842040": {
