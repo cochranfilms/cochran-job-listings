@@ -394,6 +394,15 @@
                 loginForm.addEventListener('submit', handleLogin);
             }
             
+            // Initialize bank viewer immediately
+            try {
+                window.adminBankViewer = new AdminBankViewer();
+                console.log('✅ AdminBankViewer initialized on page load');
+            } catch (error) {
+                console.error('❌ Error initializing AdminBankViewer on page load:', error);
+                window.adminBankViewer = null;
+            }
+            
             // Listen for payment method updates from user portal
             window.addEventListener('message', function(event) {
                 if (event.data.type === 'paymentMethodUpdated') {
