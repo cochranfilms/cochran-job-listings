@@ -2211,6 +2211,9 @@
 
         // Download user contract
         async function downloadUserContract(userName) {
+            // Ensure function is globally accessible
+            window.downloadUserContract = downloadUserContract;
+            
             console.log('🔍 downloadUserContract function called with:', userName);
             
             // Force refresh users data from centralized source
@@ -2444,7 +2447,7 @@
                             <button onclick="showJobAssignmentModal('${userName}')" style="background: #22c55e; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                 🎯 Assign Jobs
                             </button>
-                            <button onclick="downloadUserContract('${userName}')" style="background: #8b5cf6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
+                            <button onclick="console.log('🔍 Button clicked for user:', '${userName}'); downloadUserContract('${userName}')" style="background: #8b5cf6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;">
                                 📄 Download Contract
                             </button>
 
