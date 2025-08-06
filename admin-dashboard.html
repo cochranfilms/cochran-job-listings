@@ -1432,6 +1432,7 @@
                     // Populate location dropdown
                     const locationSelect = document.getElementById('jobLocation');
                     if (locationSelect) {
+                        const currentLocationValue = locationSelect.value; // Preserve current value
                         locationSelect.innerHTML = '<option value="">Select a location...</option>';
                         dropdownOptions.locations.forEach(location => {
                             const option = document.createElement('option');
@@ -1439,11 +1440,16 @@
                             option.textContent = location;
                             locationSelect.appendChild(option);
                         });
+                        // Restore current value if it exists in the new options
+                        if (currentLocationValue && dropdownOptions.locations.includes(currentLocationValue)) {
+                            locationSelect.value = currentLocationValue;
+                        }
                     }
                     
                     // Populate pay rate dropdown
                     const paySelect = document.getElementById('jobPay');
                     if (paySelect) {
+                        const currentPayValue = paySelect.value; // Preserve current value
                         paySelect.innerHTML = '<option value="">Select a rate...</option>';
                         dropdownOptions.rates.forEach(rate => {
                             const option = document.createElement('option');
@@ -1451,6 +1457,10 @@
                             option.textContent = rate;
                             paySelect.appendChild(option);
                         });
+                        // Restore current value if it exists in the new options
+                        if (currentPayValue && dropdownOptions.rates.includes(currentPayValue)) {
+                            paySelect.value = currentPayValue;
+                        }
                     }
                     
                     console.log('✅ Job form dropdowns populated with', dropdownOptions.locations.length, 'locations and', dropdownOptions.rates.length, 'rates');
@@ -1462,6 +1472,7 @@
                     
                     const locationSelect = document.getElementById('jobLocation');
                     if (locationSelect) {
+                        const currentLocationValue = locationSelect.value; // Preserve current value
                         locationSelect.innerHTML = '<option value="">Select a location...</option>';
                         defaultLocations.forEach(location => {
                             const option = document.createElement('option');
@@ -1469,10 +1480,15 @@
                             option.textContent = location;
                             locationSelect.appendChild(option);
                         });
+                        // Restore current value if it exists in the new options
+                        if (currentLocationValue && defaultLocations.includes(currentLocationValue)) {
+                            locationSelect.value = currentLocationValue;
+                        }
                     }
                     
                     const paySelect = document.getElementById('jobPay');
                     if (paySelect) {
+                        const currentPayValue = paySelect.value; // Preserve current value
                         paySelect.innerHTML = '<option value="">Select a rate...</option>';
                         defaultRates.forEach(rate => {
                             const option = document.createElement('option');
@@ -1480,6 +1496,10 @@
                             option.textContent = rate;
                             paySelect.appendChild(option);
                         });
+                        // Restore current value if it exists in the new options
+                        if (currentPayValue && defaultRates.includes(currentPayValue)) {
+                            paySelect.value = currentPayValue;
+                        }
                     }
                 }
             } catch (error) {
@@ -1762,6 +1782,7 @@
             roleSelects.forEach(selectId => {
                 const roleSelect = document.getElementById(selectId);
                 if (roleSelect) {
+                    const currentValue = roleSelect.value; // Preserve current value
                     roleSelect.innerHTML = '<option value="">Select a role...</option>';
                     window.dropdownOptions.roles.forEach(role => {
                         const option = document.createElement('option');
@@ -1769,6 +1790,10 @@
                         option.textContent = role;
                         roleSelect.appendChild(option);
                     });
+                    // Restore current value if it exists in the new options
+                    if (currentValue && window.dropdownOptions.roles.includes(currentValue)) {
+                        roleSelect.value = currentValue;
+                    }
                 }
             });
             
@@ -1777,6 +1802,7 @@
             locationSelects.forEach(selectId => {
                 const locationSelect = document.getElementById(selectId);
                     if (locationSelect) {
+                        const currentValue = locationSelect.value; // Preserve current value
                         locationSelect.innerHTML = '<option value="">Select a location...</option>';
                     window.dropdownOptions.locations.forEach(location => {
                             const option = document.createElement('option');
@@ -1784,6 +1810,10 @@
                             option.textContent = location;
                             locationSelect.appendChild(option);
                         });
+                        // Restore current value if it exists in the new options
+                        if (currentValue && window.dropdownOptions.locations.includes(currentValue)) {
+                            locationSelect.value = currentValue;
+                        }
                     }
             });
             
@@ -1792,6 +1822,7 @@
             rateSelects.forEach(selectId => {
                 const rateSelect = document.getElementById(selectId);
                 if (rateSelect) {
+                    const currentValue = rateSelect.value; // Preserve current value
                     rateSelect.innerHTML = '<option value="">Select a rate...</option>';
                     window.dropdownOptions.rates.forEach(rate => {
                             const option = document.createElement('option');
@@ -1799,12 +1830,17 @@
                             option.textContent = rate;
                         rateSelect.appendChild(option);
                     });
+                    // Restore current value if it exists in the new options
+                    if (currentValue && window.dropdownOptions.rates.includes(currentValue)) {
+                        rateSelect.value = currentValue;
+                    }
                 }
             });
             
             // Populate project type dropdown
             const projectTypeSelect = document.getElementById('assignmentJobProjectType');
             if (projectTypeSelect) {
+                const currentValue = projectTypeSelect.value; // Preserve current value
                 projectTypeSelect.innerHTML = '<option value="">Select a project type...</option>';
                 window.dropdownOptions.projectTypes.forEach(type => {
                     const option = document.createElement('option');
@@ -1812,6 +1848,10 @@
                     option.textContent = type;
                     projectTypeSelect.appendChild(option);
                 });
+                // Restore current value if it exists in the new options
+                if (currentValue && window.dropdownOptions.projectTypes.includes(currentValue)) {
+                    projectTypeSelect.value = currentValue;
+                }
             }
         }
         
