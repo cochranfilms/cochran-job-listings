@@ -3,19 +3,19 @@
     "Thing One": {
       "profile": {
         "email": "dedejackson727@gmail.com",
-        "password": "test1234",
+        "password": "rlf38Om6FOad",
         "role": "Producer",
         "location": "Atlanta, GA",
-        "projectStart": "2025-10-10T20:00",
+        "projectStart": "2025-08-06T00:03",
         "rate": "$75/hour",
         "approvedDate": "2025-08-05"
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/5/2025, 10:37:09 PM",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
         "contractUploadedDate": null,
-        "contractId": "CF-1754447829109-88LR8"
+        "contractId": null
       },
       "jobs": {
         "job-producer-default": {
@@ -29,12 +29,11 @@
           "projectStatus": "upcoming",
           "paymentStatus": "pending",
           "assignedDate": "2025-08-06",
-          "projectStart": "2025-10-10T20:00"
+          "projectStart": "2025-08-06T00:03"
         }
       },
       "primaryJob": "job-producer-default",
-      "paymentMethod": "cash",
-      "paymentStatus": "configured"
+      "paymentMethod": null
     }
   },
   "statusOptions": {
