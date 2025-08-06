@@ -2751,11 +2751,11 @@
                     // Update the job status
                     job.projectStatus = calculatedStatus;
                     
-                    // Show notification for status change
+                    // Log status change to console (removed popup notification)
                     if (calculatedStatus === 'in-progress') {
-                        showNotification('Your project has started and is now in progress.', 'success');
+                        console.log('✅ [SUCCESS] Your project has started and is now in progress.');
                     } else if (calculatedStatus === 'completed') {
-                        showNotification('Your project has been completed!', 'success');
+                        console.log('✅ [SUCCESS] Your project has been completed!');
                     }
                     
                     console.log(`✅ Updated job status: ${job.id} to ${calculatedStatus}`);
@@ -3903,7 +3903,7 @@
                         };
                         
                         if (statusMessages[newStatus]) {
-                            showNotification(statusMessages[newStatus], 'success');
+                            console.log('✅ [SUCCESS]', statusMessages[newStatus]);
                         }
                         
                         // Trigger notification system to check for new notifications
@@ -5614,27 +5614,29 @@
         /* ==================== LAYOUT COMPONENTS ==================== */
         .app-container {
             display: grid;
-            grid-template-columns: 280px 1fr;
+            grid-template-columns: 300px 1fr;
             min-height: 100vh;
             position: relative;
         }
 
         .sidebar {
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255,255,255,0.1);
-            padding: var(--spacing-xl);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(25px);
+            border-right: 1px solid rgba(255,255,255,0.08);
+            padding: 2.5rem 1.5rem;
             position: fixed;
             height: 100vh;
-            width: 280px;
+            width: 300px;
             z-index: 100;
             overflow-y: auto;
+            box-shadow: 2px 0 25px rgba(0,0,0,0.4);
         }
 
         .main-content {
-            margin-left: 280px;
-            padding: var(--spacing-xl);
+            margin-left: 300px;
+            padding: 2.5rem;
             min-height: 100vh;
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e);
         }
         
         /* ==================== HEADER & NAVIGATION ==================== */
@@ -5689,24 +5691,41 @@
 
         /* ==================== CARDS & COMPONENTS ==================== */
         .card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-xl);
-            margin-bottom: var(--spacing-lg);
-            transition: var(--transition-normal);
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,178,0,0.3), transparent);
         }
 
         .card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: rgba(255,178,0,0.2);
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             margin-bottom: var(--spacing-lg);
         }
 
@@ -6304,26 +6323,33 @@
 
         /* ==================== ADDITIONAL COMPONENTS ==================== */
         .dashboard-header {
-            margin-bottom: var(--spacing-2xl);
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
         .dashboard-header h1 {
             font-family: var(--font-display);
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: 700;
             color: var(--primary);
-            margin-bottom: var(--spacing-sm);
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
         }
 
         .dashboard-header p {
             color: rgba(255,255,255,0.7);
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            max-width: 600px;
         }
 
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: var(--spacing-lg);
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2.5rem;
+            margin-top: 2rem;
         }
 
         .profile-info,
@@ -6334,15 +6360,24 @@
         .performance-info {
             display: flex;
             flex-direction: column;
-            gap: var(--spacing-md);
+            gap: 1.5rem;
+            min-height: 200px;
         }
 
         .info-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: var(--spacing-sm) 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.2s ease;
+        }
+
+        .info-item:hover {
+            background: rgba(255,255,255,0.02);
+            margin: 0 -1rem;
+            padding: 1rem;
+            border-radius: 8px;
         }
 
         .info-item:last-child {
@@ -6352,11 +6387,15 @@
         .label {
             color: rgba(255,255,255,0.7);
             font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 0.02em;
         }
 
         .value {
             color: white;
             font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: 0.01em;
         }
 
         .value.highlight {
@@ -6383,8 +6422,10 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: var(--spacing-md);
-            padding: var(--spacing-xl) 0;
+            gap: 1.5rem;
+            padding: 3rem 2rem;
+            min-height: 300px;
+            justify-content: center;
         }
 
         .payment-method i,
@@ -6393,9 +6434,21 @@
         .no-jobs-content i,
         .no-contract-content i,
         .no-performance-content i {
-            font-size: 3rem;
+            font-size: 4rem;
             color: var(--primary);
-            margin-bottom: var(--spacing-md);
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method:hover i,
+        .no-payment:hover i,
+        .no-project:hover i,
+        .no-jobs-content:hover i,
+        .no-contract-content:hover i,
+        .no-performance-content:hover i {
+            transform: scale(1.1);
+            opacity: 1;
         }
 
         .no-payment i,
@@ -6408,8 +6461,9 @@
 
         .jobs-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: var(--spacing-lg);
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2.5rem;
+            margin-top: 2rem;
         }
 
         .job-card {
@@ -8981,22 +9035,25 @@
 
         .notification-bell {
             position: relative;
-            background: rgba(255, 178, 0, 0.1);
-            border: 1px solid rgba(255, 178, 0, 0.3);
+            background: rgba(255, 178, 0, 0.08);
+            border: 1px solid rgba(255, 178, 0, 0.2);
             color: #FFB200;
-            padding: 0.75rem;
-            border-radius: 8px;
+            padding: 1rem;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
             width: 100%;
+            backdrop-filter: blur(10px);
         }
 
         .notification-bell:hover {
-            background: rgba(255, 178, 0, 0.2);
-            border-color: rgba(255, 178, 0, 0.5);
+            background: rgba(255, 178, 0, 0.15);
+            border-color: rgba(255, 178, 0, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 178, 0, 0.2);
         }
 
         .notification-badge {
@@ -9020,15 +9077,15 @@
             position: fixed;
             top: 80px;
             right: 20px;
-            width: 400px;
-            max-height: 500px;
-            background: #1a1a2e;
-            border: 1px solid rgba(255, 178, 0, 0.3);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            width: 450px;
+            max-height: 600px;
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
             z-index: 1000;
             overflow: hidden;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(25px);
         }
 
         .notification-header {
