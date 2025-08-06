@@ -31,8 +31,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-06",
       "signedDate": "2025-08-06"
+    },
+    {
+      "contractId": "CF-1754470445338-SU9R7",
+      "freelancerName": "Black Widow",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Editor",
+      "rate": "$150/hour",
+      "location": "New York, NY",
+      "fileName": "CF-1754470445338-SU9R7.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-06T08:54:17.250Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754470445338-SU9R7.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-06",
+      "signedDate": "2025-08-06"
     }
   ],
-  "lastUpdated": "2025-08-06T07:06:49.785Z",
-  "totalContracts": 2
+  "lastUpdated": "2025-08-06T08:54:17.250Z",
+  "totalContracts": 3
 }
