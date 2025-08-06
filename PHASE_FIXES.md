@@ -3,6 +3,39 @@
 ## Overview
 This document tracks the fixes for various issues in the Cochran Films landing page system.
 
+## System Architecture Notes
+
+### Centralized Data Structure Principle
+**CRITICAL**: All user-specific data must be stored in `users.json` as the single source of truth.
+
+**Rule**: Any new user input, field, or category that is connected to a user must be added to the data structure inside `users.json`. The UI design of any new function should pull data from `users.json` as long as it is connected with user-specific data.
+
+**Current Centralized Structure**:
+```json
+{
+  "users": {
+    "userName": {
+      "profile": { /* user profile data */ },
+      "contract": { /* contract information */ },
+      "jobs": { /* job assignments */ },
+      "performance": { /* performance reviews */ },
+      "payment": { /* payment information */ },
+      "notifications": [ /* user notifications */ ]
+      // Add new user-specific categories here
+    }
+  }
+}
+```
+
+**Benefits**:
+- Single source of truth eliminates data fragmentation
+- Consistent data across admin dashboard and user portal
+- Easier maintenance and debugging
+- No sync issues between multiple JSON files
+- Better reliability and data integrity
+
+**Implementation**: Both admin-dashboard.html and user-portal.html now read from centralized `users.json` for all user-related data.
+
 ## Phase 1 Fix - Error User Not Found Alert
 **Issue**: Error alert shows up in user-portal.html as soon as the page loads, even before user login attempts. Continues to show after successful login and page reload.
 
