@@ -797,4 +797,237 @@ const response = await fetch(contractUrl);
 - ✅ **Easy Tracking**: Can immediately identify contract ownership
 - ✅ **Reliable Downloads**: Direct file access from contracts directory
 - ✅ **Reduced Dependencies**: No more external PDF generation libraries
-- ✅ **Better Error Handling**: Clear feedback when files not found 
+- ✅ **Better Error Handling**: Clear feedback when files not found
+
+## Phase 17 Fix - Typing Functions & Input Experience Optimization
+**Date**: 2025-08-06
+**Context**: User input lag and cursor visibility issues in user-portal.html
+
+### Issues Identified
+1. **Typing Lag**: Multiple event listeners and debouncing functions causing performance issues
+2. **Cursor Visibility**: Hard to see cursor when typing in input fields
+3. **Input Focus Issues**: Poor visual feedback when inputs are focused
+4. **Performance Problems**: Excessive function calls and event listeners slowing down typing
+
+### Root Cause Analysis
+**Typing Performance Issues**:
+- Multiple debouncing functions with 300ms delays causing input lag
+- Excessive event listeners on input fields
+- Complex input handling logic with multiple function calls
+- Poor cursor styling making it hard to see during typing
+
+**Input Experience Problems**:
+- Cursor color not properly visible against background
+- Input focus styling not providing clear visual feedback
+- Mobile zoom issues on input focus
+- Inconsistent input styling across different input types
+
+### Solution Implemented
+**Typing Functions & Input Experience Optimization**:
+
+#### **1. Optimized Typing Animation**
+- ✅ **Improved Cursor Visibility**: Enhanced typing cursor with gold color and text shadow
+- ✅ **Better Animation Timing**: Slowed typing speed from 50ms to 80ms for better readability
+- ✅ **Enhanced Cursor Styling**: Added `caret-color: #FFB200` for consistent cursor visibility
+- ✅ **Professional Appearance**: Gold cursor with text shadow for better visibility
+
+#### **2. Streamlined Input Event Handling**
+- ✅ **Removed Debouncing**: Eliminated complex debouncing functions that caused lag
+- ✅ **Single Event Listeners**: One event listener per input field instead of multiple
+- ✅ **Immediate Feedback**: Error messages clear immediately when typing starts
+- ✅ **Reduced Function Calls**: Minimized unnecessary function executions
+
+#### **3. Enhanced Input Styling**
+- ✅ **Better Cursor Visibility**: Added `caret-color: #FFB200` to all input fields
+- ✅ **Improved Focus States**: Enhanced focus styling with gold borders and shadows
+- ✅ **Mobile Optimization**: Prevented zoom on mobile with 16px font size
+- ✅ **Consistent Styling**: Unified input appearance across all input types
+
+#### **4. Performance Optimizations**
+- ✅ **RequestAnimationFrame**: Used for smoother UI updates during data refresh
+- ✅ **Reduced Event Listeners**: Eliminated redundant input event handlers
+- ✅ **Immediate UI Updates**: Instant feedback without waiting for refresh cycles
+- ✅ **Optimized CSS**: Reduced CSS complexity and improved rendering performance
+
+### Implementation Details
+```javascript
+// Optimized typing animation
+function typeWelcomeMessage() {
+    const welcomeElement = document.querySelector('.dashboard-header h1');
+    if (!welcomeElement) return;
+    
+    const originalText = welcomeElement.textContent;
+    welcomeElement.textContent = '';
+    
+    let i = 0;
+    const typeInterval = setInterval(() => {
+        welcomeElement.textContent += originalText.charAt(i);
+        i++;
+        
+        if (i >= originalText.length) {
+            clearInterval(typeInterval);
+            // Enhanced cursor with better visibility
+            welcomeElement.innerHTML += '<span class="typing-cursor">|</span>';
+        }
+    }, 80); // Slower for better readability
+}
+
+// Streamlined input handling
+emailInput.addEventListener('input', function() {
+    // Clear error message immediately when typing
+    const errorElement = document.getElementById('loginError');
+    if (errorElement && errorElement.style.display !== 'none') {
+        errorElement.style.display = 'none';
+    }
+});
+```
+
+### CSS Enhancements
+```css
+/* Improved input styling for better cursor visibility */
+input[type="text"], input[type="email"], input[type="password"] {
+    caret-color: #FFB200 !important;
+    color: #FFFFFF !important;
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    padding: 12px 16px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    outline: none !important;
+}
+
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
+    border-color: #FFB200 !important;
+    box-shadow: 
+        0 0 0 3px rgba(255, 178, 0, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    transform: translateY(-1px) !important;
+}
+```
+
+### Results Achieved
+- ✅ **Eliminated Typing Lag**: Removed debouncing functions and excessive event listeners
+- ✅ **Improved Cursor Visibility**: Gold cursor with text shadow for better visibility
+- ✅ **Enhanced Input Experience**: Immediate feedback and better focus states
+- ✅ **Mobile Optimization**: Prevented zoom issues on mobile devices
+- ✅ **Performance Improvements**: Reduced function calls and optimized rendering
+- ✅ **Professional Appearance**: Consistent gold theme across all input elements
+- ✅ **Better User Experience**: Smooth, responsive typing experience
+
+## Phase 18 Fix - PDF Download & Contract Status System Alignment
+**Date**: 2025-08-06
+**Context**: PDF download failures and contract status display issues due to data structure mismatch
+
+### Issues Identified
+1. **PDF Download Failures**: Both user-portal.html and admin-dashboard.html showing "Contract file not found" when clicking download buttons
+2. **Contract Status Display Issues**: Signed date showing "processing" instead of actual date
+3. **Data Structure Mismatch**: Random contract IDs in users.json vs user name-based file naming
+4. **System Confusion**: Multiple data structures causing inconsistent behavior
+
+### Root Cause Analysis
+**Data Structure Problems**:
+- **users.json** was creating random contract IDs like `CF-1754472197848-S360O`
+- **contracts directory** has files named by user names like `Purple Spider.pdf`
+- **Download functions** were looking for files by user names but system was using random IDs
+- **Contract status display** was trying to parse date format "8/6/2025, 5:23:17 AM" incorrectly
+
+**System Architecture Issues**:
+- Download functions still using old `uploadedContracts` array logic
+- Contract status functions not properly reading from centralized `users.json` structure
+- Date formatting not handling the specific format used in the system
+
+### Solution Implemented
+**Complete System Alignment**:
+
+#### **1. Fixed Contract ID Structure**
+- ✅ **Updated users.json**: Changed contract IDs from random strings to user names
+- ✅ **Consistent Naming**: Contract IDs now match file names in contracts directory
+- ✅ **Unified System**: Same naming convention across all components
+
+#### **2. Updated Download Functions**
+- ✅ **Centralized System**: Updated both user-portal.html and admin-dashboard.html to use centralized contract data
+- ✅ **Simplified Logic**: Removed complex contract lookup logic, now reads directly from user.contract
+- ✅ **User Name-Based**: Download functions now look for files by user name consistently
+
+#### **3. Enhanced Contract Status Display**
+- ✅ **Helper Function**: Created `formatContractSignedDate()` to handle specific date format
+- ✅ **Proper Date Parsing**: Handles "8/6/2025, 5:23:17 AM" format correctly
+- ✅ **Consistent Display**: Shows actual signed dates instead of "processing"
+
+#### **4. Updated Contract Status Functions**
+- ✅ **Centralized Logic**: Updated `getUserContractStatus()` to read from centralized system
+- ✅ **Simplified Structure**: Removed complex contract filtering and sorting
+- ✅ **Direct Access**: Now reads contract data directly from `currentUser.contract`
+
+### Implementation Details
+```javascript
+// Updated contract ID structure in users.json
+"contract": {
+    "contractId": "Purple Spider", // User name instead of random ID
+    "contractStatus": "signed",
+    "contractSignedDate": "8/6/2025, 5:23:17 AM"
+}
+
+// Enhanced download function
+async function downloadUserContract(jobId = null) {
+    // Check if user has contract data in centralized system
+    if (!currentUser || !currentUser.contract) {
+        showNotification('❌ No contract found for your account.', 'error');
+        return;
+    }
+    
+    const userContract = currentUser.contract;
+    
+    // Create safe filename from user name
+    const safeFileName = currentUser.name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+    const contractUrl = `contracts/${safeFileName}`;
+    
+    // Download logic...
+}
+
+// Helper function for date formatting
+function formatContractSignedDate(dateString) {
+    if (!dateString) return 'Processing...';
+    
+    try {
+        // Handle the specific format "8/6/2025, 5:23:17 AM"
+        let date;
+        if (dateString.includes(',')) {
+            const parts = dateString.split(',');
+            const datePart = parts[0].trim();
+            const timePart = parts[1].trim();
+            date = new Date(`${datePart} ${timePart}`);
+        } else {
+            date = new Date(dateString);
+        }
+        
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString();
+        } else {
+            return dateString; // Display as is
+        }
+    } catch (error) {
+        return dateString; // Display as is
+    }
+}
+```
+
+### Results Achieved
+- ✅ **PDF Downloads Working**: Both portals now successfully download contract files
+- ✅ **Consistent Data Structure**: Contract IDs match file names across all systems
+- ✅ **Proper Date Display**: Signed dates show correctly instead of "processing"
+- ✅ **Unified System**: All components now use the same centralized data structure
+- ✅ **Simplified Architecture**: Removed complex contract lookup logic
+- ✅ **Better User Experience**: Clear contract status and working downloads
+- ✅ **System Reliability**: Consistent behavior across admin and user portals
+
+### Technical Benefits
+- **No More Random IDs**: Contract IDs are now meaningful user names
+- **File System Alignment**: Contract files named consistently with user names
+- **Centralized Logic**: All contract operations use the same data source
+- **Improved Maintainability**: Simplified code structure and data flow
+- **Better Error Handling**: Clear feedback when contracts not found
+- **Consistent User Experience**: Same behavior across all interfaces 

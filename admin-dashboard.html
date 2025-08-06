@@ -2387,7 +2387,7 @@
 
 
         
-        // Download user contract
+        // Download user contract - UPDATED FOR CENTRALIZED SYSTEM
         async function downloadUserContract(userName) {
             // Ensure function is globally accessible
             window.downloadUserContract = downloadUserContract;
@@ -2419,73 +2419,22 @@
             console.log('📄 Attempting to download contract for:', userName);
             console.log('📄 User data:', userData);
             
-            // Get user's email for contract lookup
-            const userEmail = userData.profile?.email;
-            if (!userEmail) {
-                console.log('❌ No email found for user:', userName);
-                showNotification('No email found for user', 'error');
+            // Check if user has contract data in centralized system
+            if (!userData.contract) {
+                console.log('❌ No contract data found for user:', userName);
+                showNotification('No contract data found for user', 'error');
                 return;
             }
             
-            // Load contracts from centralized data (same as user-portal.html)
-            let uploadedContracts = [];
-            try {
-                const contractsResponse = await fetch('users.json');
-                if (contractsResponse.ok) {
-                    const usersData = await contractsResponse.json();
-                    
-                    // Extract contract data from centralized users data
-                    for (const [userNameKey, userDataKey] of Object.entries(usersData.users)) {
-                        if (userDataKey.contract && userDataKey.contract.contractId) {
-                            // Convert user contract data to uploaded contracts format
-                            const contractData = {
-                                contractId: userDataKey.contract.contractId,
-                                freelancerName: userDataKey.contract.freelancerName || userNameKey,
-                                freelancerEmail: userDataKey.contract.freelancerEmail || userDataKey.profile?.email,
-                                role: userDataKey.contract.role || userDataKey.profile?.role,
-                                rate: userDataKey.contract.rate || userDataKey.profile?.rate,
-                                location: userDataKey.contract.location || userDataKey.profile?.location,
-                                fileName: userDataKey.contract.fileName,
-                                fileSize: userDataKey.contract.fileSize,
-                                uploadDate: userDataKey.contract.uploadDate,
-                                status: userDataKey.contract.status,
-                                githubUrl: userDataKey.contract.githubUrl,
-                                notes: userDataKey.contract.notes,
-                                contractDate: userDataKey.contract.contractDate,
-                                signedDate: userDataKey.contract.signedDate
-                            };
-                            uploadedContracts.push(contractData);
-                        }
-                    }
-                    console.log('✅ Contracts loaded from centralized users.json:', uploadedContracts.length, 'contracts');
-                }
-            } catch (error) {
-                console.error('❌ Error loading contracts from centralized data:', error);
-            }
+            const userContract = userData.contract;
+            console.log('📄 Contract data from centralized system:', userContract);
             
-            // Find contracts for this user (same logic as user-portal.html)
-            let userContracts = uploadedContracts.filter(contract => 
-                contract.freelancerEmail && contract.freelancerEmail.toLowerCase() === userEmail.toLowerCase()
-            );
-            
-            if (userContracts.length === 0) {
-                console.log('❌ No contracts found for user:', userName);
-                showNotification('No contracts found for user', 'error');
+            // Check if contract is signed
+            if (userContract.contractStatus !== 'signed') {
+                console.log('❌ Contract not signed yet for user:', userName);
+                showNotification('Contract not signed yet for user', 'error');
                 return;
             }
-            
-            // Sort by upload date to get the most recent contract
-            userContracts.sort((a, b) => {
-                const dateA = new Date(a.uploadDate || a.signedDate || 0);
-                const dateB = new Date(b.uploadDate || b.signedDate || 0);
-                return dateB - dateA; // Most recent first
-            });
-            
-            const userContract = userContracts[0];
-            console.log(`📄 Found ${userContracts.length} contract(s) for user, using most recent: ${userContract.contractId}`);
-            console.log('📄 Contract properties:', Object.keys(userContract));
-            console.log('📄 Contract fileName:', userContract.fileName);
-            console.log('📄 Contract githubUrl:', userContract.githubUrl);
             
             try {
                 // Search for PDF file by user name in contracts directory

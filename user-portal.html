@@ -1387,54 +1387,61 @@
             }
         }
 
-        // Get user's contract status from uploaded contracts
-        function getUserContractStatus(userEmail, jobId = null) {
-            // Find ALL contracts for this user
-            let userContracts = uploadedContracts.filter(contract => 
-                contract.freelancerEmail && contract.freelancerEmail.toLowerCase() === userEmail.toLowerCase()
-            );
+        // Helper function to format contract signed date
+        function formatContractSignedDate(dateString) {
+            if (!dateString) return 'Processing...';
             
-            if (userContracts.length > 0) {
-                // If a specific job is requested, filter by jobId
-                if (jobId && jobId !== 'legacy-job') {
-                    const jobSpecificContracts = userContracts.filter(contract => 
-                        contract.jobId === jobId
-                    );
-                    if (jobSpecificContracts.length > 0) {
-                        userContracts = jobSpecificContracts;
-                        console.log(`📄 Found ${jobSpecificContracts.length} contract(s) for job ${jobId}`);
-                    } else {
-                        console.log(`⚠️ No contracts found for job ${jobId}, using most recent contract`);
-                    }
+            try {
+                // Handle the specific format "8/6/2025, 5:23:17 AM"
+                let date;
+                if (dateString.includes(',')) {
+                    // Parse the specific format
+                    const parts = dateString.split(',');
+                    const datePart = parts[0].trim();
+                    const timePart = parts[1].trim();
+                    date = new Date(`${datePart} ${timePart}`);
+                } else {
+                    date = new Date(dateString);
                 }
                 
-                // Sort by upload date to get the most recent contract
-                userContracts.sort((a, b) => {
-                    const dateA = new Date(a.uploadDate || a.signedDate || 0);
-                    const dateB = new Date(b.uploadDate || b.signedDate || 0);
-                    return dateB - dateA; // Most recent first
-                });
-                
-                const mostRecentContract = userContracts[0];
-                console.log(`📄 Found ${userContracts.length} contract(s) for user, using most recent: ${mostRecentContract.contractId}`);
-                
-                return {
-                    status: mostRecentContract.status,
-                    contractId: mostRecentContract.contractId,
-                    signedDate: mostRecentContract.uploadDate || mostRecentContract.signedDate,
-                    fileName: mostRecentContract.fileName,
-                    notes: mostRecentContract.notes,
-                    githubUrl: mostRecentContract.githubUrl,
-                    role: mostRecentContract.role,
-                    rate: mostRecentContract.rate,
-                    location: mostRecentContract.location,
-                    jobId: mostRecentContract.jobId,
-                    jobRole: mostRecentContract.jobRole,
-                    jobDescription: mostRecentContract.jobDescription
-                };
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString();
+                } else {
+                    console.warn('⚠️ Invalid contract signed date:', dateString);
+                    return dateString; // Display as is
+                }
+            } catch (error) {
+                console.warn('⚠️ Error formatting contract signed date:', error);
+                return dateString; // Display as is
+            }
+        }
+
+        // Get user's contract status from centralized system
+        function getUserContractStatus(userEmail, jobId = null) {
+            // Check if current user has contract data in centralized system
+            if (!currentUser || !currentUser.contract) {
+                console.log('❌ No contract data found for user in centralized system');
+                return null;
             }
             
-            return null;
+            const userContract = currentUser.contract;
+            console.log('📄 Contract data from centralized system:', userContract);
+            
+            // Return contract data in the expected format
+            return {
+                status: userContract.contractStatus,
+                contractId: userContract.contractId,
+                signedDate: userContract.contractSignedDate,
+                fileName: `${currentUser.name}.pdf`,
+                notes: null,
+                githubUrl: null,
+                role: currentUser.profile?.role,
+                rate: currentUser.profile?.rate,
+                location: currentUser.profile?.location,
+                jobId: jobId || 'legacy-job',
+                jobRole: currentUser.profile?.role,
+                jobDescription: currentUser.profile?.description
+            };
         }
 
 
@@ -1497,119 +1504,6 @@
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             }
-        }
-
-        // Quick user validation without heavy data loading
-        async function validateUserQuickly(email, password) {
-            try {
-                // Try to get cached users data first
-                if (users.length === 0) {
-                    // Quick API call without heavy processing
-                    const response = await fetch('/api/users');
-                    if (response.ok) {
-                        const jsonData = await response.json();
-                        if (jsonData.users) {
-                            // Quick user lookup without full data transformation
-                            const userEntry = Object.entries(jsonData.users).find(([name, user]) => {
-                                // Safely check if user and profile exist
-                                if (!user || !user.profile || !user.profile.email) {
-                                    return false;
-                                }
-                                return user.profile.email.toLowerCase() === email.toLowerCase();
-                            });
-                            
-                            if (userEntry) {
-                                const [name, user] = userEntry;
-                                // Check password
-                                if (user.profile?.password === password) {
-                                    // Return minimal user object for immediate login
-                                    return {
-                                        name: name,
-                                        email: user.profile.email,
-                                        password: user.profile.password,
-                                        approvedDate: user.profile.approvedDate,
-                                        contractUrl: user.contract?.contractUrl || 'contract.html',
-                                        contractStatus: user.contract?.contractStatus || 'pending',
-                                        contractSignedDate: user.contract?.contractSignedDate,
-                                        contractUploadedDate: user.contract?.contractUploadedDate,
-                                        contractId: user.contract?.contractId,
-                                        paymentMethod: user.paymentMethod || null,
-                                        paymentStatus: user.paymentStatus || 'pending',
-                                        jobs: user.jobs || {
-                                            'legacy-job': {
-                                                id: 'legacy-job',
-                                                role: user.profile?.role,
-                                                location: user.profile?.location,
-                                                projectStart: user.profile?.projectStart,
-                                                rate: user.profile?.rate,
-                                                status: 'upcoming',
-                                                projectType: 'Legacy Job',
-                                                description: `${user.profile?.role} position`
-                                            }
-                                        },
-                                        primaryJob: user.primaryJob || 'legacy-job'
-                                    };
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // Use cached data if available
-                    const user = users.find(u => {
-                        // Safely check if user and email exist
-                        if (!u || !u.email) {
-                            return false;
-                        }
-                        return u.email.toLowerCase() === email.toLowerCase();
-                    });
-                    if (user && user.password === password) {
-                        return user;
-                    }
-                }
-                
-                return null;
-            } catch (error) {
-                console.error('Quick validation error:', error);
-                return null;
-            }
-        }
-
-        // Check if authenticated user exists in our system (simplified)
-        async function checkUserInSystem(email) {
-            console.log('🔍 Checking user in system:', email);
-            
-            // Validate email before proceeding
-            if (!email || !email.trim()) {
-                console.warn('⚠️ Invalid email provided');
-                return;
-            }
-            
-            await loadUsersData();
-            
-            // Try to find user by email (case-insensitive)
-            const user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
-            
-            if (user) {
-                console.log('✅ User found in system:', user.name);
-                currentUser = user;
-                sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
-                showUserPortal();
-            } else {
-                // User not found in our system
-                console.warn('⚠️ User not found in system:', email);
-                console.log('📋 Available users:', users.map(u => ({ name: u.name, email: u.email })));
-                // Only show error if user is actually trying to access the system
-                if (document.getElementById('userPortal').style.display !== 'block') {
-                    showNotification('Account not found in system. Please contact support.', 'error');
-                }
-            }
-        }
-
-        // Show user portal
-        function showUserPortal() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('userPortal').style.display = 'block';
-            loadUserData();
         }
 
         // Quick user validation without heavy data loading
@@ -2412,7 +2306,7 @@
             typeWelcomeMessage();
         }
 
-        // Typing effect for welcome message
+        // Typing effect for welcome message - OPTIMIZED
         function typeWelcomeMessage() {
             const welcomeElement = document.querySelector('.dashboard-header h1');
             if (!welcomeElement) return;
@@ -2427,17 +2321,20 @@
                 
                 if (i >= originalText.length) {
                     clearInterval(typeInterval);
-                    // Add cursor blink effect
-                    welcomeElement.innerHTML += '<span class="cursor">|</span>';
+                    // Add cursor blink effect with better visibility
+                    welcomeElement.innerHTML += '<span class="typing-cursor">|</span>';
                 }
-            }, 50);
+            }, 80); // Slightly slower for better readability
         }
 
-        // Add cursor animation to CSS
+        // Add cursor animation to CSS - IMPROVED
         const cursorStyle = document.createElement('style');
         cursorStyle.textContent = `
-            .cursor {
-                animation: blink 1s infinite;
+            .typing-cursor {
+                animation: blink 1.2s infinite;
+                color: #FFB200;
+                font-weight: bold;
+                text-shadow: 0 0 5px #FFB200;
             }
             
             @keyframes blink {
@@ -2465,10 +2362,47 @@
                 animation: ripple 0.6s linear;
                 pointer-events: none;
             }
+            
+            /* IMPROVED INPUT STYLING FOR BETTER CURSOR VISIBILITY */
+            input[type="text"], input[type="email"], input[type="password"] {
+                caret-color: #FFB200 !important;
+                color: #FFFFFF !important;
+                font-size: 16px !important;
+                line-height: 1.5 !important;
+                padding: 12px 16px !important;
+                background: rgba(255, 255, 255, 0.1) !important;
+                border: 2px solid rgba(255, 255, 255, 0.2) !important;
+                border-radius: 8px !important;
+                transition: all 0.3s ease !important;
+                outline: none !important;
+                -webkit-appearance: none !important;
+                appearance: none !important;
+            }
+            
+            input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
+                border-color: #FFB200 !important;
+                box-shadow: 
+                    0 0 0 3px rgba(255, 178, 0, 0.2),
+                    0 4px 12px rgba(0, 0, 0, 0.3) !important;
+                background: rgba(255, 255, 255, 0.15) !important;
+                transform: translateY(-1px) !important;
+            }
+            
+            input[type="text"]::placeholder, input[type="email"]::placeholder, input[type="password"]::placeholder {
+                color: rgba(255, 255, 255, 0.6) !important;
+                font-weight: 300 !important;
+            }
+            
+            /* Prevent zoom on mobile */
+            @media screen and (max-width: 768px) {
+                input[type="text"], input[type="email"], input[type="password"] {
+                    font-size: 16px !important;
+                }
+            }
         `;
         document.head.appendChild(cursorStyle);
 
-        // Enhanced data refresh with loading animation
+        // Enhanced data refresh with loading animation - OPTIMIZED
         async function refreshUserDataWithAnimation() {
             if (!currentUser) return;
             
@@ -2480,7 +2414,13 @@
                 refreshBtn.disabled = true;
                 
                 try {
-                    await loadUserData();
+                    // Use requestAnimationFrame for smoother UI updates
+                    await new Promise(resolve => {
+                        requestAnimationFrame(async () => {
+                            await loadUserData();
+                            resolve();
+                        });
+                    });
                     showEnhancedNotification('✅ Data refreshed successfully!', 'success');
                 } catch (error) {
                     showEnhancedNotification('❌ Failed to refresh data', 'error');
@@ -4575,54 +4515,28 @@
 
 
         
-        // Download contract for user
+        // Download contract for user - UPDATED FOR CENTRALIZED SYSTEM
         async function downloadUserContract(jobId = null) {
             console.log('🔍 Download button clicked');
             console.log('👤 Current user:', currentUser);
-            console.log('📋 Uploaded contracts:', uploadedContracts);
             console.log('🎯 Requested job ID:', jobId);
             
-            // Get the most recent contract for this user (same logic as getUserContractStatus)
-            let userContracts = uploadedContracts.filter(contract => 
-                contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
-            );
-            
-            if (userContracts.length === 0) {
-                // If no uploaded contract, check if contract is signed but not uploaded
-                if (currentUser.contractStatus === 'signed') {
-                    console.log('✅ Your contract has been signed and is being processed by admin.');
-                } else {
-                    showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
-                }
+            // Check if user has contract data in centralized system
+            if (!currentUser || !currentUser.contract) {
+                console.log('❌ No contract data found for user');
+                showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
                 return;
             }
             
-            // If a specific job is requested, filter by jobId
-            if (jobId && jobId !== 'legacy-job') {
-                const jobSpecificContracts = userContracts.filter(contract => 
-                    contract.jobId === jobId
-                );
-                if (jobSpecificContracts.length > 0) {
-                    userContracts = jobSpecificContracts;
-                    console.log(`📄 Found ${jobSpecificContracts.length} contract(s) for job ${jobId}`);
-                } else {
-                    console.log(`⚠️ No contracts found for job ${jobId}, using most recent contract`);
-                }
+            const userContract = currentUser.contract;
+            console.log('📄 Contract data from centralized system:', userContract);
+            
+            // Check if contract is signed
+            if (userContract.contractStatus !== 'signed') {
+                console.log('❌ Contract not signed yet');
+                showNotification('❌ Your contract has not been signed yet. Please wait for admin approval.', 'error');
+                return;
             }
-            
-            // Sort by upload date to get the most recent contract
-            userContracts.sort((a, b) => {
-                const dateA = new Date(a.uploadDate || a.signedDate || 0);
-                const dateB = new Date(b.uploadDate || b.signedDate || 0);
-                return dateB - dateA; // Most recent first
-            });
-            
-            const userContract = userContracts[0];
-            console.log(`📄 Found ${userContracts.length} contract(s) for user, using most recent: ${userContract.contractId}`);
-            console.log('📄 Contract properties:', Object.keys(userContract));
-            console.log('📄 Contract fileName:', userContract.fileName);
-            console.log('📄 Contract githubUrl:', userContract.githubUrl);
-            console.log('📄 Contract fileData:', userContract.fileData ? 'Present' : 'Not present');
             
             try {
                 // Search for PDF file by user name in contracts directory
@@ -5176,124 +5090,135 @@
                 }
             }, 30000); // 30 seconds
             
-            // Add login form handler
+            // Add login form handler with OPTIMIZED input handling
             const loginForm = document.getElementById('loginForm');
             if (loginForm) {
                 loginForm.addEventListener('submit', handleLogin);
                 
-                // Add input debouncing to prevent lag
+                // OPTIMIZED input handling - single event listener per input
                 const emailInput = document.getElementById('email');
                 const passwordInput = document.getElementById('password');
                 
                 if (emailInput) {
-                    emailInput.addEventListener('input', debounce(() => {
-                        // Clear error message when user starts typing
+                    // Single input event listener with immediate feedback
+                    emailInput.addEventListener('input', function() {
+                        // Clear error message immediately when typing
                         const errorElement = document.getElementById('loginError');
-                        if (errorElement) {
+                        if (errorElement && errorElement.style.display !== 'none') {
                             errorElement.style.display = 'none';
                         }
-                    }, 300));
+                    });
+                    
+                    // Add focus styling for better UX
+                    emailInput.addEventListener('focus', function() {
+                        this.style.borderColor = '#FFB200';
+                        this.style.boxShadow = '0 0 0 3px rgba(255, 178, 0, 0.2)';
+                    });
+                    
+                    emailInput.addEventListener('blur', function() {
+                        this.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                        this.style.boxShadow = 'none';
+                    });
                 }
                 
                 if (passwordInput) {
-                    passwordInput.addEventListener('input', debounce(() => {
-                        // Clear error message when user starts typing
+                    // Single input event listener with immediate feedback
+                    passwordInput.addEventListener('input', function() {
+                        // Clear error message immediately when typing
                         const errorElement = document.getElementById('loginError');
-                        if (errorElement) {
+                        if (errorElement && errorElement.style.display !== 'none') {
                             errorElement.style.display = 'none';
                         }
-                    }, 300));
+                    });
+                    
+                    // Add focus styling for better UX
+                    passwordInput.addEventListener('focus', function() {
+                        this.style.borderColor = '#FFB200';
+                        this.style.boxShadow = '0 0 0 3px rgba(255, 178, 0, 0.2)';
+                    });
+                    
+                    passwordInput.addEventListener('blur', function() {
+                        this.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                        this.style.boxShadow = 'none';
+                    });
                 }
             }
             
-            // Debounce function to prevent excessive function calls
-            function debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
-            
-                    // Add refresh button functionality
-        window.refreshUserData = refreshUserData;
+            // Add refresh button functionality
+            window.refreshUserData = refreshUserData;
         
-        // Immediate update functions for real-time UI updates
-        function updateTimelineDisplay() {
-            if (currentUser && document.getElementById('jobsContent')) {
-                displayJobsWithStatus().catch(error => {
-                    console.warn('⚠️ Error updating timeline display:', error);
-                });
-            }
-        }
-        
-        function updateJobStatusDisplay() {
-            if (currentUser && document.getElementById('currentJobsContainer')) {
-                displayCurrentJobs();
-            }
-        }
-        
-        function updatePerformanceReviewDisplay() {
-            if (currentUser && document.getElementById('performanceReviewsContainer')) {
-                displayPerformanceReviews();
-            }
-        }
-        
-        function updatePaymentStatusDisplay() {
-            if (currentUser && document.getElementById('paymentStatusContainer')) {
-                // Update payment status indicators
-                const paymentElements = document.querySelectorAll('[data-payment-status]');
-                paymentElements.forEach(element => {
-                    const status = element.getAttribute('data-payment-status');
-                    element.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-                });
-            }
-        }
-        
-        function updateContractStatusDisplay() {
-            if (currentUser && document.getElementById('contractStatusContainer')) {
-                // Update contract status indicators
-                const contractElements = document.querySelectorAll('[data-contract-status]');
-                contractElements.forEach(element => {
-                    const status = element.getAttribute('data-contract-status');
-                    element.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-                });
-            }
-        }
-        
-        function updateNotificationCount(count) {
-            // Update notification badge count
-            const notificationBadge = document.querySelector('.notification-badge');
-            if (notificationBadge) {
-                if (count > 0) {
-                    notificationBadge.textContent = count;
-                    notificationBadge.style.display = 'block';
-                } else {
-                    notificationBadge.style.display = 'none';
+            // Immediate update functions for real-time UI updates
+            function updateTimelineDisplay() {
+                if (currentUser && document.getElementById('jobsContent')) {
+                    displayJobsWithStatus().catch(error => {
+                        console.warn('⚠️ Error updating timeline display:', error);
+                    });
                 }
             }
-        }
-
-        function checkForNewUserNotifications() {
-            // Quick check for new notifications without full reload
-            fetch('/api/notifications')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.notifications && currentUser) {
-                        const userNotifications = data.notifications.filter(n => 
-                            n.userEmail === currentUser.email || n.userEmail === currentUser.profile?.email
-                        );
-                        updateNotificationCount(userNotifications.length);
+            
+            function updateJobStatusDisplay() {
+                if (currentUser && document.getElementById('currentJobsContainer')) {
+                    displayCurrentJobs();
+                }
+            }
+            
+            function updatePerformanceReviewDisplay() {
+                if (currentUser && document.getElementById('performanceReviewsContainer')) {
+                    displayPerformanceReviews();
+                }
+            }
+            
+            function updatePaymentStatusDisplay() {
+                if (currentUser && document.getElementById('paymentStatusContainer')) {
+                    // Update payment status indicators
+                    const paymentElements = document.querySelectorAll('[data-payment-status]');
+                    paymentElements.forEach(element => {
+                        const status = element.getAttribute('data-payment-status');
+                        element.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                    });
+                }
+            }
+            
+            function updateContractStatusDisplay() {
+                if (currentUser && document.getElementById('contractStatusContainer')) {
+                    // Update contract status indicators
+                    const contractElements = document.querySelectorAll('[data-contract-status]');
+                    contractElements.forEach(element => {
+                        const status = element.getAttribute('data-contract-status');
+                        element.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                    });
+                }
+            }
+            
+            function updateNotificationCount(count) {
+                // Update notification badge count
+                const notificationBadge = document.querySelector('.notification-badge');
+                if (notificationBadge) {
+                    if (count > 0) {
+                        notificationBadge.textContent = count;
+                        notificationBadge.style.display = 'block';
+                    } else {
+                        notificationBadge.style.display = 'none';
                     }
-                })
-                .catch(error => {
-                    console.warn('Quick notification check failed:', error);
-                });
-        }
+                }
+            }
+
+            function checkForNewUserNotifications() {
+                // Quick check for new notifications without full reload
+                fetch('/api/notifications')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.notifications && currentUser) {
+                            const userNotifications = data.notifications.filter(n => 
+                                n.userEmail === currentUser.email || n.userEmail === currentUser.profile?.email
+                            );
+                            updateNotificationCount(userNotifications.length);
+                        }
+                    })
+                    .catch(error => {
+                        console.warn('Quick notification check failed:', error);
+                    });
+            }
             
             // Set up real-time data updates (every 3 seconds to prevent bouncing)
             setInterval(() => {
@@ -5324,35 +5249,32 @@
             }, 3000); // 3 seconds to prevent bouncing
         });
 
-        // Missing functions from backup file
+        // Missing functions from backup file - UPDATED FOR CENTRALIZED SYSTEM
         function getUserContractStatus(userEmail, jobId = null) {
-            if (!uploadedContracts || uploadedContracts.length === 0) {
+            // Check if current user has contract data in centralized system
+            if (!currentUser || !currentUser.contract) {
+                console.log('❌ No contract data found for user in centralized system');
                 return null;
             }
             
-            // Find contracts for this user
-            const userContracts = uploadedContracts.filter(contract => 
-                contract.userEmail === userEmail
-            );
+            const userContract = currentUser.contract;
+            console.log('📄 Contract data from centralized system:', userContract);
             
-            if (userContracts.length === 0) {
-                return null;
-            }
-            
-            // If jobId is specified, try to find job-specific contract
-            if (jobId) {
-                const jobSpecificContract = userContracts.find(contract => 
-                    contract.jobId === jobId
-                );
-                if (jobSpecificContract) {
-                    return jobSpecificContract;
-                }
-            }
-            
-            // Return the most recent contract
-            return userContracts.sort((a, b) => 
-                new Date(b.uploadDate) - new Date(a.uploadDate)
-            )[0];
+            // Return contract data in the expected format
+            return {
+                status: userContract.contractStatus,
+                contractId: userContract.contractId,
+                signedDate: userContract.contractSignedDate,
+                fileName: `${currentUser.name}.pdf`,
+                notes: null,
+                githubUrl: null,
+                role: currentUser.profile?.role,
+                rate: currentUser.profile?.rate,
+                location: currentUser.profile?.location,
+                jobId: jobId || 'legacy-job',
+                jobRole: currentUser.profile?.role,
+                jobDescription: currentUser.profile?.description
+            };
         }
 
         function viewJobDetails() {
@@ -6455,12 +6377,13 @@
         .input-container input:focus {
             outline: none;
             background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 178, 0, 0.5);
+            border-color: #FFB200;
             box-shadow: 
                 0 8px 24px rgba(0, 0, 0, 0.3),
                 0 0 0 3px rgba(255, 178, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
+            caret-color: #FFB200;
         }
 
         .input-container input:focus + .input-icon {
@@ -6878,8 +6801,10 @@
 
         .form-group input:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: #FFB200;
             box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+            caret-color: #FFB200;
+            background: rgba(255, 255, 255, 0.15);
         }
 
         .error-message {
