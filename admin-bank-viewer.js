@@ -249,12 +249,24 @@ class AdminBankViewer {
             return;
         }
 
+        // Debug password comparison
+        console.log('🔍 Password Debug:');
+        console.log('  adminPassword:', adminPassword);
+        console.log('  expectedPassword:', 'Cochranfilms2@');
+        console.log('  length:', adminPassword.length, 'vs', 'Cochranfilms2@'.length);
+        console.log('  exactMatch:', adminPassword === 'Cochranfilms2@');
+        console.log('  charCodes:', Array.from(adminPassword).map(c => c.charCodeAt(0)));
+        console.log('  expectedCharCodes:', Array.from('Cochranfilms2@').map(c => c.charCodeAt(0)));
+
         // Verify admin password first
         if (adminPassword !== 'Cochranfilms2@') {
+            console.log('❌ Password validation failed!');
             showNotification('❌ Invalid admin password', 'error');
             this.logAccess(userName, 'decrypt_failed_invalid_password');
             return;
         }
+        
+        console.log('✅ Password validation passed!');
 
         try {
             // Show loading state
@@ -374,8 +386,14 @@ function closeAdminBankModal() {
 }
 
 function decryptBankDetails(userName) {
+    console.log('🔍 Global decryptBankDetails called for:', userName);
+    console.log('🔍 window.adminBankViewer available:', !!window.adminBankViewer);
+    
     if (window.adminBankViewer) {
+        console.log('✅ Calling class method...');
         window.adminBankViewer.decryptBankDetails(userName);
+    } else {
+        console.log('❌ AdminBankViewer not available');
     }
 }
 
