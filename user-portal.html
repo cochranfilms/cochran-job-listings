@@ -2721,6 +2721,19 @@
                     updateTimelineDisplay();
                     
                     showNotification(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`, 'success');
+                    
+                    // Add notification for user about payment method update
+                    await addNotification(
+                        'Payment Method Updated',
+                        `Your payment method has been updated to ${paymentMethod.toUpperCase()}`,
+                        'payment_method_updated',
+                        {
+                            userEmail: currentUser.email,
+                            paymentMethod: paymentMethod,
+                            actionRequired: false,
+                            priority: 'normal'
+                        }
+                    );
                 } catch (error) {
                     console.error('❌ Error updating payment method:', error);
                     

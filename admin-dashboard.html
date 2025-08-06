@@ -3787,6 +3787,21 @@
             
             console.log(`✅ Updated project status for ${userName} - ${jobId}: ${newStatus}`);
             showNotification(`✅ Project status updated for ${userName} - ${jobId}: ${newStatus}`, 'success');
+            
+            // Add notification for user about status change
+            await addNotification(
+                'Project Status Updated',
+                `Your project status has been updated to "${newStatus}" by admin`,
+                'project_status_updated',
+                {
+                    userName: userName,
+                    userEmail: users[userName]?.profile?.email,
+                    jobId: jobId,
+                    newStatus: newStatus,
+                    actionRequired: false,
+                    priority: 'normal'
+                }
+            );
         }
 
         // ==================== JOB ASSIGNMENT & PAYMENT MANAGEMENT ====================
@@ -5375,43 +5390,35 @@
         // Check for performance review notifications
         async function checkPerformanceReviewNotifications() {
             try {
-                const response = await fetch('/api/performance');
+                const response = await fetch('/api/users');
                 if (response.ok) {
-                    const performanceData = await response.json();
-                    const reviews = performanceData.performanceReviews || {};
+                    const usersData = await response.json();
+                    const users = usersData.users || {};
                     
-                    for (const [email, review] of Object.entries(reviews)) {
-                        // Check if we already have a notification for this review
-                        const existingNotification = notifications.find(n => 
-                            n.type === 'performance_review_completed' && 
-                            n.data.userEmail === email &&
-                            n.data.reviewDate === review.reviewDate
-                        );
-                        
-                        // Only create notification if it doesn't exist and review is completed
-                        if (!existingNotification && review.overallRating && review.reviewDate) {
-                            const userResponse = await fetch('/api/users');
-                            if (userResponse.ok) {
-                                const usersData = await userResponse.json();
-                                const user = Object.values(usersData.users || {}).find(u => 
-                                    u.profile?.email === email
+                    for (const [userName, user] of Object.entries(users)) {
+                        if (user.performance && user.performance.overallRating && user.performance.reviewDate) {
+                            // Check if we already have a notification for this review
+                            const existingNotification = notifications.find(n => 
+                                n.type === 'performance_review_completed' && 
+                                n.data.userEmail === user.profile?.email &&
+                                n.data.reviewDate === user.performance.reviewDate
+                            );
+                            
+                            // Only create notification if it doesn't exist and review is completed
+                            if (!existingNotification) {
+                                await addNotification(
+                                    'Performance Review Completed',
+                                    `${user.profile?.name || userName} has completed a performance review with rating ${user.performance.overallRating}/5`,
+                                    'performance_review_completed',
+                                    {
+                                        userEmail: user.profile?.email,
+                                        userName: user.profile?.name || userName,
+                                        rating: user.performance.overallRating,
+                                        reviewDate: user.performance.reviewDate,
+                                        actionRequired: true,
+                                        priority: 'high'
+                                    }
                                 );
-                                
-                                if (user) {
-                                    await addNotification(
-                                        'Performance Review Completed',
-                                        `${user.profile?.name || email} has completed a performance review with rating ${review.overallRating}/5`,
-                                        'performance_review_completed',
-                                        {
-                                            userEmail: email,
-                                            userName: user.profile?.name || 'Unknown User',
-                                            rating: review.overallRating,
-                                            reviewDate: review.reviewDate,
-                                            actionRequired: true,
-                                            priority: 'high'
-                                        }
-                                    );
-                                }
                             }
                         }
                     }
@@ -5461,27 +5468,27 @@
         // Check for contract status notifications
         async function checkContractStatusNotifications() {
             try {
-                const response = await fetch('/api/uploaded-contracts');
+                const response = await fetch('/api/users');
                 if (response.ok) {
-                    const contractsData = await response.json();
-                    const contracts = contractsData.uploadedContracts || [];
+                    const usersData = await response.json();
+                    const users = usersData.users || {};
                     
-                    for (const contract of contracts) {
-                        if (contract.contractStatus === 'signed') {
+                    for (const [userName, user] of Object.entries(users)) {
+                        if (user.contract && user.contract.contractStatus === 'signed') {
                             const existingNotification = notifications.find(n => 
                                 n.type === 'contract_signed' && 
-                                n.data.contractId === contract.contractId
+                                n.data.userEmail === user.profile?.email
                             );
                             
                             if (!existingNotification) {
                                 await addNotification(
                                     'Contract Signed',
-                                    `${contract.freelancerName} has signed their contract (${contract.contractId})`,
+                                    `${user.profile?.name || userName} has signed their contract (${user.contract.contractId})`,
                                     'contract_signed',
                                     {
-                                        contractId: contract.contractId,
-                                        freelancerName: contract.freelancerName,
-                                        userEmail: contract.userEmail,
+                                        contractId: user.contract.contractId,
+                                        freelancerName: user.profile?.name || userName,
+                                        userEmail: user.profile?.email,
                                         actionRequired: true,
                                         priority: 'high'
                                     }
@@ -5973,6 +5980,20 @@
             try {
                 await updateUsersOnGitHub();
                 showNotification(`✅ Payment status updated for ${userName}!\nStatus: ${paymentStatus}`, 'success');
+                
+                // Add notification for user about payment status change
+                await addNotification(
+                    'Payment Status Updated',
+                    `Your payment status has been updated to "${paymentStatus}" by admin`,
+                    'payment_status_updated',
+                    {
+                        userName: userName,
+                        userEmail: userData.profile?.email,
+                        paymentStatus: paymentStatus,
+                        actionRequired: false,
+                        priority: 'normal'
+                    }
+                );
                 
                 // Immediate performance review trigger for paid status
                 if (paymentStatus === 'paid') {
@@ -7550,11 +7571,12 @@
         // Users can manually refresh when needed
         console.log('🔄 Auto-refresh disabled to prevent flickering');
         
-        // Only background notification polling (every 60 seconds)
-        setInterval(() => {
+        // Background notification polling (every 30 seconds)
+        setInterval(async () => {
             // Check for new notifications in background
-            checkForNewPerformanceReviews();
-        }, 60000); // 60 seconds for background checks only
+            await triggerSmartNotifications();
+            await checkForNewPerformanceReviews();
+        }, 30000); // 30 seconds for background checks
         
         // Function to update user status indicators without full reload
         function updateUserStatusIndicators() {

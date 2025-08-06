@@ -2378,6 +2378,44 @@
             }
         }
         
+        // Add notification function for contract signing
+        async function addNotification(title, message, type = 'info', data = {}) {
+            try {
+                const notification = {
+                    id: Math.floor(Date.now() + Math.random() * 1000),
+                    title: title,
+                    message: message,
+                    type: type,
+                    data: data,
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                    actionRequired: data.actionRequired || false,
+                    priority: data.priority || 'normal'
+                };
+                
+                // Save to notifications.json via API
+                const response = await fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        notifications: [notification]
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('🔔 Contract signing notification added:', notification);
+                } else {
+                    console.warn('⚠️ Could not save notification to server');
+                }
+                
+                return notification.id;
+            } catch (error) {
+                console.error('❌ Error adding notification:', error);
+            }
+        }
+        
         // Save signed contract data and send emails
         async function saveSignedContractData() {
             try {
@@ -2447,6 +2485,24 @@
                 }
                 
                 console.log('✅ Signed contract data prepared:', signedContractData);
+                
+                // Add notification for contract signing
+                try {
+                    await addNotification(
+                        'Contract Signed Successfully',
+                        `Your contract has been signed and is being processed by admin`,
+                        'contract_signed',
+                        {
+                            userEmail: signatureData.freelancerEmail,
+                            userName: signatureData.freelancerName,
+                            contractId: contractId,
+                            actionRequired: false,
+                            priority: 'normal'
+                        }
+                    );
+                } catch (notificationError) {
+                    console.warn('⚠️ Could not add notification:', notificationError);
+                }
                 
                 updateNotificationProgress('Generating your contract PDF...', 70);
                 
