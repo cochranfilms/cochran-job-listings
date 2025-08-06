@@ -1002,7 +1002,7 @@
                 const cacheTimestamp = sessionStorage.getItem('cachedUsersDataTimestamp');
                 const now = Date.now();
                 const cacheAge = now - (parseInt(cacheTimestamp) || 0);
-                const cacheValid = cacheAge < 2 * 60 * 1000; // 2 minutes for more responsive updates
+                const cacheValid = cacheAge < 30 * 1000; // 30 seconds for immediate updates
                 
                 if (cachedData && cacheValid) {
                     console.log('✅ Using cached users data (age:', Math.round(cacheAge / 1000), 'seconds)');
