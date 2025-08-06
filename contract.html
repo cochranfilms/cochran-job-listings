@@ -1453,7 +1453,8 @@
                     body: JSON.stringify({
                         contractId: contractData.contractId,
                         pdfContent: pdfBase64,
-                        freelancerName: contractData.freelancerName
+                        freelancerName: contractData.freelancerName,
+                        fileName: `${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`
                     })
                 });
                 
@@ -1469,7 +1470,7 @@
                         role: contractData.role,
                         rate: contractData.rate,
                         location: contractData.location,
-                        fileName: `${contractData.contractId}.pdf`,
+                        fileName: `${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
                         fileSize: Math.round(pdfBase64.length * 0.75), // Approximate size
                         uploadDate: new Date().toISOString(),
                         status: 'uploaded',
@@ -2730,11 +2731,11 @@
                     role: contractData.role,
                     rate: contractData.rate,
                     location: contractData.location,
-                    fileName: `${contractData.contractId}.pdf`,
+                    fileName: `${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
                     fileSize: 0, // Will be updated when file is actually uploaded
                     uploadDate: new Date().toISOString(),
                     status: 'uploaded',
-                    githubUrl: `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${contractData.contractId}.pdf`,
+                    githubUrl: `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
                     notes: 'Automatically uploaded via contract signing',
                     contractDate: contractData.effectiveDate,
                     signedDate: contractData.signatureDate

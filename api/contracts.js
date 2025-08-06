@@ -70,14 +70,16 @@ module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
         try {
-            const { contractId, pdfContent, freelancerName } = req.body;
+            const { contractId, pdfContent, freelancerName, fileName } = req.body;
             
             if (!contractId || !pdfContent) {
                 return res.status(400).json({ error: 'contractId and pdfContent are required' });
             }
 
-            const filename = `contracts/${contractId}.pdf`;
-            const commitMessage = `Add signed contract: ${contractId}${freelancerName ? ` - ${freelancerName}` : ''}`;
+            // Use the fileName from request body, or fall back to contractId if not provided
+            const safeFileName = fileName || `${contractId}.pdf`;
+            const filename = `contracts/${safeFileName}`;
+            const commitMessage = `Add signed contract: ${safeFileName.replace('.pdf', '')}${freelancerName ? ` - ${freelancerName}` : ''}`;
             
             console.log(`📤 Uploading contract PDF: ${filename}`);
             
