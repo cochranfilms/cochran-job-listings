@@ -2605,15 +2605,19 @@
             const welcomeElement = document.querySelector('.dashboard-header h1');
             if (!welcomeElement) return;
             
-            const originalText = welcomeElement.textContent;
+            // Get the current user name for dynamic welcome message
+            const userName = currentUser ? currentUser.name : 'User';
+            const welcomeText = `Welcome back, ${userName}!`;
+            
+            // Clear the element and start typing
             welcomeElement.textContent = '';
             
             let i = 0;
             const typeInterval = setInterval(() => {
-                welcomeElement.textContent += originalText.charAt(i);
+                welcomeElement.textContent += welcomeText.charAt(i);
                 i++;
                 
-                if (i >= originalText.length) {
+                if (i >= welcomeText.length) {
                     clearInterval(typeInterval);
                     // Add cursor blink effect with better visibility
                     welcomeElement.innerHTML += '<span class="typing-cursor">|</span>';
