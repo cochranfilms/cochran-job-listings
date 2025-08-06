@@ -628,12 +628,14 @@
                             uploadedContracts.splice(index, 1);
                             
                             // 2. Try to delete PDF file from GitHub
-                            if (contract.fileName) {
+                            if (contract.freelancerName) {
                                 try {
-                                    console.log(`🗑️ Attempting to delete PDF file: ${contract.fileName}`);
+                                    // Create safe filename from freelancer name (same as download function)
+                                    const safeFileName = contract.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+                                    console.log(`🗑️ Attempting to delete PDF file: ${safeFileName}`);
                                     
                                     // First, get the file's SHA
-                                    const getResponse = await fetch('/api/github/file/contracts/' + contract.fileName);
+                                    const getResponse = await fetch('/api/github/file/contracts/' + safeFileName);
                                     let sha = null;
                                     
                                     if (getResponse.ok) {
@@ -650,12 +652,12 @@
                                                     'Content-Type': 'application/json'
                                                 },
                                                 body: JSON.stringify({
-                                                    fileName: contract.fileName
+                                                    fileName: safeFileName
                                                 })
                                             });
                                             
                                             if (localDeleteResponse.ok) {
-                                                console.log('✅ Local PDF file deleted:', contract.fileName);
+                                                console.log('✅ Local PDF file deleted:', safeFileName);
                                                 localFileDeletedCount++;
                                             }
                                         } catch (localError) {
@@ -671,12 +673,12 @@
                                                     'Content-Type': 'application/json'
                                                 },
                                                 body: JSON.stringify({
-                                                    fileName: contract.fileName
+                                                    fileName: safeFileName
                                                 })
                                             });
                                             
                                             if (localDeleteResponse.ok) {
-                                                console.log('✅ Local PDF file deleted:', contract.fileName);
+                                                console.log('✅ Local PDF file deleted:', safeFileName);
                                                 localFileDeletedCount++;
                                             }
                                         } catch (localError) {
@@ -686,13 +688,13 @@
                                     
                                     // If we have the SHA, proceed with GitHub deletion
                                     if (sha) {
-                                        const deleteResponse = await fetch('/api/github/file/contracts/' + contract.fileName, {
+                                        const deleteResponse = await fetch('/api/github/file/contracts/' + safeFileName, {
                                             method: 'DELETE',
                                             headers: {
                                                 'Content-Type': 'application/json'
                                             },
                                             body: JSON.stringify({
-                                                message: `Delete contract PDF: ${contract.fileName} - ${contract.freelancerName}`,
+                                                message: `Delete contract PDF: ${safeFileName} - ${contract.freelancerName}`,
                                                 sha: sha
                                             })
                                         });
@@ -1062,12 +1064,15 @@
                     // 2. Update uploaded-contracts.json on GitHub
                     const gitHubUpdateSuccess = await updateUploadedContractsOnGitHub();
                     
-                    // 3. Delete PDF file from GitHub (if filename exists)
+                    // 3. Delete PDF file from GitHub (if freelancer name exists)
                     let pdfDeleted = false;
-                    if (contract.fileName) {
+                    if (contract.freelancerName) {
                         try {
+                            // Create safe filename from freelancer name (same as download function)
+                            const safeFileName = contract.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+                            
                             // First, get the file's SHA
-                            const getResponse = await fetch('/api/github/file/contracts/' + contract.fileName);
+                            const getResponse = await fetch('/api/github/file/contracts/' + safeFileName);
                             let sha = null;
                             
                             if (getResponse.ok) {
@@ -1082,23 +1087,23 @@
                             
                             // If we have the SHA, proceed with deletion
                             if (sha) {
-                                const deleteResponse = await fetch('/api/github/file/contracts/' + contract.fileName, {
+                                const deleteResponse = await fetch('/api/github/file/contracts/' + safeFileName, {
                                     method: 'DELETE',
                                     headers: {
                                         'Content-Type': 'application/json'
                                     },
                                     body: JSON.stringify({
-                                        message: `Delete contract PDF: ${contract.fileName} - ${contract.freelancerName}`,
+                                        message: `Delete contract PDF: ${safeFileName} - ${contract.freelancerName}`,
                                         sha: sha
                                     })
                                 });
                                 
                                 if (deleteResponse.ok) {
-                                    console.log('✅ PDF file deleted from GitHub:', contract.fileName);
+                                    console.log('✅ PDF file deleted from GitHub:', safeFileName);
                                     pdfDeleted = true;
                                 } else {
                                     const errorData = await deleteResponse.json().catch(() => ({}));
-                                    console.warn('⚠️ Could not delete PDF file from GitHub:', contract.fileName, errorData);
+                                    console.warn('⚠️ Could not delete PDF file from GitHub:', safeFileName, errorData);
                                 }
                             }
                         } catch (pdfError) {
@@ -2943,29 +2948,32 @@
                     let pdfMessage = '';
                     
                     // 1. Delete associated PDF file if contract exists
-                    if (contractId && contractFileName) {
+                    if (userName) {
                         try {
-                            console.log(`🗑️ Attempting to delete PDF file: ${contractFileName}`);
+                            // Create safe filename from user name (same as download function)
+                            const safeFileName = userName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+                            console.log(`🗑️ Attempting to delete PDF file: ${safeFileName}`);
                             
-                            // Try to delete PDF file from GitHub
+                            // Try to delete PDF file from GitHub using user name
                             const deletePdfResponse = await fetch('/api/delete-pdf', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                 },
                                 body: JSON.stringify({
-                                    fileName: contractFileName,
+                                    fileName: safeFileName,
                                     contractId: contractId,
-                                    userEmail: userEmail
+                                    userEmail: userEmail,
+                                    userName: userName
                                 })
                             });
                             
                             if (deletePdfResponse.ok) {
                                 const deleteResult = await deletePdfResponse.json();
                                 if (deleteResult.success) {
-                                    console.log('✅ PDF file deleted successfully:', contractFileName);
+                                    console.log('✅ PDF file deleted successfully:', safeFileName);
                                     pdfDeleted = true;
-                                    pdfMessage = `PDF file (${contractFileName}) deleted.`;
+                                    pdfMessage = `PDF file (${safeFileName}) deleted.`;
                                 } else {
                                     console.warn('⚠️ PDF deletion failed:', deleteResult.error);
                                     pdfMessage = `PDF file may still exist: ${deleteResult.error}`;
