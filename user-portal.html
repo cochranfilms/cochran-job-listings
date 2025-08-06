@@ -1427,44 +1427,37 @@
                 return null;
             }
             
-            // The contract data might be directly on currentUser or in a nested structure
-            let userContract = null;
-            
-            // Check if contract data is directly on currentUser
-            if (currentUser.contract) {
-                userContract = currentUser.contract;
-                console.log('✅ Found contract data directly on currentUser');
-            } else if (currentUser.contractStatus) {
-                // Contract data might be flattened
-                userContract = {
+            // The contract data is flattened on currentUser (not nested)
+            // Based on the data loading process, contract data is flattened like this:
+            // contractStatus, contractSignedDate, contractUploadedDate, contractId
+            if (currentUser.contractStatus) {
+                const userContract = {
                     contractStatus: currentUser.contractStatus,
                     contractSignedDate: currentUser.contractSignedDate,
                     contractId: currentUser.contractId || currentUser.name,
                     contractUploadedDate: currentUser.contractUploadedDate
                 };
-                console.log('✅ Found flattened contract data on currentUser');
+                console.log('✅ Found flattened contract data on currentUser:', userContract);
+                
+                // Return contract data in the expected format
+                return {
+                    status: userContract.contractStatus,
+                    contractId: userContract.contractId,
+                    signedDate: userContract.contractSignedDate,
+                    fileName: `${currentUser.name}.pdf`,
+                    notes: null,
+                    githubUrl: null,
+                    role: currentUser.role || currentUser.profile?.role,
+                    rate: currentUser.rate || currentUser.profile?.rate,
+                    location: currentUser.location || currentUser.profile?.location,
+                    jobId: jobId || 'legacy-job',
+                    jobRole: currentUser.role || currentUser.profile?.role,
+                    jobDescription: currentUser.description || currentUser.profile?.description
+                };
             } else {
                 console.log('❌ No contract data found for user in centralized system');
                 return null;
             }
-            
-            console.log('📄 Contract data from centralized system:', userContract);
-            
-            // Return contract data in the expected format
-            return {
-                status: userContract.contractStatus,
-                contractId: userContract.contractId,
-                signedDate: userContract.contractSignedDate,
-                fileName: `${currentUser.name}.pdf`,
-                notes: null,
-                githubUrl: null,
-                role: currentUser.role || currentUser.profile?.role,
-                rate: currentUser.rate || currentUser.profile?.rate,
-                location: currentUser.location || currentUser.profile?.location,
-                jobId: jobId || 'legacy-job',
-                jobRole: currentUser.role || currentUser.profile?.role,
-                jobDescription: currentUser.description || currentUser.profile?.description
-            };
         }
 
 
@@ -4551,22 +4544,17 @@
                 return;
             }
             
-            // The contract data might be directly on currentUser or in a nested structure
-            let userContract = null;
-            
-            // Check if contract data is directly on currentUser
-            if (currentUser.contract) {
-                userContract = currentUser.contract;
-                console.log('✅ Found contract data directly on currentUser');
-            } else if (currentUser.contractStatus) {
-                // Contract data might be flattened
+            // The contract data is flattened on currentUser (not nested)
+            // Based on the data loading process, contract data is flattened like this:
+            // contractStatus, contractSignedDate, contractUploadedDate, contractId
+            if (currentUser.contractStatus) {
                 userContract = {
                     contractStatus: currentUser.contractStatus,
                     contractSignedDate: currentUser.contractSignedDate,
                     contractId: currentUser.contractId || currentUser.name,
                     contractUploadedDate: currentUser.contractUploadedDate
                 };
-                console.log('✅ Found flattened contract data on currentUser');
+                console.log('✅ Found flattened contract data on currentUser:', userContract);
             } else {
                 console.log('❌ No contract data found for user');
                 showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');

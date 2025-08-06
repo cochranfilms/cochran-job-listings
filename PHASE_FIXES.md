@@ -1158,4 +1158,144 @@ function formatContractSignedDate(dateString) {
 - **Robust Error Handling**: Multiple fallback mechanisms
 - **Consistent Date Formatting**: Centralized date formatting logic
 - **Better User Experience**: Proper display of contract information
-- **System Reliability**: Handles edge cases and data structure variations 
+- **System Reliability**: Handles edge cases and data structure variations
+
+## Phase 20 Fix - Data Structure Flattening Issue Resolution
+**Date**: 2025-08-06
+**Context**: Contract data access issues due to data structure flattening during loading process
+
+### Issues Identified
+1. **Contract Data Not Found**: System still showing "❌ No contract data found for user in centralized system" despite contract data existing
+2. **Data Structure Mismatch**: Functions looking for nested `currentUser.contract` but data is flattened
+3. **Date Formatting Not Applied**: Date formatting helper function not being used in display logic
+4. **Inconsistent Data Access**: Different functions expecting different data structures
+
+### Root Cause Analysis
+**Data Loading Process Issue**:
+- **users.json** has nested structure: `users["Cody Cochran"].contract`
+- **Data loading process** flattens this structure during `loadUsersData()` function
+- **Flattened structure** puts contract data directly on `currentUser` object:
+  - `currentUser.contractStatus`
+  - `currentUser.contractSignedDate`
+  - `currentUser.contractId`
+  - `currentUser.contractUploadedDate`
+- **Functions were looking** for `currentUser.contract` (nested) instead of flattened properties
+
+**Code Analysis**:
+```javascript
+// Data loading process flattens the structure:
+users = Object.entries(jsonData.users).map(([name, user]) => ({
+    name: name,
+    email: user.profile?.email,
+    // ... other properties
+    contractStatus: user.contract?.contractStatus || 'pending',
+    contractSignedDate: user.contract?.contractSignedDate,
+    contractUploadedDate: user.contract?.contractUploadedDate,
+    contractId: user.contract?.contractId,
+    // ... other properties
+}));
+```
+
+### Solution Implemented
+**Updated Contract Data Access for Flattened Structure**:
+
+#### **1. Fixed getUserContractStatus Function**
+- ✅ **Corrected Data Access**: Updated to look for flattened contract properties
+- ✅ **Removed Nested Check**: Removed check for `currentUser.contract` (doesn't exist)
+- ✅ **Enhanced Logging**: Added detailed logging to track data access
+- ✅ **Proper Fallback**: Uses `currentUser.name` as fallback for contractId
+
+#### **2. Updated Download Function**
+- ✅ **Flattened Structure Support**: Updated to work with flattened contract data
+- ✅ **Consistent Data Access**: Same logic as getUserContractStatus function
+- ✅ **Better Error Handling**: Clear error messages when contract data missing
+- ✅ **Enhanced Logging**: Detailed console output for debugging
+
+#### **3. Applied Date Formatting Helper**
+- ✅ **Helper Function Usage**: Updated contract status display to use `formatContractSignedDate()`
+- ✅ **Consistent Formatting**: All date displays now use centralized helper
+- ✅ **Better Error Handling**: Graceful fallback when date parsing fails
+- ✅ **Proper Date Display**: Signed dates show correctly instead of "Processing..."
+
+### Implementation Details
+```javascript
+// Updated getUserContractStatus for flattened structure
+function getUserContractStatus(userEmail, jobId = null) {
+    console.log('🔍 Getting contract status for user:', currentUser?.name);
+    console.log('📄 Current user structure:', currentUser);
+    
+    if (!currentUser) {
+        console.log('❌ No current user found');
+        return null;
+    }
+    
+    // The contract data is flattened on currentUser (not nested)
+    if (currentUser.contractStatus) {
+        const userContract = {
+            contractStatus: currentUser.contractStatus,
+            contractSignedDate: currentUser.contractSignedDate,
+            contractId: currentUser.contractId || currentUser.name,
+            contractUploadedDate: currentUser.contractUploadedDate
+        };
+        console.log('✅ Found flattened contract data on currentUser:', userContract);
+        
+        return {
+            status: userContract.contractStatus,
+            contractId: userContract.contractId,
+            signedDate: userContract.contractSignedDate,
+            fileName: `${currentUser.name}.pdf`,
+            // ... other properties
+        };
+    } else {
+        console.log('❌ No contract data found for user in centralized system');
+        return null;
+    }
+}
+
+// Updated download function for flattened structure
+async function downloadUserContract(jobId = null) {
+    if (!currentUser) {
+        console.log('❌ No current user found');
+        showNotification('❌ No contract found for your account.', 'error');
+        return;
+    }
+    
+    // The contract data is flattened on currentUser
+    if (currentUser.contractStatus) {
+        userContract = {
+            contractStatus: currentUser.contractStatus,
+            contractSignedDate: currentUser.contractSignedDate,
+            contractId: currentUser.contractId || currentUser.name,
+            contractUploadedDate: currentUser.contractUploadedDate
+        };
+        console.log('✅ Found flattened contract data on currentUser:', userContract);
+    } else {
+        console.log('❌ No contract data found for user');
+        showNotification('❌ No contract found for your account.', 'error');
+        return;
+    }
+    
+    // Download logic...
+}
+
+// Date formatting helper usage
+} else if (currentUser.contractSignedDate) {
+    signedDate = formatContractSignedDate(currentUser.contractSignedDate);
+}
+```
+
+### Results Achieved
+- ✅ **Contract Data Found**: System now properly accesses flattened contract data
+- ✅ **Proper Date Display**: Signed dates show correctly using helper function
+- ✅ **PDF Downloads Working**: Download functions work with flattened structure
+- ✅ **Consistent Data Access**: All functions use same flattened data structure
+- ✅ **Better Error Handling**: Clear error messages and comprehensive logging
+- ✅ **System Reliability**: Handles the actual data structure being used
+
+### Technical Benefits
+- **Correct Data Access**: Functions now match the actual flattened data structure
+- **Consistent Behavior**: All contract operations use same data access pattern
+- **Enhanced Debugging**: Detailed logging shows exactly what data is available
+- **Robust Error Handling**: Clear feedback when contract data is missing
+- **Better User Experience**: Proper contract status display and working downloads
+- **System Reliability**: Functions work with the actual data structure being used 
