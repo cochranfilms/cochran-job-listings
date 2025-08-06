@@ -498,6 +498,7 @@
             try {
                 if (currentUser && currentUser.jobs) {
                     for (const [jobId, job] of Object.entries(currentUser.jobs)) {
+                        // Check for completed jobs with paid status
                         if (job.projectStatus === 'completed' && job.paymentStatus === 'paid') {
                             // Check if we've already shown this notification for this job
                             const notificationKey = `job_completed_${currentUser.email}_${jobId}`;
@@ -521,6 +522,50 @@
                                             jobTitle: job.title,
                                             actionRequired: false,
                                             priority: 'normal'
+                                        }
+                                    );
+                                    
+                                    // Mark this notification as shown
+                                    sessionStorage.setItem(notificationKey, 'true');
+                                }
+                            }
+                        }
+                        
+                        // Check for project status changes
+                        const statusMessages = {
+                            'upcoming': `Your project "${job.title}" has been scheduled and is now in the upcoming phase.`,
+                            'in-progress': `Your project "${job.title}" has started and is now in progress.`,
+                            'completed': `Your project "${job.title}" has been completed successfully!`,
+                            'cancelled': `Your project "${job.title}" has been cancelled. Please contact support for more information.`
+                        };
+                        
+                        if (statusMessages[job.projectStatus]) {
+                            const notificationKey = `project_status_${currentUser.email}_${jobId}_${job.projectStatus}`;
+                            const alreadyShown = sessionStorage.getItem(notificationKey);
+                            
+                            if (!alreadyShown) {
+                                const existingNotification = notifications.find(n => 
+                                    n.type === 'project_status_change' && 
+                                    n.data.userEmail === currentUser.email &&
+                                    n.data.jobId === jobId &&
+                                    n.data.projectStatus === job.projectStatus
+                                );
+                                
+                                if (!existingNotification) {
+                                    const priority = job.projectStatus === 'cancelled' ? 'high' : 'normal';
+                                    const actionRequired = job.projectStatus === 'cancelled';
+                                    
+                                    await addNotification(
+                                        'Project Status Update',
+                                        statusMessages[job.projectStatus],
+                                        'project_status_change',
+                                        {
+                                            userEmail: currentUser.email,
+                                            jobId: jobId,
+                                            jobTitle: job.title,
+                                            projectStatus: job.projectStatus,
+                                            actionRequired: actionRequired,
+                                            priority: priority
                                         }
                                     );
                                     
@@ -2839,6 +2884,11 @@
                         if (statusMessages[newStatus]) {
                             showNotification(statusMessages[newStatus], 'success');
                         }
+                        
+                        // Trigger notification system to check for new notifications
+                        setTimeout(() => {
+                            checkJobStatusNotifications();
+                        }, 1000);
                     }
                 }
             } catch (error) {
