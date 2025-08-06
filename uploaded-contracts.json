@@ -63,8 +63,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-06",
       "signedDate": "2025-08-06"
+    },
+    {
+      "contractId": "CF-1754472197848-S360O",
+      "freelancerName": "Cody Cochran",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Editor",
+      "rate": "$75/hour",
+      "location": "Douglasville, GA",
+      "fileName": "Cody Cochran.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-06T09:23:31.276Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Cody Cochran.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-06",
+      "signedDate": "2025-08-06"
     }
   ],
-  "lastUpdated": "2025-08-06T09:06:42.258Z",
-  "totalContracts": 4
+  "lastUpdated": "2025-08-06T09:23:31.276Z",
+  "totalContracts": 5
 }
