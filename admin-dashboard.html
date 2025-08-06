@@ -2235,22 +2235,20 @@
                 console.log('📁 Could not access contracts directory:', error);
             }
 
-            // Check if contract exists in uploaded contracts
-            const userContract = uploadedContracts.find(contract => 
-                contract.freelancerName === userName || 
-                contract.freelancerEmail === userData.profile?.email
-            );
-
-            if (userContract && userContract.contractUrl) {
-                // If we have a contract URL, download it
+            // Check if contract exists in centralized user data
+            const userContract = userData.contract;
+            
+            if (userContract && userContract.githubUrl) {
+                // If we have a GitHub URL, download it
+                console.log('📤 Downloading from GitHub URL:', userContract.githubUrl);
                 const link = document.createElement('a');
-                link.href = userContract.contractUrl;
-                link.download = `${userName.replace(/\s+/g, '_')}_Contract.pdf`;
+                link.href = userContract.githubUrl;
+                link.download = userContract.fileName || `${userName.replace(/\s+/g, '_')}_Contract.pdf`;
                 link.target = '_blank';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                console.log('✅ Contract downloaded for:', userName);
+                console.log('✅ Contract downloaded from GitHub for:', userName);
                 showNotification('✅ Contract downloaded successfully!', 'success');
                 return;
             }
