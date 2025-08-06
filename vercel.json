@@ -19,6 +19,12 @@
     },
     "api/delete-pdf.js": {
       "maxDuration": 30
+    },
+    "api/notifications.js": {
+      "maxDuration": 30
+    },
+    "api/contracts.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

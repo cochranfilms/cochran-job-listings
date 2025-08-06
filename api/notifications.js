@@ -1,4 +1,4 @@
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 
 // Notifications API endpoint
@@ -22,24 +22,30 @@ module.exports = async function(req, res) {
         let notificationsData = { notifications: [], lastUpdated: new Date().toISOString() };
         
         try {
-            if (await fs.access(notificationsFile).then(() => true).catch(() => false)) {
-                const fileContent = await fs.readFile(notificationsFile, 'utf8');
+            if (fs.existsSync(notificationsFile)) {
+                const fileContent = fs.readFileSync(notificationsFile, 'utf8');
                 notificationsData = JSON.parse(fileContent);
                 console.log('✅ Loaded notifications from file:', notificationsData.notifications.length);
             } else {
                 console.log('📄 Notifications file does not exist, using default data');
-                // Create the file with default data
-                await fs.writeFile(notificationsFile, JSON.stringify(notificationsData, null, 2));
-                console.log('✅ Created notifications file with default data');
+                // Try to create the file with default data
+                try {
+                    fs.writeFileSync(notificationsFile, JSON.stringify(notificationsData, null, 2));
+                    console.log('✅ Created notifications file with default data');
+                } catch (writeError) {
+                    console.error('❌ Failed to create notifications file:', writeError.message);
+                    // Continue with default data even if file creation fails
+                }
             }
         } catch (readError) {
             console.warn('⚠️ Error reading notifications file, using default data:', readError.message);
             // Try to create the file with default data
             try {
-                await fs.writeFile(notificationsFile, JSON.stringify(notificationsData, null, 2));
+                fs.writeFileSync(notificationsFile, JSON.stringify(notificationsData, null, 2));
                 console.log('✅ Created notifications file with default data after error');
             } catch (writeError) {
                 console.error('❌ Failed to create notifications file:', writeError.message);
+                // Continue with default data even if file creation fails
             }
         }
         
@@ -68,7 +74,7 @@ module.exports = async function(req, res) {
                 notificationsData.unreadCount = notifications.filter(n => !n.read).length;
                 
                 // Save to file
-                await fs.writeFile(notificationsFile, JSON.stringify(notificationsData, null, 2));
+                fs.writeFileSync(notificationsFile, JSON.stringify(notificationsData, null, 2));
                 console.log('✅ Notifications saved to file');
                 
                 res.json({
@@ -94,10 +100,18 @@ module.exports = async function(req, res) {
         
     } catch (error) {
         console.error('❌ Notifications API error:', error);
+        
+        // Return a more graceful error response for production
         res.status(500).json({
             success: false,
             error: 'Internal server error',
-            message: error.message
+            message: error.message,
+            fallback: {
+                notifications: [],
+                lastUpdated: new Date().toISOString(),
+                totalNotifications: 0,
+                unreadCount: 0
+            }
         });
     }
 }; 
