@@ -31,8 +31,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-06",
       "signedDate": "2025-08-06"
+    },
+    {
+      "contractId": "CF-1754471188921-M0ACR",
+      "freelancerName": "Purple Spider",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Backdrop Photographer Spotlight",
+      "rate": "$100/hour",
+      "location": "Los Angeles, CA",
+      "fileName": "Purple Spider.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-06T09:06:42.258Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Purple Spider.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-06",
+      "signedDate": "2025-08-06"
     }
   ],
-  "lastUpdated": "2025-08-06T07:06:49.785Z",
-  "totalContracts": 2
+  "lastUpdated": "2025-08-06T09:06:42.258Z",
+  "totalContracts": 3
 }
