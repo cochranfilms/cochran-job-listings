@@ -2214,48 +2214,6 @@
 
         // Global refresh function
         window.refreshUserData = refreshUserDataWithAnimation;
-                                        <div class="job-details-grid">
-                                            <div class="job-detail">
-                                                <i class="fas fa-map-marker-alt"></i>
-                                                <span>${job.location}</span>
-                                            </div>
-                                            <div class="job-detail">
-                                                <i class="fas fa-dollar-sign"></i>
-                                                <span>${job.pay || job.rate || '$75/hour'}</span>
-                                            </div>
-                                            <div class="job-detail">
-                                                <i class="fas fa-clock"></i>
-                                                <span>${job.projectStart}</span>
-                                            </div>
-                                            <div class="job-detail">
-                                                <i class="fas fa-check-circle"></i>
-                                                <span>Project: ${projectStatus.charAt(0).toUpperCase() + projectStatus.slice(1)}</span>
-                                            </div>
-                                            <div class="job-detail">
-                                                <i class="fas fa-credit-card"></i>
-                                                <span>Payment: ${paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="job-status-indicator ${projectStatus}">
-                                        ${projectStatus.charAt(0).toUpperCase() + projectStatus.slice(1)}
-                                    </div>
-                                </div>
-                            `}).join('')}
-                        </div>
-                        
-                        <div class="job-actions-section">
-                            <button class="btn btn-primary" onclick="switchPortalTab('jobs')">
-                                <i class="fas fa-tasks"></i> View Project Timeline
-                            </button>
-                            <button class="btn btn-secondary" onclick="viewJobDetails()">
-                                <i class="fas fa-info-circle"></i> Job Details
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
         
         // Get appropriate icon for job type
         function getJobIcon(projectType) {
