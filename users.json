@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Erica Cochran": {
+      "profile": {
+        "email": "dedejackson727@gmail.com",
+        "password": "ss4bNyyBnDls",
+        "role": "Backdrop Photographer Base",
+        "location": "Los Angeles, CA",
+        "projectStart": "2025-10-10T21:00",
+        "rate": "$250/hour",
+        "approvedDate": "2025-08-06"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-backdrop-photographer-base-1754521842040": {
+          "id": "job-backdrop-photographer-base-1754521842040",
+          "title": "Backdrop Photographer Base",
+          "date": "2025-11-08",
+          "location": "Douglasville, GA",
+          "pay": "$400",
+          "description": "You will be taking pictures for on-site printing at the 2nd annual Stranger Things block party from 4-9pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+          "status": "Inactive",
+          "projectStatus": "Inactive",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-06",
+          "projectStart": "2025-10-10T21:00"
+        }
+      },
+      "primaryJob": "job-backdrop-photographer-base-1754521842040",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,7 +51,7 @@
     ]
   },
   "lastUpdated": "2025-08-06",
-  "totalUsers": 0,
+  "totalUsers": 1,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-06"
