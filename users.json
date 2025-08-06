@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Purple Spider": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "password": "pBNRPYWdIyu2",
+        "role": "Backdrop Photographer Spotlight",
+        "location": "Los Angeles, CA",
+        "projectStart": "2025-10-12T21:00",
+        "rate": "$100/hour",
+        "approvedDate": "2025-08-06"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-backdrop-photographer-spotlight-1754471133235": {
+          "id": "job-backdrop-photographer-spotlight-1754471133235",
+          "title": "Backdrop Photographer Spotlight",
+          "date": "2025-10-24",
+          "location": "Douglasville, GA",
+          "pay": "$300 + Tip",
+          "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+          "status": "Inactive",
+          "projectStatus": "Inactive",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-06",
+          "projectStart": "2025-10-12T21:00"
+        }
+      },
+      "primaryJob": "job-backdrop-photographer-spotlight-1754471133235",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,7 +51,7 @@
     ]
   },
   "lastUpdated": "2025-08-06",
-  "totalUsers": 0,
+  "totalUsers": 1,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-06"
