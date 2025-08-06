@@ -268,8 +268,17 @@ rm -f test-results-*.json
 node run-tests.js --cleanup-only
 ```
 
+## Recent Updates
+
+### Latest Changes (August 2025)
+- **User Portal Payment Data Fix**: Fixed user portal to properly read and display payment information from users.json
+- **Improved Data Refresh**: Reduced cache time from 5 minutes to 2 minutes for more responsive updates
+- **Enhanced Debugging**: Added console logging for payment data display and user data updates
+- **Real-time Updates**: Increased refresh frequency from 2 seconds to 1 second for immediate payment data updates
+- **Cache Management**: Added automatic cache clearing when payment methods are updated
+
 ---
 
-**Last Updated**: August 5, 2025  
-**Version**: 1.0.0  
+**Last Updated**: August 6, 2025  
+**Version**: 1.1.0  
 **Maintainer**: Cochran Films Development Team 

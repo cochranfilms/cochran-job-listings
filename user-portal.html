@@ -775,12 +775,12 @@
             try {
                 console.log('🔄 Loading users data...');
                 
-                // Check if we have cached data and it's recent (less than 5 minutes old)
+                // Check if we have cached data and it's recent (less than 2 minutes old for payment data)
                 const cachedData = sessionStorage.getItem('cachedUsersData');
                 const cacheTimestamp = sessionStorage.getItem('cachedUsersDataTimestamp');
                 const now = Date.now();
                 const cacheAge = now - (parseInt(cacheTimestamp) || 0);
-                const cacheValid = cacheAge < 5 * 60 * 1000; // 5 minutes
+                const cacheValid = cacheAge < 2 * 60 * 1000; // 2 minutes for more responsive updates
                 
                 if (cachedData && cacheValid) {
                     console.log('✅ Using cached users data (age:', Math.round(cacheAge / 1000), 'seconds)');
@@ -1131,16 +1131,31 @@
             try {
                 // Handle different date formats
                 let date;
-                if (dateString.includes('T')) {
+                
+                // Handle "8/5/2025, 10:37:09 PM" format
+                if (dateString.includes(',') && dateString.includes('PM') || dateString.includes('AM')) {
+                    date = new Date(dateString);
+                } else if (dateString.includes('T')) {
                     // ISO format
                     date = new Date(dateString);
                 } else if (dateString.includes('/')) {
                     // MM/DD/YYYY format
                     const parts = dateString.split('/');
-                    date = new Date(parts[2], parts[0] - 1, parts[1]);
+                    if (parts.length === 3) {
+                        date = new Date(parts[2], parts[0] - 1, parts[1]);
+                    } else {
+                        // Try parsing as is
+                        date = new Date(dateString);
+                    }
                 } else {
                     // YYYY-MM-DD format
                     date = new Date(dateString + 'T00:00:00');
+                }
+                
+                // Check if date is valid
+                if (isNaN(date.getTime())) {
+                    console.warn('⚠️ Invalid date:', dateString);
+                    return null;
                 }
                 
                 // Adjust for timezone (assuming EST/EDT)
@@ -1150,7 +1165,7 @@
                 return date.toISOString().split('T')[0];
             } catch (error) {
                 console.warn('⚠️ Could not parse date:', dateString, error);
-                return dateString;
+                return null;
             }
         }
 
@@ -1402,6 +1417,10 @@
         async function loadUserData() {
             if (!currentUser) return;
 
+            // Clear cache to ensure fresh data for payment updates
+            sessionStorage.removeItem('cachedUsersData');
+            sessionStorage.removeItem('cachedUsersDataTimestamp');
+            
             // Refresh data from server to get latest updates
             await loadUsersData();
             await loadPerformanceReviews(); // Ensure performance reviews are loaded
@@ -1410,6 +1429,11 @@
             const updatedUser = users.find(u => u.email === currentUser.email);
             if (updatedUser) {
                 currentUser = updatedUser;
+                console.log('✅ Updated current user data:', {
+                    name: currentUser.name,
+                    paymentMethod: currentUser.paymentMethod,
+                    paymentStatus: currentUser.paymentStatus
+                });
             }
 
             // Update welcome message
@@ -1435,6 +1459,13 @@
         function displayUserInfo() {
             const container = document.getElementById('userInfo');
             
+            // Debug current user data
+            console.log('🔍 Displaying user info for:', currentUser.name);
+            console.log('💰 Payment data:', {
+                paymentMethod: currentUser.paymentMethod,
+                paymentStatus: currentUser.paymentStatus
+            });
+            
             // Get all jobs for this user from the jobs object and convert to array
             const userJobsObject = currentUser.jobs || {};
             const userJobs = Object.values(userJobsObject);
@@ -1442,7 +1473,19 @@
             
             // Fix timezone issues with approved date
             const fixedApprovedDate = fixTimezone(currentUser.approvedDate);
-            const displayApprovedDate = fixedApprovedDate ? new Date(fixedApprovedDate).toLocaleDateString() : 'Pending';
+            let displayApprovedDate = 'Pending';
+            if (fixedApprovedDate) {
+                try {
+                    const date = new Date(fixedApprovedDate);
+                    if (!isNaN(date.getTime())) {
+                        displayApprovedDate = date.toLocaleDateString();
+                    } else {
+                        console.warn('⚠️ Invalid approved date after fixTimezone:', fixedApprovedDate);
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Error formatting approved date:', error);
+                }
+            }
             
 
             
@@ -1677,7 +1720,33 @@
             }
             
             if (contractStatus === 'signed') {
-                const signedDate = userContract ? new Date(userContract.signedDate).toLocaleDateString() : currentUser.contractSignedDate || 'Processing...';
+                let signedDate = 'Processing...';
+                if (userContract && userContract.signedDate) {
+                    try {
+                        const date = new Date(userContract.signedDate);
+                        if (!isNaN(date.getTime())) {
+                            signedDate = date.toLocaleDateString();
+                        } else {
+                            console.warn('⚠️ Invalid contract signed date:', userContract.signedDate);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error formatting contract signed date:', error);
+                    }
+                } else if (currentUser.contractSignedDate) {
+                    // Try to format the contract signed date from users.json
+                    try {
+                        const date = new Date(currentUser.contractSignedDate);
+                        if (!isNaN(date.getTime())) {
+                            signedDate = date.toLocaleDateString();
+                        } else {
+                            console.warn('⚠️ Invalid contract signed date from users.json:', currentUser.contractSignedDate);
+                            signedDate = currentUser.contractSignedDate; // Display as is
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error formatting contract signed date from users.json:', error);
+                        signedDate = currentUser.contractSignedDate; // Display as is
+                    }
+                }
                 const contractId = userContract ? userContract.contractId : currentUser.contractId || 'Generating...';
                 
                 container.innerHTML = `
@@ -1704,7 +1773,33 @@
             }
             
             if (contractStatus === 'uploaded') {
-                const signedDate = userContract ? new Date(userContract.signedDate).toLocaleDateString() : currentUser.contractSignedDate || 'Processing...';
+                let signedDate = 'Processing...';
+                if (userContract && userContract.signedDate) {
+                    try {
+                        const date = new Date(userContract.signedDate);
+                        if (!isNaN(date.getTime())) {
+                            signedDate = date.toLocaleDateString();
+                        } else {
+                            console.warn('⚠️ Invalid contract signed date:', userContract.signedDate);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error formatting contract signed date:', error);
+                    }
+                } else if (currentUser.contractSignedDate) {
+                    // Try to format the contract signed date from users.json
+                    try {
+                        const date = new Date(currentUser.contractSignedDate);
+                        if (!isNaN(date.getTime())) {
+                            signedDate = date.toLocaleDateString();
+                        } else {
+                            console.warn('⚠️ Invalid contract signed date from users.json:', currentUser.contractSignedDate);
+                            signedDate = currentUser.contractSignedDate; // Display as is
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error formatting contract signed date from users.json:', error);
+                        signedDate = currentUser.contractSignedDate; // Display as is
+                    }
+                }
                 const contractId = userContract ? userContract.contractId : currentUser.contractId || 'Generating...';
                 
                 container.innerHTML = `
@@ -1717,7 +1812,15 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                                 <div><strong>Contract ID:</strong> ${contractId}</div>
                                 <div><strong>Signed Date:</strong> ${signedDate}</div>
-                                <div><strong>Uploaded Date:</strong> ${userContract ? new Date(userContract.signedDate).toLocaleDateString() : 'N/A'}</div>
+                                <div><strong>Uploaded Date:</strong> ${userContract && userContract.signedDate ? (() => {
+                                    try {
+                                        const date = new Date(userContract.signedDate);
+                                        return !isNaN(date.getTime()) ? date.toLocaleDateString() : 'N/A';
+                                    } catch (error) {
+                                        console.warn('⚠️ Error formatting uploaded date:', error);
+                                        return 'N/A';
+                                    }
+                                })() : 'N/A'}</div>
                                 <div><strong>Rate:</strong> ${currentUser.jobs ? Object.values(currentUser.jobs)[0]?.pay || Object.values(currentUser.jobs)[0]?.rate || '$75/hour' : currentUser.rate || '$75/hour'}</div>
                             </div>
                             <div style="background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
@@ -1889,7 +1992,19 @@
                 const userName = currentUser?.profile?.name || currentUser?.profile?.email?.split('@')[0] || 'Team Member';
                 
                 // Display the performance review
-                const reviewDate = userReview.reviewDate ? new Date(userReview.reviewDate).toLocaleDateString() : 'N/A';
+                let reviewDate = 'N/A';
+                if (userReview.reviewDate) {
+                    try {
+                        const date = new Date(userReview.reviewDate);
+                        if (!isNaN(date.getTime())) {
+                            reviewDate = date.toLocaleDateString();
+                        } else {
+                            console.warn('⚠️ Invalid performance review date:', userReview.reviewDate);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error formatting performance review date:', error);
+                    }
+                }
                 const overallRating = userReview.overallRating || 'Not rated';
                 const categories = userReview.categories || {};
                 
@@ -2211,7 +2326,19 @@
                                     <div class="timeline-main">
                                         <strong>${step.title}</strong>
                                         <span>${step.description}</span>
-                                        ${step.date ? `<small class="timeline-date">${step.date.toLocaleDateString()}</small>` : ''}
+                                        ${step.date ? `<small class="timeline-date">${(() => {
+                                            try {
+                                                if (step.date instanceof Date) {
+                                                    return !isNaN(step.date.getTime()) ? step.date.toLocaleDateString() : 'Invalid Date';
+                                                } else {
+                                                    const date = new Date(step.date);
+                                                    return !isNaN(date.getTime()) ? date.toLocaleDateString() : 'Invalid Date';
+                                                }
+                                            } catch (error) {
+                                                console.warn('⚠️ Error formatting timeline date:', error);
+                                                return 'Invalid Date';
+                                            }
+                                        })()}</small>` : ''}
                                     </div>
                                     
                                     ${step.status === 'current' ? `
@@ -2590,7 +2717,19 @@
                 z-index: 1000;
             `;
             
-            const reviewDate = userReview.reviewDate ? new Date(userReview.reviewDate).toLocaleDateString() : 'N/A';
+            let reviewDate = 'N/A';
+            if (userReview.reviewDate) {
+                try {
+                    const date = new Date(userReview.reviewDate);
+                    if (!isNaN(date.getTime())) {
+                        reviewDate = date.toLocaleDateString();
+                    } else {
+                        console.warn('⚠️ Invalid performance review date:', userReview.reviewDate);
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Error formatting performance review date:', error);
+                }
+            }
             const overallRating = userReview.overallRating || 'N/A';
             
             modal.innerHTML = `
@@ -2758,6 +2897,10 @@
 
         // Update user payment method on GitHub
         async function updateUserPaymentMethod(email, paymentMethod) {
+            // Clear cache to ensure fresh data
+            sessionStorage.removeItem('cachedUsersData');
+            sessionStorage.removeItem('cachedUsersDataTimestamp');
+            
             const maxRetries = 3;
             let retryCount = 0;
             
@@ -2866,6 +3009,12 @@
                     // Wait before retrying
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
+            }
+            
+            // Force refresh user data after successful update
+            if (currentUser) {
+                await loadUserData();
+                console.log('✅ User data refreshed after payment method update');
             }
         }
 
@@ -3777,7 +3926,7 @@
                 });
         }
             
-            // Set up immediate real-time data updates (every 2 seconds for instant feedback)
+            // Set up immediate real-time data updates (every 1 second for instant feedback)
             setInterval(() => {
                 console.log('⚡ Immediate user portal refresh...');
                 loadUsersData().then(() => {
@@ -3801,7 +3950,7 @@
                 }).catch(error => {
                     console.warn('⚠️ User portal performance immediate refresh failed:', error);
                 });
-            }, 2000); // 2 seconds for immediate updates
+            }, 1000); // 1 second for immediate updates
             
             // Additional rapid polling for critical user data (every 1 second)
             setInterval(() => {
