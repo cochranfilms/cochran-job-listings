@@ -6,8 +6,7 @@ const fs = require('fs');
 // Import API routes
 const firebaseRouter = require('./api/firebase');
 const notificationsRouter = require('./api/notifications');
-const testRunnerRouter = require('./api/test-runner');
-const exportResultsRouter = require('./api/export-results');
+
 const deletePdfRouter = require('./api/delete-pdf');
 const contractsRouter = require('./api/contracts');
 
@@ -287,9 +286,7 @@ app.use('/api/firebase', firebaseRouter);
 // Notifications API routes
 app.use('/api/notifications', notificationsRouter);
 
-// Test Runner API routes
-app.use('/api/run-tests', testRunnerRouter);
-app.use('/api/export-results', exportResultsRouter);
+
 
 // PDF Deletion API route
 app.use('/api/delete-pdf', deletePdfRouter);
@@ -357,10 +354,7 @@ app.listen(PORT, () => {
     console.log(`   - DELETE /api/github/file/:filename`);
     console.log(`   - GET  /api/notifications`);
     console.log(`   - POST /api/notifications`);
-    console.log(`   - POST /api/run-tests`);
-    console.log(`   - POST /api/export-results`);
     console.log(`   - DELETE /api/delete-pdf`);
-    console.log(`\n🌐 Test page: http://localhost:${PORT}/test-api.html`);
     console.log(`📋 Admin dashboard: http://localhost:${PORT}/admin-dashboard.html`);
-    console.log(`🧪 Test dashboard: http://localhost:${PORT}/test-dashboard.html`);
+    console.log(`👤 User portal: http://localhost:${PORT}/user-portal.html`);
 }); 

@@ -1531,11 +1531,11 @@
                     }
                 }
                 
-                // Save PDF to user's device
-                const fileName = `Cochran-Films-Contract-${contractData.contractId}.pdf`;
-                doc.save(fileName);
+                // Save PDF to user's device using user name instead of contract ID
+                const safeFileName = contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+                doc.save(safeFileName);
                 
-                console.log('✅ PDF downloaded successfully:', fileName);
+                console.log('✅ PDF downloaded successfully:', safeFileName);
                 
                 // Show success message
                 setTimeout(() => {
