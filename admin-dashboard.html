@@ -5399,7 +5399,13 @@
                 await initializeNotificationSystem();
                 
                 // Initialize bank viewer
-                window.adminBankViewer = new AdminBankViewer();
+                try {
+                    window.adminBankViewer = new AdminBankViewer();
+                    console.log('✅ AdminBankViewer initialized successfully');
+                } catch (error) {
+                    console.error('❌ Error initializing AdminBankViewer:', error);
+                    window.adminBankViewer = null;
+                }
                 
                 // Close notification dropdown when clicking outside
                 document.addEventListener('click', function(event) {
@@ -5415,20 +5421,27 @@
         // Show user bank details
         async function showUserBankDetails(userName) {
             try {
+                console.log('🔍 showUserBankDetails called for:', userName);
+                
                 const userData = users[userName];
                 if (!userData) {
+                    console.error('❌ User not found:', userName);
                     showNotification('User not found', 'error');
                     return;
                 }
                 
+                console.log('✅ User data found:', userData);
+                
                 if (window.adminBankViewer) {
+                    console.log('✅ AdminBankViewer is available');
                     await window.adminBankViewer.showUserBankDetails(userName, userData);
                 } else {
+                    console.error('❌ Bank viewer not initialized');
                     showNotification('Bank viewer not initialized', 'error');
                 }
             } catch (error) {
-                console.error('Error showing bank details:', error);
-                showNotification('Error loading bank details', 'error');
+                console.error('❌ Error showing bank details:', error);
+                showNotification('Error loading bank details: ' + error.message, 'error');
             }
         }
 
