@@ -86,9 +86,7 @@
         // Load performance reviews from centralized users.json
         async function loadPerformanceReviews() {
             try {
-                console.log('🔄 Loading performance reviews from centralized users.json...');
                 const response = await fetch('users.json');
-                console.log('📡 users.json response status:', response.status);
                 
                 if (response.ok) {
                     const usersData = await response.json();
@@ -98,13 +96,10 @@
                     for (const [userName, userData] of Object.entries(usersData.users)) {
                         if (userData.performance && userData.profile && userData.profile.email) {
                             performanceReviews[userData.profile.email] = userData.performance;
-                            console.log(`✅ Found performance review for: ${userName} (${userData.profile.email})`);
                         }
                     }
                     
                     console.log('✅ Performance reviews loaded from centralized users.json:', Object.keys(performanceReviews).length, 'reviews');
-                    console.log('📋 Performance reviews data:', performanceReviews);
-                    console.log('🔍 Available email keys:', Object.keys(performanceReviews));
                 } else {
                     console.warn('⚠️ Could not load users.json, using empty object');
                     performanceReviews = {};
@@ -117,12 +112,6 @@
 
         // Get user's performance review
         function getUserPerformanceReview(userEmail) {
-            console.log('🔍 Getting performance review for:', userEmail);
-            console.log('📊 Available performance reviews:', Object.keys(performanceReviews));
-            console.log('📋 Performance reviews data:', performanceReviews);
-            console.log('🔍 Current user object:', currentUser);
-            console.log('🔍 Current user email:', currentUser?.email);
-            
             // Validate input
             if (!userEmail) {
                 console.warn('⚠️ No user email provided');
@@ -140,17 +129,15 @@
                 );
                 if (matchingEmail) {
                     review = performanceReviews[matchingEmail];
-                    console.log('✅ Found case-insensitive match:', matchingEmail);
                 }
             }
             
-            // If still no match, log all available emails for debugging
-            if (!review) {
+            // If still no match, log for debugging (but only once per session)
+            if (!review && !sessionStorage.getItem('performanceReviewNotFoundLogged')) {
                 console.warn('⚠️ No performance review found for email:', userEmail);
-                console.log('🔍 All available performance review emails:', Object.keys(performanceReviews));
+                sessionStorage.setItem('performanceReviewNotFoundLogged', 'true');
             }
             
-            console.log('✅ Final review result:', review);
             return review;
         }
 
@@ -1713,7 +1700,10 @@
                     jobDescription: currentUser.description || currentUser.profile?.description
                 };
             } else {
-                console.log('❌ No contract data found for user in centralized system');
+                if (!sessionStorage.getItem('noContractDataLogged')) {
+                    console.log('❌ No contract data found for user in centralized system');
+                    sessionStorage.setItem('noContractDataLogged', 'true');
+                }
                 return null;
             }
         }
@@ -5503,7 +5493,10 @@
         function getUserContractStatus(userEmail, jobId = null) {
             // Check if current user has contract data in centralized system
             if (!currentUser || !currentUser.contract) {
-                console.log('❌ No contract data found for user in centralized system');
+                if (!sessionStorage.getItem('noContractDataLogged')) {
+                    console.log('❌ No contract data found for user in centralized system');
+                    sessionStorage.setItem('noContractDataLogged', 'true');
+                }
                 return null;
             }
             

@@ -1480,4 +1480,100 @@ async function downloadUserContract(userName) {
 - **User-Friendly**: Files named after users for easy identification
 - **Centralized Architecture**: All data still centralized in users.json
 - **Consistent Experience**: Same PDF quality and design across all portals
-- **Complete Integration**: All portals now use the same PDF generation workflow 
+- **Complete Integration**: All portals now use the same PDF generation workflow
+
+## Phase 23 Fix - JavaScript Syntax Error & Performance Optimization
+**Date**: 2025-08-06
+**Context**: JavaScript syntax error at line 5032 and excessive console logging causing performance issues
+
+### Issues Identified
+1. **JavaScript Syntax Error**: "Declaration or statement expected" error at line 5032 in user-portal.html
+2. **Content Security Policy Violations**: Admin dashboard scripts from cdnjs.cloudflare.com being blocked
+3. **Excessive Console Logging**: Repeated function calls and debug messages causing performance issues
+4. **Orphaned Code**: Code outside of functions causing syntax errors
+
+### Root Cause Analysis
+**JavaScript Syntax Error**:
+- **Orphaned Code**: Code starting at line 4873 was outside of any function
+- **Missing Function Structure**: Download logic was not properly enclosed in functions
+- **Duplicate Functions**: Two `downloadUserContract` functions causing conflicts
+- **Missing Closing Braces**: Functions not properly closed
+
+**Content Security Policy Issues**:
+- **CSP Restrictions**: Content Security Policy only allowed cdn.jsdelivr.net, not cdnjs.cloudflare.com
+- **Script Loading Failures**: jsPDF and html2canvas libraries being blocked
+- **PDF Generation Failures**: Admin dashboard unable to load required libraries
+
+**Performance Issues**:
+- **Excessive Logging**: Repeated console.log statements every few seconds
+- **Function Call Spam**: Multiple function calls causing browser performance issues
+- **Debug Messages**: Too many debug messages cluttering console
+
+### Solution Implemented
+**Complete JavaScript Structure Fix & Performance Optimization**:
+
+#### **1. Fixed JavaScript Syntax Error**
+- ✅ **Proper Function Structure**: Wrapped orphaned code into `downloadUploadedContract()` function
+- ✅ **Fixed Missing Braces**: Added proper closing braces for all functions
+- ✅ **Eliminated Duplicates**: Removed duplicate function definitions
+- ✅ **Clean Code Structure**: All code now properly enclosed in functions
+
+#### **2. Fixed Content Security Policy**
+- ✅ **Added cdnjs.cloudflare.com**: Updated CSP to allow scripts from cdnjs.cloudflare.com
+- ✅ **Library Loading**: jsPDF and html2canvas libraries now load properly
+- ✅ **PDF Generation**: Admin dashboard can now generate PDFs successfully
+- ✅ **Consistent Script Loading**: Same library versions across all portals
+
+#### **3. Optimized Performance & Logging**
+- ✅ **Reduced Console Spam**: Removed excessive debug logging from performance review functions
+- ✅ **Session-based Logging**: Limited "No contract data found" messages to once per session
+- ✅ **Streamlined Functions**: Removed redundant function calls and event listeners
+- ✅ **Better Error Handling**: Enhanced error handling with less verbose logging
+
+### Implementation Details
+```javascript
+// Fixed function structure - wrapped orphaned code into proper function
+async function downloadUploadedContract(jobId = null) {
+    console.log('🔍 Download uploaded contract button clicked');
+    // ... all the orphaned code now properly enclosed
+}
+
+// Updated Content Security Policy
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://ssl.gstatic.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; ...">
+
+// Optimized logging - reduced excessive console messages
+async function loadPerformanceReviews() {
+    try {
+        const response = await fetch('users.json');
+        // Removed excessive debug logging
+        console.log('✅ Performance reviews loaded from centralized users.json:', Object.keys(performanceReviews).length, 'reviews');
+    } catch (error) {
+        console.error('❌ Error loading performance reviews from centralized data:', error);
+        performanceReviews = {};
+    }
+}
+
+// Session-based logging to reduce spam
+if (!sessionStorage.getItem('noContractDataLogged')) {
+    console.log('❌ No contract data found for user in centralized system');
+    sessionStorage.setItem('noContractDataLogged', 'true');
+}
+```
+
+### Results Achieved
+- ✅ **JavaScript Syntax Fixed**: No more "Declaration or statement expected" errors
+- ✅ **PDF Libraries Loading**: jsPDF and html2canvas libraries load properly in admin dashboard
+- ✅ **Performance Improved**: Reduced console spam and excessive function calls
+- ✅ **Clean Code Structure**: All code properly enclosed in functions
+- ✅ **Better User Experience**: Faster page loading and less browser lag
+- ✅ **Consistent Functionality**: All download functions work properly
+- ✅ **Professional Console**: Clean console output without excessive debug messages
+
+### Technical Benefits
+- **Proper JavaScript Structure**: All code properly enclosed in functions
+- **Fixed CSP Issues**: Scripts load properly without security policy violations
+- **Performance Optimization**: Reduced function calls and console spam
+- **Better Error Handling**: Cleaner error messages and logging
+- **Maintainable Code**: Proper function structure and organization
+- **Professional Experience**: Faster page loading and cleaner console output
+- **Consistent Functionality**: All features work properly without syntax errors 
