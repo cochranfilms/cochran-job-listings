@@ -4870,43 +4870,6 @@
                 showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
             }
         }
-                        // Create blob from response
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        
-                        // Create download link
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = userContract.fileName;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        
-                        // Clean up
-                        window.URL.revokeObjectURL(url);
-                        
-                        console.log('📄 Downloaded contract via API:', userContract.fileName);
-                        
-                        // Add notification to sophisticated notification system
-                        await addNotification(
-                            'Contract Downloaded Successfully',
-                            `Your contract "${userContract.fileName}" was downloaded via API endpoint.`,
-                            'contract_downloaded',
-                            {
-                                contractId: userContract.contractId,
-                                fileName: userContract.fileName,
-                                userEmail: currentUser.email,
-                                actionRequired: false,
-                                priority: 'normal'
-                            }
-                        );
-                        return;
-                    } else {
-                        console.warn('⚠️ API endpoint failed, trying fallback methods');
-                    }
-                }
-                
-                // Fallback to GitHub URL if available
                 if (userContract.githubUrl) {
                     console.log('📤 Attempting to download from GitHub URL:', userContract.githubUrl);
                     const link = document.createElement('a');
@@ -5065,12 +5028,12 @@
                     }
                 }
                 
-                showNotification('❌ Contract file not available. Please contact admin.', 'error');
-                
-            } catch (error) {
-                console.error('❌ Error downloading contract:', error);
-                showNotification('❌ Error downloading contract. Please try again or contact admin.', 'error');
-            }
+                try {
+                    showNotification('❌ Contract file not available. Please contact admin.', 'error');
+                } catch (error) {
+                    console.error('❌ Error downloading contract:', error);
+                    showNotification('❌ Error downloading contract. Please try again or contact admin.', 'error');
+                }
         }
 
         // View contract details
@@ -5089,9 +5052,9 @@
                 // If no uploaded contract, check if contract is signed but not uploaded
                 if (currentUser.contractStatus === 'signed') {
                     console.log('✅ Your contract has been signed and is being processed by admin.');
-                                  } else {
-                      showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
-                  }
+                } else {
+                    showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
+                }
                 return;
             }
             
