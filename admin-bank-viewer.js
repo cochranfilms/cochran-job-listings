@@ -279,7 +279,7 @@ class AdminBankViewer {
             
             // Get user data
             console.log('🔍 Loading users data...');
-            const users = await loadUsersData();
+            const users = await loadUsers();
             console.log('🔍 Users data loaded:', users);
             
             const userData = users.users[userName];
