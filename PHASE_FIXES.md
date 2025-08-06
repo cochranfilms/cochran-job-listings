@@ -1298,4 +1298,186 @@ async function downloadUserContract(jobId = null) {
 - **Enhanced Debugging**: Detailed logging shows exactly what data is available
 - **Robust Error Handling**: Clear feedback when contract data is missing
 - **Better User Experience**: Proper contract status display and working downloads
-- **System Reliability**: Functions work with the actual data structure being used 
+- **System Reliability**: Functions work with the actual data structure being used
+
+## Phase 21 Fix - PDF Generation Integration for User Portal
+**Date**: 2025-08-06
+**Context**: PDF download workflow broken after centralization - integrating contract.html PDF generation system
+
+### Issues Identified
+1. **PDF Download Failures**: All PDF download functions broken across user-portal.html and admin-dashboard.html
+2. **Workflow Disruption**: Beautiful PDF generation system in contract.html not being used
+3. **File Access Issues**: Download functions trying to access non-existent files instead of generating PDFs
+4. **System Inconsistency**: Different approaches between contract.html (PDF generation) and other portals (file download)
+
+### Root Cause Analysis
+**Architecture Mismatch**:
+- **contract.html**: Has beautiful PDF generation system using jsPDF library
+- **user-portal.html & admin-dashboard.html**: Trying to download existing PDF files
+- **Centralized Data**: Contract IDs now use user names instead of random IDs
+- **Missing Integration**: PDF generation system not integrated into other portals
+
+**The Real Problem**:
+- You have a perfectly working PDF generation system in contract.html
+- The other portals should use the same PDF generation approach
+- No need to go back to random IDs - the user name approach is correct
+- Need to integrate the PDF generation system from contract.html into user-portal.html
+
+### Solution Implemented
+**PDF Generation System Integration**:
+
+#### **1. Added PDF Libraries to User Portal**
+- ✅ **jsPDF Integration**: Added jsPDF and html2canvas libraries to user-portal.html
+- ✅ **Library Loading**: Same library versions as contract.html for consistency
+- ✅ **Professional PDFs**: Same beautiful PDF generation capability
+
+#### **2. Integrated PDF Generation Functions**
+- ✅ **generateContractPDF Function**: Copied from contract.html to user-portal.html
+- ✅ **Professional Design**: Gold headers, contractor information boxes, contract terms, signatures
+- ✅ **Consistent Styling**: Same visual design as contract.html PDFs
+- ✅ **Complete Integration**: All PDF generation logic from contract.html
+
+#### **3. Updated Download Function**
+- ✅ **PDF Generation Approach**: Changed from file download to PDF generation
+- ✅ **On-the-fly Generation**: PDFs generated from contract data when needed
+- ✅ **User Name Files**: Files saved as "User Name.pdf" using user names
+- ✅ **Professional Appearance**: Same professional PDF design as contract.html
+
+### Implementation Details
+```javascript
+// Added PDF libraries to user-portal.html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+// Integrated generateContractPDF function from contract.html
+function generateContractPDF(contractData) {
+    // Professional PDF generation with gold headers, contractor info boxes,
+    // contract terms, signatures, and professional footer
+    // Same implementation as contract.html
+}
+
+// Updated download function to generate PDFs on-the-fly
+async function downloadUserContract(jobId = null) {
+    // Create contract data for PDF generation
+    const contractData = {
+        contractId: currentUser.contractId || currentUser.name,
+        freelancerName: currentUser.name,
+        freelancerEmail: currentUser.email,
+        role: currentUser.role || currentUser.profile?.role || 'Contractor',
+        location: currentUser.location || currentUser.profile?.location || 'Atlanta Area',
+        projectStart: currentUser.projectStart || currentUser.profile?.projectStart || 'TBD',
+        rate: currentUser.rate || currentUser.profile?.rate || 'Not specified',
+        effectiveDate: currentUser.approvedDate || new Date().toISOString().split('T')[0],
+        signatureDate: currentUser.contractSignedDate ? formatContractSignedDate(currentUser.contractSignedDate) : new Date().toISOString().split('T')[0],
+        signature: currentUser.contractStatus === 'signed' ? 'Digital Signature' : 'Not Signed'
+    };
+    
+    // Generate PDF using the same function as contract.html
+    const doc = generateContractPDF(contractData);
+    
+    // Save PDF to user's device using user name
+    const safeFileName = currentUser.name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+    doc.save(safeFileName);
+}
+```
+
+### Results Achieved
+- ✅ **PDF Downloads Working**: User portal now generates PDFs on-the-fly like contract.html
+- ✅ **Professional Appearance**: Same beautiful PDF design as contract.html
+- ✅ **User Name Files**: Files saved with user names instead of random IDs
+- ✅ **Centralized Data**: All data still centralized in users.json
+- ✅ **Consistent Workflow**: Same PDF generation approach across all portals
+- ✅ **No Random IDs**: Maintained user name approach for contract IDs
+
+### Technical Benefits
+- **Unified PDF System**: Same PDF generation capability across all interfaces
+- **Professional Design**: Beautiful PDFs with gold headers and proper formatting
+- **On-the-fly Generation**: PDFs generated when needed, no file dependencies
+- **User-Friendly**: Files named after users for easy identification
+- **Centralized Architecture**: All data still centralized in users.json
+- **Consistent Experience**: Same PDF quality and design across all portals
+
+## Phase 22 Fix - Admin Dashboard PDF Generation Integration
+**Date**: 2025-08-06
+**Context**: Completing PDF generation integration for admin dashboard
+
+### Issues Identified
+1. **Admin Dashboard PDF Downloads**: Admin dashboard still using old file download approach
+2. **Inconsistent Workflow**: Different PDF handling between user portal and admin dashboard
+3. **Missing PDF Generation**: Admin dashboard missing the beautiful PDF generation system
+4. **System Inconsistency**: Admin dashboard not using the same PDF generation approach
+
+### Solution Implemented
+**Complete PDF Generation Integration for Admin Dashboard**:
+
+#### **1. Added PDF Libraries to Admin Dashboard**
+- ✅ **jsPDF Integration**: Added jsPDF and html2canvas libraries to admin-dashboard.html
+- ✅ **Library Loading**: Same library versions as contract.html and user-portal.html
+- ✅ **Professional PDFs**: Same beautiful PDF generation capability
+
+#### **2. Integrated PDF Generation Functions**
+- ✅ **generateContractPDF Function**: Copied from contract.html to admin-dashboard.html
+- ✅ **Professional Design**: Gold headers, contractor information boxes, contract terms, signatures
+- ✅ **Consistent Styling**: Same visual design as contract.html PDFs
+- ✅ **Complete Integration**: All PDF generation logic from contract.html
+
+#### **3. Updated Admin Download Function**
+- ✅ **PDF Generation Approach**: Changed from file download to PDF generation
+- ✅ **On-the-fly Generation**: PDFs generated from contract data when needed
+- ✅ **User Name Files**: Files saved as "User Name.pdf" using user names
+- ✅ **Professional Appearance**: Same professional PDF design as contract.html
+
+### Implementation Details
+```javascript
+// Added PDF libraries to admin-dashboard.html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+// Integrated generateContractPDF function from contract.html
+function generateContractPDF(contractData) {
+    // Professional PDF generation with gold headers, contractor info boxes,
+    // contract terms, signatures, and professional footer
+    // Same implementation as contract.html
+}
+
+// Updated admin download function to generate PDFs on-the-fly
+async function downloadUserContract(userName) {
+    // Create contract data for PDF generation
+    const contractData = {
+        contractId: userContract.contractId || userName,
+        freelancerName: userName,
+        freelancerEmail: userData.profile?.email || 'Not specified',
+        role: userData.profile?.role || 'Contractor',
+        location: userData.profile?.location || 'Atlanta Area',
+        projectStart: userData.profile?.projectStart || 'TBD',
+        rate: userData.profile?.rate || 'Not specified',
+        effectiveDate: userData.profile?.approvedDate || new Date().toISOString().split('T')[0],
+        signatureDate: userContract.contractSignedDate || new Date().toISOString().split('T')[0],
+        signature: userContract.contractStatus === 'signed' ? 'Digital Signature' : 'Not Signed'
+    };
+    
+    // Generate PDF using the same function as contract.html
+    const doc = generateContractPDF(contractData);
+    
+    // Save PDF to user's device using user name
+    const safeFileName = userName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+    doc.save(safeFileName);
+}
+```
+
+### Results Achieved
+- ✅ **Complete PDF Integration**: All portals now use same PDF generation system
+- ✅ **Professional Appearance**: Same beautiful PDF design across all interfaces
+- ✅ **User Name Files**: Files saved with user names instead of random IDs
+- ✅ **Centralized Data**: All data still centralized in users.json
+- ✅ **Consistent Workflow**: Same PDF generation approach across all portals
+- ✅ **No Random IDs**: Maintained user name approach for contract IDs
+
+### Technical Benefits
+- **Unified PDF System**: Same PDF generation capability across all interfaces
+- **Professional Design**: Beautiful PDFs with gold headers and proper formatting
+- **On-the-fly Generation**: PDFs generated when needed, no file dependencies
+- **User-Friendly**: Files named after users for easy identification
+- **Centralized Architecture**: All data still centralized in users.json
+- **Consistent Experience**: Same PDF quality and design across all portals
+- **Complete Integration**: All portals now use the same PDF generation workflow 
