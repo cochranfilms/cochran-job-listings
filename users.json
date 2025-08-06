@@ -1,5 +1,41 @@
 {
-  "users": {},
+  "users": {
+    "Cody Cochran": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "password": "rvrJSMMM3yjh",
+        "role": "Editor",
+        "location": "Douglasville, GA",
+        "projectStart": "2025-10-25T14:00",
+        "rate": "$75/hour",
+        "approvedDate": "2025-08-06"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending",
+        "contractSignedDate": null,
+        "contractUploadedDate": null,
+        "contractId": null
+      },
+      "jobs": {
+        "job-editor-default": {
+          "id": "job-editor-default",
+          "title": "Editor Position",
+          "date": "2025-08-06",
+          "location": "Douglasville, GA",
+          "pay": "$75/hour",
+          "description": "Professional Editor position in Douglasville, GA. Details to be provided.",
+          "status": "upcoming",
+          "projectStatus": "upcoming",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-06",
+          "projectStart": "2025-10-25T14:00"
+        }
+      },
+      "primaryJob": "job-editor-default",
+      "paymentMethod": null
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,7 +51,7 @@
     ]
   },
   "lastUpdated": "2025-08-06",
-  "totalUsers": 0,
+  "totalUsers": 1,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-06"
