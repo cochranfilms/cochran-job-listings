@@ -1713,7 +1713,12 @@
             await checkAutomaticProjectStatusUpdates();
 
             // Update welcome message
-            document.getElementById('userName').textContent = currentUser.name;
+            const userNameElement = document.getElementById('userName');
+            if (userNameElement) {
+                userNameElement.textContent = currentUser.name;
+            } else {
+                console.warn('⚠️ userName element not found in DOM');
+            }
             
             // Display user info
             displayUserInfo();
@@ -4864,6 +4869,19 @@
             }
         }
         
+        function updateNotificationCount(count) {
+            // Update notification badge count
+            const notificationBadge = document.querySelector('.notification-badge');
+            if (notificationBadge) {
+                if (count > 0) {
+                    notificationBadge.textContent = count;
+                    notificationBadge.style.display = 'block';
+                } else {
+                    notificationBadge.style.display = 'none';
+                }
+            }
+        }
+
         function checkForNewUserNotifications() {
             // Quick check for new notifications without full reload
             fetch('/api/notifications')
