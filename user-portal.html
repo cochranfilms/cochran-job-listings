@@ -9702,7 +9702,7 @@
                     <span>Invalid email or password. Please try again.</span>
                 </div>
                 
-                <form id="loginForm" class="login-form">
+                <form id="loginForm" class="login-form" method="post" onsubmit="handleLogin(event); return false;">
                     <div class="form-group">
                         <div class="input-container">
                             <i class="fas fa-envelope input-icon"></i>
