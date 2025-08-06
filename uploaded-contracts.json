@@ -79,8 +79,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-06",
       "signedDate": "2025-08-06"
+    },
+    {
+      "contractId": "CF-1754521921258-HS362",
+      "freelancerName": "Erica Cochran",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Backdrop Photographer Base",
+      "rate": "$250/hour",
+      "location": "Los Angeles, CA",
+      "fileName": "Erica Cochran.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-06T23:12:13.341Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Erica Cochran.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-06",
+      "signedDate": "2025-08-06"
     }
   ],
-  "lastUpdated": "2025-08-06T09:23:31.276Z",
-  "totalContracts": 5
+  "lastUpdated": "2025-08-06T23:12:13.341Z",
+  "totalContracts": 6
 }
