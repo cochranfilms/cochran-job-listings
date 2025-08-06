@@ -2211,8 +2211,11 @@
 
         // Download user contract
         async function downloadUserContract(userName) {
+            console.log('🔍 downloadUserContract function called with:', userName);
+            
             const userData = users[userName];
             if (!userData) {
+                console.log('❌ User not found:', userName);
                 showNotification('User not found', 'error');
                 return;
             }
@@ -2357,6 +2360,9 @@
                 console.log('❌ No contract ID found for:', userName);
             }
         }
+        
+        // Make function globally accessible
+        window.downloadUserContract = downloadUserContract;
 
         // Check if performance review should be shown for a user
         function shouldShowPerformanceReview(userData) {
