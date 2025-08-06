@@ -1251,7 +1251,8 @@
                         // Update user with contract data from uploaded-contracts.json
                         user.contractStatus = mostRecentContract.status || 'uploaded';
                         user.contractId = mostRecentContract.contractId;
-                        user.contractSignedDate = mostRecentContract.signedDate || mostRecentContract.uploadDate;
+                        // Preserve original contractSignedDate from users.json if available
+                        user.contractSignedDate = user.contractSignedDate || mostRecentContract.signedDate || mostRecentContract.uploadDate;
                         user.contractUploadedDate = mostRecentContract.uploadDate;
                         
                         // Update job information if available
