@@ -5529,11 +5529,11 @@
                     fileName: `${currentUser.name}.pdf`,
                     notes: null,
                     githubUrl: null,
-                    role: jobData?.role || currentUser.profile?.role,
-                    rate: jobData?.rate || jobData?.pay || currentUser.profile?.rate,
+                    role: jobData?.title || jobData?.role || currentUser.profile?.role,
+                    rate: jobData?.pay || jobData?.rate || currentUser.profile?.rate,
                     location: jobData?.location || currentUser.profile?.location,
                     jobId: jobId || currentUser.primaryJob || 'legacy-job',
-                    jobRole: jobData?.role || currentUser.profile?.role,
+                    jobRole: jobData?.title || jobData?.role || currentUser.profile?.role,
                     jobDescription: jobData?.description || currentUser.profile?.description
                 };
             } else {
