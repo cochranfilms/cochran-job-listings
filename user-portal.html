@@ -5518,6 +5518,9 @@
                 };
                 console.log('✅ Found flattened contract data on currentUser:', userContract);
                 
+                // Get job data for the specific job
+                const jobData = currentUser.jobs && currentUser.jobs[jobId || currentUser.primaryJob];
+                
                 // Return contract data in the expected format
                 return {
                     status: userContract.contractStatus,
@@ -5526,12 +5529,12 @@
                     fileName: `${currentUser.name}.pdf`,
                     notes: null,
                     githubUrl: null,
-                    role: currentUser.role || currentUser.profile?.role,
-                    rate: currentUser.rate || currentUser.profile?.rate,
-                    location: currentUser.location || currentUser.profile?.location,
-                    jobId: jobId || 'legacy-job',
-                    jobRole: currentUser.role || currentUser.profile?.role,
-                    jobDescription: currentUser.description || currentUser.profile?.description
+                    role: jobData?.role || currentUser.profile?.role,
+                    rate: jobData?.rate || jobData?.pay || currentUser.profile?.rate,
+                    location: jobData?.location || currentUser.profile?.location,
+                    jobId: jobId || currentUser.primaryJob || 'legacy-job',
+                    jobRole: jobData?.role || currentUser.profile?.role,
+                    jobDescription: jobData?.description || currentUser.profile?.description
                 };
             } else {
                 if (!sessionStorage.getItem('noContractDataLogged')) {
