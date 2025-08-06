@@ -359,4 +359,49 @@ The centralized data structure implemented in Phase 12 is the optimal solution b
 1. **Template Organization**: Move template files to /templates subfolder
 2. **Data Cleanup**: Clear users.json data while preserving structure
 3. **Fresh Start**: Begin with clean slate for live testing
-4. **PDF Handling**: Implement graceful handling for missing contract files 
+4. **PDF Handling**: Implement graceful handling for missing contract files
+
+## Phase 12.1 Fix - Performance.json Integration Issue
+**Date**: 2025-08-05
+**Context**: Post-centralization data synchronization problems
+
+### Issue Identified
+**Problem**: System still using separate `performance.json` file outside centralized `users.json` structure, causing:
+- **Refresh rate/timing errors** in notifications
+- **Duplicate notifications** for already completed actions
+- **Users being kicked out** of user-portal.html unexpectedly
+- **Data loading inconsistencies** between admin and user portals
+
+### Root Cause Analysis
+**Data Fragmentation**: 
+- `performance.json` remains separate from centralized `users.json`
+- Same issue as before with multiple JSON files causing synchronization problems
+- Notifications system reading from separate performance.json file
+- Refresh timing conflicts between centralized and separate data sources
+
+### Proposed Solution
+**Keep jobs-data.json separate** (working fine) but **integrate performance.json into users.json**:
+
+**Current Structure**:
+```
+users.json (centralized) ←→ performance.json (separate) ←→ jobs-data.json (separate)
+```
+
+**Proposed Structure**:
+```
+users.json (centralized + performance) ←→ jobs-data.json (separate)
+```
+
+### Implementation Plan
+1. **Migrate performance data** from `performance.json` into `users.json` user objects
+2. **Update notification system** to read from centralized performance data
+3. **Fix refresh timing** by using single data source
+4. **Maintain jobs-data.json** as separate file (working correctly)
+5. **Test notification timing** and user portal stability
+
+### Expected Benefits
+- ✅ **Single data source** for all user-related data
+- ✅ **Consistent refresh timing** across admin and user portals
+- ✅ **Eliminate duplicate notifications**
+- ✅ **Prevent users being kicked out** of user-portal.html
+- ✅ **Maintain jobs-data.json** functionality (working correctly) 
