@@ -659,45 +659,11 @@
         
         // Check for payment method notifications
         async function checkPaymentMethodNotifications() {
-            if (!currentUser || !currentUser.paymentMethod) return;
-            
-            // Check if we've already shown this notification for this user
-            const notificationKey = `payment_method_${currentUser.email}_${currentUser.paymentMethod}`;
-            const alreadyShown = sessionStorage.getItem(notificationKey);
-            
-            if (!alreadyShown) {
-                const existingNotification = notifications.find(n =>
-                    n.data.notificationKey === notificationKey
-                );
+            try {
+                if (!currentUser || !currentUser.paymentMethod) return;
                 
-                if (!existingNotification) {
-                    await addNotification(
-                        'Payment Method Updated',
-                        `Your payment method has been set to ${currentUser.paymentMethod.toUpperCase()}. You'll receive payments via this method.`,
-                        'payment',
-                        {
-                            notificationKey: notificationKey,
-                            actionRequired: false,
-                            priority: 'normal'
-                        }
-                    );
-                }
-                
-                // Mark this notification as shown
-                sessionStorage.setItem(notificationKey, 'true');
-            }
-        } catch (error) {
-            console.error('❌ Error checking payment method notifications:', error);
-        }
-        
-        // Check for contract status notifications
-        async function checkContractStatusNotifications() {
-            if (!currentUser) return;
-            
-            const contract = getUserContractStatus(currentUser.email);
-            if (contract && contract.contractStatus === 'signed') {
                 // Check if we've already shown this notification for this user
-                const notificationKey = `contract_signed_${currentUser.email}_${contract.contractId}`;
+                const notificationKey = `payment_method_${currentUser.email}_${currentUser.paymentMethod}`;
                 const alreadyShown = sessionStorage.getItem(notificationKey);
                 
                 if (!alreadyShown) {
@@ -707,13 +673,13 @@
                     
                     if (!existingNotification) {
                         await addNotification(
-                            'Contract Signed',
-                            `Your contract ${contract.contractId} has been signed and is ready for download.`,
-                            'contract',
+                            'Payment Method Updated',
+                            `Your payment method has been set to ${currentUser.paymentMethod.toUpperCase()}. You'll receive payments via this method.`,
+                            'payment',
                             {
                                 notificationKey: notificationKey,
-                                actionRequired: true,
-                                priority: 'high'
+                                actionRequired: false,
+                                priority: 'normal'
                             }
                         );
                     }
@@ -721,19 +687,20 @@
                     // Mark this notification as shown
                     sessionStorage.setItem(notificationKey, 'true');
                 }
+            } catch (error) {
+                console.error('❌ Error checking payment method notifications:', error);
             }
-        } catch (error) {
-            console.error('❌ Error checking contract status notifications:', error);
         }
         
-        // Check for job status notifications
-        async function checkJobStatusNotifications() {
-            if (!currentUser || !currentUser.jobs) return;
-            
-            for (const [jobId, job] of Object.entries(currentUser.jobs)) {
-                if (job.projectStatus === 'completed') {
-                    // Check if we've already shown this notification for this job
-                    const notificationKey = `job_completed_${currentUser.email}_${jobId}`;
+        // Check for contract status notifications
+        async function checkContractStatusNotifications() {
+            try {
+                if (!currentUser) return;
+                
+                const contract = getUserContractStatus(currentUser.email);
+                if (contract && contract.contractStatus === 'signed') {
+                    // Check if we've already shown this notification for this user
+                    const notificationKey = `contract_signed_${currentUser.email}_${contract.contractId}`;
                     const alreadyShown = sessionStorage.getItem(notificationKey);
                     
                     if (!alreadyShown) {
@@ -743,13 +710,13 @@
                         
                         if (!existingNotification) {
                             await addNotification(
-                                'Job Completed',
-                                `Your job "${job.title || job.role}" has been marked as completed.`,
-                                'job',
+                                'Contract Signed',
+                                `Your contract ${contract.contractId} has been signed and is ready for download.`,
+                                'contract',
                                 {
                                     notificationKey: notificationKey,
-                                    actionRequired: false,
-                                    priority: 'normal'
+                                    actionRequired: true,
+                                    priority: 'high'
                                 }
                             );
                         }
@@ -758,9 +725,48 @@
                         sessionStorage.setItem(notificationKey, 'true');
                     }
                 }
+            } catch (error) {
+                console.error('❌ Error checking contract status notifications:', error);
             }
-        } catch (error) {
-            console.error('❌ Error checking job status notifications:', error);
+        }
+        
+        // Check for job status notifications
+        async function checkJobStatusNotifications() {
+            try {
+                if (!currentUser || !currentUser.jobs) return;
+                
+                for (const [jobId, job] of Object.entries(currentUser.jobs)) {
+                    if (job.projectStatus === 'completed') {
+                        // Check if we've already shown this notification for this job
+                        const notificationKey = `job_completed_${currentUser.email}_${jobId}`;
+                        const alreadyShown = sessionStorage.getItem(notificationKey);
+                        
+                        if (!alreadyShown) {
+                            const existingNotification = notifications.find(n =>
+                                n.data.notificationKey === notificationKey
+                            );
+                            
+                            if (!existingNotification) {
+                                await addNotification(
+                                    'Job Completed',
+                                    `Your job "${job.title || job.role}" has been marked as completed.`,
+                                    'job',
+                                    {
+                                        notificationKey: notificationKey,
+                                        actionRequired: false,
+                                        priority: 'normal'
+                                    }
+                                );
+                            }
+                            
+                            // Mark this notification as shown
+                            sessionStorage.setItem(notificationKey, 'true');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error checking job status notifications:', error);
+            }
         }
         
         // Start notification polling
@@ -978,529 +984,7 @@
             }
         }
 
-        // ==================== SOPHISTICATED NOTIFICATION SYSTEM ====================
-        
-        // Centralized notification system with real-time updates
-        let notifications = [];
-        let notificationUpdateInterval;
-        
-        // Initialize notification system
-        async function initializeNotificationSystem() {
-            console.log('🔔 Initializing sophisticated notification system...');
-            await loadNotifications();
-            startNotificationPolling();
-            updateNotificationBadge();
-            updateNotificationList();
-        }
-        
-        // Load notifications from centralized storage
-        async function loadNotifications() {
-            try {
-                const response = await fetch('/api/notifications');
-                if (response.ok) {
-                    const data = await response.json();
-                    notifications = data.notifications || [];
-                    console.log('✅ Loaded notifications from API:', notifications.length);
-                } else {
-                    // Fallback to localStorage
-                    notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-                    console.log('⚠️ Using localStorage fallback for notifications');
-                }
-            } catch (error) {
-                console.error('❌ Error loading notifications:', error);
-                notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-            }
-        }
-        
-        // Save notifications to centralized storage
-        async function saveNotifications() {
-            try {
-                const response = await fetch('/api/notifications', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        notifications: notifications,
-                        lastUpdated: new Date().toISOString()
-                    })
-                });
-                
-                if (response.ok) {
-                    console.log('✅ Notifications saved to centralized storage');
-                } else {
-                    // Fallback to localStorage
-                    localStorage.setItem('notifications', JSON.stringify(notifications));
-                    console.log('⚠️ Using localStorage fallback for notifications');
-                }
-            } catch (error) {
-                console.error('❌ Error saving notifications:', error);
-                localStorage.setItem('notifications', JSON.stringify(notifications));
-            }
-        }
-        
-        // Add notification with rich data
-        async function addNotification(title, message, type = 'info', data = {}) {
-            const notification = {
-                id: Math.floor(Date.now() + Math.random() * 1000),
-                title: title,
-                message: message,
-                type: type,
-                data: data,
-                timestamp: new Date().toISOString(),
-                read: false,
-                actionRequired: data.actionRequired || false,
-                priority: data.priority || 'normal'
-            };
-            
-            notifications.unshift(notification);
-            await saveNotifications();
-            updateNotificationBadge();
-            updateNotificationList();
-            
-            console.log('🔔 Added notification:', notification);
-            return notification.id;
-        }
-        
-        // Smart notification triggers for user portal
-        async function triggerSmartNotifications() {
-            console.log('🔍 Checking for smart notification triggers...');
-            
-            // Check for payment method updates
-            await checkPaymentMethodNotifications();
-            
-            // Check for contract status updates
-            await checkContractStatusNotifications();
-            
-            // Check for job status updates
-            await checkJobStatusNotifications();
-        }
-        
-        // Check for payment method notifications
-        async function checkPaymentMethodNotifications() {
-            try {
-                if (currentUser && currentUser.paymentMethod) {
-                    // Check if we've already shown this notification for this user
-                    const notificationKey = `payment_method_${currentUser.email}_${currentUser.paymentMethod}`;
-                    const alreadyShown = sessionStorage.getItem(notificationKey);
-                    
-                    if (!alreadyShown) {
-                        const existingNotification = notifications.find(n => 
-                            n.type === 'payment_method_updated' && 
-                            n.data.userEmail === currentUser.email
-                        );
-                        
-                        if (!existingNotification) {
-                            await addNotification(
-                                'Payment Method Updated',
-                                `Your payment method has been updated to ${currentUser.paymentMethod}`,
-                                'payment_method_updated',
-                                {
-                                    userEmail: currentUser.email,
-                                    paymentMethod: currentUser.paymentMethod,
-                                    actionRequired: false,
-                                    priority: 'normal'
-                                }
-                            );
-                            
-                            // Mark this notification as shown
-                            sessionStorage.setItem(notificationKey, 'true');
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error checking payment method notifications:', error);
-            }
-        }
-        
-        // Check for contract status notifications
-        async function checkContractStatusNotifications() {
-            try {
-                if (currentUser && currentUser.contract) {
-                    const contract = currentUser.contract;
-                    if (contract.contractStatus === 'signed') {
-                        // Check if we've already shown this notification for this user
-                        const notificationKey = `contract_signed_${currentUser.email}_${contract.contractId}`;
-                        const alreadyShown = sessionStorage.getItem(notificationKey);
-                        
-                        if (!alreadyShown) {
-                            const existingNotification = notifications.find(n => 
-                                n.type === 'contract_signed' && 
-                                n.data.userEmail === currentUser.email
-                            );
-                            
-                            if (!existingNotification) {
-                                await addNotification(
-                                    'Contract Signed',
-                                    `Your contract has been signed and is being processed by admin`,
-                                    'contract_signed',
-                                    {
-                                        userEmail: currentUser.email,
-                                        contractId: contract.contractId,
-                                        actionRequired: false,
-                                        priority: 'normal'
-                                    }
-                                );
-                                
-                                // Mark this notification as shown
-                                sessionStorage.setItem(notificationKey, 'true');
-                            }
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error checking contract status notifications:', error);
-            }
-        }
-        
-        // Check for job status notifications
-        async function checkJobStatusNotifications() {
-            try {
-                if (currentUser && currentUser.jobs) {
-                    for (const [jobId, job] of Object.entries(currentUser.jobs)) {
-                        // Check for completed jobs with paid status
-                        if (job.projectStatus === 'completed' && job.paymentStatus === 'paid') {
-                            // Check if we've already shown this notification for this job
-                            const notificationKey = `job_completed_${currentUser.email}_${jobId}`;
-                            const alreadyShown = sessionStorage.getItem(notificationKey);
-                            
-                            if (!alreadyShown) {
-                                const existingNotification = notifications.find(n => 
-                                    n.type === 'job_completed' && 
-                                    n.data.userEmail === currentUser.email &&
-                                    n.data.jobId === jobId
-                                );
-                                
-                                if (!existingNotification) {
-                                    await addNotification(
-                                        'Job Completed',
-                                        `Your job "${job.title}" has been completed and payment has been processed`,
-                                        'job_completed',
-                                        {
-                                            userEmail: currentUser.email,
-                                            jobId: jobId,
-                                            jobTitle: job.title,
-                                            actionRequired: false,
-                                            priority: 'normal'
-                                        }
-                                    );
-                                    
-                                    // Mark this notification as shown
-                                    sessionStorage.setItem(notificationKey, 'true');
-                                }
-                            }
-                        }
-                        
-                        // Check for project status changes
-                        const statusMessages = {
-                            'upcoming': `Your project "${job.title}" has been scheduled and is now in the upcoming phase.`,
-                            'in-progress': `Your project "${job.title}" has started and is now in progress.`,
-                            'completed': `Your project "${job.title}" has been completed successfully!`,
-                            'cancelled': `Your project "${job.title}" has been cancelled. Please contact support for more information.`
-                        };
-                        
-                        if (statusMessages[job.projectStatus]) {
-                            const notificationKey = `project_status_${currentUser.email}_${jobId}_${job.projectStatus}`;
-                            const alreadyShown = sessionStorage.getItem(notificationKey);
-                            
-                            if (!alreadyShown) {
-                                const existingNotification = notifications.find(n => 
-                                    n.type === 'project_status_change' && 
-                                    n.data.userEmail === currentUser.email &&
-                                    n.data.jobId === jobId &&
-                                    n.data.projectStatus === job.projectStatus
-                                );
-                                
-                                if (!existingNotification) {
-                                    const priority = job.projectStatus === 'cancelled' ? 'high' : 'normal';
-                                    const actionRequired = job.projectStatus === 'cancelled';
-                                    
-                                    await addNotification(
-                                        'Project Status Update',
-                                        statusMessages[job.projectStatus],
-                                        'project_status_change',
-                                        {
-                                            userEmail: currentUser.email,
-                                            jobId: jobId,
-                                            jobTitle: job.title,
-                                            projectStatus: job.projectStatus,
-                                            actionRequired: actionRequired,
-                                            priority: priority
-                                        }
-                                    );
-                                    
-                                    // Mark this notification as shown
-                                    sessionStorage.setItem(notificationKey, 'true');
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error checking job status notifications:', error);
-            }
-        }
-        
-        // Start notification polling
-        function startNotificationPolling() {
-            // Check for new notifications every 30 seconds
-            notificationUpdateInterval = setInterval(async () => {
-                await triggerSmartNotifications();
-            }, 30000);
-            
-            console.log('🔄 Started notification polling (30s interval)');
-        }
-        
-        // Stop notification polling
-        function stopNotificationPolling() {
-            if (notificationUpdateInterval) {
-                clearInterval(notificationUpdateInterval);
-                console.log('⏹️ Stopped notification polling');
-            }
-        }
-        
-        // Update notification badge
-        function updateNotificationBadge() {
-            const badge = document.getElementById('notificationBadge');
-            if (!badge) return;
-            
-            const unreadCount = notifications.filter(n => !n.read).length;
-            const highPriorityCount = notifications.filter(n => !n.read && n.priority === 'high').length;
-            
-            if (unreadCount > 0) {
-                badge.textContent = unreadCount;
-                badge.style.display = 'flex';
-                
-                // Add visual indicator for high priority notifications
-                if (highPriorityCount > 0) {
-                    badge.style.background = '#ff4444';
-                    badge.style.animation = 'pulse 2s infinite';
-                } else {
-                    badge.style.background = '#FFB200';
-                    badge.style.animation = 'none';
-                }
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-        
-        // Update notification list with rich display
-        function updateNotificationList() {
-            const list = document.getElementById('notificationList');
-            if (!list) return;
-            
-            if (notifications.length === 0) {
-                list.innerHTML = `
-                    <div class="no-notifications">
-                        <i class="fas fa-bell-slash"></i>
-                        <p>No notifications</p>
-                        <small>Notifications will appear here for important updates</small>
-                    </div>
-                `;
-                return;
-            }
-            
-            list.innerHTML = notifications.map(notification => `
-                <div class="notification-item ${notification.read ? 'read' : 'unread'} ${notification.priority}" 
-                     onclick="handleNotificationClick(${notification.id})">
-                    <div class="notification-header">
-                        <div class="notification-title">
-                            <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
-                            ${notification.title}
-                            ${notification.actionRequired ? '<span class="action-required">Action Required</span>' : ''}
-                        </div>
-                        <div class="notification-time">${formatNotificationTime(notification.timestamp)}</div>
-                    </div>
-                    <div class="notification-message">${notification.message}</div>
-                    ${notification.data.actionRequired ? `
-                        <div class="notification-actions">
-                            <button onclick="handleNotificationAction(${notification.id}, 'view')" class="action-btn">
-                                <i class="fas fa-eye"></i> View Details
-                            </button>
-                            <button onclick="handleNotificationAction(${notification.id}, 'dismiss')" class="action-btn secondary">
-                                <i class="fas fa-times"></i> Dismiss
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-            `).join('');
-        }
-        
-        // Handle notification clicks with smart navigation
-        async function handleNotificationClick(notificationId) {
-            const notification = notifications.find(n => n.id === notificationId);
-            if (!notification) {
-                console.error('❌ Notification not found:', notificationId);
-                return;
-            }
-            
-            console.log('🔍 Handling notification click:', notification);
-            
-            // Mark as read
-            await markAsRead(notificationId);
-            
-            // Navigate based on notification type
-            switch (notification.type) {
-                case 'payment_method_updated':
-                    console.log('✅ Switching to profile tab for payment management');
-                    switchPortalTab('profile');
-                    break;
-                    
-                case 'contract_signed':
-                    console.log('✅ Switching to contracts tab for contract details');
-                    switchPortalTab('contracts');
-                    break;
-                    
-                case 'job_completed':
-                    console.log('✅ Switching to jobs tab for job details');
-                    switchPortalTab('jobs');
-                    break;
-                    
-                default:
-                    console.log('ℹ️ No specific action for notification type:', notification.type);
-            }
-        }
-        
-        // Handle notification actions
-        async function handleNotificationAction(notificationId, action) {
-            const notification = notifications.find(n => n.id === notificationId);
-            if (!notification) return;
-            
-            switch (action) {
-                case 'view':
-                    await handleNotificationClick(notificationId);
-                    break;
-                    
-                case 'dismiss':
-                    await removeNotification(notificationId);
-                    break;
-                    
-                case 'approve':
-                    // Handle approval action
-                    console.log('✅ Approving notification:', notificationId);
-                    await removeNotification(notificationId);
-                    break;
-                    
-                case 'reject':
-                    // Handle rejection action
-                    console.log('❌ Rejecting notification:', notificationId);
-                    await removeNotification(notificationId);
-                    break;
-            }
-        }
-        
-        // Remove notification
-        async function removeNotification(notificationId) {
-            notifications = notifications.filter(n => n.id !== notificationId);
-            await saveNotifications();
-            updateNotificationBadge();
-            updateNotificationList();
-        }
-        
-        // Mark notification as read
-        async function markAsRead(notificationId) {
-            const notification = notifications.find(n => n.id === notificationId);
-            if (notification) {
-                notification.read = true;
-                await saveNotifications();
-                updateNotificationBadge();
-                updateNotificationList();
-            }
-        }
-        
-        // Clear all notifications
-        async function clearAllNotifications() {
-            notifications = [];
-            await saveNotifications();
-            updateNotificationBadge();
-            updateNotificationList();
-        }
-        
-        // Toggle notification dropdown
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notificationDropdown');
-            const bell = document.getElementById('notificationBell');
-            
-            if (!dropdown || !bell) return;
-            
-            const isVisible = dropdown.style.display === 'block';
-            dropdown.style.display = isVisible ? 'none' : 'block';
-            
-            if (!isVisible) {
-                // Position the dropdown relative to the bell button
-                const bellRect = bell.getBoundingClientRect();
-                dropdown.style.top = (bellRect.bottom + 10) + 'px';
-                dropdown.style.right = (window.innerWidth - bellRect.right) + 'px';
-                
-                updateNotificationList();
-                // Mark all as read when opened
-                notifications.forEach(n => n.read = true);
-                updateNotificationBadge();
-            }
-        }
-        
-        // Get notification icon based on type
-        function getNotificationIcon(type) {
-            const icons = {
-                'payment_method_updated': 'credit-card',
-                'contract_signed': 'file-contract',
-                'job_completed': 'check-circle',
-                'performance_review': 'star',
-                'system_update': 'cog',
-                'warning': 'exclamation-triangle',
-                'error': 'times-circle',
-                'success': 'check-circle',
-                'info': 'info-circle'
-            };
-            return icons[type] || 'bell';
-        }
-        
-        // Format notification time
-        function formatNotificationTime(timestamp) {
-            const now = new Date();
-            const notificationTime = new Date(timestamp);
-            const diffMs = now - notificationTime;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
-            
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins}m ago`;
-            if (diffHours < 24) return `${diffHours}h ago`;
-            if (diffDays < 7) return `${diffDays}d ago`;
-            return notificationTime.toLocaleDateString();
-        }
 
-        // ==================== JSON UPDATE NOTIFICATIONS ====================
-        
-        // Enhanced notification for JSON updates in user portal
-        function notifyUserJSONUpdate(fileName, action, details = '') {
-            const messages = {
-                'users.json': {
-                    'updated': `✅ Your profile has been updated!`,
-                    'payment': `💰 Your payment method has been updated!`,
-                    'performance': `⭐ Your performance review is now available!`
-                },
-                'jobs-data.json': {
-                    'updated': `🎯 Your job assignments have been updated!`,
-                    'assigned': `✅ A new job has been assigned to you!`
-                },
-
-                'performance.json': {
-                    'updated': `⭐ Your performance review has been updated!`,
-                    'created': `⭐ A new performance review is available!`
-                },
-                'uploaded-contracts.json': {
-                    'updated': `📄 Your contract has been updated!`,
-                    'uploaded': `📄 Your signed contract is now available!`
-                }
-            };
-            
-            const fileMessages = messages[fileName] || {};
-            const message = fileMessages[action] || `✅ Your ${fileName} has been updated!`;
-            
-            showNotification(`${message} ${details}`, 'success');
-        }
 
         // Load freelancer data from JSON file
         async function loadUsersData() {
