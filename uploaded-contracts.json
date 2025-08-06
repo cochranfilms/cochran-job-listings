@@ -1,7 +1,24 @@
 {
   "exportDate": "2025-08-05T23:12:09.218Z",
-  "totalContracts": 0,
+  "totalContracts": 1,
   "contracts": [],
-  "uploadedContracts": [],
-  "lastUpdated": "2025-08-05T23:12:09.218Z"
+  "uploadedContracts": [
+    {
+      "contractId": "CF-1754439317321-J8HF4",
+      "freelancerName": "Cody Cochran",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Assistant",
+      "rate": "$150/hour",
+      "location": "Miami, FL",
+      "fileName": "CF-1754439317321-J8HF4.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-06T00:15:29.044Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754439317321-J8HF4.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-05",
+      "signedDate": "2025-08-05"
+    }
+  ],
+  "lastUpdated": "2025-08-06T00:15:29.044Z"
 }
