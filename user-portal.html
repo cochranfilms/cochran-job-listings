@@ -1461,6 +1461,11 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('userPortal').style.display = 'block';
             loadUserData();
+            
+            // Initialize creative features after portal is shown
+            setTimeout(() => {
+                initializeCreativeFeatures();
+            }, 500);
         }
 
         // Show login screen
@@ -1514,11 +1519,11 @@
             // Update welcome message
             document.getElementById('userName').textContent = currentUser.name;
             
-            // Display user info
+            // Display user info for modern layout
             displayUserInfo();
-            displayUserContracts();
-            displayUserJobs();
-            displayUserPerformanceReviews();
+            displayCurrentJobs();
+            displayContracts();
+            displayPerformanceReviews();
         }
 
         // Refresh user data manually
@@ -1530,7 +1535,7 @@
                             console.log('✅ Data refreshed successfully!');
         }
 
-        // Display user information
+        // Display user information for modern layout
         function displayUserInfo() {
             const container = document.getElementById('userInfo');
             
@@ -1540,11 +1545,6 @@
                 paymentMethod: currentUser.paymentMethod,
                 paymentStatus: currentUser.paymentStatus
             });
-            
-            // Get all jobs for this user from the jobs object and convert to array
-            const userJobsObject = currentUser.jobs || {};
-            const userJobs = Object.values(userJobsObject);
-            const primaryJobId = currentUser.primaryJob;
             
             // Fix timezone issues with approved date
             const fixedApprovedDate = fixTimezone(currentUser.approvedDate);
@@ -1562,71 +1562,658 @@
                 }
             }
             
-
-            
             container.innerHTML = `
-                <div class="profile-grid">
-                    <!-- Contact Information Card -->
-                    <div class="contact-info-card">
-                        <h3><i class="fas fa-user-circle"></i> Contact Information</h3>
-                        <div class="contact-details">
-                            <div class="contact-item">
-                                <i class="fas fa-user"></i>
-                                <div>
-                                    <strong>Full Name</strong>
-                                    <span>${currentUser.name}</span>
+                <div class="profile-info">
+                    <div class="info-item">
+                        <span class="label">Full Name</span>
+                        <span class="value">${currentUser.name}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Email Address</span>
+                        <span class="value">${currentUser.email}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Approved Date</span>
+                        <span class="value">${displayApprovedDate}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Role</span>
+                        <span class="value">${currentUser.role || 'Creator'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Location</span>
+                        <span class="value">${currentUser.location || 'N/A'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Rate</span>
+                        <span class="value highlight">${currentUser.rate || 'N/A'}</span>
+                    </div>
+                </div>
+            `;
+            
+            // Update project info
+            displayProjectInfo();
+            
+            // Update payment info
+            displayPaymentInfo();
+        }
+
+        // Display project information for modern layout
+        function displayProjectInfo() {
+            const container = document.getElementById('projectInfo');
+            if (!container) return;
+            
+            const userJobs = Object.values(currentUser.jobs || {});
+            const selectedJob = getSelectedJob();
+            
+            if (selectedJob) {
+                const projectProgress = getProjectProgress();
+                
+                container.innerHTML = `
+                    <div class="project-info">
+                        <h3>${selectedJob.title || selectedJob.role || 'Current Position'}</h3>
+                        <div class="project-status">
+                            <span class="status-badge status-${selectedJob.projectStatus || 'upcoming'}">
+                                ${selectedJob.projectStatus || 'upcoming'}
+                            </span>
+                        </div>
+                        <div class="project-progress">
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: ${projectProgress}%"></div>
+                            </div>
+                            <span class="progress-text">${projectProgress}% Complete</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="no-project">
+                        <i class="fas fa-calendar-plus"></i>
+                        <p>No active project assigned</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Display payment information for modern layout
+        function displayPaymentInfo() {
+            const container = document.getElementById('paymentMethodSection');
+            if (!container) return;
+            
+            if (currentUser.paymentMethod) {
+                container.innerHTML = `
+                    <div class="payment-info">
+                        <div class="payment-method">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${currentUser.paymentMethod.toUpperCase()}</span>
+                        </div>
+                        <button onclick="showPaymentModal()" class="btn btn-secondary">
+                            <i class="fas fa-edit"></i>
+                            Update Payment Method
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="no-payment">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Payment method not configured</p>
+                        <button onclick="showPaymentModal()" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Set Payment Method
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Helper function to get selected job
+        function getSelectedJob() {
+            if (!currentUser || !currentUser.jobs) return null;
+            
+            const jobs = Object.values(currentUser.jobs);
+            if (jobs.length === 0) return null;
+            
+            // Return the primary job or the first job
+            return jobs.find(job => job.id === currentUser.primaryJob) || jobs[0];
+        }
+
+        // Helper function to get project progress
+        function getProjectProgress() {
+            const job = getSelectedJob();
+            if (!job) return 0;
+            
+            const status = job.projectStatus || 'upcoming';
+            switch (status) {
+                case 'upcoming': return 0;
+                case 'in-progress': return 50;
+                case 'completed': return 100;
+                default: return 0;
+            }
+        }
+
+        // Display current jobs for modern layout
+        function displayCurrentJobs() {
+            const container = document.getElementById('jobsContent');
+            if (!container) return;
+            
+            const userJobs = Object.values(currentUser.jobs || {});
+            
+            if (userJobs.length > 0) {
+                container.innerHTML = userJobs.map(job => `
+                    <div class="card job-card">
+                        <div class="card-header">
+                            <h3 class="card-title">${job.title || job.role || 'Project'}</h3>
+                            <span class="status-badge status-${job.projectStatus || 'upcoming'}">
+                                ${job.projectStatus || 'upcoming'}
+                            </span>
+                        </div>
+                        <div class="job-details">
+                            <div class="job-info">
+                                <div class="info-item">
+                                    <span class="label">Location:</span>
+                                    <span class="value">${job.location || 'N/A'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Rate:</span>
+                                    <span class="value highlight">${job.pay || job.rate || 'N/A'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Start Date:</span>
+                                    <span class="value">${job.projectStart || job.date || 'N/A'}</span>
                                 </div>
                             </div>
-                            <div class="contact-item">
-                                <i class="fas fa-envelope"></i>
-                                <div>
-                                    <strong>Email Address</strong>
-                                    <span>${currentUser.email}</span>
-                                </div>
-                            </div>
-                            <div class="contact-item">
-                                <i class="fas fa-calendar-check"></i>
-                                <div>
-                                    <strong>Approved Date</strong>
-                                    <span>${displayApprovedDate}</span>
-                                </div>
-                            </div>
-                            <div class="contact-item">
-                                <i class="fas fa-credit-card"></i>
-                                <div>
-                                    <strong>Payment Method</strong>
-                                    <span>${currentUser.paymentMethod ? currentUser.paymentMethod.toUpperCase() : 'Not Set'}</span>
+                            <div class="job-timeline">
+                                <h4>Project Timeline</h4>
+                                <div class="timeline">
+                                    ${renderTimelineSteps(job)}
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Current Jobs Card -->
-                    <div class="current-job-card">
-                        <div class="job-header-section">
-                            <h3><i class="fas fa-briefcase"></i> Your Assignments</h3>
-                            <span class="job-count">${userJobs.length} Active Job${userJobs.length !== 1 ? 's' : ''}</span>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <div class="card no-jobs-card">
+                        <div class="no-jobs-content">
+                            <i class="fas fa-calendar-times"></i>
+                            <h3>No Jobs Assigned</h3>
+                            <p>You don't have any active jobs at the moment.</p>
+                            <p>New assignments will appear here automatically.</p>
                         </div>
-                        
-                        <div class="job-selector">
-                            ${userJobs.map((job, index) => {
-                                // Get project status from users data
-                                const userJob = currentUser.jobs[job.id];
-                                const projectStatus = userJob && userJob.projectStatus ? userJob.projectStatus : 'upcoming';
-                                const paymentStatus = userJob && userJob.paymentStatus ? userJob.paymentStatus : 'pending';
-                                
-                                return `
-                                <div class="job-option ${job.id === primaryJobId ? 'active' : ''}" onclick="selectJob(${index}, '${job.id}')">
-                                    <div class="job-info">
-                                        <div class="job-title">
-                                            <i class="fas fa-${getJobIcon(job.projectType)}"></i>
-                                            <strong>${job.title || job.role || 'Assistant Position'}</strong>
-                                            ${job.id === primaryJobId ? '<span class="primary-badge">Primary</span>' : ''}
-                                        </div>
-                                        <div class="job-type">
-                                            <i class="fas fa-tag"></i>
-                                            <span>${job.projectType || 'Assistant'}</span>
-                                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Render timeline steps for jobs
+        function renderTimelineSteps(job) {
+            const steps = [
+                { title: 'Project Assigned', status: 'completed' },
+                { title: 'In Progress', status: job.projectStatus === 'in-progress' || job.projectStatus === 'completed' ? 'completed' : 'upcoming' },
+                { title: 'Completed', status: job.projectStatus === 'completed' ? 'completed' : 'upcoming' }
+            ];
+            
+            return steps.map(step => `
+                <div class="timeline-item ${step.status}">
+                    <div class="timeline-content">
+                        <h4>${step.title}</h4>
+                        <p>${step.status === 'completed' ? 'Step completed' : 'Pending'}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display contracts for modern layout
+        function displayContracts() {
+            const container = document.getElementById('contractsContent');
+            if (!container) return;
+            
+            const userContract = getUserContractStatus(currentUser.email);
+            
+            if (userContract) {
+                container.innerHTML = `
+                    <div class="card contract-card">
+                        <div class="card-header">
+                            <h2 class="card-title">Signed Contract</h2>
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div class="contract-info">
+                            <div class="contract-details">
+                                <div class="info-item">
+                                    <span class="label">Contract ID:</span>
+                                    <span class="value">${userContract.contractId || 'N/A'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Status:</span>
+                                    <span class="status-badge status-completed">Signed</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Signed Date:</span>
+                                    <span class="value">${userContract.signedDate || 'N/A'}</span>
+                                </div>
+                            </div>
+                            <div class="contract-actions">
+                                <button onclick="downloadUserContract()" class="btn btn-primary">
+                                    <i class="fas fa-download"></i>
+                                    Download Contract
+                                </button>
+                                <button onclick="viewContractDetails()" class="btn btn-secondary">
+                                    <i class="fas fa-eye"></i>
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="card no-contract-card">
+                        <div class="no-contract-content">
+                            <i class="fas fa-file-signature"></i>
+                            <h3>No Contract Found</h3>
+                            <p>You don't have any signed contracts yet.</p>
+                            <p>Contracts will appear here once they're signed and uploaded.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Display performance reviews for modern layout
+        function displayPerformanceReviews() {
+            const container = document.getElementById('performanceContent');
+            if (!container) return;
+            
+            const userEmail = currentUser.email;
+            const performance = performanceReviews[userEmail];
+            
+            if (performance) {
+                container.innerHTML = `
+                    <div class="card performance-card">
+                        <div class="card-header">
+                            <h2 class="card-title">Latest Review</h2>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="performance-info">
+                            <div class="performance-rating">
+                                <h3>Overall Rating</h3>
+                                <div class="rating-stars">
+                                    ${generateStars(performance.overallRating || 0)}
+                                </div>
+                                <span class="rating-text">${performance.overallRating || 0}/5</span>
+                            </div>
+                            <div class="performance-details">
+                                <div class="info-item">
+                                    <span class="label">Review Date:</span>
+                                    <span class="value">${performance.reviewDate ? new Date(performance.reviewDate).toLocaleDateString() : 'N/A'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Reviewer:</span>
+                                    <span class="value">${performance.reviewer || 'Admin Team'}</span>
+                                </div>
+                            </div>
+                            ${performance.comments ? `
+                                <div class="performance-comments">
+                                    <h4>Comments</h4>
+                                    <p>${performance.comments}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="card no-performance-card">
+                        <div class="no-performance-content">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>No Performance Review</h3>
+                            <p>You don't have any performance reviews yet.</p>
+                            <p>Reviews will appear here after project completion.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Generate star rating display
+        function generateStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 !== 0;
+            let stars = '';
+            
+            for (let i = 0; i < 5; i++) {
+                if (i < fullStars) {
+                    stars += '<i class="fas fa-star"></i>';
+                } else if (i === fullStars && hasHalfStar) {
+                    stars += '<i class="fas fa-star-half-alt"></i>';
+                } else {
+                    stars += '<i class="far fa-star"></i>';
+                }
+            }
+            
+            return stars;
+        }
+
+        // ==================== CREATIVE POWERHOUSE FEATURES ====================
+        
+        // Animated welcome message
+        function animateWelcomeMessage() {
+            const welcomeElement = document.querySelector('.dashboard-header h1');
+            if (welcomeElement) {
+                welcomeElement.style.opacity = '0';
+                welcomeElement.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    welcomeElement.style.transition = 'all 0.8s ease';
+                    welcomeElement.style.opacity = '1';
+                    welcomeElement.style.transform = 'translateY(0)';
+                }, 300);
+            }
+        }
+
+        // Particle background effect
+        function createParticleBackground() {
+            const mainContent = document.querySelector('.main-content');
+            if (!mainContent) return;
+            
+            // Create particle container
+            const particleContainer = document.createElement('div');
+            particleContainer.className = 'particle-container';
+            particleContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: -1;
+                overflow: hidden;
+            `;
+            
+            // Add particles
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 2px;
+                    height: 2px;
+                    background: var(--primary);
+                    border-radius: 50%;
+                    opacity: 0.3;
+                    animation: float ${3 + Math.random() * 4}s infinite ease-in-out;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                `;
+                particleContainer.appendChild(particle);
+            }
+            
+            mainContent.appendChild(particleContainer);
+        }
+
+        // Add floating animation to CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+                50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
+            }
+            
+            .card {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .card::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: linear-gradient(45deg, transparent, rgba(255,178,0,0.1), transparent);
+                transform: rotate(45deg);
+                transition: all 0.6s ease;
+                opacity: 0;
+            }
+            
+            .card:hover::before {
+                opacity: 1;
+                transform: rotate(45deg) translateX(100%);
+            }
+            
+            .status-badge {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .status-badge::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+                transition: left 0.5s ease;
+            }
+            
+            .status-badge:hover::after {
+                left: 100%;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Interactive timeline with hover effects
+        function enhanceTimelineInteractivity() {
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            timelineItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05)';
+                    this.style.transition = 'transform 0.3s ease';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+        }
+
+        // Dynamic progress bar animation
+        function animateProgressBars() {
+            const progressBars = document.querySelectorAll('.progress-bar');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                
+                setTimeout(() => {
+                    bar.style.transition = 'width 1.5s ease-out';
+                    bar.style.width = width;
+                }, 500);
+            });
+        }
+
+        // Enhanced notification system with animations
+        function showEnhancedNotification(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} enhanced-notification`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-${getNotificationIcon(type)}"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="notification-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // Add enhanced styling
+            notification.style.cssText = `
+                transform: translateX(100%) scale(0.8);
+                opacity: 0;
+                transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            `;
+            
+            const container = document.querySelector('.notification-container') || document.body;
+            container.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0) scale(1)';
+                notification.style.opacity = '1';
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%) scale(0.8)';
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 400);
+            }, duration);
+        }
+
+        function getNotificationIcon(type) {
+            const icons = {
+                'success': 'check-circle',
+                'error': 'exclamation-circle',
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle'
+            };
+            return icons[type] || 'info-circle';
+        }
+
+        // Initialize creative features
+        function initializeCreativeFeatures() {
+            // Animate welcome message
+            animateWelcomeMessage();
+            
+            // Create particle background
+            createParticleBackground();
+            
+            // Enhance timeline interactivity
+            setTimeout(enhanceTimelineInteractivity, 1000);
+            
+            // Animate progress bars
+            setTimeout(animateProgressBars, 1500);
+            
+            // Add card hover effects
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+            
+            // Add sidebar navigation effects
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    // Add ripple effect
+                    const ripple = document.createElement('span');
+                    ripple.className = 'ripple';
+                    ripple.style.cssText = `
+                        position: absolute;
+                        border-radius: 50%;
+                        background: rgba(255,178,0,0.3);
+                        transform: scale(0);
+                        animation: ripple 0.6s linear;
+                        pointer-events: none;
+                    `;
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => ripple.remove(), 600);
+                });
+            });
+            
+            // Add typing effect to welcome message
+            typeWelcomeMessage();
+        }
+
+        // Typing effect for welcome message
+        function typeWelcomeMessage() {
+            const welcomeElement = document.querySelector('.dashboard-header h1');
+            if (!welcomeElement) return;
+            
+            const originalText = welcomeElement.textContent;
+            welcomeElement.textContent = '';
+            
+            let i = 0;
+            const typeInterval = setInterval(() => {
+                welcomeElement.textContent += originalText.charAt(i);
+                i++;
+                
+                if (i >= originalText.length) {
+                    clearInterval(typeInterval);
+                    // Add cursor blink effect
+                    welcomeElement.innerHTML += '<span class="cursor">|</span>';
+                }
+            }, 50);
+        }
+
+        // Add cursor animation to CSS
+        const cursorStyle = document.createElement('style');
+        cursorStyle.textContent = `
+            .cursor {
+                animation: blink 1s infinite;
+            }
+            
+            @keyframes blink {
+                0%, 50% { opacity: 1; }
+                51%, 100% { opacity: 0; }
+            }
+            
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+            
+            .nav-link {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .ripple {
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255,178,0,0.3);
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+            }
+        `;
+        document.head.appendChild(cursorStyle);
+
+        // Enhanced data refresh with loading animation
+        async function refreshUserDataWithAnimation() {
+            if (!currentUser) return;
+            
+            // Show loading animation
+            const refreshBtn = document.querySelector('.btn[onclick*="refreshUserData"]');
+            if (refreshBtn) {
+                const originalText = refreshBtn.innerHTML;
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+                refreshBtn.disabled = true;
+                
+                try {
+                    await loadUserData();
+                    showEnhancedNotification('✅ Data refreshed successfully!', 'success');
+                } catch (error) {
+                    showEnhancedNotification('❌ Failed to refresh data', 'error');
+                } finally {
+                    refreshBtn.innerHTML = originalText;
+                    refreshBtn.disabled = false;
+                }
+            }
+        }
+
+        // Global refresh function
+        window.refreshUserData = refreshUserDataWithAnimation;
                                         <div class="job-details-grid">
                                             <div class="job-detail">
                                                 <i class="fas fa-map-marker-alt"></i>
@@ -4003,6 +4590,9 @@
         document.addEventListener('DOMContentLoaded', async function() {
             // Initialize sophisticated notification system
             await initializeNotificationSystem();
+            
+            // Initialize creative powerhouse features
+            initializeCreativeFeatures();
             
             // Close notification dropdown when clicking outside
             document.addEventListener('click', function(event) {
