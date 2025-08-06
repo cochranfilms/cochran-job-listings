@@ -18,7 +18,8 @@ module.exports = async (req, res) => {
         branch: process.env.GITHUB_BRANCH || 'main'
     };
 
-    if (!GITHUB_CONFIG.token) {
+    // Only require GitHub token for POST requests (uploading to GitHub)
+    if (req.method === 'POST' && !GITHUB_CONFIG.token) {
         console.error('❌ GITHUB_TOKEN environment variable not set');
         return res.status(500).json({ error: 'GitHub token not configured' });
     }

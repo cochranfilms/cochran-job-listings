@@ -9,6 +9,7 @@ const notificationsRouter = require('./api/notifications');
 const testRunnerRouter = require('./api/test-runner');
 const exportResultsRouter = require('./api/export-results');
 const deletePdfRouter = require('./api/delete-pdf');
+const contractsRouter = require('./api/contracts');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -292,6 +293,10 @@ app.use('/api/export-results', exportResultsRouter);
 
 // PDF Deletion API route
 app.use('/api/delete-pdf', deletePdfRouter);
+
+// Contracts API routes
+app.get('/api/contracts', contractsRouter);
+app.post('/api/contracts', contractsRouter);
 
 // Local file deletion endpoint for contracts
 app.post('/api/contracts/delete-local', async (req, res) => {
