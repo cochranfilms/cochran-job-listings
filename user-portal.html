@@ -3271,13 +3271,15 @@
             }
 
             // Display jobs with status (now using users data directly)
-            displayJobsWithStatus();
+            displayJobsWithStatus().catch(error => {
+                console.warn('⚠️ Error displaying jobs with status:', error);
+            });
         }
 
 
 
         // Display jobs with project status
-        function displayJobsWithStatus() {
+        async function displayJobsWithStatus() {
             const container = document.getElementById('jobsContent');
             if (!container) {
                 console.warn('⚠️ jobsContent container not found in DOM');
@@ -3288,6 +3290,12 @@
             console.log('Current user:', currentUser);
             console.log('Current user jobs:', currentUser?.jobs);
             console.log('Selected job index:', selectedJobIndex);
+            
+            // Ensure performance reviews are loaded before displaying timeline
+            if (Object.keys(performanceReviews).length === 0) {
+                console.log('🔄 Loading performance reviews before displaying timeline...');
+                await loadPerformanceReviews();
+            }
             
             // Get the selected job or fall back to primary job
             const selectedJob = getSelectedJob();
@@ -3566,13 +3574,8 @@
         function getProjectTimeline() {
             if (!currentUser) return [];
             
-            // Ensure performance reviews are loaded
-            if (Object.keys(performanceReviews).length === 0) {
-                console.warn('⚠️ Performance reviews not loaded yet, loading now...');
-                loadPerformanceReviews().then(() => {
-                    console.log('✅ Performance reviews loaded, timeline should update');
-                });
-            }
+            // Performance reviews should be loaded before this function is called
+            // Don't load them here to avoid infinite loops
             
             // Get contract status from uploaded-contracts.json
             const userContract = getUserContractStatus(currentUser.email);
@@ -5119,8 +5122,10 @@
         
         // Immediate update functions for real-time UI updates
         function updateTimelineDisplay() {
-            if (currentUser && document.getElementById('timelineContainer')) {
-                generateTimeline();
+            if (currentUser && document.getElementById('jobsContent')) {
+                displayJobsWithStatus().catch(error => {
+                    console.warn('⚠️ Error updating timeline display:', error);
+                });
             }
         }
         
