@@ -3,7 +3,7 @@
     "Thing One": {
       "profile": {
         "email": "dedejackson727@gmail.com",
-        "password": "1mGvo5HOBOgR",
+        "password": "test1234",
         "role": "Producer",
         "location": "Atlanta, GA",
         "projectStart": "2025-10-10T20:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/5/2025, 10:37:09 PM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754447829109-88LR8"
       },
       "jobs": {
         "job-producer-default": {
