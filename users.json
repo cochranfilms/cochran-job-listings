@@ -3,7 +3,7 @@
     "Cody Cochran": {
       "profile": {
         "email": "codylcochran89@gmail.com",
-        "password": "rvrJSMMM3yjh",
+        "password": "youtube",
         "role": "Editor",
         "location": "Douglasville, GA",
         "projectStart": "2025-10-25T14:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/6/2025, 5:23:17 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754472197848-S360O"
       },
       "jobs": {
         "job-editor-default": {
