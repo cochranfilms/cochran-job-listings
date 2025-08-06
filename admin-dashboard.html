@@ -69,6 +69,10 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- PDF Generation Libraries (same as contract.html) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <!-- Performance Data Script -->
 
     
@@ -2378,6 +2382,288 @@
             document.body.appendChild(modal);
         }
 
+        // PDF Generation Functions (same as contract.html)
+        function generateContractPDF(contractData) {
+            try {
+                console.log('📄 Starting PDF generation for contract:', contractData.contractId);
+                
+                const { jsPDF } = window.jspdf;
+                if (!jsPDF) {
+                    throw new Error('jsPDF library not loaded');
+                }
+                
+                const doc = new jsPDF();
+                
+                // ==================== HEADER ====================
+                
+                // Professional header with gold background
+                doc.setFillColor(255, 178, 0);
+                doc.rect(0, 0, 210, 25, 'F');
+                
+                // Company name and title in header
+                doc.setFontSize(20);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('COCHRAN FILMS', 105, 12, { align: 'center' });
+                
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'normal');
+                doc.text('FREELANCE CONTRACT AGREEMENT', 105, 20, { align: 'center' });
+                
+                // ==================== CONTRACT METADATA ====================
+                
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Contract ID: ${contractData.contractId}`, 20, 35);
+                doc.text(`Effective Date: ${contractData.effectiveDate}`, 20, 40);
+                
+                // ==================== CONTRACTOR INFORMATION ====================
+                
+                // Professional section header with background
+                doc.setFillColor(255, 178, 0);
+                doc.rect(20, 50, 170, 8, 'F');
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACTOR INFORMATION', 105, 56, { align: 'center' });
+                
+                // Two separate info boxes for better organization
+                // Left box - Contractor Info
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, 65, 80, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(20, 65, 80, 25, 'S');
+                
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACTOR INFO', 25, 72);
+                
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Name: ${contractData.freelancerName || 'Not specified'}`, 25, 78);
+                doc.text(`Role: ${contractData.role || 'Not specified'}`, 25, 82);
+                doc.text(`Location: ${contractData.location || 'Not specified'}`, 25, 86);
+                
+                // Right box - Project Details
+                doc.setFillColor(248, 249, 250);
+                doc.rect(110, 65, 80, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(110, 65, 80, 25, 'S');
+                
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('PROJECT DETAILS', 115, 72);
+                
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Email: ${contractData.freelancerEmail || 'Not specified'}`, 115, 78);
+                doc.text(`Start: ${contractData.projectStart || 'Not specified'}`, 115, 82);
+                doc.text(`Rate: ${contractData.rate || 'Not specified'}`, 115, 86);
+                
+                // ==================== CONTRACT TERMS ====================
+                
+                // Professional section header with background
+                doc.setFillColor(255, 178, 0);
+                doc.rect(20, 100, 170, 8, 'F');
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACT TERMS & CONDITIONS', 105, 106, { align: 'center' });
+                
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                
+                // Professional compact terms list
+                const compactTerms = [
+                    'INDEPENDENT CONTRACTOR: Not an employee of\nCochran Films.',
+                    'SERVICES: Provide professional services as specified.',
+                    'COMPENSATION: Payment within 24 hours of completion.',
+                    'STANDARDS: All work must meet Cochran Films quality.',
+                    'ATTIRE: Professional attire (all black) required.',
+                    'PUNCTUALITY: Arrive 15 minutes before start time.',
+                    'DOCUMENTATION: Bring valid ID and signed contract.',
+                    'EQUIPMENT: Use provided Cochran Films equipment.',
+                    'CONDUCT: Maintain professional demeanor at all times.',
+                    'SAFETY: Follow all safety protocols provided.',
+                    'CONFIDENTIALITY: Respect project confidentiality.',
+                    'BTS CONTENT: May freely take and share behind-the-scenes.',
+                    'TAX OBLIGATIONS: Contractor responsible for personal taxes.',
+                    'TRANSPORTATION: Contractor responsible for own transport.'
+                ];
+                
+                // Process each term with TWO-COLUMN layout to save vertical space
+                compactTerms.forEach((term, index) => {
+                    // Split into two columns: left column (0-6) and right column (7-13)
+                    const isLeftColumn = index < 7;
+                    const columnIndex = isLeftColumn ? index : index - 7;
+                    const xPos = isLeftColumn ? 20 : 110; // Left column at x=20, right column at x=110
+                    const fixedYPos = 120 + (columnIndex * 8);
+                    
+                    // Render each term with two-column layout and text wrapping
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    
+                    // Handle multi-line terms (like term #1)
+                    if (term.includes('\n')) {
+                        const lines = term.split('\n');
+                        lines.forEach((line, lineIndex) => {
+                            doc.text(line, xPos, fixedYPos + (lineIndex * 4));
+                        });
+                    } else {
+                        doc.text(term, xPos, fixedYPos);
+                    }
+                });
+                
+                // Calculate signature position AFTER all terms are rendered (two-column layout)
+                const maxColumnHeight = Math.ceil(compactTerms.length / 2) * 8; // Height of tallest column
+                const lastTermY = 120 + maxColumnHeight;
+                const signatureY = lastTermY + 20; // Add 20px spacing after last term
+                
+                // ==================== SIGNATURES ====================
+                
+                // Signature header with professional styling
+                doc.setFillColor(255, 178, 0);
+                doc.rect(20, signatureY - 5, 170, 8, 'F');
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACT SIGNATURES', 105, signatureY + 2, { align: 'center' });
+                
+                // Company signature (pre-signed) - Professional styling
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('COCHRAN FILMS (COMPANY)', 20, signatureY + 15);
+                
+                // Company signature box with professional border
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, signatureY + 20, 75, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(20, signatureY + 20, 75, 25, 'S');
+                
+                doc.setFontSize(6);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                
+                doc.text('Authorized Signature:', 25, signatureY + 26);
+                
+                // CURSIVE SIGNATURE FOR CODY COCHRAN
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'italic'); // Use italic for cursive effect
+                doc.text('Cody Cochran', 25, signatureY + 32);
+                
+                // Add signature line for authenticity
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.3);
+                doc.line(25, signatureY + 34, 85, signatureY + 34);
+                
+                doc.setFontSize(6);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Title: Founder & CEO', 25, signatureY + 38);
+                doc.text('Date: ' + contractData.effectiveDate, 25, signatureY + 42);
+                
+                // Contractor signature - Professional styling
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACTOR SIGNATURE', 105, signatureY + 15);
+                
+                // Contractor signature box with professional border
+                doc.setFillColor(248, 249, 250);
+                doc.rect(105, signatureY + 20, 75, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(105, signatureY + 20, 75, 25, 'S');
+                
+                doc.setFontSize(6);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                
+                doc.text('Contractor:', 115, signatureY + 26);
+                
+                // CURSIVE SIGNATURE FOR CONTRACTOR
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'italic'); // Use italic for cursive effect
+                doc.text(contractData.freelancerName || 'Contractor Name', 115, signatureY + 32);
+                
+                // Add signature line for authenticity
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.3);
+                doc.line(115, signatureY + 34, 175, signatureY + 34);
+                
+                doc.setFontSize(6);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Signature: ' + (contractData.signature || 'Digitally Signed'), 115, signatureY + 38);
+                doc.text('Date: ' + (contractData.signatureDate || contractData.effectiveDate), 115, signatureY + 42);
+                
+                // ==================== PROFESSIONAL LEGAL FOOTER ====================
+                
+                // Footer - positioned with proper spacing to fit in container
+                const footerY = 260; // MOVED DOWN from 240 to 260 to avoid overlapping signature boxes
+                
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, footerY - 5, 170, 20, 'F'); // Increased height to 20mm
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.3);
+                doc.rect(20, footerY - 5, 170, 20, 'S');
+                
+                doc.setFontSize(6);
+                doc.setTextColor(100, 100, 100);
+                doc.setFont('helvetica', 'normal');
+                doc.text('This contract was digitally signed and is legally binding under Georgia law.', 105, footerY + 3, { align: 'center' });
+                doc.text('Generated by Cochran Films Contract Portal • ' + new Date().toLocaleDateString(), 105, footerY + 8, { align: 'center' });
+                doc.text('Contract ID: ' + contractData.contractId, 105, footerY + 13, { align: 'center' });
+                
+                return doc;
+            } catch (error) {
+                console.error('❌ Error generating PDF:', error);
+                throw error;
+            }
+        }
+        
+        // Download PDF directly to user's device
+        function downloadContractPDF(contractData) {
+            try {
+                console.log('📄 Generating PDF for direct download...');
+                
+                // Check if contractData is available
+                if (!contractData) {
+                    console.error('❌ No contract data available for download');
+                    alert('❌ No contract data available. Please sign the contract first.');
+                    return;
+                }
+                
+                // Generate PDF using the best available method
+                let doc;
+                try {
+                    doc = generateContractPDF(contractData);
+                } catch (error) {
+                    console.warn('⚠️ PDF generation failed:', error);
+                    alert('❌ There was an error generating the PDF. Please try again.');
+                    return;
+                }
+                
+                // Save PDF to user's device
+                const fileName = `Cochran-Films-Contract-${contractData.contractId}.pdf`;
+                doc.save(fileName);
+                
+                console.log('✅ PDF downloaded successfully:', fileName);
+                
+            } catch (error) {
+                console.error('❌ Error downloading PDF:', error);
+                alert('❌ There was an error downloading your contract. Please try again or contact support.');
+            }
+        }
+        
         // Download user contract
         async function downloadUserContract(userName) {
             // Ensure function is globally accessible
@@ -2479,6 +2765,33 @@
             console.log('📄 Contract githubUrl:', userContract.githubUrl);
             
             try {
+                // First, try to generate PDF on-the-fly using contract data
+                if (userContract.contractId && userData) {
+                    console.log('📄 Attempting to generate PDF on-the-fly for contract:', userContract.contractId);
+                    
+                    // Create contract data for PDF generation
+                    const contractData = {
+                        contractId: userContract.contractId,
+                        freelancerName: userName,
+                        freelancerEmail: userData.profile?.email,
+                        role: userData.profile?.role,
+                        location: userData.profile?.location,
+                        projectStart: userData.profile?.projectStart,
+                        rate: userData.profile?.rate,
+                        effectiveDate: userData.profile?.approvedDate || new Date().toISOString().split('T')[0],
+                        signatureDate: userData.contract?.contractSignedDate || new Date().toISOString().split('T')[0],
+                        signature: 'Digitally Signed'
+                    };
+                    
+                    try {
+                        downloadContractPDF(contractData);
+                        showNotification('✅ Contract PDF generated and downloaded successfully!', 'success');
+                        return;
+                    } catch (pdfError) {
+                        console.warn('⚠️ PDF generation failed, trying file download methods:', pdfError);
+                    }
+                }
+                
                 // Try to download from local contracts directory first
                 if (userContract.contractId) {
                     console.log('📤 Attempting to download from local contracts directory:', userContract.contractId);

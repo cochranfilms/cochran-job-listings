@@ -101,6 +101,18 @@ runner.cleanupTestData().then(() => console.log('✅ Cleanup completed'));
 
 ### **PDF Files (`/contracts/` directory)**
 - Removes test PDF files: "test-contract.pdf", "test-delete-pdf.pdf"
+- Cleans up any test PDF files created during testing
+- Maintains production PDF files (CF-*.pdf files)
+
+### **PDF Generation System**
+- **Library Integration**: jsPDF and html2canvas libraries properly integrated
+- **On-the-fly Generation**: PDFs generated from contract data when files don't exist
+- **Fallback System**: Multiple download methods ensure successful file access
+- **Error Handling**: Comprehensive error handling with user feedback
+- **Professional Design**: Consistent PDF styling across all interfaces
+
+### **PDF Files (`/contracts/` directory)**
+- Removes test PDF files: "test-contract.pdf", "test-delete-pdf.pdf"
 - Cleans up any test contract files created during testing
 - Maintains production PDF files (CF-*.pdf files)
 

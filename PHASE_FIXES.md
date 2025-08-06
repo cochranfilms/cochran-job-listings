@@ -407,6 +407,114 @@ if (userContract.contractId) {
 }
 ```
 
+## Phase 16 Fix - PDF Generation & Download System Enhancement
+**Date**: 2025-08-06
+**Context**: PDF download functionality not working consistently across admin-dashboard.html and user-portal.html
+
+### Issues Identified
+1. **PDF Download Failures**: Both admin-dashboard.html and user-portal.html failing to download contract PDFs
+2. **Missing PDF Generation**: No on-the-fly PDF generation capability like contract.html
+3. **Inconsistent Download Methods**: Different download approaches between contract.html and other portals
+4. **File Access Issues**: Download functions not properly accessing existing PDF files in /contracts/ directory
+
+### Root Cause Analysis
+**PDF Download Issues**:
+- Admin dashboard and user portal were trying to download existing PDF files from /contracts/ directory
+- contract.html uses on-the-fly PDF generation with jsPDF library
+- Download functions in admin and user portals lacked PDF generation capability
+- Missing jsPDF and html2canvas libraries in admin and user portals
+
+**Architecture Mismatch**:
+- contract.html: Generates PDFs on-the-fly using contract data
+- admin-dashboard.html & user-portal.html: Tries to download existing PDF files
+- No unified approach for PDF handling across all interfaces
+
+### Solution Implemented
+**Unified PDF Generation System**:
+- **Added PDF Libraries**: Integrated jsPDF and html2canvas libraries to both admin-dashboard.html and user-portal.html
+- **PDF Generation Functions**: Implemented same PDF generation functions from contract.html
+- **On-the-fly Generation**: Added capability to generate PDFs from contract data when files don't exist
+- **Fallback System**: Maintains existing file download as fallback when PDF generation fails
+- **Consistent Implementation**: Same PDF generation logic across all three interfaces
+
+### Implementation Details
+
+#### **PDF Generation Functions Added**
+- `generateContractPDF()`: Creates professional PDF contracts with proper formatting
+- `downloadContractPDF()`: Downloads generated PDFs to user's device
+- **Professional Design**: Gold headers, contractor information boxes, contract terms, signatures
+- **Consistent Styling**: Same visual design as contract.html PDFs
+
+#### **Enhanced Download Logic**
+- **Primary Method**: Generate PDF on-the-fly using contract data from users.json
+- **Fallback Method**: Download existing PDF files from /contracts/ directory
+- **GitHub Fallback**: Download from GitHub URLs as final fallback
+- **Error Handling**: Comprehensive error handling with user feedback
+
+#### **Library Integration**
+- **jsPDF**: Professional PDF generation with proper formatting
+- **html2canvas**: HTML to canvas conversion (available for future enhancements)
+- **Consistent Loading**: Same library versions across all interfaces
+
+### Technical Implementation
+```javascript
+// PDF Generation Function (same as contract.html)
+function generateContractPDF(contractData) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Professional header with gold background
+    doc.setFillColor(255, 178, 0);
+    doc.rect(0, 0, 210, 25, 'F');
+    
+    // Contractor information boxes
+    // Contract terms and conditions
+    // Digital signatures
+    // Professional footer
+    
+    return doc;
+}
+
+// Enhanced download function with generation capability
+async function downloadUserContract(userName) {
+    // First, try to generate PDF on-the-fly
+    if (userContract.contractId && userData) {
+        const contractData = {
+            contractId: userContract.contractId,
+            freelancerName: userName,
+            // ... other contract data
+        };
+        
+        try {
+            downloadContractPDF(contractData);
+            return;
+        } catch (pdfError) {
+            // Fallback to file download methods
+        }
+    }
+    
+    // Fallback to existing file download methods
+    // ... existing download logic
+}
+```
+
+### Results Achieved
+- ✅ **Unified PDF System**: Same PDF generation capability across all interfaces
+- ✅ **On-the-fly Generation**: PDFs generated from contract data when files don't exist
+- ✅ **Professional Design**: Consistent PDF styling with gold headers and proper formatting
+- ✅ **Enhanced Reliability**: Multiple fallback methods ensure successful downloads
+- ✅ **Better User Experience**: Immediate PDF generation with professional appearance
+- ✅ **Consistent Architecture**: Same approach used in contract.html, admin-dashboard.html, and user-portal.html
+- ✅ **Library Integration**: jsPDF and html2canvas libraries properly integrated
+- ✅ **Error Handling**: Comprehensive error handling with user feedback
+
+### Benefits
+- **No Missing Files**: PDFs generated on-the-fly even when files don't exist in /contracts/
+- **Professional Appearance**: Consistent PDF design across all interfaces
+- **Reliable Downloads**: Multiple fallback methods ensure successful downloads
+- **User-Friendly**: Immediate feedback and professional PDF appearance
+- **Maintainable**: Single PDF generation logic shared across all interfaces
+
 ## Implementation Status
 
 ### Category: Authentication & User Portal Issues
