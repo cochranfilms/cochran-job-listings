@@ -1584,6 +1584,26 @@
             }
         }
         
+        // Download signed contract function
+        async function downloadSignedContract() {
+            try {
+                console.log('📄 Attempting to download signed contract...');
+                
+                if (!signedContractData) {
+                    console.log('❌ No signed contract data available');
+                    alert('❌ No signed contract data available. Please sign the contract first.');
+                    return;
+                }
+                
+                // Use the existing downloadContractPDF function with signed data
+                downloadContractPDF(signedContractData);
+                
+            } catch (error) {
+                console.error('❌ Error downloading signed contract:', error);
+                alert('❌ There was an error downloading your signed contract. Please try again or contact support.');
+            }
+        }
+        
         // Load users data from JSON file
         async function loadUsersData() {
             try {
