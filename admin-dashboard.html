@@ -2798,8 +2798,31 @@
                 return;
             }
             
-            // For now, just show a notification that user editing is not implemented yet
-            showNotification(`User editing for ${userName} is not implemented yet. This feature will be added soon.`, 'info');
+            // Populate the form with existing user data
+            document.getElementById('freelancerName').value = userName;
+            document.getElementById('freelancerEmail').value = userData.profile?.email || '';
+            document.getElementById('freelancerRole').value = userData.profile?.role || '';
+            document.getElementById('freelancerLocation').value = userData.profile?.location || '';
+            document.getElementById('projectStart').value = userData.profile?.projectStart || '';
+            document.getElementById('freelancerRate').value = userData.profile?.rate || '';
+            document.getElementById('approvedDate').value = userData.profile?.approvedDate || '';
+            
+            // Update the form title to indicate editing
+            const formTitle = document.querySelector('#contractForm h2');
+            if (formTitle) {
+                formTitle.textContent = `Edit Creator: ${userName}`;
+            }
+            
+            // Update submit button text
+            const submitButton = document.querySelector('#contractForm button[type="submit"]');
+            if (submitButton) {
+                submitButton.textContent = 'Update Creator';
+            }
+            
+            // Scroll to the form
+            document.getElementById('contractForm').scrollIntoView({ behavior: 'smooth' });
+            
+            showNotification(`Editing user: ${userName}. Only the fields you change will be updated.`, 'info');
         }
 
         async function deleteUser(userName) {
@@ -2948,113 +2971,164 @@
             const userRole = document.getElementById('freelancerRole').value;
             const userLocation = document.getElementById('freelancerLocation').value;
             
-            // Generate a temporary password for Firebase account creation
-            const tempPassword = generateTempPassword();
+            // Check if user already exists
+            const existingUser = users[userName];
+            const isEditing = existingUser !== undefined;
             
-            // Assign job data based on role and location
-            const assignedJobs = await assignJobsToUser(userRole, userLocation);
-            
-            const userData = {
-                profile: {
-                    email: userEmail,
-                    password: tempPassword, // Temporary password for Firebase account
-                    role: userRole,
-                    location: userLocation,
-                    projectStart: document.getElementById('projectStart').value,
-                    rate: document.getElementById('freelancerRate').value,
-                    approvedDate: document.getElementById('approvedDate').value
-                },
-                contract: {
-                    contractUrl: "contract.html",
-                    contractStatus: 'pending',
-                    contractSignedDate: null,
-                    contractUploadedDate: null,
-                    contractId: null
-                },
-                jobs: assignedJobs.jobs,
-                primaryJob: assignedJobs.primaryJob,
-                paymentMethod: null
-            };
-            
-            try {
-                // Check if user already exists
-                const existingUser = users[userName];
-                let firebaseResult = { success: true }; // Default success for existing users
+            if (isEditing) {
+                // EDITING EXISTING USER - Only update changed fields
+                console.log('🔄 Editing existing user:', userName);
                 
-                if (!existingUser) {
-                    // Only create Firebase account for new users
+                // Preserve existing data and only update changed fields
+                const updatedUserData = {
+                    profile: {
+                        ...existingUser.profile, // Keep existing profile data
+                        email: userEmail,
+                        role: userRole,
+                        location: userLocation,
+                        projectStart: document.getElementById('projectStart').value,
+                        rate: document.getElementById('freelancerRate').value,
+                        approvedDate: document.getElementById('approvedDate').value
+                    },
+                    contract: {
+                        ...existingUser.contract // Keep existing contract data
+                    },
+                    jobs: {
+                        ...existingUser.jobs // Keep existing jobs
+                    },
+                    primaryJob: existingUser.primaryJob, // Keep existing primary job
+                    paymentMethod: existingUser.paymentMethod // Keep existing payment method
+                };
+                
+                // Update the user data
+                users[userName] = updatedUserData;
+                
+                console.log('✅ User data updated (preserving existing data):', userName);
+                
+                // Update localStorage and GitHub
+                localStorage.setItem('users', JSON.stringify(users));
+                await updateUsersOnGitHub();
+                
+                // Refresh display
+                await displayUsers();
+                
+                // Add notification
+                await addNotification(
+                    'User Updated Successfully',
+                    `User "${userName}" has been updated while preserving existing contract, payment, and job data.`,
+                    'user_updated',
+                    {
+                        userName: userName,
+                        userEmail: userEmail,
+                        actionRequired: false,
+                        priority: 'normal'
+                    }
+                );
+                
+                // Clear form
+                clearFreelancerForm();
+                
+            } else {
+                // CREATING NEW USER
+                console.log('🔄 Creating new user:', userName);
+                
+                // Generate a temporary password for Firebase account creation
+                const tempPassword = generateTempPassword();
+                
+                // Assign job data based on role and location
+                const assignedJobs = await assignJobsToUser(userRole, userLocation);
+                
+                const userData = {
+                    profile: {
+                        email: userEmail,
+                        password: tempPassword, // Temporary password for Firebase account
+                        role: userRole,
+                        location: userLocation,
+                        projectStart: document.getElementById('projectStart').value,
+                        rate: document.getElementById('freelancerRate').value,
+                        approvedDate: document.getElementById('approvedDate').value
+                    },
+                    contract: {
+                        contractUrl: "contract.html",
+                        contractStatus: 'pending',
+                        contractSignedDate: null,
+                        contractUploadedDate: null,
+                        contractId: null
+                    },
+                    jobs: assignedJobs.jobs,
+                    primaryJob: assignedJobs.primaryJob,
+                    paymentMethod: null
+                };
+                
+                try {
+                    // Create Firebase account for new users
                     console.log('🔄 Creating new Firebase account for:', userEmail);
-                    firebaseResult = await createFirebaseAccount(userEmail, tempPassword);
-                } else {
-                    console.log('✅ User already exists, skipping Firebase account creation for:', userEmail);
-                }
-                
-                if (firebaseResult.success) {
-                    console.log('✅ User data updated for:', userEmail);
+                    const firebaseResult = await createFirebaseAccount(userEmail, tempPassword);
                     
-                    // 2. Add/Update user in local users object
-                    users[userName] = userData;
-                    
-                    // 3. Update localStorage
-                    localStorage.setItem('users', JSON.stringify(users));
-                    
-                    // 4. Update GitHub repository
-                    await updateUsersOnGitHub();
-                    
-                    // 5. Send job acceptance email (only for new users)
-                    if (!existingUser) {
+                    if (firebaseResult.success) {
+                        console.log('✅ User data created for:', userEmail);
+                        
+                        // Add new user to local users object
+                        users[userName] = userData;
+                        
+                        // Update localStorage
+                        localStorage.setItem('users', JSON.stringify(users));
+                        
+                        // Update GitHub repository
+                        await updateUsersOnGitHub();
+                        
+                        // Send job acceptance email for new users
                         await sendJobAcceptanceEmail(userName, userData);
+                        
+                        // Refresh display
+                        await displayUsers();
+                        
+                        // Add notification
+                        await addNotification(
+                            'User Created Successfully',
+                            `User "${userName}" has been created with Firebase account and job acceptance email sent.`,
+                            'user_created',
+                            {
+                                userName: userName,
+                                userEmail: userData.profile.email,
+                                actionRequired: false,
+                                priority: 'normal'
+                            }
+                        );
+                        
+                        // Clear form
+                        clearFreelancerForm();
+                        
+                    } else {
+                        // Add error notification
+                        await addNotification(
+                            'User Creation Failed',
+                            `Failed to create Firebase account for user "${userName}": ${firebaseResult.error}`,
+                            'error',
+                            {
+                                userName: userName,
+                                error: firebaseResult.error,
+                                actionRequired: true,
+                                priority: 'high'
+                            }
+                        );
                     }
                     
-                    // 6. Refresh display
-                    await displayUsers();
-                    
-                    // Add notification to centralized system
-                    const action = existingUser ? 'updated' : 'created';
+                } catch (error) {
+                    console.error('❌ Error creating user:', error);
+                    // Add error notification
                     await addNotification(
-                        `User ${action.charAt(0).toUpperCase() + action.slice(1)} Successfully`,
-                        `User "${userName}" has been ${action} ${existingUser ? '' : 'with Firebase account and job acceptance email sent.'}`,
-                        'user_created',
-                        {
-                            userName: userName,
-                            userEmail: userData.profile.email,
-                            actionRequired: false,
-                            priority: 'normal'
-                        }
-                    );
-                    
-                    // Clear form
-                    clearFreelancerForm();
-                    
-                } else {
-                    // Add error notification to centralized system
-                    await addNotification(
-                        'User Creation Failed',
-                        `Failed to create Firebase account for user "${userName}": ${firebaseResult.error}`,
+                        'User Creation Error',
+                        `Error creating user "${userName}": ${error.message}`,
                         'error',
                         {
                             userName: userName,
-                            error: firebaseResult.error,
+                            error: error.message,
                             actionRequired: true,
                             priority: 'high'
                         }
                     );
                 }
-                
-            } catch (error) {
-                console.error('❌ Error creating user:', error);
-                // Add error notification to centralized system
-                await addNotification(
-                    'User Creation Error',
-                    `Error creating user "${userName}": ${error.message}`,
-                    'error',
-                    {
-                        userName: userName,
-                        error: error.message,
-                        actionRequired: true,
-                        priority: 'high'
-                    }
-                );
             }
         }
         
@@ -3180,6 +3254,17 @@
                     select.value = '';
                 }
             });
+            
+            // Reset form title and button text
+            const formTitle = document.querySelector('#contractForm h2');
+            if (formTitle) {
+                formTitle.textContent = 'Add/Edit Creator';
+            }
+            
+            const submitButton = document.querySelector('#contractForm button[type="submit"]');
+            if (submitButton) {
+                submitButton.textContent = 'Save Freelancer';
+            }
             
             console.log('✅ Freelancer form cleared');
         }
