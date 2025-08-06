@@ -1,5 +1,27 @@
 {
-  "users": {},
+  "users": {
+    "Test User": {
+      "profile": {
+        "email": "test@example.com",
+        "password": "test123",
+        "role": "Editor",
+        "location": "Test City, GA",
+        "projectStart": "2025-08-06T10:00",
+        "rate": "$50/hour",
+        "approvedDate": "2025-08-06"
+      },
+      "contract": {
+        "contractId": "CF-TEST-USER-001",
+        "fileName": "Test User.pdf",
+        "status": "signed",
+        "signedDate": "8/6/2025, 10:00:00 AM",
+        "uploadDate": "8/6/2025, 10:00:00 AM",
+        "githubUrl": "https://github.com/cochranfilms/cochran-job-listings/blob/main/contracts/Test%20User.pdf"
+      },
+      "paymentMethod": "paypal",
+      "paymentStatus": "configured"
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -15,7 +37,7 @@
     ]
   },
   "lastUpdated": "2025-08-06",
-  "totalUsers": 0,
+  "totalUsers": 1,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-06"
