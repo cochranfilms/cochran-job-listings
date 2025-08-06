@@ -2989,7 +2989,7 @@
                             
                             // Try to delete PDF file from GitHub using user name
                             const deletePdfResponse = await fetch('/api/delete-pdf', {
-                                method: 'POST',
+                                method: 'DELETE',
                                 headers: {
                                     'Content-Type': 'application/json',
                                 },
