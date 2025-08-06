@@ -2210,12 +2210,15 @@
         }
 
         // Download user contract
-        function downloadUserContract(userName) {
+        async function downloadUserContract(userName) {
             const userData = users[userName];
             if (!userData) {
                 showNotification('User not found', 'error');
                 return;
             }
+
+            console.log('📄 Attempting to download contract for:', userName);
+            console.log('📄 User data:', userData);
 
             // Check if contract exists in uploaded contracts
             const userContract = uploadedContracts.find(contract => 
@@ -2234,49 +2237,88 @@
                 document.body.removeChild(link);
                 console.log('✅ Contract downloaded for:', userName);
                 showNotification('✅ Contract downloaded successfully!', 'success');
-            } else {
-                // Check if contract exists in the contracts directory using contract ID format
-                const contractId = userData.contract?.contractId;
-                if (contractId) {
-                    const contractFileName = `${contractId}.pdf`;
-                    
-                    // Try multiple possible URLs like user-portal.html does
-                    const possibleUrls = [
-                        `contracts/${contractFileName}`,
-                        `https://collaborate.cochranfilms.com/contracts/${contractFileName}`,
-                        `contracts/${contractId.replace('CF-UPLOAD-', 'CF-')}.pdf`,
-                        `contracts/${contractId.replace('CF-', 'CF-UPLOAD-')}.pdf`
-                    ];
-                    
-                    let downloadAttempted = false;
-                    
-                    for (const contractUrl of possibleUrls) {
-                        try {
-                    const link = document.createElement('a');
-                    link.href = contractUrl;
-                    link.download = contractFileName;
-                    link.target = '_blank';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                            downloadAttempted = true;
-                            console.log('📄 Contract download attempted for:', userName, 'with URL:', contractUrl);
-                            break;
-                        } catch (error) {
-                            console.log('❌ Failed to download from:', contractUrl);
-                        }
-                    }
-                    
-                    if (downloadAttempted) {
-                        showNotification(`📄 Downloading contract ${contractId} for ${userName}`, 'info');
-                    } else {
-                        showNotification(`❌ Failed to download contract for ${userName}`, 'error');
-                    }
-                } else {
-                    // No contract ID found, show error
-                    showNotification(`❌ No contract ID found for ${userName}`, 'error');
-                    console.log('❌ No contract ID found for:', userName);
+                return;
+            }
+
+            // Check if contract exists in the contracts directory using contract ID format
+            const contractId = userData.contract?.contractId;
+            if (contractId) {
+                console.log('📄 Contract ID found:', contractId);
+                
+                // Try multiple possible filenames like user-portal.html does
+                const possibleContractIds = [contractId];
+                
+                // If the contract ID contains "UPLOAD", also try without it
+                if (contractId.includes('CF-UPLOAD-')) {
+                    possibleContractIds.push(contractId.replace('CF-UPLOAD-', 'CF-'));
                 }
+                // If the contract ID doesn't contain "UPLOAD", also try with it
+                else if (contractId.includes('CF-') && !contractId.includes('CF-UPLOAD-')) {
+                    possibleContractIds.push(contractId.replace('CF-', 'CF-UPLOAD-'));
+                }
+
+                for (const idToTry of possibleContractIds) {
+                    const contractIdFileName = `${idToTry}.pdf`;
+                    const contractUrl = `contracts/${contractIdFileName}`;
+                    console.log(`📤 Trying to download: ${contractUrl}`);
+                    
+                    try {
+                        // Check if file exists first
+                        const response = await fetch(contractUrl, { method: 'HEAD' });
+                        if (response.ok) {
+                            console.log('📄 File found, downloading...');
+                            const link = document.createElement('a');
+                            link.href = contractUrl;
+                            link.download = contractIdFileName;
+                            link.target = '_blank';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            console.log('✅ Contract downloaded successfully:', contractIdFileName);
+                            showNotification('✅ Contract downloaded successfully!', 'success');
+                            return;
+                        } else {
+                            console.warn(`⚠️ File not found: ${contractUrl}`);
+                        }
+                    } catch (fetchError) {
+                        console.warn(`⚠️ Could not access file: ${contractUrl}`, fetchError);
+                    }
+                }
+                
+                // If local file not found, try GitHub
+                for (const idToTry of possibleContractIds) {
+                    const contractIdFileName = `${idToTry}.pdf`;
+                    const githubRawUrl = `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${contractIdFileName}`;
+                    console.log(`📤 Trying GitHub URL: ${githubRawUrl}`);
+                    
+                    try {
+                        const response = await fetch(githubRawUrl, { method: 'HEAD' });
+                        if (response.ok) {
+                            console.log('📄 File found on GitHub, downloading...');
+                            const link = document.createElement('a');
+                            link.href = githubRawUrl;
+                            link.download = contractIdFileName;
+                            link.target = '_blank';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            console.log('✅ Contract downloaded from GitHub:', contractIdFileName);
+                            showNotification('✅ Contract downloaded successfully!', 'success');
+                            return;
+                        } else {
+                            console.warn(`⚠️ File not found on GitHub: ${githubRawUrl}`);
+                        }
+                    } catch (fetchError) {
+                        console.warn(`⚠️ Could not access GitHub file: ${githubRawUrl}`, fetchError);
+                    }
+                }
+                
+                showNotification(`❌ Contract file not found for ${userName}`, 'error');
+                console.log('❌ Contract file not found for:', userName);
+            } else {
+                // No contract ID found, show error
+                showNotification(`❌ No contract ID found for ${userName}`, 'error');
+                console.log('❌ No contract ID found for:', userName);
             }
         }
 
@@ -7325,45 +7367,56 @@
 
         <!-- Auto-refresh functionality -->
         <script>
-                    // Set up immediate real-time data updates (every 2 seconds for instant feedback)
+        let lastUsersData = null;
+        let lastPerformanceData = null;
+        
+        // Set up intelligent real-time data updates (every 10 seconds, only if data changed)
         setInterval(() => {
-            console.log('⚡ Immediate data refresh...');
+            console.log('🔄 Checking for data updates...');
+            
+            // Load users data and only update if changed
             loadUsers().then(() => {
-                console.log('✅ Users data refreshed instantly');
-                // Immediately update UI if data changed
-                if (isAuthenticated) {
-                    displayUsers();
+                const currentUsersData = JSON.stringify(users);
+                if (currentUsersData !== lastUsersData) {
+                    console.log('✅ Users data changed, updating display...');
+                    lastUsersData = currentUsersData;
+                    if (isAuthenticated) {
+                        displayUsers();
+                    }
+                } else {
+                    console.log('📊 No user data changes detected');
                 }
             }).catch(error => {
-                console.warn('⚠️ Immediate refresh failed:', error);
+                console.warn('⚠️ Users refresh failed:', error);
             });
             
+            // Load performance reviews and only update if changed
             loadPerformanceReviews().then(() => {
-                console.log('✅ Performance reviews refreshed instantly');
-                // Immediately update performance review displays
-                if (isAuthenticated) {
-                    checkPerformanceReviewAlerts();
+                const currentPerformanceData = JSON.stringify(performanceReviews);
+                if (currentPerformanceData !== lastPerformanceData) {
+                    console.log('✅ Performance data changed, updating alerts...');
+                    lastPerformanceData = currentPerformanceData;
+                    if (isAuthenticated) {
+                        checkPerformanceReviewAlerts();
+                    }
+                } else {
+                    console.log('📊 No performance data changes detected');
                 }
             }).catch(error => {
-                console.warn('⚠️ Performance immediate refresh failed:', error);
+                console.warn('⚠️ Performance refresh failed:', error);
             });
-        }, 2000); // 2 seconds for immediate updates
+        }, 10000); // 10 seconds for intelligent updates
         
-        // Additional rapid polling for critical data (every 1 second)
+        // Background notification polling (every 30 seconds)
         setInterval(() => {
-            // Quick check for new notifications
+            // Check for new notifications
             checkForNewPerformanceReviews();
             
-            // Quick check for performance review alerts
+            // Check for performance review alerts
             if (isAuthenticated && Object.keys(users).length > 0) {
                 checkPerformanceReviewAlerts();
             }
-            
-            // Quick check for user data changes
-            if (isAuthenticated) {
-                updateUserStatusIndicators();
-            }
-        }, 1000); // 1 second for critical updates
+        }, 30000); // 30 seconds for background checks
         
         // Function to update user status indicators without full reload
         function updateUserStatusIndicators() {
