@@ -5659,6 +5659,46 @@
             }
         }
 
+        // Payment options configuration
+        const PAYMENT_OPTIONS = {
+            paypal: {
+                name: 'PayPal',
+                icon: 'fab fa-paypal',
+                gradient: 'linear-gradient(135deg, #0070ba, #1546a0)',
+                description: 'PayPal transfer'
+            },
+            bank: {
+                name: 'Bank Transfer',
+                icon: 'fas fa-university',
+                gradient: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                description: 'Direct bank transfer'
+            },
+            stripe: {
+                name: 'Stripe',
+                icon: 'fab fa-stripe',
+                gradient: 'linear-gradient(135deg, #6772e5, #5469d4)',
+                description: 'Stripe payment processing'
+            },
+            zelle: {
+                name: 'Zelle',
+                icon: 'fas fa-mobile-alt',
+                gradient: 'linear-gradient(135deg, #6b46c1, #553c9a)',
+                description: 'Zelle transfer'
+            },
+            cash: {
+                name: 'Cash',
+                icon: 'fas fa-money-bill-wave',
+                gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                description: 'Cash payment'
+            },
+            invoice: {
+                name: 'Invoice',
+                icon: 'fas fa-file-invoice-dollar',
+                gradient: 'linear-gradient(135deg, #10b981, #059669)',
+                description: 'Invoice payment'
+            }
+        };
+
         // Payment modal functionality
         function showPaymentModal() {
             const modal = document.createElement('div');
@@ -5715,56 +5755,24 @@
                         </p>
                         
                         <div style="display: grid; gap: 1rem;">
-                            <button onclick="setPaymentMethod('paypal')" style="
-                                background: linear-gradient(135deg, #0070ba, #1546a0);
-                                color: white;
-                                border: none;
-                                padding: 1rem;
-                                border-radius: 10px;
-                                font-weight: bold;
-                                cursor: pointer;
-                                transition: all 0.3s ease;
-                                display: flex;
-                                align-items: center;
-                                gap: 0.5rem;
-                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                                <i class="fab fa-paypal"></i>
-                                PayPal
-                            </button>
-                            
-                            <button onclick="setPaymentMethod('bank')" style="
-                                background: linear-gradient(135deg, #22c55e, #16a34a);
-                                color: white;
-                                border: none;
-                                padding: 1rem;
-                                border-radius: 10px;
-                                font-weight: bold;
-                                cursor: pointer;
-                                transition: all 0.3s ease;
-                                display: flex;
-                                align-items: center;
-                                gap: 0.5rem;
-                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                                <i class="fas fa-university"></i>
-                                Bank Transfer
-                            </button>
-                            
-                            <button onclick="setPaymentMethod('stripe')" style="
-                                background: linear-gradient(135deg, #6772e5, #5469d4);
-                                color: white;
-                                border: none;
-                                padding: 1rem;
-                                border-radius: 10px;
-                                font-weight: bold;
-                                cursor: pointer;
-                                transition: all 0.3s ease;
-                                display: flex;
-                                align-items: center;
-                                gap: 0.5rem;
-                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                                <i class="fab fa-stripe"></i>
-                                Stripe
-                            </button>
+                            ${Object.entries(PAYMENT_OPTIONS).map(([key, option]) => `
+                                <button onclick="setPaymentMethod('${key}')" style="
+                                    background: ${option.gradient};
+                                    color: white;
+                                    border: none;
+                                    padding: 1rem;
+                                    border-radius: 10px;
+                                    font-weight: bold;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.5rem;
+                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    <i class="${option.icon}"></i>
+                                    ${option.name}
+                                </button>
+                            `).join('')}
                         </div>
                     </div>
                     
