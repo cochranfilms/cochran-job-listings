@@ -3041,30 +3041,9 @@
             if (contractStatus === 'signed') {
                 let signedDate = 'Processing...';
                 if (userContract && userContract.signedDate) {
-                    try {
-                        const date = new Date(userContract.signedDate);
-                        if (!isNaN(date.getTime())) {
-                            signedDate = date.toLocaleDateString();
-                        } else {
-                            console.warn('⚠️ Invalid contract signed date:', userContract.signedDate);
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ Error formatting contract signed date:', error);
-                    }
+                    signedDate = formatContractSignedDate(userContract.signedDate);
                 } else if (currentUser.contractSignedDate) {
-                    // Try to format the contract signed date from users.json
-                    try {
-                        const date = new Date(currentUser.contractSignedDate);
-                        if (!isNaN(date.getTime())) {
-                            signedDate = date.toLocaleDateString();
-                        } else {
-                            console.warn('⚠️ Invalid contract signed date from users.json:', currentUser.contractSignedDate);
-                            signedDate = currentUser.contractSignedDate; // Display as is
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ Error formatting contract signed date from users.json:', error);
-                        signedDate = currentUser.contractSignedDate; // Display as is
-                    }
+                    signedDate = formatContractSignedDate(currentUser.contractSignedDate);
                 }
                 const contractId = userContract ? userContract.contractId : currentUser.contractId || 'Generating...';
                 
@@ -3094,30 +3073,9 @@
             if (contractStatus === 'uploaded') {
                 let signedDate = 'Processing...';
                 if (userContract && userContract.signedDate) {
-                    try {
-                        const date = new Date(userContract.signedDate);
-                        if (!isNaN(date.getTime())) {
-                            signedDate = date.toLocaleDateString();
-                        } else {
-                            console.warn('⚠️ Invalid contract signed date:', userContract.signedDate);
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ Error formatting contract signed date:', error);
-                    }
+                    signedDate = formatContractSignedDate(userContract.signedDate);
                 } else if (currentUser.contractSignedDate) {
-                    // Try to format the contract signed date from users.json
-                    try {
-                        const date = new Date(currentUser.contractSignedDate);
-                        if (!isNaN(date.getTime())) {
-                            signedDate = date.toLocaleDateString();
-                        } else {
-                            console.warn('⚠️ Invalid contract signed date from users.json:', currentUser.contractSignedDate);
-                            signedDate = currentUser.contractSignedDate; // Display as is
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ Error formatting contract signed date from users.json:', error);
-                        signedDate = currentUser.contractSignedDate; // Display as is
-                    }
+                    signedDate = formatContractSignedDate(currentUser.contractSignedDate);
                 }
                 const contractId = userContract ? userContract.contractId : currentUser.contractId || 'Generating...';
                 
@@ -3131,15 +3089,7 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                                 <div><strong>Contract ID:</strong> ${contractId}</div>
                                 <div><strong>Signed Date:</strong> ${signedDate}</div>
-                                <div><strong>Uploaded Date:</strong> ${userContract && userContract.signedDate ? (() => {
-                                    try {
-                                        const date = new Date(userContract.signedDate);
-                                        return !isNaN(date.getTime()) ? date.toLocaleDateString() : 'N/A';
-                                    } catch (error) {
-                                        console.warn('⚠️ Error formatting uploaded date:', error);
-                                        return 'N/A';
-                                    }
-                                })() : 'N/A'}</div>
+                                <div><strong>Uploaded Date:</strong> ${userContract && userContract.signedDate ? formatContractSignedDate(userContract.signedDate) : 'N/A'}</div>
                                 <div><strong>Rate:</strong> ${currentUser.jobs ? Object.values(currentUser.jobs)[0]?.pay || Object.values(currentUser.jobs)[0]?.rate || '$75/hour' : currentUser.rate || '$75/hour'}</div>
                             </div>
                             <div style="background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
