@@ -33,7 +33,8 @@
         }
       },
       "primaryJob": "job-producer-default",
-      "paymentMethod": null
+      "paymentMethod": "cash",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
