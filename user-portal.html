@@ -4720,6 +4720,54 @@
                     return;
                 }
                 
+                // Try to download from local contracts directory first
+                if (userContract.contractId) {
+                    console.log('📤 Attempting to download from local contracts directory:', userContract.contractId);
+                    
+                    const contractFileName = `${userContract.contractId}.pdf`;
+                    const localContractUrl = `contracts/${contractFileName}`;
+                    
+                    try {
+                        const response = await fetch(localContractUrl);
+                        if (response.ok) {
+                            console.log('📄 File found locally, downloading...');
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = contractFileName;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            
+                            // Clean up
+                            window.URL.revokeObjectURL(url);
+                            
+                            console.log('📄 Downloaded contract from local directory:', contractFileName);
+                            
+                            // Add notification to sophisticated notification system
+                            await addNotification(
+                                'Contract Downloaded Successfully',
+                                `Your contract "${contractFileName}" was downloaded successfully.`,
+                                'contract_downloaded',
+                                {
+                                    contractId: userContract.contractId,
+                                    fileName: contractFileName,
+                                    userEmail: currentUser.email,
+                                    actionRequired: false,
+                                    priority: 'normal'
+                                }
+                            );
+                            return;
+                        } else {
+                            console.warn(`⚠️ File not found locally: ${localContractUrl}`);
+                        }
+                    } catch (fetchError) {
+                        console.warn(`⚠️ Could not access local file: ${fetchError}`);
+                    }
+                }
+                
                 // Try to construct GitHub URL from contract ID as final fallback
                 if (userContract.contractId && userContract.fileName) {
                     console.log('📤 Attempting to download from GitHub using contract ID:', userContract.contractId);
@@ -5379,7 +5427,7 @@
                 }
                 
                 // Try to download from API first
-                const response = await fetch(`/api/contracts/download/${userContract.contractId}`);
+                const response = await fetch(`/api/contracts?filename=${userContract.contractId}.pdf`);
                 
                 if (response.ok) {
                     const blob = await response.blob();

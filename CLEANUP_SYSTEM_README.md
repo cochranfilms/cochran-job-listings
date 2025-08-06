@@ -99,6 +99,11 @@ runner.cleanupTestData().then(() => console.log('✅ Cleanup completed'));
 - Removes test notification: "Test Notification"
 - Updates total notification count
 
+### **PDF Files (`/contracts/` directory)**
+- Removes test PDF files: "test-contract.pdf", "test-delete-pdf.pdf"
+- Cleans up any test contract files created during testing
+- Maintains production PDF files (CF-*.pdf files)
+
 ### **Code Quality Issues**
 - **Syntax Errors**: Fixed orphaned HTML code in JavaScript functions
 - **Template Literal Issues**: Resolved "Unexpected token '<'" errors in user-portal.html

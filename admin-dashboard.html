@@ -2479,6 +2479,41 @@
             console.log('📄 Contract githubUrl:', userContract.githubUrl);
             
             try {
+                // Try to download from local contracts directory first
+                if (userContract.contractId) {
+                    console.log('📤 Attempting to download from local contracts directory:', userContract.contractId);
+                    
+                    const contractFileName = `${userContract.contractId}.pdf`;
+                    const localContractUrl = `contracts/${contractFileName}`;
+                    
+                    try {
+                        const response = await fetch(localContractUrl);
+                        if (response.ok) {
+                            console.log('📄 File found locally, downloading...');
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = contractFileName;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            
+                            // Clean up
+                            window.URL.revokeObjectURL(url);
+                            
+                            console.log('📄 Downloaded contract from local directory:', contractFileName);
+                            showNotification('✅ Contract downloaded successfully!', 'success');
+                            return;
+                        } else {
+                            console.warn(`⚠️ File not found locally: ${localContractUrl}`);
+                        }
+                    } catch (fetchError) {
+                        console.warn(`⚠️ Could not access local file: ${fetchError}`);
+                    }
+                }
+                
                 // Try to download from GitHub first (same as user-portal.html)
                 if (userContract.githubUrl) {
                     console.log('📤 Downloading from GitHub URL:', userContract.githubUrl);
@@ -5963,7 +5998,7 @@
                 'payment_processed': 'money-bill-wave',
                 'system_update': 'cog',
                 'warning': 'exclamation-triangle',
-                'error': 'times-circle',
+                'error': '❌',
                 'success': 'check-circle',
                 'info': 'info-circle'
             };
