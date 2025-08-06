@@ -15,8 +15,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-05",
       "signedDate": "2025-08-05"
+    },
+    {
+      "contractId": "CF-1754452770885-4LWOV",
+      "freelancerName": "Thing Two",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Assistant",
+      "rate": "$125/hour",
+      "location": "New York, NY",
+      "fileName": "CF-1754452770885-4LWOV.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-06T03:59:42.598Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754452770885-4LWOV.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-05",
+      "signedDate": "2025-08-05"
     }
   ],
-  "lastUpdated": "2025-08-06T02:37:22.126Z",
-  "totalContracts": 1
+  "lastUpdated": "2025-08-06T03:59:42.598Z",
+  "totalContracts": 2
 }
