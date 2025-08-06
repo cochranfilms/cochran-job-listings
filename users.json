@@ -68,7 +68,8 @@
         }
       },
       "primaryJob": "job-assistant-default",
-      "paymentMethod": null
+      "paymentMethod": "cash",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
