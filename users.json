@@ -1,73 +1,38 @@
 {
   "users": {
-    "Black Widow": {
+    "Cody Cochran": {
       "profile": {
         "email": "codylcochran89@gmail.com",
-        "password": "test12345",
+        "password": "youtube",
         "role": "Editor",
-        "location": "New York, NY",
-        "projectStart": "2025-10-10T14:00",
-        "rate": "$150/hour",
+        "location": "Douglasville, GA",
+        "projectStart": "2025-10-25T14:00",
+        "rate": "$75/hour",
         "approvedDate": "2025-08-06"
       },
       "contract": {
         "contractUrl": "contract.html",
         "contractStatus": "signed",
-        "contractSignedDate": "8/6/2025, 4:54:05 AM",
+        "contractSignedDate": "8/6/2025, 5:23:17 AM",
         "contractUploadedDate": null,
-        "contractId": "Black Widow"
+        "contractId": "Cody Cochran"
       },
       "jobs": {
         "job-editor-default": {
           "id": "job-editor-default",
           "title": "Editor Position",
           "date": "2025-08-06",
-          "location": "New York, NY",
-          "pay": "$150/hour",
-          "description": "Professional Editor position in New York, NY. Details to be provided.",
+          "location": "Douglasville, GA",
+          "pay": "$75/hour",
+          "description": "Professional Editor position in Douglasville, GA. Details to be provided.",
           "status": "upcoming",
           "projectStatus": "upcoming",
           "paymentStatus": "pending",
           "assignedDate": "2025-08-06",
-          "projectStart": "2025-10-10T14:00"
+          "projectStart": "2025-10-25T14:00"
         }
       },
       "primaryJob": "job-editor-default",
-      "paymentMethod": null
-    },
-    "Purple Spider": {
-      "profile": {
-        "email": "codylcochran87@gmail.com",
-        "password": "testicals",
-        "role": "Backdrop Photographer Spotlight",
-        "location": "Los Angeles, CA",
-        "projectStart": "2025-10-12T21:00",
-        "rate": "$100/hour",
-        "approvedDate": "2025-08-06"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/6/2025, 5:06:28 AM",
-        "contractUploadedDate": null,
-        "contractId": "Purple Spider"
-      },
-      "jobs": {
-        "job-backdrop-photographer-spotlight-1754471133235": {
-          "id": "job-backdrop-photographer-spotlight-1754471133235",
-          "title": "Backdrop Photographer Spotlight",
-          "date": "2025-10-24",
-          "location": "Douglasville, GA",
-          "pay": "$300 + Tip",
-          "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
-          "status": "Inactive",
-          "projectStatus": "Inactive",
-          "paymentStatus": "pending",
-          "assignedDate": "2025-08-06",
-          "projectStart": "2025-10-12T21:00"
-        }
-      },
-      "primaryJob": "job-backdrop-photographer-spotlight-1754471133235",
       "paymentMethod": null
     }
   },
