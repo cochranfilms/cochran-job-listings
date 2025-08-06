@@ -249,6 +249,13 @@ class AdminBankViewer {
             return;
         }
 
+        // Verify admin password first
+        if (adminPassword !== 'Cochranfilms2@') {
+            showNotification('❌ Invalid admin password', 'error');
+            this.logAccess(userName, 'decrypt_failed_invalid_password');
+            return;
+        }
+
         try {
             // Show loading state
             const decryptButton = document.querySelector('button[onclick*="decryptBankDetails"]');
@@ -264,10 +271,10 @@ class AdminBankViewer {
                 throw new Error('No bank data found for user');
             }
 
-            // Attempt to decrypt
+            // Use the stored encryption key for decryption
             const decryptedData = await this.secureStorage.decryptBankData(
                 userData.bankData.encrypted,
-                adminPassword
+                userData.bankData.encryptionKey
             );
 
             // Display decrypted data

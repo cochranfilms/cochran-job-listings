@@ -256,6 +256,7 @@ class SecureBankModal {
         // Add bank data to current user
         currentUser.bankData = {
             encrypted: encryptedData.encrypted,
+            encryptionKey: encryptedData.encryptionKey, // Store the key for admin decryption
             lastFour: encryptedData.lastFour,
             bankName: encryptedData.bankName,
             accountType: encryptedData.accountType,
@@ -293,6 +294,7 @@ class SecureBankModal {
                     // Update bank data
                     user.bankData = {
                         encrypted: encryptedData.encrypted,
+                        encryptionKey: encryptedData.encryptionKey, // Store the key for admin decryption
                         lastFour: encryptedData.lastFour,
                         bankName: encryptedData.bankName,
                         accountType: encryptedData.accountType,

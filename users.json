@@ -32,7 +32,7 @@
         }
       },
       "primaryJob": "job-editor-default",
-      "paymentMethod": "zelle",
+      "paymentMethod": "bank",
       "paymentStatus": "configured"
     }
   },

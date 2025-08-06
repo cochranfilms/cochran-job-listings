@@ -182,7 +182,7 @@ class BankDataCollector {
         
         return {
             encrypted: encryptedData,
-            password: encryptionPassword,
+            encryptionKey: encryptionPassword, // Store the key for admin decryption
             lastFour: bankData.lastFour,
             bankName: bankData.bankName,
             accountType: bankData.accountType,
