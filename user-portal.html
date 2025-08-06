@@ -4833,15 +4833,23 @@
                 return;
             }
             
-            // The contract data is flattened on currentUser (not nested)
-            if (currentUser.contractStatus) {
-                const userContract = {
+            // Check for both nested and flattened contract data structures
+            let userContract = null;
+            
+            if (currentUser.contract) {
+                // Nested structure from users.json
+                userContract = currentUser.contract;
+                console.log('✅ Found nested contract data:', userContract);
+            } else if (currentUser.contractStatus) {
+                // Flattened structure from data loading process
+                userContract = {
                     contractStatus: currentUser.contractStatus,
                     contractSignedDate: currentUser.contractSignedDate,
                     contractId: currentUser.contractId || currentUser.name,
                     contractUploadedDate: currentUser.contractUploadedDate
                 };
                 console.log('✅ Found flattened contract data on currentUser:', userContract);
+            }
                 
                 // Check if contract is signed
                 if (userContract.contractStatus !== 'signed') {
@@ -4852,7 +4860,7 @@
                 
                 // Create contract data for PDF generation (same format as contract.html)
                 const contractData = {
-                    contractId: currentUser.contractId || currentUser.name,
+                    contractId: userContract.contractId || currentUser.name,
                     freelancerName: currentUser.name,
                     freelancerEmail: currentUser.email,
                     role: currentUser.role || currentUser.profile?.role || 'Contractor',
@@ -4860,8 +4868,8 @@
                     projectStart: currentUser.projectStart || currentUser.profile?.projectStart || 'TBD',
                     rate: currentUser.rate || currentUser.profile?.rate || 'Not specified',
                     effectiveDate: currentUser.approvedDate || new Date().toISOString().split('T')[0],
-                    signatureDate: currentUser.contractSignedDate ? formatContractSignedDate(currentUser.contractSignedDate) : new Date().toISOString().split('T')[0],
-                    signature: currentUser.contractStatus === 'signed' ? 'Digital Signature' : 'Not Signed'
+                    signatureDate: userContract.contractSignedDate ? formatContractSignedDate(userContract.contractSignedDate) : new Date().toISOString().split('T')[0],
+                    signature: userContract.contractStatus === 'signed' ? 'Digital Signature' : 'Not Signed'
                 };
                 
                 try {
@@ -5676,43 +5684,8 @@
             }
         }
 
-        async function downloadUserContract(jobId = null) {
-            if (!currentUser) {
-                showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
-                return;
-            }
-            
-            try {
-                // Get contract from uploaded contracts
-                const userContract = getUserContractStatus(currentUser.email, jobId);
-                
-                if (!userContract) {
-                    showNotification('❌ Contract file not available. Please contact admin.', 'error');
-                    return;
-                }
-                
-                // Try to download from API first
-                const response = await fetch(`/api/contracts?filename=${userContract.contractId}.pdf`);
-                
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${userContract.contractId}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                    showNotification('✅ Contract downloaded successfully!', 'success');
-                } else {
-                    throw new Error('API download failed');
-                }
-            } catch (error) {
-                console.error('Download error:', error);
-                showNotification('❌ Error downloading contract. Please try again or contact admin.', 'error');
-            }
-        }
+        // REMOVED: Duplicate downloadUserContract function that was causing conflicts
+        // The main downloadUserContract function above handles PDF generation properly
 
         function viewContractDetails() {
             const selectedJob = getSelectedJob();
