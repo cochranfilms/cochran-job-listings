@@ -148,87 +148,283 @@
             return review;
         }
 
+        // Load freelancer data from JSON file
+        async function loadUsersData() {
+            try {
+                console.log('🔄 Loading users data...');
+                
+                // Check if we have cached data and it's recent (less than 2 minutes old for payment data)
+                const cachedData = sessionStorage.getItem('cachedUsersData');
+                const cacheTimestamp = sessionStorage.getItem('cachedUsersDataTimestamp');
+                const now = Date.now();
+                const cacheAge = now - (parseInt(cacheTimestamp) || 0);
+                const cacheValid = cacheAge < 2 * 60 * 1000; // 2 minutes for more responsive updates
+                
+                if (cachedData && cacheValid) {
+                    console.log('✅ Using cached users data (age:', Math.round(cacheAge / 1000), 'seconds)');
+                    users = JSON.parse(cachedData);
+                    return;
+                }
+                
+                // First, try to load directly from users API
+                try {
+                    const response = await fetch('/api/users');
+                    if (response.ok) {
+                        const jsonData = await response.json();
+                        if (jsonData.users) {
+                            // Convert the JSON structure to array format with job support
+                            users = Object.entries(jsonData.users).map(([name, user]) => ({
+                                name: name,
+                                email: user.profile?.email,
+                                password: user.profile?.password,
+                                approvedDate: user.profile?.approvedDate,
+                                contractUrl: user.contract?.contractUrl || 'contract.html',
+                                // CONTRACT STATUS FIELDS - CRITICAL!
+                                contractStatus: user.contract?.contractStatus || 'pending',
+                                contractSignedDate: user.contract?.contractSignedDate,
+                                contractUploadedDate: user.contract?.contractUploadedDate,
+                                contractId: user.contract?.contractId,
+                                // PAYMENT FIELDS - CRITICAL!
+                                paymentMethod: user.paymentMethod || null,
+                                paymentStatus: user.paymentStatus || 'pending',
+                                // Handle both old single job format and new multiple jobs format
+                                jobs: user.jobs || {
+                                    'legacy-job': {
+                                        id: 'legacy-job',
+                                        role: user.profile?.role,
+                                        location: user.profile?.location,
+                                        projectStart: user.profile?.projectStart,
+                                        rate: user.profile?.rate,
+                                        status: 'upcoming',
+                                        projectType: 'Legacy Job',
+                                        description: `${user.profile?.role} position`
+                                    }
+                                },
+                                primaryJob: user.primaryJob || 'legacy-job'
+                            }));
+                            
+                            console.log('✅ Users data loaded from API:', users.length, 'users');
+                            console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
+                                name: u.name, 
+                                email: u.email, 
+                                jobCount: Object.keys(u.jobs || {}).length,
+                                contractStatus: u.contractStatus,
+                                contractId: u.contractId
+                            })));
+                            
+                            // Cache the data
+                            sessionStorage.setItem('cachedUsersData', JSON.stringify(users));
+                            sessionStorage.setItem('cachedUsersDataTimestamp', now.toString());
+                            
+                            // Now merge with uploaded contracts data to get the most up-to-date contract information
+                            await mergeUsersDataWithUploadedContracts();
+                            return;
+                        }
+                    }
+                } catch (fetchError) {
+                    console.warn('⚠️ Could not fetch users.json, trying localStorage...', fetchError);
+                }
+                
+                // Fallback: Try to load from localStorage (admin dashboard format)
+                let data = JSON.parse(localStorage.getItem('users') || '[]');
+                
+                // If localStorage is empty or not an array, try to load from JSON file structure in localStorage
+                if (!Array.isArray(data) || data.length === 0) {
+                    const jsonData = localStorage.getItem('approvedUsers');
+                    if (jsonData) {
+                        const parsedJsonData = JSON.parse(jsonData);
+                        if (parsedJsonData.users) {
+                            // Convert the JSON structure to array format
+                            data = Object.entries(parsedJsonData.users).map(([name, user]) => ({
+                                name: name,
+                                email: user.profile?.email,
+                                password: user.profile?.password,
+                                approvedDate: user.profile?.approvedDate,
+                                contractUrl: user.contract?.contractUrl || 'contract.html',
+                                // CONTRACT STATUS FIELDS - CRITICAL!
+                                contractStatus: user.contract?.contractStatus || 'pending',
+                                contractSignedDate: user.contract?.contractSignedDate,
+                                contractUploadedDate: user.contract?.contractUploadedDate,
+                                contractId: user.contract?.contractId,
+                                // PAYMENT FIELDS - CRITICAL!
+                                paymentMethod: user.paymentMethod || null,
+                                paymentStatus: user.paymentStatus || 'pending',
+                                jobs: user.jobs || {
+                                    'legacy-job': {
+                                        id: 'legacy-job',
+                                        role: user.profile?.role,
+                                        location: user.profile?.location,
+                                        projectStart: user.profile?.projectStart,
+                                        rate: user.profile?.rate,
+                                        status: 'upcoming',
+                                        projectType: 'Legacy Job',
+                                        description: `${user.profile?.role} position`
+                                    }
+                                },
+                                primaryJob: user.primaryJob || 'legacy-job'
+                            }));
+                        }
+                    } else {
+                        // Final fallback: hardcoded data with job structure
+                        data = [
+                            {
+                                name: "Francisco Flores",
+                                email: "ciscocinema@gmail.com",
+                                password: "Cinema2025",
+                                approvedDate: "2024-01-08",
+                                contractUrl: "contract.html",
+                                contractStatus: "pending",
+                                contractSignedDate: null,
+                                contractUploadedDate: null,
+                                contractId: null,
+                                jobs: {
+                                    'job-francisco-001': {
+                                        id: 'job-francisco-001',
+                                        role: "Backdrop Photographer",
+                                        location: "6695 Church Street, Douglasville, GA 30134",
+                                        projectStart: "November 8, 2025 at 3:15 PM",
+                                        rate: "$400.00 USD (Flat)",
+                                        status: 'upcoming',
+                                        projectType: 'Photography',
+                                        description: 'Backdrop photography for corporate event'
+                                    }
+                                },
+                                primaryJob: 'job-francisco-001'
+                            },
+                            {
+                                name: "Cody Cochran",
+                                email: "codylcochran89@gmail.com",
+                                password: "TestPassword2025",
+                                approvedDate: "2025-08-01",
+                                contractUrl: "contract.html",
+                                contractStatus: "pending",
+                                contractSignedDate: null,
+                                contractUploadedDate: null,
+                                contractId: null,
+                                jobs: {
+                                    'job-cody-001': {
+                                        id: 'job-cody-001',
+                                        role: "Assistant",
+                                        location: "New York, NY",
+                                        projectStart: "2025-08-06T00:04",
+                                        rate: "$125/hour",
+                                        status: 'upcoming',
+                                        projectType: 'Assistant',
+                                        description: 'Professional Assistant position in New York, NY. Details to be provided.'
+                                    }
+                                },
+                                primaryJob: 'job-cody-001'
+                            }
+                        ];
+                    }
+                }
+                
+                users = data;
+                console.log('✅ Users data loaded from localStorage:', users.length, 'users');
+                
+                // Cache the data
+                sessionStorage.setItem('cachedUsersData', JSON.stringify(users));
+                sessionStorage.setItem('cachedUsersDataTimestamp', now.toString());
+                
+            } catch (error) {
+                console.error('❌ Error loading users data:', error);
+                users = [];
+            }
+        }
+
+        // Load uploaded contracts data
+        async function loadUploadedContracts() {
+            try {
+                console.log('🔄 Loading uploaded contracts data...');
+                const response = await fetch('uploaded-contracts.json');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    uploadedContracts = data.contracts || [];
+                    console.log('✅ Uploaded contracts loaded:', uploadedContracts.length, 'contracts');
+                } else {
+                    console.warn('⚠️ Could not load uploaded-contracts.json, using empty array');
+                    uploadedContracts = [];
+                }
+            } catch (error) {
+                console.error('❌ Error loading uploaded contracts:', error);
+                uploadedContracts = [];
+            }
+        }
+
+        // Load jobs data
+        async function loadJobsData() {
+            try {
+                console.log('🔄 Loading jobs data...');
+                const response = await fetch('jobs-data.json');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    jobsData = data.jobs || [];
+                    console.log('✅ Jobs data loaded:', jobsData.length, 'jobs');
+                } else {
+                    console.warn('⚠️ Could not load jobs-data.json, using empty array');
+                    jobsData = [];
+                }
+            } catch (error) {
+                console.error('❌ Error loading jobs data:', error);
+                jobsData = [];
+            }
+        }
+
+        // Merge users data with uploaded contracts
+        async function mergeUsersDataWithUploadedContracts() {
+            try {
+                console.log('🔄 Merging users data with uploaded contracts...');
+                
+                // Load uploaded contracts if not already loaded
+                if (uploadedContracts.length === 0) {
+                    await loadUploadedContracts();
+                }
+                
+                // Update users with contract information from uploaded contracts
+                for (const user of users) {
+                    const matchingContract = uploadedContracts.find(contract => 
+                        contract.userEmail === user.email
+                    );
+                    
+                    if (matchingContract) {
+                        user.contractId = matchingContract.contractId;
+                        user.contractUploadedDate = matchingContract.uploadDate;
+                        user.contractStatus = 'uploaded';
+                        console.log(`✅ Updated user ${user.name} with contract info:`, matchingContract.contractId);
+                    }
+                }
+                
+                console.log('✅ Users data merged with uploaded contracts');
+            } catch (error) {
+                console.error('❌ Error merging users data with uploaded contracts:', error);
+            }
+        }
+
         // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
         
-        // Enhanced notification system to replace all alert() calls
+        // Enhanced notification system to replace all alert() calls - moved to console logs
         function showNotification(message, type = 'info', duration = 5000) {
-            const notification = document.createElement('div');
-            const icon = getNotificationIcon(type);
-            const colors = getNotificationColors(type);
+            // Log to console instead of showing UI notifications
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
             
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 1rem 1.5rem;
-                border-radius: 12px;
-                color: white;
-                font-weight: 600;
-                z-index: 10000;
-                background: ${colors.background};
-                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-                border: 1px solid ${colors.border};
-                max-width: 400px;
-                min-width: 300px;
-                backdrop-filter: blur(10px);
-                transform: translateX(100%);
-                transition: transform 0.3s ease-out;
-                font-family: 'Inter', sans-serif;
-            `;
-            
-            notification.innerHTML = `
-                <div style="display: flex; align-items: flex-start; gap: 12px;">
-                    <div style="font-size: 1.2rem; margin-top: 2px;">${icon}</div>
-                    <div style="flex: 1;">
-                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
-                            ${type.toUpperCase()}
-                        </div>
-                        <div style="font-size: 0.95rem; line-height: 1.4;">
-                            ${message}
-                        </div>
-                    </div>
-                    <button onclick="this.parentElement.parentElement.remove()" 
-                            style="
-                                background: rgba(255,255,255,0.2);
-                                color: white;
-                                border: none;
-                                padding: 4px;
-                                border-radius: 50%;
-                                cursor: pointer;
-                                width: 24px;
-                                height: 24px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-size: 14px;
-                                margin-left: 8px;
-                                transition: background 0.2s;
-                            "
-                            onmouseover="this.style.background='rgba(255,255,255,0.3)'"
-                            onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-                        ×
-                    </button>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Animate in
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            // Auto-remove after duration
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.style.transform = 'translateX(100%)';
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.parentNode.removeChild(notification);
-                        }
-                    }, 300);
-                }
-            }, duration);
+            switch (type) {
+                case 'success':
+                    console.log('✅', logMessage);
+                    break;
+                case 'error':
+                    console.error('❌', logMessage);
+                    break;
+                case 'warning':
+                    console.warn('⚠️', logMessage);
+                    break;
+                case 'info':
+                default:
+                    console.info('ℹ️', logMessage);
+                    break;
+            }
         }
         
         function getNotificationIcon(type) {
@@ -1519,11 +1715,11 @@
             // Update welcome message
             document.getElementById('userName').textContent = currentUser.name;
             
-            // Display user info for modern layout
+            // Display user info
             displayUserInfo();
-            displayCurrentJobs();
-            displayContracts();
-            displayPerformanceReviews();
+            displayUserContracts();
+            displayUserJobs();
+            displayUserPerformanceReviews();
         }
 
         // Refresh user data manually
@@ -5194,6 +5390,267 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* ==================== MODERN LOGIN SCREEN ==================== */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            overflow: hidden;
+        }
+
+        .login-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+
+        .floating-elements {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .floating-icon {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+
+        .floating-icon:nth-child(1) { top: 20%; left: 10%; }
+        .floating-icon:nth-child(2) { top: 60%; left: 80%; }
+        .floating-icon:nth-child(3) { top: 80%; left: 20%; }
+        .floating-icon:nth-child(4) { top: 30%; left: 70%; }
+        .floating-icon:nth-child(5) { top: 70%; left: 40%; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            width: 100%;
+            padding: 2rem;
+            gap: 4rem;
+        }
+
+        .login-brand {
+            flex: 1;
+            text-align: center;
+            color: white;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFB200, #FF8C00);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(255, 178, 0, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .logo-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #000;
+            font-family: 'Cinzel', serif;
+        }
+
+        .brand-text {
+            text-align: left;
+        }
+
+        .brand-title {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #FFB200;
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            text-shadow: 0 0 20px rgba(255, 178, 0, 0.5);
+        }
+
+        .brand-subtitle {
+            font-size: 1.5rem;
+            color: #FFB200;
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            opacity: 0.8;
+        }
+
+        .portal-icon {
+            font-size: 4rem;
+            margin: 1rem 0;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .login-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #FFB200;
+            margin: 1rem 0;
+            font-family: 'Cinzel', serif;
+            text-shadow: 0 0 20px rgba(255, 178, 0, 0.5);
+        }
+
+        .login-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .login-form-container {
+            flex: 1;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.2rem;
+            z-index: 2;
+        }
+
+        .input-container input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .input-container input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .input-container input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.3);
+        }
+
+        .input-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #FFB200, #FF8C00);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .input-container input:focus + .input-line {
+            transform: scaleX(1);
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #FFB200, #FF8C00);
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 16px rgba(255, 178, 0, 0.3);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 178, 0, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Inter', sans-serif;
+        }
+
         /* ==================== LOADING STATES ==================== */
         .loading {
             display: inline-block;
@@ -7902,26 +8359,59 @@
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
+        <div class="login-background">
+            <div class="floating-elements">
+                <div class="floating-icon" style="--delay: 0s">🎬</div>
+                <div class="floating-icon" style="--delay: 2s">📹</div>
+                <div class="floating-icon" style="--delay: 4s">🎥</div>
+                <div class="floating-icon" style="--delay: 6s">✨</div>
+                <div class="floating-icon" style="--delay: 8s">🌟</div>
+            </div>
+        </div>
+        
         <div class="login-container">
-            <img src="https://static.wixstatic.com/media/aeef42_d31420a75a164d2cb4508bdd7d99ca88~mv2.png" alt="Cochran Films" class="login-logo">
-                                    <h1 class="login-title">👤 CREATOR PORTAL</h1>
-            <p class="login-subtitle">Access your contracts and project information</p>
-            
-            <div id="loginError" class="error-message">
-                Invalid email or password. Please try again.
+            <div class="login-brand">
+                <div class="logo-container">
+                    <div class="logo-circle">
+                        <span class="logo-text">C</span>
+                    </div>
+                    <div class="brand-text">
+                        <h1 class="brand-title">OCHRAN</h1>
+                        <h2 class="brand-subtitle">FILMS</h2>
+                    </div>
+                </div>
+                <div class="portal-icon">👤</div>
+                <h1 class="login-title">CREATOR PORTAL</h1>
+                <p class="login-subtitle">Access your contracts and project information</p>
             </div>
             
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
+            <div class="login-form-container">
+                <div id="loginError" class="error-message" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Invalid email or password. Please try again.</span>
                 </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <button type="submit" class="btn">🔐 Login</button>
-            </form>
+                
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <div class="input-container">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            <div class="input-line"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-container">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                            <div class="input-line"></div>
+                        </div>
+                    </div>
+                    <button type="submit" class="login-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>LOGIN</span>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -8047,79 +8537,7 @@
             </div>
         </main>
     </div>
-                            <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="cash" ${currentUser?.paymentMethod === 'cash' ? 'checked' : ''}>
-                                <span class="payment-option-content">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                    <strong>Cash</strong>
-                                    <small>Direct cash payment</small>
-                                </span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="check" ${currentUser?.paymentMethod === 'check' ? 'checked' : ''}>
-                                <span class="payment-option-content">
-                                    <i class="fas fa-university"></i>
-                                    <strong>Check</strong>
-                                    <small>Paper check mailed</small>
-                                </span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="zelle" ${currentUser?.paymentMethod === 'zelle' ? 'checked' : ''}>
-                                <span class="payment-option-content">
-                                    <i class="fas fa-mobile-alt"></i>
-                                    <strong>Zelle</strong>
-                                    <small>Digital bank transfer</small>
-                                </span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="paypal" ${currentUser?.paymentMethod === 'paypal' ? 'checked' : ''}>
-                                <span class="payment-option-content">
-                                    <i class="fab fa-paypal"></i>
-                                    <strong>PayPal</strong>
-                                    <small>PayPal transfer</small>
-                                </span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="invoice" ${currentUser?.paymentMethod === 'invoice' ? 'checked' : ''}>
-                                <span class="payment-option-content">
-                                    <i class="fas fa-file-invoice"></i>
-                                    <strong>Invoice Request</strong>
-                                    <small>You invoice Cochran Films</small>
-                                </span>
-                            </label>
-                        </div>
-                        <button onclick="updatePaymentMethod()" class="btn" style="background: #FFB200; color: #000;">
-                            <i class="fas fa-save"></i> Save Payment Method
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Current Jobs Tab -->
-            <div id="jobs-tab" class="portal-tab">
-                <h2 style="color: #FFB200; margin-bottom: 1rem; font-family: 'Cinzel', serif;">💼 Your Current Jobs</h2>
-                <div id="userJobs">
-                    <!-- Jobs will be populated here -->
-                </div>
-            </div>
-            
-            <!-- Contracts Tab -->
-            <div id="contracts-tab" class="portal-tab">
-                <h2 style="color: #FFB200; margin-bottom: 1rem; font-family: 'Cinzel', serif;">📋 Your Contracts</h2>
-                <div id="userContracts">
-                    <!-- Contracts will be populated here -->
-                </div>
-            </div>
-            
-            <!-- Performance Reviews Tab -->
-            <div id="performance-tab" class="portal-tab">
-                <h2 style="color: #FFB200; margin-bottom: 1rem; font-family: 'Cinzel', serif;">⭐ Your Performance Reviews</h2>
-                <div id="userPerformanceReviews">
-                    <!-- Performance reviews will be populated here -->
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Notification Dropdown (Moved outside containers to avoid stacking context issues) -->
     <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
