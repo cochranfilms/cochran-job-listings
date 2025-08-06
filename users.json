@@ -3,7 +3,7 @@
     "Purple Spider": {
       "profile": {
         "email": "codylcochran87@gmail.com",
-        "password": "pBNRPYWdIyu2",
+        "password": "testicals",
         "role": "Backdrop Photographer Spotlight",
         "location": "Los Angeles, CA",
         "projectStart": "2025-10-12T21:00",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/6/2025, 5:06:28 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754471188921-M0ACR"
       },
       "jobs": {
         "job-backdrop-photographer-spotlight-1754471133235": {
