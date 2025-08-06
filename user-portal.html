@@ -5797,7 +5797,7 @@
         function setPaymentMethod(method) {
             if (!currentUser) return;
             
-            // Update user's payment method
+            // Update user's payment method locally
             currentUser.paymentMethod = method;
             
             // Show success notification
@@ -5805,6 +5805,15 @@
             
             // Close modal
             closePaymentModal();
+            
+            // Save to backend (GitHub)
+            updateUserPaymentMethod(currentUser.email, method).then(() => {
+                console.log('✅ Payment method saved to backend successfully');
+                showNotification('✅ Payment method saved to server', 'success');
+            }).catch((error) => {
+                console.error('❌ Error saving payment method to backend:', error);
+                showNotification('⚠️ Payment method saved locally but server update failed', 'warning');
+            });
             
             // Refresh the payment display
             displayUserInfo();
