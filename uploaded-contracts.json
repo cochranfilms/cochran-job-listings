@@ -15,8 +15,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-05",
       "signedDate": "2025-08-05"
+    },
+    {
+      "contractId": "CF-1754463997856-AXAOX",
+      "freelancerName": "thing three",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Editor",
+      "rate": "$150/hour",
+      "location": "New York, NY",
+      "fileName": "CF-1754463997856-AXAOX.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-06T07:06:49.785Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754463997856-AXAOX.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-06",
+      "signedDate": "2025-08-06"
     }
   ],
-  "lastUpdated": "2025-08-06T03:59:42.598Z",
-  "totalContracts": 1
+  "lastUpdated": "2025-08-06T07:06:49.785Z",
+  "totalContracts": 2
 }
