@@ -467,23 +467,48 @@
 
         // Manual upload functions removed - contracts are now automatically uploaded via contract signing
 
-        // Load uploaded contracts
+        // Load uploaded contracts from centralized users.json
         async function loadUploadedContracts() {
-            console.log('🔄 Loading uploaded contracts...');
+            console.log('🔄 Loading uploaded contracts from centralized users.json...');
             
             try {
-                const response = await fetch('/api/uploaded-contracts');
+                const response = await fetch('users.json');
                 if (response.ok) {
-                    const data = await response.json();
-                    // The API returns the full JSON structure, so we need to access uploadedContracts
-                    uploadedContracts = data.uploadedContracts || [];
-                    console.log('✅ Loaded', uploadedContracts.length, 'uploaded contracts from API');
+                    const usersData = await response.json();
+                    uploadedContracts = [];
+                    
+                    // Extract contract data from centralized users data
+                    for (const [userName, userData] of Object.entries(usersData.users)) {
+                        if (userData.contract && userData.contract.contractId) {
+                            // Convert user contract data to uploaded contracts format
+                            const contractData = {
+                                contractId: userData.contract.contractId,
+                                freelancerName: userData.contract.freelancerName || userName,
+                                freelancerEmail: userData.contract.freelancerEmail || userData.profile?.email,
+                                role: userData.contract.role || userData.profile?.role,
+                                rate: userData.contract.rate || userData.profile?.rate,
+                                location: userData.contract.location || userData.profile?.location,
+                                fileName: userData.contract.fileName,
+                                fileSize: userData.contract.fileSize,
+                                uploadDate: userData.contract.uploadDate,
+                                status: userData.contract.status,
+                                githubUrl: userData.contract.githubUrl,
+                                notes: userData.contract.notes,
+                                contractDate: userData.contract.contractDate,
+                                signedDate: userData.contract.signedDate
+                            };
+                            uploadedContracts.push(contractData);
+                            console.log(`✅ Found contract for: ${userName} (${contractData.fileName})`);
+                        }
+                    }
+                    
+                    console.log('✅ Loaded', uploadedContracts.length, 'uploaded contracts from centralized users.json');
                 } else {
-                    console.warn('⚠️ Could not load uploaded contracts from API, showing empty state');
+                    console.warn('⚠️ Could not load users.json, showing empty state');
                     uploadedContracts = [];
                 }
             } catch (error) {
-                console.error('❌ Error loading uploaded contracts:', error);
+                console.error('❌ Error loading uploaded contracts from centralized data:', error);
                 uploadedContracts = [];
             }
             
