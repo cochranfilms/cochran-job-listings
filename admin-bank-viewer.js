@@ -275,19 +275,32 @@ class AdminBankViewer {
             decryptButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Decrypting...';
             decryptButton.disabled = true;
 
+            console.log('🔍 Starting decryption process...');
+            
             // Get user data
+            console.log('🔍 Loading users data...');
             const users = await loadUsersData();
+            console.log('🔍 Users data loaded:', users);
+            
             const userData = users.users[userName];
+            console.log('🔍 User data for', userName + ':', userData);
             
             if (!userData || !userData.bankData) {
+                console.log('❌ No bank data found for user');
                 throw new Error('No bank data found for user');
             }
+            
+            console.log('🔍 Bank data found:', userData.bankData);
+            console.log('🔍 Encrypted data length:', userData.bankData.encrypted.length);
+            console.log('🔍 Encryption key:', userData.bankData.encryptionKey);
 
             // Use the stored encryption key for decryption
+            console.log('🔍 Calling secureStorage.decryptBankData...');
             const decryptedData = await this.secureStorage.decryptBankData(
                 userData.bankData.encrypted,
                 userData.bankData.encryptionKey
             );
+            console.log('🔍 Decryption successful:', decryptedData);
 
             // Display decrypted data
             this.displayDecryptedData(decryptedData);
