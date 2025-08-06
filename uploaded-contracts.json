@@ -1,22 +1,6 @@
 {
   "uploadedContracts": [
     {
-      "contractId": "CF-1754447829109-88LR8",
-      "freelancerName": "Thing One",
-      "freelancerEmail": "dedejackson727@gmail.com",
-      "role": "Producer",
-      "rate": "$75/hour",
-      "location": "Atlanta, GA",
-      "fileName": "CF-1754447829109-88LR8.pdf",
-      "fileSize": 0,
-      "uploadDate": "2025-08-06T02:37:22.126Z",
-      "status": "uploaded",
-      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/CF-1754447829109-88LR8.pdf",
-      "notes": "Automatically uploaded via contract signing",
-      "contractDate": "2025-08-05",
-      "signedDate": "2025-08-05"
-    },
-    {
       "contractId": "CF-1754452770885-4LWOV",
       "freelancerName": "Thing Two",
       "freelancerEmail": "codylcochran89@gmail.com",
@@ -34,5 +18,5 @@
     }
   ],
   "lastUpdated": "2025-08-06T03:59:42.598Z",
-  "totalContracts": 2
+  "totalContracts": 1
 }

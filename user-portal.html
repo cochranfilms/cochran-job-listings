@@ -1527,7 +1527,7 @@
             
             showNotification('🔄 Refreshing data...', 'info');
             await loadUserData();
-            showNotification('✅ Data refreshed successfully!', 'success');
+                            console.log('✅ Data refreshed successfully!');
         }
 
         // Display user information
@@ -3061,7 +3061,7 @@
                     updatePaymentStatusDisplay();
                     updateTimelineDisplay();
                     
-                    showNotification(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`, 'success');
+                    console.log(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}`);
                     
                     // Add notification for user about payment method update
                     await addNotification(
@@ -3380,7 +3380,7 @@
                 // Update freelancers.json on GitHub
                 try {
                     await updateUserPaymentMethod(currentUser.email, paymentMethod);
-                    showNotification(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}\n\nYour preference has been saved and the admin team has been notified!`, 'success');
+                    console.log(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}`);
                     closePaymentDropdown();
                     
                     // Refresh the timeline to show updated status
@@ -3548,7 +3548,7 @@
             if (userContracts.length === 0) {
                 // If no uploaded contract, check if contract is signed but not uploaded
                 if (currentUser.contractStatus === 'signed') {
-                    showNotification('✅ Your contract has been signed and is being processed by admin. You will be able to download it once it\'s uploaded.', 'success');
+                    console.log('✅ Your contract has been signed and is being processed by admin.');
                 } else {
                     showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
                 }
@@ -3607,7 +3607,6 @@
                         window.URL.revokeObjectURL(url);
                         
                         console.log('📄 Downloaded contract via API:', userContract.fileName);
-                        showNotification('✅ Contract downloaded successfully!', 'success');
                         return;
                     } else {
                         console.warn('⚠️ API endpoint failed, trying fallback methods');
@@ -3625,7 +3624,6 @@
                     link.click();
                     document.body.removeChild(link);
                     console.log('📄 Downloaded contract from GitHub:', userContract.fileName);
-                    showNotification('✅ Contract downloaded successfully!', 'success');
                     return;
                 }
                 
@@ -3639,7 +3637,6 @@
                     link.click();
                     document.body.removeChild(link);
                     console.log('📄 Downloaded contract from local data:', userContract.fileName);
-                    showNotification('✅ Contract downloaded successfully!', 'success');
                     return;
                 }
                 
@@ -3675,7 +3672,6 @@
                                 link.click();
                                 document.body.removeChild(link);
                                 console.log('📄 Downloaded contract from GitHub:', userContract.fileName);
-                                showNotification('✅ Contract downloaded successfully!', 'success');
                                 return;
                             } else {
                                 console.warn(`⚠️ File not found on GitHub with ID ${idToTry}:`, githubRawUrl);
@@ -3709,7 +3705,7 @@
             if (!userContract) {
                 // If no uploaded contract, check if contract is signed but not uploaded
                 if (currentUser.contractStatus === 'signed') {
-                    showNotification('✅ Your contract has been signed and is being processed by admin. You will be able to view details once it\'s uploaded.', 'success');
+                    console.log('✅ Your contract has been signed and is being processed by admin.');
                                   } else {
                       showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
                   }
@@ -3925,7 +3921,7 @@
                     currentUser = updatedUser;
                     console.log('✅ User data refreshed:', currentUser);
                     loadUserData(); // Refresh displays
-                    showNotification('Data refreshed successfully!', 'success');
+                    console.log('Data refreshed successfully!');
                 } else {
                     console.warn('⚠️ User not found after refresh');
                     showNotification('Unable to refresh user data', 'error');

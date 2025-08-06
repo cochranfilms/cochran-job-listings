@@ -817,7 +817,6 @@
                     window.URL.revokeObjectURL(url);
                     
                     console.log('📄 Downloaded contract via API:', contract.fileName);
-                    showNotification('✅ Contract downloaded successfully!', 'success');
                     return;
                 }
                 
@@ -832,7 +831,6 @@
                     link.click();
                     document.body.removeChild(link);
                     console.log('📄 Downloaded contract from GitHub:', contract.fileName);
-                    showNotification('✅ Contract downloaded successfully!', 'success');
                     return;
                 }
                 
@@ -846,7 +844,6 @@
                     link.click();
                     document.body.removeChild(link);
                     console.log('📄 Downloaded contract from local data:', contract.fileName);
-                    showNotification('✅ Contract downloaded successfully!', 'success');
                     return;
                 }
                 
@@ -1387,7 +1384,7 @@
             
             displayJobs();
             clearJobForm();
-            showNotification('Job saved successfully and updated on GitHub!', 'success');
+                            console.log('Job saved successfully and updated on GitHub!');
         }
 
         // Edit job
@@ -1413,7 +1410,7 @@
                 await updateJobsOnGitHub();
                 
                 displayJobs();
-                showNotification('Job deleted successfully and updated on GitHub!', 'success');
+                console.log('Job deleted successfully and updated on GitHub!');
             }
         }
 
@@ -1955,7 +1952,7 @@
                 
                 if (updateResponse.ok) {
                     console.log('✅ Successfully saved dropdown options to GitHub');
-                    showNotification('✅ Dropdown options saved successfully to GitHub!', 'success');
+                    console.log('✅ Dropdown options saved successfully to GitHub!');
                 } else {
                     const errorData = await updateResponse.json();
                     throw new Error(`GitHub API error: ${errorData.error || 'Unknown error'}`);
@@ -3988,7 +3985,7 @@
             await updateUsersOnGitHub();
             
             console.log(`✅ Updated project status for ${userName} - ${jobId}: ${newStatus}`);
-            showNotification(`✅ Project status updated for ${userName} - ${jobId}: ${newStatus}`, 'success');
+                            console.log(`✅ Project status updated for ${userName} - ${jobId}: ${newStatus}`);
             
             // Add notification for user about status change
             await addNotification(
@@ -5269,7 +5266,7 @@
                 // Close modal
                 document.querySelector('div[style*="position: fixed"]').remove();
                 
-                showNotification(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}`, 'success');
+                console.log(`✅ Updated project status for ${freelancerName} - ${jobId}\nProject: ${newProjectStatus}`);
                 
                 // Check for performance review if payment status is "paid"
                 if (newPaymentStatus === 'paid') {
