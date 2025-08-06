@@ -4445,11 +4445,23 @@
                 }
             }
             
-            // Force refresh user data after successful update
-            if (currentUser) {
-                await loadUserData();
-                console.log('✅ User data refreshed after payment method update');
-            }
+                    // Force refresh user data after successful update
+        if (currentUser) {
+            // Clear cache to force fresh data load
+            sessionStorage.removeItem('cachedUsersData');
+            sessionStorage.removeItem('cachedUsersDataTimestamp');
+            await loadUserData();
+            console.log('✅ User data refreshed after payment method update');
+        }
+        }
+
+        // Force refresh cache function
+        async function forceRefreshCache() {
+            console.log('🔄 Force refreshing cache...');
+            sessionStorage.removeItem('cachedUsersData');
+            sessionStorage.removeItem('cachedUsersDataTimestamp');
+            await loadUsersData();
+            console.log('✅ Cache refreshed');
         }
 
         // Payment Dropdown Functions
