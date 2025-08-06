@@ -11,12 +11,7 @@
       "maxDuration": 30
     },
 
-    "api/run-tests.js": {
-      "maxDuration": 60
-    },
-    "api/export-results.js": {
-      "maxDuration": 30
-    },
+
     "api/delete-pdf.js": {
       "maxDuration": 30
     },
