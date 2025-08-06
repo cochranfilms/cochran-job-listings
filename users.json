@@ -3,7 +3,7 @@
     "thing three": {
       "profile": {
         "email": "dedejackson727@gmail.com",
-        "password": "Pj9TVunDPOZz",
+        "password": "test1234",
         "role": "Editor",
         "location": "New York, NY",
         "projectStart": "2025-08-06T03:10",
@@ -12,10 +12,10 @@
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending",
-        "contractSignedDate": null,
+        "contractStatus": "signed",
+        "contractSignedDate": "8/6/2025, 3:06:37 AM",
         "contractUploadedDate": null,
-        "contractId": null
+        "contractId": "CF-1754463997856-AXAOX"
       },
       "jobs": {
         "job-editor-default": {
