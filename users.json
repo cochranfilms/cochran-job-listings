@@ -1,40 +1,5 @@
 {
   "users": {
-    "Black Widow": {
-      "profile": {
-        "email": "codylcochran89@gmail.com",
-        "password": "test12345",
-        "role": "Editor",
-        "location": "New York, NY",
-        "projectStart": "2025-10-10T14:00",
-        "rate": "$150/hour",
-        "approvedDate": "2025-08-06"
-      },
-      "contract": {
-        "contractUrl": "contract.html",
-        "contractStatus": "signed",
-        "contractSignedDate": "8/6/2025, 4:54:05 AM",
-        "contractUploadedDate": null,
-        "contractId": "CF-1754470445338-SU9R7"
-      },
-      "jobs": {
-        "job-editor-default": {
-          "id": "job-editor-default",
-          "title": "Editor Position",
-          "date": "2025-08-06",
-          "location": "New York, NY",
-          "pay": "$150/hour",
-          "description": "Professional Editor position in New York, NY. Details to be provided.",
-          "status": "upcoming",
-          "projectStatus": "upcoming",
-          "paymentStatus": "pending",
-          "assignedDate": "2025-08-06",
-          "projectStart": "2025-10-10T14:00"
-        }
-      },
-      "primaryJob": "job-editor-default",
-      "paymentMethod": null
-    },
     "Purple Spider": {
       "profile": {
         "email": "codylcochran87@gmail.com",
