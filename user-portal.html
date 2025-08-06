@@ -4870,94 +4870,168 @@
                 showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
             }
         }
-                if (userContract.githubUrl) {
-                    console.log('📤 Attempting to download from GitHub URL:', userContract.githubUrl);
-                    const link = document.createElement('a');
-                    link.href = userContract.githubUrl;
-                    link.download = userContract.fileName;
-                    link.target = '_blank';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    console.log('📄 Downloaded contract from GitHub:', userContract.fileName);
-                    
-                    // Add notification to sophisticated notification system
-                    await addNotification(
-                        'Contract Downloaded Successfully',
-                        `Your contract "${userContract.fileName}" was downloaded from GitHub.`,
-                        'contract_downloaded',
-                        {
-                            contractId: userContract.contractId,
-                            fileName: userContract.fileName,
-                            userEmail: currentUser.email,
-                            actionRequired: false,
-                            priority: 'normal'
-                        }
-                    );
-                    return;
-                }
+        
+        // Alternative download function for uploaded contracts
+        async function downloadUploadedContract(jobId = null) {
+            console.log('🔍 Download uploaded contract button clicked');
+            console.log('👤 Current user:', currentUser);
+            console.log('🎯 Requested job ID:', jobId);
+            
+            // Get job-specific contract
+            const currentJobId = getSelectedJob() ? getSelectedJob().id : currentUser.primaryJob;
+            const userContract = getUserContractStatus(currentUser.email, currentJobId);
+            
+            console.log('📄 Found user contract:', userContract);
+            
+            if (!userContract) {
+                console.log('❌ No uploaded contract found for user');
+                showNotification('❌ No contract found for your account. Please sign your contract first.', 'error');
+                return;
+            }
+            
+            if (userContract.githubUrl) {
+                console.log('📤 Attempting to download from GitHub URL:', userContract.githubUrl);
+                const link = document.createElement('a');
+                link.href = userContract.githubUrl;
+                link.download = userContract.fileName;
+                link.target = '_blank';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                console.log('📄 Downloaded contract from GitHub:', userContract.fileName);
                 
-                // Fallback to local file data if available
-                if (userContract.fileData) {
-                    console.log('📤 Downloading from local data');
-                    const link = document.createElement('a');
-                    link.href = userContract.fileData;
-                    link.download = userContract.fileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    console.log('📄 Downloaded contract from local data:', userContract.fileName);
-                    
-                    // Add notification to sophisticated notification system
-                    await addNotification(
-                        'Contract Downloaded Successfully',
-                        `Your contract "${userContract.fileName}" was downloaded from local data.`,
-                        'contract_downloaded',
-                        {
-                            contractId: userContract.contractId,
-                            fileName: userContract.fileName,
-                            userEmail: currentUser.email,
-                            actionRequired: false,
-                            priority: 'normal'
-                        }
-                    );
-                    return;
-                }
+                // Add notification to sophisticated notification system
+                await addNotification(
+                    'Contract Downloaded Successfully',
+                    `Your contract "${userContract.fileName}" was downloaded from GitHub.`,
+                    'contract_downloaded',
+                    {
+                        contractId: userContract.contractId,
+                        fileName: userContract.fileName,
+                        userEmail: currentUser.email,
+                        actionRequired: false,
+                        priority: 'normal'
+                    }
+                );
+                return;
+            }
+            
+            // Fallback to local file data if available
+            if (userContract.fileData) {
+                console.log('📤 Downloading from local data');
+                const link = document.createElement('a');
+                link.href = userContract.fileData;
+                link.download = userContract.fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                console.log('📄 Downloaded contract from local data:', userContract.fileName);
                 
-                // Try to download from local contracts directory first
-                if (userContract.contractId) {
-                    console.log('📤 Attempting to download from local contracts directory:', userContract.contractId);
-                    
-                    const contractFileName = `${userContract.contractId}.pdf`;
-                    const localContractUrl = `contracts/${contractFileName}`;
+                // Add notification to sophisticated notification system
+                await addNotification(
+                    'Contract Downloaded Successfully',
+                    `Your contract "${userContract.fileName}" was downloaded from local data.`,
+                    'contract_downloaded',
+                    {
+                        contractId: userContract.contractId,
+                        fileName: userContract.fileName,
+                        userEmail: currentUser.email,
+                        actionRequired: false,
+                        priority: 'normal'
+                    }
+                );
+                return;
+            }
+            
+            // Try to download from local contracts directory first
+            if (userContract.contractId) {
+                console.log('📤 Attempting to download from local contracts directory:', userContract.contractId);
+                
+                const contractFileName = `${userContract.contractId}.pdf`;
+                const localContractUrl = `contracts/${contractFileName}`;
+                
+                try {
+                    const response = await fetch(localContractUrl);
+                    if (response.ok) {
+                        console.log('📄 File found locally, downloading...');
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = contractFileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // Clean up
+                        window.URL.revokeObjectURL(url);
+                        
+                        console.log('📄 Downloaded contract from local directory:', contractFileName);
+                        
+                        // Add notification to sophisticated notification system
+                        await addNotification(
+                            'Contract Downloaded Successfully',
+                            `Your contract "${contractFileName}" was downloaded successfully.`,
+                            'contract_downloaded',
+                            {
+                                contractId: userContract.contractId,
+                                fileName: contractFileName,
+                                userEmail: currentUser.email,
+                                actionRequired: false,
+                                priority: 'normal'
+                            }
+                        );
+                        return;
+                    } else {
+                        console.warn(`⚠️ File not found locally: ${localContractUrl}`);
+                    }
+                } catch (fetchError) {
+                    console.warn(`⚠️ Could not access local file: ${fetchError}`);
+                }
+            }
+            
+            // Try to construct GitHub URL from contract ID as final fallback
+            if (userContract.contractId && userContract.fileName) {
+                console.log('📤 Attempting to download from GitHub using contract ID:', userContract.contractId);
+                
+                const possibleContractIds = [userContract.contractId];
+                
+                // If the contract ID contains "UPLOAD", also try without it
+                if (userContract.contractId.includes('CF-UPLOAD-')) {
+                    possibleContractIds.push(userContract.contractId.replace('CF-UPLOAD-', 'CF-'));
+                }
+                // If the contract ID doesn't contain "UPLOAD", also try with it
+                else if (userContract.contractId.includes('CF-') && !userContract.contractId.includes('CF-UPLOAD-')) {
+                    possibleContractIds.push(userContract.contractId.replace('CF-', 'CF-UPLOAD-'));
+                }
+
+                for (const idToTry of possibleContractIds) {
+                    const contractIdFileName = `${idToTry}.pdf`;
+                    const githubRawUrl = `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${contractIdFileName}`;
+                    console.log(`📤 Trying GitHub URL with contract ID: ${idToTry}`);
                     
                     try {
-                        const response = await fetch(localContractUrl);
+                        const response = await fetch(githubRawUrl, { method: 'HEAD' });
                         if (response.ok) {
-                            console.log('📄 File found locally, downloading...');
-                            const blob = await response.blob();
-                            const url = window.URL.createObjectURL(blob);
-                            
+                            console.log('📄 File found on GitHub, downloading...');
                             const link = document.createElement('a');
-                            link.href = url;
-                            link.download = contractFileName;
+                            link.href = githubRawUrl;
+                            link.download = userContract.fileName;
+                            link.target = '_blank';
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
-                            
-                            // Clean up
-                            window.URL.revokeObjectURL(url);
-                            
-                            console.log('📄 Downloaded contract from local directory:', contractFileName);
+                            console.log('📄 Downloaded contract from GitHub:', userContract.fileName);
                             
                             // Add notification to sophisticated notification system
                             await addNotification(
                                 'Contract Downloaded Successfully',
-                                `Your contract "${contractFileName}" was downloaded successfully.`,
+                                `Your contract "${userContract.fileName}" was downloaded from GitHub.`,
                                 'contract_downloaded',
                                 {
                                     contractId: userContract.contractId,
-                                    fileName: contractFileName,
+                                    fileName: userContract.fileName,
                                     userEmail: currentUser.email,
                                     actionRequired: false,
                                     priority: 'normal'
@@ -4965,70 +5039,15 @@
                             );
                             return;
                         } else {
-                            console.warn(`⚠️ File not found locally: ${localContractUrl}`);
+                            console.warn(`⚠️ File not found on GitHub with ID ${idToTry}:`, githubRawUrl);
                         }
                     } catch (fetchError) {
-                        console.warn(`⚠️ Could not access local file: ${fetchError}`);
+                        console.warn(`⚠️ Could not access file on GitHub with ID ${idToTry}:`, fetchError);
                     }
                 }
-                
-                // Try to construct GitHub URL from contract ID as final fallback
-                if (userContract.contractId && userContract.fileName) {
-                    console.log('📤 Attempting to download from GitHub using contract ID:', userContract.contractId);
-                    
-                    const possibleContractIds = [userContract.contractId];
-                    
-                    // If the contract ID contains "UPLOAD", also try without it
-                    if (userContract.contractId.includes('CF-UPLOAD-')) {
-                        possibleContractIds.push(userContract.contractId.replace('CF-UPLOAD-', 'CF-'));
-                    }
-                    // If the contract ID doesn't contain "UPLOAD", also try with it
-                    else if (userContract.contractId.includes('CF-') && !userContract.contractId.includes('CF-UPLOAD-')) {
-                        possibleContractIds.push(userContract.contractId.replace('CF-', 'CF-UPLOAD-'));
-                    }
-
-                    for (const idToTry of possibleContractIds) {
-                        const contractIdFileName = `${idToTry}.pdf`;
-                        const githubRawUrl = `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${contractIdFileName}`;
-                        console.log(`📤 Trying GitHub URL with contract ID: ${idToTry}`);
-                        
-                        try {
-                            const response = await fetch(githubRawUrl, { method: 'HEAD' });
-                            if (response.ok) {
-                                console.log('📄 File found on GitHub, downloading...');
-                                const link = document.createElement('a');
-                                link.href = githubRawUrl;
-                                link.download = userContract.fileName;
-                                link.target = '_blank';
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                console.log('📄 Downloaded contract from GitHub:', userContract.fileName);
-                                
-                                // Add notification to sophisticated notification system
-                                await addNotification(
-                                    'Contract Downloaded Successfully',
-                                    `Your contract "${userContract.fileName}" was downloaded from GitHub.`,
-                                    'contract_downloaded',
-                                    {
-                                        contractId: userContract.contractId,
-                                        fileName: userContract.fileName,
-                                        userEmail: currentUser.email,
-                                        actionRequired: false,
-                                        priority: 'normal'
-                                    }
-                                );
-                                return;
-                            } else {
-                                console.warn(`⚠️ File not found on GitHub with ID ${idToTry}:`, githubRawUrl);
-                            }
-                        } catch (fetchError) {
-                            console.warn(`⚠️ Could not access file on GitHub with ID ${idToTry}:`, fetchError);
-                        }
-                    }
-                }
-                
-                showNotification('❌ Contract file not available. Please contact admin.', 'error');
+            }
+            
+            showNotification('❌ Contract file not available. Please contact admin.', 'error');
         }
 
         // View contract details
