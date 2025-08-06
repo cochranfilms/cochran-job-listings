@@ -25,8 +25,8 @@
           "location": "New York, NY",
           "pay": "$150/hour",
           "description": "Professional Editor position in New York, NY. Details to be provided.",
-          "status": "upcoming",
-          "projectStatus": "upcoming",
+          "status": "in-progress",
+          "projectStatus": "in-progress",
           "paymentStatus": "pending",
           "assignedDate": "2025-08-06",
           "projectStart": "2025-08-06T03:10"
