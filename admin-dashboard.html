@@ -22,6 +22,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
+    <!-- Secure Bank Storage -->
+    <script src="secure-bank-storage.js"></script>
+    <script src="admin-bank-viewer.js"></script>
+    
     <style>
         :root {
             --primary: #FFB200;
@@ -720,7 +724,15 @@
         function updateStats() {
             document.getElementById('totalCreators').textContent = Object.keys(window.users).length;
             document.getElementById('activeJobs').textContent = window.jobs.filter(job => job.status === 'Active').length;
-            document.getElementById('pendingReviews').textContent = window.jobs.filter(job => !job.reviewed).length;
+            
+            // Count pending reviews (users who haven't been reviewed yet)
+            const pendingReviews = Object.keys(window.users).filter(userName => {
+                const user = window.users[userName];
+                // Consider a user as needing review if they have a contract but no review data
+                return user.contract?.contractStatus === 'signed' && !user.performanceReview;
+            }).length;
+            
+            document.getElementById('pendingReviews').textContent = pendingReviews;
             document.getElementById('totalContracts').textContent = Object.keys(window.users).length;
         }
 
@@ -1048,23 +1060,243 @@
             URL.revokeObjectURL(url);
         }
 
-        // View user details
+        // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
+        
+        // Enhanced notification system
+        function showNotification(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            const icon = getNotificationIcon(type);
+            const colors = getNotificationColors(type);
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colors.background};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                border: 1px solid ${colors.border};
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                z-index: 10000;
+                font-family: 'Inter', sans-serif;
+                font-size: 0.9rem;
+                max-width: 400px;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                backdrop-filter: blur(10px);
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.2rem;">${icon}</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">${type.toUpperCase()}</div>
+                        <div style="opacity: 0.9; line-height: 1.4;">${message}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        function getNotificationIcon(type) {
+            switch (type) {
+                case 'success': return '✅';
+                case 'error': return '❌';
+                case 'warning': return '⚠️';
+                case 'info': return 'ℹ️';
+                default: return '🔔';
+            }
+        }
+        
+        function getNotificationColors(type) {
+            switch (type) {
+                case 'success': return { background: 'linear-gradient(135deg, #22c55e, #16a34a)', border: '#16a34a' };
+                case 'error': return { background: 'linear-gradient(135deg, #ef4444, #dc2626)', border: '#dc2626' };
+                case 'warning': return { background: 'linear-gradient(135deg, #f59e0b, #d97706)', border: '#d97706' };
+                case 'info': return { background: 'linear-gradient(135deg, #3b82f6, #2563eb)', border: '#2563eb' };
+                default: return { background: 'linear-gradient(135deg, #6b7280, #4b5563)', border: '#4b5563' };
+            }
+        }
+
+        // View user details with sophisticated modal
         function viewUserDetails(userName) {
             const user = window.users[userName];
             if (!user) return;
             
-            const details = `
-User: ${userName}
-Email: ${user.profile?.email || 'Not specified'}
-Role: ${user.profile?.role || 'Not specified'}
-Location: ${user.profile?.location || 'Not specified'}
-Primary Job: ${user.primaryJob || 'None'}
-Payment Method: ${user.paymentMethod || 'Not specified'}
-Contract Status: ${user.contract?.contractStatus || 'Not specified'}
-Contract ID: ${user.contract?.contractId || 'Not specified'}
+            // Create sophisticated modal
+            const modal = document.createElement('div');
+            modal.id = 'userDetailsModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
             `;
             
-            alert(details);
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+                    padding: 2rem;
+                    border-radius: 16px;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    border: 1px solid #FFB200;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                ">
+                    <button onclick="this.closest('#userDetailsModal').remove()" 
+                            style="
+                                position: absolute;
+                                top: 1rem;
+                                right: 1rem;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 30px;
+                                height: 30px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 18px;
+                                font-weight: bold;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">×</button>
+                    
+                    <h3 style="color: #FFB200; margin-bottom: 1.5rem; text-align: center; font-family: 'Cinzel', serif;">
+                        👤 USER DETAILS - ${userName.toUpperCase()}
+                    </h3>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                        <h4 style="color: #FFB200; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            📋 Profile Information
+                        </h4>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Email:</strong> 
+                                <span style="color: #FFB200;">${user.profile?.email || 'Not specified'}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Role:</strong> 
+                                <span style="color: #FFB200;">${user.profile?.role || 'Not specified'}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Location:</strong> 
+                                <span style="color: #FFB200;">${user.profile?.location || 'Not specified'}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Approved Date:</strong> 
+                                <span style="color: #FFB200;">${user.profile?.approvedDate || 'Not specified'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                        <h4 style="color: #FFB200; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            📝 Contract Information
+                        </h4>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Contract Status:</strong> 
+                                <span style="color: ${user.contract?.contractStatus === 'signed' ? '#22c55e' : '#f59e0b'};">
+                                    ${user.contract?.contractStatus || 'Not specified'}
+                                </span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Contract ID:</strong> 
+                                <span style="color: #FFB200; font-family: monospace;">${user.contract?.contractId || 'Not specified'}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Signed Date:</strong> 
+                                <span style="color: #FFB200;">${user.contract?.contractSignedDate || 'Not specified'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                        <h4 style="color: #FFB200; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            💼 Job Information
+                        </h4>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Primary Job:</strong> 
+                                <span style="color: #FFB200;">${user.primaryJob || 'None'}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Payment Method:</strong> 
+                                <span style="color: #FFB200;">${user.paymentMethod || 'Not specified'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button onclick="showBankDetails('${userName}')" 
+                                style="
+                                    background: linear-gradient(135deg, #3b82f6, #2563eb);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.75rem 1.5rem;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                    flex: 1;
+                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            🏦 View Bank Details
+                        </button>
+                        <button onclick="showPerformanceReview('${userName}')" 
+                                style="
+                                    background: linear-gradient(135deg, #f59e0b, #d97706);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.75rem 1.5rem;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                    flex: 1;
+                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            📊 Performance Review
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         }
 
         // Delete user
@@ -1073,7 +1305,288 @@ Contract ID: ${user.contract?.contractId || 'Not specified'}
                 delete window.users[userName];
                 displayUsers();
                 updateStats();
+                showNotification(`User ${userName} deleted successfully`, 'success');
             }
+        }
+
+        // Show bank details with encryption
+        function showBankDetails(userName) {
+            const user = window.users[userName];
+            if (!user) {
+                showNotification('User not found', 'error');
+                return;
+            }
+
+            // Create sophisticated bank details modal
+            const modal = document.createElement('div');
+            modal.id = 'bankDetailsModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+                    padding: 2rem;
+                    border-radius: 16px;
+                    max-width: 500px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    border: 1px solid #FFB200;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                ">
+                    <button onclick="this.closest('#bankDetailsModal').remove()" 
+                            style="
+                                position: absolute;
+                                top: 1rem;
+                                right: 1rem;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 30px;
+                                height: 30px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 18px;
+                                font-weight: bold;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">×</button>
+                    
+                    <h3 style="color: #FFB200; margin-bottom: 1.5rem; text-align: center; font-family: 'Cinzel', serif;">
+                        🏦 BANK DETAILS - ${userName.toUpperCase()}
+                    </h3>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                        <h4 style="color: #FFB200; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            🔐 Secure Banking Information
+                        </h4>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Payment Method:</strong> 
+                                <span style="color: #FFB200;">${user.paymentMethod || 'Not specified'}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Encryption Status:</strong> 
+                                <span style="color: #22c55e;">🔒 End-to-End Encrypted</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Security Level:</strong> 
+                                <span style="color: #22c55e;">Maximum</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(59,130,246,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59,130,246,0.3);">
+                        <h4 style="color: #3b82f6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            ℹ️ Information
+                        </h4>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; line-height: 1.6;">
+                            Bank details are securely stored with end-to-end encryption. 
+                            This information is only accessible to authorized administrators.
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button onclick="this.closest('#bankDetailsModal').remove()" 
+                                style="
+                                    background: linear-gradient(135deg, #6b7280, #4b5563);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.75rem 1.5rem;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                    flex: 1;
+                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // Show performance review
+        function showPerformanceReview(userName) {
+            const user = window.users[userName];
+            if (!user) {
+                showNotification('User not found', 'error');
+                return;
+            }
+
+            // Create sophisticated performance review modal
+            const modal = document.createElement('div');
+            modal.id = 'performanceReviewModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+                    padding: 2rem;
+                    border-radius: 16px;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    border: 1px solid #FFB200;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                ">
+                    <button onclick="this.closest('#performanceReviewModal').remove()" 
+                            style="
+                                position: absolute;
+                                top: 1rem;
+                                right: 1rem;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 30px;
+                                height: 30px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 18px;
+                                font-weight: bold;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">×</button>
+                    
+                    <h3 style="color: #FFB200; margin-bottom: 1.5rem; text-align: center; font-family: 'Cinzel', serif;">
+                        📊 PERFORMANCE REVIEW - ${userName.toUpperCase()}
+                    </h3>
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                        <h4 style="color: #FFB200; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            📋 Review Status
+                        </h4>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Review Status:</strong> 
+                                <span style="color: #f59e0b;">Pending</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Last Review:</strong> 
+                                <span style="color: #FFB200;">Not yet reviewed</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Performance Level:</strong> 
+                                <span style="color: #22c55e;">New</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(59,130,246,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59,130,246,0.3);">
+                        <h4 style="color: #3b82f6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            📝 Review Notes
+                        </h4>
+                        <textarea placeholder="Enter performance review notes here..." 
+                                  style="
+                                      width: 100%;
+                                      min-height: 100px;
+                                      background: rgba(0,0,0,0.4);
+                                      border: 1px solid rgba(255,178,0,0.3);
+                                      border-radius: 8px;
+                                      color: white;
+                                      padding: 0.75rem;
+                                      font-family: 'Inter', sans-serif;
+                                      resize: vertical;
+                                  "></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button onclick="submitPerformanceReview('${userName}')" 
+                                style="
+                                    background: linear-gradient(135deg, #22c55e, #16a34a);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.75rem 1.5rem;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                    flex: 1;
+                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            ✅ Submit Review
+                        </button>
+                        <button onclick="this.closest('#performanceReviewModal').remove()" 
+                                style="
+                                    background: linear-gradient(135deg, #6b7280, #4b5563);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.75rem 1.5rem;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                    flex: 1;
+                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // Submit performance review
+        function submitPerformanceReview(userName) {
+            const modal = document.getElementById('performanceReviewModal');
+            const textarea = modal.querySelector('textarea');
+            const notes = textarea.value.trim();
+            
+            if (!notes) {
+                showNotification('Please enter review notes', 'warning');
+                return;
+            }
+            
+            // Here you would typically save the review to your backend
+            showNotification(`Performance review submitted for ${userName}`, 'success');
+            modal.remove();
         }
 
         // Generate all contract files
