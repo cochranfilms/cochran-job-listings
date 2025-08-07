@@ -1317,7 +1317,17 @@
                 return;
             }
 
-            // Create sophisticated bank details modal
+            // Use the proper admin bank viewer system
+            if (window.adminBankViewer) {
+                window.adminBankViewer.showUserBankDetails(userName, user);
+            } else {
+                // Fallback to simple modal if admin bank viewer is not available
+                showSimpleBankModal(userName, user);
+            }
+        }
+
+        // Fallback simple bank modal
+        function showSimpleBankModal(userName, user) {
             const modal = document.createElement('div');
             modal.id = 'bankDetailsModal';
             modal.style.cssText = `
@@ -1333,6 +1343,9 @@
                 justify-content: center;
                 backdrop-filter: blur(10px);
             `;
+            
+            // Check if user has bank data
+            const hasBankData = user.bankData && Object.keys(user.bankData).length > 0;
             
             modal.innerHTML = `
                 <div style="
@@ -1371,33 +1384,56 @@
                         🏦 BANK DETAILS - ${userName.toUpperCase()}
                     </h3>
                     
-                    <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                    ${hasBankData ? `
+                        <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                            <h4 style="color: #FFB200; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                🔐 Secure Banking Information
+                            </h4>
+                            <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <strong>Bank Name:</strong> 
+                                    <span style="color: #FFB200;">${user.bankData.bankName || 'Not specified'}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <strong>Account Type:</strong> 
+                                    <span style="color: #FFB200;">${user.bankData.accountType || 'Not specified'}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <strong>Last 4 Digits:</strong> 
+                                    <span style="color: #FFB200;">****${user.bankData.lastFour || '****'}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <strong>Encryption Status:</strong> 
+                                    <span style="color: #22c55e;">🔒 End-to-End Encrypted</span>
+                                </div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div style="background: rgba(59,130,246,0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(59,130,246,0.3);">
+                            <h4 style="color: #3b82f6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                ℹ️ No Bank Data Available
+                            </h4>
+                            <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; line-height: 1.6;">
+                                <strong>${userName}</strong> has not set up bank transfer details yet.
+                                <br><br>
+                                Bank details will appear here once the user selects "Bank Transfer" as their payment method and completes the secure setup process.
+                            </div>
+                        </div>
+                    `}
+                    
+                    <div style="background: rgba(255,178,0,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,178,0,0.3);">
                         <h4 style="color: #FFB200; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                            🔐 Secure Banking Information
+                            💳 Payment Method
                         </h4>
                         <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <strong>Payment Method:</strong> 
+                                <strong>Current Method:</strong> 
                                 <span style="color: #FFB200;">${user.paymentMethod || 'Not specified'}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <strong>Encryption Status:</strong> 
-                                <span style="color: #22c55e;">🔒 End-to-End Encrypted</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <strong>Security Level:</strong> 
                                 <span style="color: #22c55e;">Maximum</span>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div style="background: rgba(59,130,246,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59,130,246,0.3);">
-                        <h4 style="color: #3b82f6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                            ℹ️ Information
-                        </h4>
-                        <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; line-height: 1.6;">
-                            Bank details are securely stored with end-to-end encryption. 
-                            This information is only accessible to authorized administrators.
                         </div>
                     </div>
                     
@@ -1663,6 +1699,14 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
+            
+            // Initialize admin bank viewer
+            if (typeof AdminBankViewer !== 'undefined') {
+                window.adminBankViewer = new AdminBankViewer();
+                console.log('✅ Admin Bank Viewer initialized');
+            } else {
+                console.log('⚠️ Admin Bank Viewer not available, using fallback');
+            }
             
             // Auto-run tests after a short delay
             setTimeout(() => {
