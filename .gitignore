@@ -7,3 +7,4 @@ config/github-config.json
 .env
 secrets/
 tokens/ 
+node_modules

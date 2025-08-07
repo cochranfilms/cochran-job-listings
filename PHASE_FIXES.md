@@ -36,7 +36,33 @@ This document tracks the fixes for various issues in the Cochran Films landing p
 
 **Implementation**: Both admin-dashboard.html and user-portal.html now read from centralized `users.json` for all user-related data.
 
-## Phase 1 Fix - Error User Not Found Alert
+## Phase 1 Fix - User Deletion System (Latest)
+**Issue**: Users weren't being deleted from `users.json` and changes weren't being pushed to GitHub when admins deleted users from the admin dashboard.
+
+**Root Cause**: The `deleteUser` function in `admin-dashboard.html` only deleted from the local `window.users` object but didn't persist changes to `users.json` or GitHub.
+
+**Solutions Implemented**:
+1. **Enhanced deleteUser Function**: Updated to call `updateUsersOnGitHub()` after deletion
+2. **Created update-users API**: New `/api/update-users` endpoint for secure GitHub updates
+3. **Added PDF Cleanup**: Enhanced deletion flow to include PDF file cleanup
+4. **Improved Error Handling**: Added comprehensive error handling and user feedback
+5. **Created Test Scripts**: Added `test-admin-user-deletion-system.js` and `test-admin-deletion-simple.js`
+
+**Files Modified**:
+- `admin-dashboard.html`: Enhanced deleteUser function with proper persistence
+- `api/update-users.js`: New API endpoint for updating users.json and GitHub
+- `test-admin-user-deletion-system.js`: Comprehensive browser-based test
+- `test-admin-deletion-simple.js`: API-focused test without browser automation
+- `TESTING_SYSTEM_README.md`: Updated documentation for new test scripts
+
+**Test Results**:
+- ✅ User deletion now persists to users.json
+- ✅ Changes are pushed to GitHub automatically
+- ✅ PDF files are cleaned up when users are deleted
+- ✅ Comprehensive error handling and user feedback
+- ✅ Full test coverage for deletion workflow
+
+## Phase 2 Fix - Error User Not Found Alert
 **Issue**: Error alert shows up in user-portal.html as soon as the page loads, even before user login attempts. Continues to show after successful login and page reload.
 
 **Root Cause**: The `checkUserInSystem()` function is being called immediately when Firebase auth state changes, even when no user is properly authenticated.

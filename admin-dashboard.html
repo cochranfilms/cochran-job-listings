@@ -1390,11 +1390,88 @@
         }
 
         // Delete user (for contract management)
-        function deleteUser(name) {
+        async function deleteUser(name) {
             if (confirm(`Are you sure you want to delete ${name}?`)) {
-                delete window.users[name];
-                displayUsers();
-                updateStats();
+                try {
+                    const userData = window.users[name];
+                    const userEmail = userData?.profile?.email;
+                    const contractId = userData?.contract?.contractId;
+                    const contractFileName = userData?.contract?.fileName;
+                    
+                    let firebaseDeleted = false;
+                    let firebaseMessage = '';
+                    let pdfDeleted = false;
+                    let pdfMessage = '';
+                    
+                    // 1. Delete associated PDF file if contract exists
+                    if (contractFileName) {
+                        try {
+                            console.log(`🗑️ Attempting to delete PDF: ${contractFileName}`);
+                            const deletePdfResponse = await fetch('/api/delete-pdf', {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    filename: contractFileName
+                                })
+                            });
+                            
+                            if (deletePdfResponse.ok) {
+                                const pdfResult = await deletePdfResponse.json();
+                                console.log('✅ PDF file deleted successfully:', pdfResult);
+                                pdfDeleted = true;
+                                pdfMessage = 'PDF file deleted from server.';
+                            } else {
+                                console.warn('⚠️ PDF deletion request failed:', deletePdfResponse.status);
+                                pdfMessage = 'PDF file may still exist on server.';
+                            }
+                        } catch (pdfError) {
+                            console.warn('⚠️ Could not delete PDF file:', pdfError);
+                            pdfMessage = 'PDF file may still exist.';
+                        }
+                    }
+                    
+                    // 2. Delete from Firebase (if email exists)
+                    if (userEmail) {
+                        try {
+                            const firebaseResult = await deleteFirebaseAccount(userEmail);
+                            if (firebaseResult.success) {
+                                console.log('✅ Firebase account deleted for:', userEmail);
+                                firebaseDeleted = true;
+                                firebaseMessage = 'Removed from Firebase and GitHub.';
+                            } else {
+                                console.warn('⚠️ Firebase account deletion limited:', firebaseResult.error);
+                                firebaseMessage = firebaseResult.message || 'Firebase account may still exist.';
+                            }
+                        } catch (firebaseError) {
+                            console.warn('⚠️ Could not delete Firebase account:', firebaseError);
+                            firebaseMessage = 'Firebase account may still exist.';
+                        }
+                    }
+                    
+                    // 3. Delete from local users object
+                    delete window.users[name];
+                    
+                    // 4. Update users.json file
+                    await updateUsersOnGitHub('delete', name);
+                    
+                    // 5. Refresh display
+                    displayUsers();
+                    updateStats();
+                    
+                    // 6. Show comprehensive success message
+                    let successMessage = `✅ User "${name}" deleted successfully!`;
+                    if (firebaseDeleted) successMessage += ` ${firebaseMessage}`;
+                    if (pdfDeleted) successMessage += ` ${pdfMessage}`;
+                    
+                    showNotification(successMessage, 'success');
+                    
+                } catch (error) {
+                    console.error('❌ Error deleting user:', error);
+                    showNotification(`❌ Error deleting user: ${error.message}`, 'error');
+                    displayUsers(); // Still update the display
+                }
             }
         }
 
@@ -1435,6 +1512,79 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        // Update users.json on GitHub
+        async function updateUsersOnGitHub(action = 'update', userName = '') {
+            try {
+                console.log('🔄 Updating users.json via API...');
+                
+                const response = await fetch('/api/update-users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        users: window.users,
+                        action: action,
+                        userName: userName
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Users data updated successfully:', result);
+                    
+                    let message = '✅ Users data updated successfully';
+                    if (result.githubUpdated) {
+                        message += ' and pushed to GitHub';
+                    } else {
+                        message += ` (GitHub: ${result.githubMessage})`;
+                    }
+                    
+                    showNotification(message, 'success');
+                    return true;
+                } else {
+                    const error = await response.json();
+                    console.error('❌ Failed to update users:', error);
+                    showNotification('❌ Failed to update users data', 'error');
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error('❌ Error updating users:', error);
+                showNotification('❌ Error updating users data', 'error');
+                return false;
+            }
+        }
+
+        // Delete Firebase account
+        async function deleteFirebaseAccount(email) {
+            try {
+                console.log(`🗑️ Attempting to delete Firebase account: ${email}`);
+                
+                const response = await fetch('/api/firebase', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Firebase deletion response:', result);
+                    return result;
+                } else {
+                    const error = await response.json();
+                    console.error('❌ Firebase deletion failed:', error);
+                    return { success: false, error: error.message };
+                }
+                
+            } catch (error) {
+                console.error('❌ Error calling Firebase API:', error);
+                return { success: false, error: error.message };
+            }
         }
 
         // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================

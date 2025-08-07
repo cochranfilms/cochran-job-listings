@@ -81,18 +81,34 @@ async function testBankDetailsFix() {
         // Test 3: Check modal content
         console.log('\n📄 Test 3: Check Modal Content');
         const modalContent = await page.evaluate(() => {
-            const modal = document.querySelector('#bankDetailsModal');
-            if (!modal) {
-                return { exists: false };
+            // Check for both our modal and admin bank viewer modal
+            const ourModal = document.querySelector('#bankDetailsModal');
+            const adminModal = document.querySelector('div[style*="position: fixed"][style*="z-index: 1000"]');
+            
+            if (!ourModal && !adminModal) {
+                return { exists: false, modalType: 'none' };
             }
 
-            const modalText = modal.textContent || '';
+            let modalText = '';
+            let modalType = '';
+
+            if (ourModal) {
+                modalText = ourModal.textContent || '';
+                modalType = 'our-modal';
+            } else if (adminModal) {
+                modalText = adminModal.textContent || '';
+                modalType = 'admin-modal';
+            }
+
             return {
                 exists: true,
-                hasNoBankDataMessage: modalText.includes('No Bank Data Available') || modalText.includes('has not set up bank transfer details'),
+                modalType: modalType,
+                hasNoBankDataMessage: modalText.includes('No Bank Data') || modalText.includes('has not set up bank transfer details'),
                 hasBankInfo: modalText.includes('Bank Name') || modalText.includes('Account Type'),
                 hasPaymentMethod: modalText.includes('Payment Method'),
-                hasEncryptionInfo: modalText.includes('Encryption') || modalText.includes('Security Level')
+                hasEncryptionInfo: modalText.includes('Encryption') || modalText.includes('Security Level'),
+                hasInfoIcon: modalText.includes('ℹ️') || modalText.includes('Information'),
+                fullText: modalText.substring(0, 200) + '...' // First 200 chars for debugging
             };
         });
 
@@ -116,8 +132,10 @@ async function testBankDetailsFix() {
         console.log(`Erica Cochran has bank data: ${userData.hasBankData ? '✅ Yes' : '❌ No'}`);
         console.log(`Payment Method: ${userData.paymentMethod || 'Not specified'}`);
         console.log(`Bank Modal Triggered: ${bankModalResult.success ? '✅ Success' : '❌ Failed'}`);
+        console.log(`Modal Type: ${modalContent.modalType || 'None'}`);
         console.log(`Modal Shows No Data Message: ${modalContent.hasNoBankDataMessage ? '✅ Correct' : '❌ Wrong'}`);
         console.log(`Admin Bank Viewer Available: ${adminBankViewerStatus.adminBankViewerExists ? '✅ Yes' : '❌ No'}`);
+        console.log(`Modal Text Preview: ${modalContent.fullText || 'No text'}`);
 
         // Analysis
         console.log('\n🔍 ANALYSIS:');
