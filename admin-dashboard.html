@@ -2076,6 +2076,29 @@
         ✅ Easy management from one interface
         ✅ No data conflicts or inconsistencies
         ✅ Scalable architecture for future additions
+        
+        ROLE vs PROJECT TYPE CLARIFICATION:
+        
+        🎭 ROLES (User-Specific):
+        - Definition: User's professional role/career
+        - Examples: Photographer, Videographer, Editor, Producer, Director
+        - Stored in: users.json under user.profile.role
+        - Used in: User creation form, user profiles
+        - Purpose: Defines what the user does professionally
+        
+        🎬 PROJECT TYPES (Job-Specific):
+        - Definition: Types of projects/jobs available
+        - Examples: Wedding Photography, Corporate Event, Commercial Video, Product Photography
+        - Stored in: jobs-data.json under job.projectType
+        - Used in: Job creation form, job listings
+        - Purpose: Defines what type of project the job is
+        
+        KEY DIFFERENCES:
+        ✅ Roles are user-specific (what they do professionally)
+        ✅ Project Types are job-specific (what type of project it is)
+        ✅ User creation form only needs Role field (not Project Type)
+        ✅ Job creation form needs Project Type field (not Role)
+        ✅ Clear separation prevents confusion between career and project type
         */
         
         // ==================== CORE FUNCTION RESTORATION ====================
