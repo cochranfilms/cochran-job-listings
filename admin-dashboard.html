@@ -18,6 +18,10 @@
     <!-- JSZip for contract file generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -473,7 +477,54 @@
 
         <!-- Main Content Grid -->
         <div class="content-grid">
-            <!-- Jobs Management -->
+            <!-- Unified User & Contract Management -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>👥 User & Contract Management</h2>
+                </div>
+                <div class="card-content">
+                    <div class="form-section">
+                        <h3>Add New User</h3>
+                        <form id="contractForm">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <input type="text" id="freelancerName" placeholder="Full Name" required>
+                                <input type="email" id="freelancerEmail" placeholder="Email Address" required>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <input type="text" id="freelancerRole" placeholder="Role (Optional)">
+                                <input type="text" id="freelancerLocation" placeholder="Location" value="Atlanta Area">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <input type="text" id="freelancerRate" placeholder="Pay Rate">
+                                <input type="date" id="approvedDate" placeholder="Approved Date">
+                            </div>
+                            <input type="url" id="contractUrl" placeholder="Contract URL" required>
+                            <button type="submit" class="btn">Save User</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearContractForm()">Clear</button>
+                        </form>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Quick Actions</h3>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <button class="btn" onclick="generateAllContracts()">📄 Generate All Contracts</button>
+                            <button class="btn btn-secondary" onclick="exportUsersData()">📊 Export Users</button>
+                            <button class="btn btn-secondary" onclick="downloadUsersJSON()" id="downloadUsersBtn" style="display: none;">📥 Download Users</button>
+                            <button class="btn btn-secondary" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📥 Download Contracts</button>
+                        </div>
+                        <div id="contractGenerationStatus"></div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Current Users & Contracts</h3>
+                        <div class="item-list" id="usersList">
+                            <!-- Users will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Job Management -->
             <div class="content-card">
                 <div class="card-header">
                     <h2>📋 Job Management</h2>
@@ -482,94 +533,68 @@
                     <div class="form-section">
                         <h3>Add New Job</h3>
                         <form id="jobForm">
-                            <input type="text" id="jobTitle" placeholder="Job Title" required>
-                            <input type="date" id="jobDate" placeholder="Event Date">
-                            <input type="text" id="jobLocation" placeholder="Location" value="Atlanta Area">
-                            <input type="text" id="jobPay" placeholder="Pay Rate">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <input type="text" id="jobTitle" placeholder="Job Title" required>
+                                <input type="date" id="jobDate" placeholder="Event Date">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <input type="text" id="jobLocation" placeholder="Location" value="Atlanta Area">
+                                <input type="text" id="jobPay" placeholder="Pay Rate">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <select id="jobType">
+                                    <option value="Photography">Photography</option>
+                                    <option value="Videography">Videography</option>
+                                    <option value="Event Coverage">Event Coverage</option>
+                                    <option value="Portrait Session">Portrait Session</option>
+                                    <option value="Commercial">Commercial</option>
+                                    <option value="Wedding">Wedding</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <select id="jobStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
                             <textarea id="jobDescription" placeholder="Job Description" rows="3"></textarea>
-                            <select id="jobStatus">
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                            </select>
-                            <button type="submit" class="btn">Save Job</button>
-                            <button type="button" class="btn btn-secondary" onclick="clearJobForm()">Clear</button>
+                            <div class="form-actions">
+                                <button type="submit" class="btn">➕ Add Job</button>
+                                <button type="button" class="btn btn-secondary" onclick="clearJobForm()">🔄 Clear</button>
+                                <button type="button" class="btn btn-secondary" onclick="assignJobsToUsers()">🎯 Assign to Users</button>
+                            </div>
                         </form>
                     </div>
                     
                     <div class="form-section">
-                        <h3>Export Jobs</h3>
-                        <button class="btn" onclick="exportJobData()">Generate JSON</button>
-                        <button class="btn btn-secondary" onclick="downloadJobJSON()" id="downloadJobBtn" style="display: none;">Download</button>
+                        <h3>Job Management Tools</h3>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <button class="btn" onclick="exportJobData()">📊 Export Jobs</button>
+                            <button class="btn btn-secondary" onclick="downloadJobJSON()" id="downloadJobBtn" style="display: none;">📥 Download Jobs</button>
+                            <button class="btn btn-secondary" onclick="showJobStats()">📈 Job Statistics</button>
+                            <button class="btn btn-secondary" onclick="bulkJobActions()">⚡ Bulk Actions</button>
+                        </div>
                     </div>
                     
                     <div class="form-section">
-                        <h3>Current Jobs</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Current Jobs</h3>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <select id="jobFilter" onchange="filterJobs()" style="width: auto; margin: 0;">
+                                    <option value="all">All Jobs</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                                <button class="btn btn-small" onclick="refreshJobs()">🔄 Refresh</button>
+                            </div>
+                        </div>
                         <div class="item-list" id="jobsList">
                             <!-- Jobs will be loaded here -->
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Contract Management -->
-            <div class="content-card">
-                <div class="card-header">
-                    <h2>🔐 Contract Management</h2>
-                </div>
-                <div class="card-content">
-                    <div class="form-section">
-                        <h3>Add New User</h3>
-                        <form id="contractForm">
-                            <input type="text" id="freelancerName" placeholder="Full Name" required>
-                            <input type="email" id="freelancerEmail" placeholder="Email Address" required>
-                            <input type="url" id="contractUrl" placeholder="Contract URL" required>
-                            <input type="text" id="freelancerRole" placeholder="Role (Optional)">
-                            <input type="date" id="approvedDate" placeholder="Approved Date">
-                                                    <button type="submit" class="btn">Save User</button>
-                        <button type="button" class="btn btn-secondary" onclick="clearContractForm()">Clear</button>
-                        </form>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h3>Export Contracts</h3>
-                        <button class="btn" onclick="exportContractData()">Generate JSON</button>
-                        <button class="btn btn-secondary" onclick="downloadContractJSON()" id="downloadContractBtn" style="display: none;">Download</button>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h3>Generate Contract Files</h3>
-                        <button class="btn" onclick="generateAllContracts()">Generate All Contracts</button>
-                        <button class="btn btn-secondary" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">Download Files</button>
-                        <div id="contractGenerationStatus"></div>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h3>Current Users</h3>
-                        <div class="item-list" id="contractsList">
-                            <!-- Users will be loaded here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Users Management -->
-        <div class="content-card">
-            <div class="card-header">
-                <h2>👥 User Management</h2>
-            </div>
-            <div class="card-content">
-                <div class="form-section">
-                    <h3>Current Users</h3>
-                    <div class="item-list" id="usersList">
-                        <!-- Users will be loaded here -->
-                    </div>
-                </div>
-                
-                <div class="form-section">
-                    <h3>Export Users</h3>
-                    <button class="btn" onclick="exportUsersData()">Generate JSON</button>
-                    <button class="btn btn-secondary" onclick="downloadUsersJSON()" id="downloadUsersBtn" style="display: none;">Download</button>
                 </div>
             </div>
         </div>
@@ -757,19 +782,42 @@
             jobsList.innerHTML = '';
 
             window.jobs.forEach((job, index) => {
+                const statusColors = {
+                    'Active': '#22c55e',
+                    'Pending': '#f59e0b',
+                    'Completed': '#3b82f6',
+                    'Cancelled': '#ef4444'
+                };
+                
                 const jobDiv = document.createElement('div');
                 jobDiv.className = 'item-card';
                 jobDiv.innerHTML = `
-                    <h4>${job.title || 'Untitled Job'}</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <h4 style="margin: 0;">${job.title || 'Untitled Job'}</h4>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span class="job-status" style="background: ${statusColors[job.status] || '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                ${job.status || 'Active'}
+                            </span>
+                            ${job.type ? `
+                                <span style="background: rgba(255, 178, 0, 0.2); color: #FFB200; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                    ${job.type}
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
                     <div class="item-meta">
                         <span>📅 ${job.date || 'TBD'}</span>
                         <span>📍 ${job.location || 'Location TBD'}</span>
                         <span>💰 ${job.pay || 'Pay TBD'}</span>
-                        <span>${job.status || 'Active'}</span>
+                        ${job.type ? `<span>🎯 ${job.type}</span>` : ''}
+                    </div>
+                    <div class="item-description">
+                        ${job.description || 'No description provided'}
                     </div>
                     <div class="item-actions">
-                        <button class="btn btn-small" onclick="editJob(${index})">Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">Delete</button>
+                        <button class="btn btn-small" onclick="editJob(${index})">✏️ Edit</button>
+                        <button class="btn btn-small" onclick="duplicateJob(${index})">📋 Duplicate</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">🗑️ Delete</button>
                     </div>
                 `;
                 jobsList.appendChild(jobDiv);
@@ -786,6 +834,7 @@
                 date: formData.get('date'),
                 location: formData.get('location'),
                 pay: formData.get('pay'),
+                type: formData.get('type'),
                 description: formData.get('description'),
                 status: formData.get('status')
             };
@@ -810,10 +859,26 @@
             document.getElementById('jobDate').value = job.date || '';
             document.getElementById('jobLocation').value = job.location || '';
             document.getElementById('jobPay').value = job.pay || '';
+            document.getElementById('jobType').value = job.type || 'Photography';
             document.getElementById('jobDescription').value = job.description || '';
             document.getElementById('jobStatus').value = job.status || 'Active';
             
             document.getElementById('jobForm').dataset.editIndex = index;
+        }
+
+        // Duplicate job
+        function duplicateJob(index) {
+            const originalJob = window.jobs[index];
+            const newJob = {
+                ...originalJob,
+                title: `${originalJob.title} (Copy)`,
+                status: 'Active'
+            };
+            
+            window.jobs.push(newJob);
+            displayJobs();
+            updateStats();
+            showNotification('Job duplicated successfully', 'success');
         }
 
         // Delete job
@@ -828,7 +893,164 @@
         // Clear job form
         function clearJobForm() {
             document.getElementById('jobForm').reset();
+            document.getElementById('jobLocation').value = 'Atlanta Area';
             delete document.getElementById('jobForm').dataset.editIndex;
+        }
+
+        // Filter jobs by status
+        function filterJobs() {
+            const filterValue = document.getElementById('jobFilter').value;
+            const jobCards = document.querySelectorAll('#jobsList .item-card');
+            
+            jobCards.forEach(card => {
+                const statusElement = card.querySelector('.job-status');
+                if (statusElement) {
+                    const status = statusElement.textContent.trim();
+                    if (filterValue === 'all' || status === filterValue) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Refresh jobs list
+        function refreshJobs() {
+            displayJobs();
+            showNotification('Jobs list refreshed', 'success');
+        }
+
+        // Show job statistics
+        function showJobStats() {
+            const stats = {
+                total: window.jobs.length,
+                active: window.jobs.filter(job => job.status === 'Active').length,
+                pending: window.jobs.filter(job => job.status === 'Pending').length,
+                completed: window.jobs.filter(job => job.status === 'Completed').length,
+                cancelled: window.jobs.filter(job => job.status === 'Cancelled').length
+            };
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a1a; border: 1px solid #FFB200; border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; color: white;">
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">📈 Job Statistics</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="background: rgba(255, 178, 0, 0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; color: #FFB200;">${stats.total}</div>
+                            <div>Total Jobs</div>
+                        </div>
+                        <div style="background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; color: #22c55e;">${stats.active}</div>
+                            <div>Active Jobs</div>
+                        </div>
+                        <div style="background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; color: #f59e0b;">${stats.pending}</div>
+                            <div>Pending Jobs</div>
+                        </div>
+                        <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; color: #3b82f6;">${stats.completed}</div>
+                            <div>Completed Jobs</div>
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="btn">Close</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Bulk job actions
+        function bulkJobActions() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a1a; border: 1px solid #FFB200; border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; color: white;">
+                    <h3 style="color: #FFB200; margin-bottom: 1rem;">⚡ Bulk Job Actions</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <p>Select jobs and perform bulk actions:</p>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                            <button class="btn btn-small" onclick="bulkUpdateStatus('Active')">✅ Mark Active</button>
+                            <button class="btn btn-small" onclick="bulkUpdateStatus('Completed')">✅ Mark Completed</button>
+                            <button class="btn btn-small" onclick="bulkUpdateStatus('Cancelled')">❌ Mark Cancelled</button>
+                            <button class="btn btn-small btn-danger" onclick="bulkDeleteJobs()">🗑️ Delete Selected</button>
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="btn btn-secondary">Close</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Bulk update job status
+        function bulkUpdateStatus(newStatus) {
+            const selectedJobs = window.jobs.filter((job, index) => {
+                const checkbox = document.querySelector(`#job-${index}`);
+                return checkbox && checkbox.checked;
+            });
+            
+            if (selectedJobs.length === 0) {
+                showNotification('Please select jobs to update', 'warning');
+                return;
+            }
+            
+            selectedJobs.forEach(job => {
+                job.status = newStatus;
+            });
+            
+            displayJobs();
+            updateStats();
+            showNotification(`${selectedJobs.length} jobs updated to ${newStatus}`, 'success');
+        }
+
+        // Bulk delete jobs
+        function bulkDeleteJobs() {
+            const selectedJobs = window.jobs.filter((job, index) => {
+                const checkbox = document.querySelector(`#job-${index}`);
+                return checkbox && checkbox.checked;
+            });
+            
+            if (selectedJobs.length === 0) {
+                showNotification('Please select jobs to delete', 'warning');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete ${selectedJobs.length} jobs?`)) {
+                window.jobs = window.jobs.filter((job, index) => {
+                    const checkbox = document.querySelector(`#job-${index}`);
+                    return !checkbox || !checkbox.checked;
+                });
+                
+                displayJobs();
+                updateStats();
+                showNotification(`${selectedJobs.length} jobs deleted`, 'success');
+            }
         }
 
         // Export job data
@@ -878,64 +1100,57 @@
             displayUsers();
         }
 
-        // Display users (for contract management)
+        // Display users (unified display)
         function displayUsers() {
             const usersList = document.getElementById('usersList');
-            const contractsList = document.getElementById('contractsList');
             
             if (usersList) {
                 usersList.innerHTML = '';
-            }
-            if (contractsList) {
-                contractsList.innerHTML = '';
             }
 
             Object.keys(window.users).forEach((name, index) => {
                 const user = window.users[name];
                 
-                // Display in users list
-                if (usersList) {
-                    const userDiv = document.createElement('div');
-                    userDiv.className = 'item-card';
-                    userDiv.innerHTML = `
-                        <h4>${name}</h4>
-                        <div class="item-meta">
-                            <span>📧 ${user.profile?.email || 'Email not specified'}</span>
-                            <span>🎭 ${user.profile?.role || 'Role not specified'}</span>
-                            <span>📍 ${user.profile?.location || 'Location not specified'}</span>
-                            <span>📅 ${user.profile?.approvedDate || 'Date not specified'}</span>
+                const userDiv = document.createElement('div');
+                userDiv.className = 'item-card';
+                userDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <h4 style="margin: 0;">${name}</h4>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: ${user.contract?.contractStatus === 'signed' ? '#22c55e' : '#f59e0b'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                ${user.contract?.contractStatus === 'signed' ? '✅ Contract Signed' : '⏳ Contract Pending'}
+                            </span>
+                            <span style="background: ${user.paymentMethod ? '#22c55e' : '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                ${user.paymentMethod ? '💳 Payment Set' : '💳 No Payment'}
+                            </span>
+                            ${user.jobs && Object.keys(user.jobs).length > 0 ? `
+                                <span style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                    🎯 ${Object.keys(user.jobs).length} Job(s)
+                                </span>
+                            ` : ''}
                         </div>
-                        <div class="item-description">
-                            <strong>Primary Job:</strong> ${user.primaryJob || 'None'}<br>
-                            <strong>Payment Method:</strong> ${user.paymentMethod || 'Not specified'}<br>
-                            <strong>Contract Status:</strong> ${user.contract?.contractStatus || 'Not specified'}
-                        </div>
-                        <div class="item-actions">
-                            <button class="btn btn-small" onclick="viewUserDetails('${name}')">View Details</button>
-                            <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">Delete</button>
-                        </div>
-                    `;
-                    usersList.appendChild(userDiv);
-                }
-                
-                // Display in contracts list (for contract management)
-                if (contractsList) {
-                    const contractDiv = document.createElement('div');
-                    contractDiv.className = 'item-card';
-                    contractDiv.innerHTML = `
-                        <h4>${name}</h4>
-                        <div class="item-meta">
-                            <span>📧 ${user.profile?.email || 'Email not specified'}</span>
-                            <span>🎭 ${user.profile?.role || 'Role not specified'}</span>
-                            <span>📅 ${user.profile?.approvedDate || 'Date not specified'}</span>
-                        </div>
-                        <div class="item-actions">
-                            <button class="btn btn-small" onclick="editUser('${name}')">Edit</button>
-                            <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">Delete</button>
-                        </div>
-                    `;
-                    contractsList.appendChild(contractDiv);
-                }
+                    </div>
+                    <div class="item-meta">
+                        <span>📧 ${user.profile?.email || 'Email not specified'}</span>
+                        <span>🎭 ${user.profile?.role || 'Role not specified'}</span>
+                        <span>📍 ${user.profile?.location || 'Location not specified'}</span>
+                        <span>💰 ${user.profile?.rate || 'Rate not specified'}</span>
+                    </div>
+                    <div class="item-description">
+                        <strong>Primary Job:</strong> ${user.primaryJob || 'None'}<br>
+                        <strong>Payment Method:</strong> ${user.paymentMethod || 'Not specified'}<br>
+                        <strong>Contract Status:</strong> ${user.contract?.contractStatus || 'Not specified'}
+                    </div>
+                    <div class="item-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn btn-small" onclick="viewUserDetails('${name}')">👤 View Details</button>
+                        <button class="btn btn-small" onclick="editUser('${name}')">✏️ Edit User</button>
+                        <button class="btn btn-small" onclick="downloadUserContract('${name}')">📄 Download Contract</button>
+                        <button class="btn btn-small" onclick="showBankDetails('${name}')">🏦 Bank Details</button>
+                        <button class="btn btn-small" onclick="showPerformanceReview('${name}')">⭐ Performance</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">🗑️ Delete</button>
+                    </div>
+                `;
+                usersList.appendChild(userDiv);
             });
         }
 
@@ -950,6 +1165,8 @@
                 profile: {
                     email: formData.get('email'),
                     role: formData.get('role'),
+                    location: formData.get('location'),
+                    rate: formData.get('rate'),
                     approvedDate: formData.get('approvedDate')
                 },
                 contract: {
@@ -980,9 +1197,196 @@
             document.getElementById('freelancerEmail').value = user.profile?.email || '';
             document.getElementById('contractUrl').value = user.contract?.contractUrl || '';
             document.getElementById('freelancerRole').value = user.profile?.role || '';
+            document.getElementById('freelancerLocation').value = user.profile?.location || 'Atlanta Area';
+            document.getElementById('freelancerRate').value = user.profile?.rate || '';
             document.getElementById('approvedDate').value = user.profile?.approvedDate || '';
             
             document.getElementById('contractForm').dataset.editName = name;
+        }
+
+        // Assign jobs to users
+        function assignJobsToUsers() {
+            if (!window.jobs || window.jobs.length === 0) {
+                showNotification('No jobs available to assign', 'warning');
+                return;
+            }
+            
+            if (!window.users || Object.keys(window.users).length === 0) {
+                showNotification('No users available to assign jobs to', 'warning');
+                return;
+            }
+            
+            // Create modal for job assignment
+            const modal = document.createElement('div');
+            modal.id = 'jobAssignmentModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            `;
+            
+            const jobsHTML = window.jobs.map((job, index) => `
+                <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                    <h4 style="color: #FFB200; margin-bottom: 0.5rem;">${job.title}</h4>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 1rem;">
+                        <div>📅 ${job.date || 'No date'}</div>
+                        <div>📍 ${job.location || 'No location'}</div>
+                        <div>💰 ${job.pay || 'No pay rate'}</div>
+                    </div>
+                    <select id="job-${index}-user" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,178,0,0.3); border-radius: 4px; color: white;">
+                        <option value="">Select a user...</option>
+                        ${Object.keys(window.users).map(userName => `
+                            <option value="${userName}">${userName}</option>
+                        `).join('')}
+                    </select>
+                </div>
+            `).join('');
+            
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+                    padding: 2rem;
+                    border-radius: 16px;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    border: 1px solid #FFB200;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                ">
+                    <button onclick="this.closest('#jobAssignmentModal').remove()" 
+                            style="
+                                position: absolute;
+                                top: 1rem;
+                                right: 1rem;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                width: 30px;
+                                height: 30px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 18px;
+                                font-weight: bold;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">×</button>
+                    
+                    <h3 style="color: #FFB200; margin-bottom: 1.5rem; text-align: center; font-family: 'Cinzel', serif;">
+                        👥 ASSIGN JOBS TO USERS
+                    </h3>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+                            Select users for each job below. Users will be assigned to jobs based on their roles and availability.
+                        </p>
+                        ${jobsHTML}
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="processJobAssignments()" 
+                                style="
+                                    background: linear-gradient(135deg, #22c55e, #16a34a);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.75rem 1.5rem;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            ✅ Assign Jobs
+                        </button>
+                        <button onclick="this.closest('#jobAssignmentModal').remove()" 
+                                style="
+                                    background: linear-gradient(135deg, #6b7280, #4b5563);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.75rem 1.5rem;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Process job assignments
+        function processJobAssignments() {
+            const assignments = [];
+            let assignedCount = 0;
+            
+            window.jobs.forEach((job, index) => {
+                const selectElement = document.getElementById(`job-${index}-user`);
+                const selectedUser = selectElement.value;
+                
+                if (selectedUser) {
+                    assignments.push({
+                        job: job,
+                        user: selectedUser
+                    });
+                    assignedCount++;
+                }
+            });
+            
+            if (assignedCount === 0) {
+                showNotification('Please select at least one user for job assignment', 'warning');
+                return;
+            }
+            
+            // Process assignments
+            assignments.forEach(assignment => {
+                const userName = assignment.user;
+                const job = assignment.job;
+                
+                if (!window.users[userName].jobs) {
+                    window.users[userName].jobs = {};
+                }
+                
+                const jobId = `job-${job.title.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+                window.users[userName].jobs[jobId] = {
+                    id: jobId,
+                    title: job.title,
+                    date: job.date,
+                    location: job.location,
+                    rate: job.pay,
+                    description: job.description,
+                    status: job.status,
+                    projectStatus: 'upcoming',
+                    paymentStatus: 'pending',
+                    assignedDate: new Date().toISOString().split('T')[0]
+                };
+                
+                // Set as primary job if user doesn't have one
+                if (!window.users[userName].primaryJob) {
+                    window.users[userName].primaryJob = jobId;
+                }
+            });
+            
+            // Update display
+            displayUsers();
+            
+            // Close modal
+            document.getElementById('jobAssignmentModal').remove();
+            
+            showNotification(`Successfully assigned ${assignedCount} job(s) to users`, 'success');
         }
 
         // Delete user (for contract management)
@@ -997,38 +1401,11 @@
         // Clear contract form
         function clearContractForm() {
             document.getElementById('contractForm').reset();
+            document.getElementById('freelancerLocation').value = 'Atlanta Area';
             delete document.getElementById('contractForm').dataset.editName;
         }
 
-        // Export contract data
-        function exportContractData() {
-            const data = {
-                users: window.users,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalUsers: Object.keys(window.users).length
-            };
-            
-            document.getElementById('downloadContractBtn').style.display = 'block';
-        }
 
-        // Download contract JSON
-        function downloadContractJSON() {
-            const data = {
-                users: window.users,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalUsers: Object.keys(window.users).length
-            };
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'users.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
 
         // Export users data
         function exportUsersData() {
@@ -1623,6 +2000,287 @@
             // Here you would typically save the review to your backend
             showNotification(`Performance review submitted for ${userName}`, 'success');
             modal.remove();
+        }
+
+        // Download user contract - Generate PDF on-the-fly
+        async function downloadUserContract(userName) {
+            console.log('🔍 downloadUserContract function called with:', userName);
+            
+            // Force refresh users data from centralized source
+            try {
+                console.log('🔄 Refreshing users data from centralized source...');
+                const response = await fetch('users.json');
+                if (response.ok) {
+                    const freshData = await response.json();
+                    window.users = freshData.users;
+                    console.log('✅ Users data refreshed from centralized source');
+                } else {
+                    console.warn('⚠️ Could not refresh users data');
+                }
+            } catch (error) {
+                console.warn('⚠️ Error refreshing users data:', error);
+            }
+            
+            const userData = window.users[userName];
+            if (!userData) {
+                console.log('❌ User not found:', userName);
+                showNotification('User not found', 'error');
+                return;
+            }
+
+            console.log('📄 Attempting to generate contract for:', userName);
+            console.log('📄 User data:', userData);
+            
+            // Check if user has contract data in centralized system
+            if (!userData.contract) {
+                console.log('❌ No contract data found for user:', userName);
+                showNotification('No contract data found for user', 'error');
+                return;
+            }
+            
+            const userContract = userData.contract;
+            console.log('📄 Contract data from centralized system:', userContract);
+            
+            // Check if contract is signed
+            if (userContract.contractStatus !== 'signed') {
+                console.log('❌ Contract not signed yet for user:', userName);
+                showNotification('Contract not signed yet for user', 'error');
+                return;
+            }
+            
+            // Create contract data for PDF generation
+            const contractData = {
+                contractId: userContract.contractId || userName,
+                freelancerName: userName,
+                freelancerEmail: userData.profile?.email || 'Not specified',
+                role: userData.profile?.role || 'Contractor',
+                location: userData.profile?.location || 'Atlanta Area',
+                projectStart: userData.profile?.projectStart || 'TBD',
+                rate: userData.profile?.rate || 'Not specified',
+                effectiveDate: userData.profile?.approvedDate || new Date().toISOString().split('T')[0],
+                signatureDate: userContract.contractSignedDate || new Date().toISOString().split('T')[0],
+                signature: userContract.contractStatus === 'signed' ? 'Digital Signature' : 'Not Signed'
+            };
+            
+            try {
+                console.log('📄 Generating PDF with contract data:', contractData);
+                
+                // Generate PDF using jsPDF
+                const { jsPDF } = window.jspdf;
+                if (!jsPDF) {
+                    throw new Error('jsPDF library not loaded');
+                }
+                
+                const doc = new jsPDF();
+                
+                // Professional header with gold background
+                doc.setFillColor(255, 178, 0);
+                doc.rect(0, 0, 210, 25, 'F');
+                
+                // Company name and title in header
+                doc.setFontSize(20);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('COCHRAN FILMS', 105, 12, { align: 'center' });
+                
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'normal');
+                doc.text('FREELANCE CONTRACT AGREEMENT', 105, 20, { align: 'center' });
+                
+                // Contract metadata
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Contract ID: ${contractData.contractId}`, 20, 35);
+                doc.text(`Effective Date: ${contractData.effectiveDate}`, 20, 40);
+                
+                // Contractor information
+                doc.setFillColor(255, 178, 0);
+                doc.rect(20, 50, 170, 8, 'F');
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACTOR INFORMATION', 105, 56, { align: 'center' });
+                
+                // Contractor details
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, 65, 80, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(20, 65, 80, 25, 'S');
+                
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACTOR INFO', 25, 72);
+                
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Name: ${contractData.freelancerName}`, 25, 78);
+                doc.text(`Role: ${contractData.role}`, 25, 82);
+                doc.text(`Location: ${contractData.location}`, 25, 86);
+                
+                // Project details
+                doc.setFillColor(248, 249, 250);
+                doc.rect(110, 65, 80, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(110, 65, 80, 25, 'S');
+                
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('PROJECT DETAILS', 115, 72);
+                
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Email: ${contractData.freelancerEmail}`, 115, 78);
+                doc.text(`Start: ${contractData.projectStart}`, 115, 82);
+                doc.text(`Rate: ${contractData.rate}`, 115, 86);
+                
+                // Contract terms
+                doc.setFillColor(255, 178, 0);
+                doc.rect(20, 100, 170, 8, 'F');
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACT TERMS & CONDITIONS', 105, 106, { align: 'center' });
+                
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                
+                const terms = [
+                    'INDEPENDENT CONTRACTOR: Not an employee of Cochran Films.',
+                    'SERVICES: Provide professional services as specified.',
+                    'COMPENSATION: Payment within 24 hours of completion.',
+                    'STANDARDS: All work must meet Cochran Films quality.',
+                    'ATTIRE: Professional attire (all black) required.',
+                    'PUNCTUALITY: Arrive 15 minutes before start time.',
+                    'DOCUMENTATION: Bring valid ID and signed contract.',
+                    'EQUIPMENT: Use provided Cochran Films equipment.',
+                    'CONDUCT: Maintain professional demeanor at all times.',
+                    'SAFETY: Follow all safety protocols provided.',
+                    'CONFIDENTIALITY: Respect project confidentiality.',
+                    'BTS CONTENT: May freely take and share behind-the-scenes.',
+                    'TAX OBLIGATIONS: Contractor responsible for personal taxes.',
+                    'TRANSPORTATION: Contractor responsible for own transport.'
+                ];
+                
+                let currentY = 120;
+                terms.forEach((term, index) => {
+                    const isLeftColumn = index < 7;
+                    const columnIndex = isLeftColumn ? index : index - 7;
+                    const xPos = isLeftColumn ? 20 : 110;
+                    const yPos = 120 + (columnIndex * 8);
+                    
+                    if (term.includes('\n')) {
+                        const lines = term.split('\n');
+                        lines.forEach((line, lineIndex) => {
+                            doc.text(line, xPos, yPos + (lineIndex * 4));
+                        });
+                    } else {
+                        doc.text(term, xPos, yPos);
+                    }
+                });
+                
+                // Signatures
+                const signatureY = 200;
+                doc.setFillColor(255, 178, 0);
+                doc.rect(20, signatureY - 5, 170, 8, 'F');
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACT SIGNATURES', 105, signatureY + 2, { align: 'center' });
+                
+                // Company signature
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('COCHRAN FILMS (COMPANY)', 20, signatureY + 15);
+                
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, signatureY + 20, 75, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(20, signatureY + 20, 75, 25, 'S');
+                
+                doc.setFontSize(6);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Authorized Signature:', 25, signatureY + 26);
+                
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'italic');
+                doc.text('Cody Cochran', 25, signatureY + 32);
+                
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.3);
+                doc.line(25, signatureY + 34, 85, signatureY + 34);
+                
+                doc.setFontSize(6);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Title: Founder & CEO', 25, signatureY + 38);
+                doc.text('Date: ' + contractData.effectiveDate, 25, signatureY + 42);
+                
+                // Contractor signature
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONTRACTOR SIGNATURE', 105, signatureY + 15);
+                
+                doc.setFillColor(248, 249, 250);
+                doc.rect(105, signatureY + 20, 75, 25, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.5);
+                doc.rect(105, signatureY + 20, 75, 25, 'S');
+                
+                doc.setFontSize(6);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Contractor:', 115, signatureY + 26);
+                
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'italic');
+                doc.text(contractData.freelancerName, 115, signatureY + 32);
+                
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.3);
+                doc.line(115, signatureY + 34, 175, signatureY + 34);
+                
+                doc.setFontSize(6);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Signature: ' + contractData.signature, 115, signatureY + 38);
+                doc.text('Date: ' + contractData.signatureDate, 115, signatureY + 42);
+                
+                // Footer
+                const footerY = 260;
+                doc.setFillColor(248, 249, 250);
+                doc.rect(20, footerY - 5, 170, 20, 'F');
+                doc.setDrawColor(255, 178, 0);
+                doc.setLineWidth(0.3);
+                doc.rect(20, footerY - 5, 170, 20, 'S');
+                
+                doc.setFontSize(6);
+                doc.setTextColor(100, 100, 100);
+                doc.setFont('helvetica', 'normal');
+                doc.text('This contract was digitally signed and is legally binding under Georgia law.', 105, footerY + 3, { align: 'center' });
+                doc.text('Generated by Cochran Films Contract Portal • ' + new Date().toLocaleDateString(), 105, footerY + 8, { align: 'center' });
+                doc.text('Contract ID: ' + contractData.contractId, 105, footerY + 13, { align: 'center' });
+                
+                // Save PDF to user's device
+                const safeFileName = userName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+                doc.save(safeFileName);
+                
+                console.log('✅ PDF generated and downloaded successfully:', safeFileName);
+                showNotification('✅ Contract downloaded successfully!', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error generating PDF:', error);
+                showNotification('❌ Error generating contract PDF. Please try again.', 'error');
+            }
         }
 
         // Generate all contract files

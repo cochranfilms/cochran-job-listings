@@ -1949,7 +1949,322 @@ if (currentUser.contract) {
 1. **PDF Download Failure**: Download button existed but PDF generation was blocked by contract status check
 2. **Contract Status Mismatch**: System checking for 'signed' status but actual status was 'uploaded'
 3. **Date Display Issues**: Contract signed date showing "Processing..." instead of actual date
-4. **Unused Data Fields**: `contractUploadedDate` field in users.json causing confusion
+4. **Unused Export Functions**: Export contracts JSON button and functions no longer needed for workflow
+
+## Phase 28 Fix - Admin Dashboard Redesign Phase 1
+**Date**: 2025-08-07
+**Context**: Admin dashboard redesign to improve user interface and functionality
+
+### Issues Identified
+1. **Confusing UI**: Users appearing in both User Management and Contract Management cards
+2. **Hidden Functions**: PDF download and other functions hidden inside user details
+3. **Unnecessary Export Button**: Export contracts JSON button not needed for current workflow
+4. **Basic Interface**: Admin dashboard too basic compared to previous version with more functions
+5. **Poor User Experience**: Functions not easily accessible, requiring multiple clicks
+
+### Root Cause Analysis
+**UI/UX Problems**:
+- **Duplicate User Display**: Same users showing in both management cards causing confusion
+- **Hidden Functionality**: Important functions like PDF download buried in user details
+- **Unnecessary Features**: Export contracts JSON button not part of current workflow
+- **Missing Functions**: Previous admin dashboard had more useful editing tools
+- **Poor Accessibility**: Functions not easily accessible from main interface
+
+### Solution Implemented
+**Phase 1 - Initial Redesign**:
+
+#### **1. Removed Unnecessary Export Functions**
+- ✅ **Removed Export Button**: Eliminated "Export Contracts" JSON button and its functions
+- ✅ **Cleaned Up Code**: Removed `exportContractData()` and `downloadContractJSON()` functions
+- ✅ **Simplified Interface**: Reduced clutter by removing unused functionality
+- ✅ **Updated Workflow**: Interface now focused on essential functions
+
+#### **2. Enhanced User Display**
+- ✅ **Improved User Cards**: Enhanced user display with status badges and better organization
+- ✅ **Status Indicators**: Added contract status and payment method badges
+- ✅ **Better Actions**: Made functions more accessible with clear action buttons
+- ✅ **Enhanced Information**: More user information visible at a glance
+
+#### **3. Added PDF Generation System**
+- ✅ **PDF Libraries**: Added jsPDF and html2canvas libraries to admin dashboard
+- ✅ **PDF Generation Function**: Integrated `generateContractPDF()` function from contract.html
+- ✅ **Download Function**: Added `downloadUserContract()` function for PDF generation
+- ✅ **Professional PDFs**: Same beautiful PDF design as contract.html
+
+#### **4. Improved User Interface**
+- ✅ **Better Button Layout**: Action buttons now more accessible and clearly labeled
+- ✅ **Enhanced Status Display**: Contract and payment status clearly visible
+- ✅ **Improved Information Hierarchy**: Better organization of user information
+- ✅ **Professional Appearance**: Enhanced visual design with better spacing and layout
+
+### Implementation Details
+```javascript
+// Removed unnecessary export functions
+// exportContractData() and downloadContractJSON() functions removed
+
+// Enhanced user display with status badges
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+    <h4 style="margin: 0;">${name}</h4>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <span style="background: ${user.contract?.contractStatus === 'signed' ? '#22c55e' : '#f59e0b'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+            ${user.contract?.contractStatus === 'signed' ? '✅ Contract Signed' : '⏳ Contract Pending'}
+        </span>
+        <span style="background: ${user.paymentMethod ? '#22c55e' : '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+            ${user.paymentMethod ? '💳 Payment Set' : '💳 No Payment'}
+        </span>
+    </div>
+</div>
+
+// Enhanced action buttons
+<div class="item-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <button class="btn btn-small" onclick="viewUserDetails('${name}')">👤 View Details</button>
+    <button class="btn btn-small" onclick="editUser('${name}')">✏️ Edit User</button>
+    <button class="btn btn-small" onclick="downloadUserContract('${name}')">📄 Download Contract</button>
+    <button class="btn btn-small" onclick="showBankDetails('${name}')">🏦 Bank Details</button>
+    <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">🗑️ Delete</button>
+</div>
+```
+
+### Results Achieved
+- ✅ **Simplified Interface**: Removed unnecessary export functions and buttons
+- ✅ **Enhanced User Display**: Better organization with status badges and clear information
+- ✅ **Accessible Functions**: PDF download and other functions now easily accessible
+- ✅ **Professional PDFs**: Integrated PDF generation system with beautiful formatting
+- ✅ **Better User Experience**: Functions no longer hidden in user details
+- ✅ **Cleaner Design**: Reduced clutter and improved visual hierarchy
+- ✅ **Consistent Workflow**: Interface focused on essential functions
+
+### Technical Benefits
+- **Streamlined Interface**: Removed unused functionality to reduce complexity
+- **Enhanced Accessibility**: Functions now easily accessible from main interface
+- **Professional PDFs**: Same beautiful PDF generation as contract.html
+- **Better Organization**: Clear status indicators and improved information hierarchy
+- **Improved User Experience**: Functions no longer require multiple clicks to access
+- **Consistent Design**: Professional appearance with better spacing and layout
+- **Maintainable Code**: Cleaner code structure without unused functions
+
+### Next Phase Planning
+**Phase 2** will focus on:
+- Further improving user management interface
+- Enhancing contract management functionality
+- Adding more editing tools from the previous admin dashboard
+- Improving job management interface
+- Creating a more unified and centralized approach to data management
+
+## Phase 29 Fix - Admin Dashboard Redesign Phase 2
+**Date**: 2025-08-07
+**Context**: Phase 2 of admin dashboard redesign - unified user & contract management with enhanced job management
+
+### Issues Identified
+1. **Confusing UI Structure**: Three separate cards (Jobs, Contract Management, User Management) causing confusion
+2. **Duplicate User Display**: Same users appearing in multiple cards
+3. **Poor Form Layout**: Single column form layout not efficient for data entry
+4. **Missing Job Assignment**: No way to assign jobs to users from admin dashboard
+5. **Scattered Functions**: Related functions spread across different cards
+
+### Root Cause Analysis
+**UI Structure Problems**:
+- **Three Separate Cards**: Jobs, Contract Management, and User Management were separate
+- **Duplicate Functionality**: Users displayed in both Contract Management and User Management
+- **Poor Form Design**: Single column layout not space-efficient
+- **Missing Integration**: No connection between jobs and users
+- **Scattered Actions**: Related functions not grouped together
+
+### Solution Implemented
+**Phase 2 - Unified Management System**:
+
+#### **1. Unified User & Contract Management**
+- ✅ **Combined Cards**: Merged Contract Management and User Management into single "User & Contract Management" card
+- ✅ **Eliminated Duplication**: Users now displayed only once in unified interface
+- ✅ **Enhanced Form Layout**: Two-column grid layout for better space utilization
+- ✅ **Added New Fields**: Location and rate fields for better user information
+- ✅ **Unified Actions**: All user-related actions in one place
+
+#### **2. Enhanced Job Management**
+- ✅ **Improved Form Layout**: Two-column grid layout for job creation
+- ✅ **Added Job Assignment**: New "Assign Jobs to Users" functionality
+- ✅ **Enhanced Actions**: Better organized job management actions
+- ✅ **Professional Layout**: Improved visual design and spacing
+
+#### **3. Job Assignment System**
+- ✅ **Modal Interface**: Professional modal for assigning jobs to users
+- ✅ **Visual Job Display**: Each job shown with details and user selection dropdown
+- ✅ **Bulk Assignment**: Can assign multiple jobs to users at once
+- ✅ **Smart Processing**: Automatic job assignment with proper data structure
+
+#### **4. Enhanced User Display**
+- ✅ **Job Count Badge**: Shows number of assigned jobs per user
+- ✅ **Performance Review Button**: Added performance review access
+- ✅ **Better Information**: More user details visible at a glance
+- ✅ **Unified Actions**: All user actions in one consistent interface
+
+### Implementation Details
+```html
+<!-- Unified User & Contract Management -->
+<div class="content-card">
+    <div class="card-header">
+        <h2>👥 User & Contract Management</h2>
+    </div>
+    <div class="card-content">
+        <!-- Enhanced form with two-column layout -->
+        <form id="contractForm">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <input type="text" id="freelancerName" placeholder="Full Name" required>
+                <input type="email" id="freelancerEmail" placeholder="Email Address" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <input type="text" id="freelancerRole" placeholder="Role (Optional)">
+                <input type="text" id="freelancerLocation" placeholder="Location" value="Atlanta Area">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <input type="text" id="freelancerRate" placeholder="Pay Rate">
+                <input type="date" id="approvedDate" placeholder="Approved Date">
+            </div>
+        </form>
+        
+        <!-- Quick Actions section -->
+        <div class="form-section">
+            <h3>Quick Actions</h3>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn" onclick="generateAllContracts()">📄 Generate All Contracts</button>
+                <button class="btn btn-secondary" onclick="exportUsersData()">📊 Export Users</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Job Management -->
+<div class="content-card">
+    <div class="card-header">
+        <h2>📋 Job Management</h2>
+    </div>
+    <div class="card-content">
+        <!-- Two-column job form -->
+        <form id="jobForm">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <input type="text" id="jobTitle" placeholder="Job Title" required>
+                <input type="date" id="jobDate" placeholder="Event Date">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <input type="text" id="jobLocation" placeholder="Location" value="Atlanta Area">
+                <input type="text" id="jobPay" placeholder="Pay Rate">
+            </div>
+        </form>
+        
+        <!-- Job Actions section -->
+        <div class="form-section">
+            <h3>Job Actions</h3>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn" onclick="exportJobData()">📊 Export Jobs</button>
+                <button class="btn btn-secondary" onclick="assignJobsToUsers()">👥 Assign Jobs to Users</button>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+```javascript
+// Job assignment modal system
+function assignJobsToUsers() {
+    // Creates professional modal for job assignment
+    // Shows each job with user selection dropdown
+    // Processes assignments and updates user data
+}
+
+// Enhanced user display with job count
+function displayUsers() {
+    // Shows job count badge for users with assigned jobs
+    // Displays performance review button
+    // Unified action buttons for all user functions
+}
+```
+
+### Results Achieved
+- ✅ **Unified Interface**: Single "User & Contract Management" card eliminates confusion
+- ✅ **Enhanced Forms**: Two-column layout for better space utilization
+- ✅ **Job Assignment**: Professional modal for assigning jobs to users
+- ✅ **Better Organization**: Related functions grouped together logically
+- ✅ **Improved User Experience**: More efficient data entry and management
+- ✅ **Professional Design**: Enhanced visual layout and spacing
+- ✅ **Eliminated Duplication**: Users displayed only once in unified interface
+
+### Technical Benefits
+- **Streamlined Interface**: Reduced from 3 cards to 2 focused cards
+- **Better Space Utilization**: Two-column layouts for efficient data entry
+- **Enhanced Functionality**: Job assignment system connects jobs and users
+- **Improved User Experience**: More intuitive and organized interface
+- **Professional Appearance**: Enhanced visual design with better spacing
+- **Maintainable Code**: Cleaner structure with unified display logic
+- **Scalable Architecture**: Easy to add new features to unified system
+
+### Next Phase Planning
+**Phase 3** will focus on:
+- Adding more advanced editing tools from the previous admin dashboard
+- Enhancing performance review system integration
+- Improving data visualization and analytics
+- Adding bulk operations for user and job management
+- Creating advanced filtering and search capabilities
+
+## Phase 30 Fix - Admin Dashboard Redesign Phase 3
+**Date**: 2025-08-07
+**Context**: Phase 3 of admin dashboard redesign - enhanced job management with advanced features and better user interface
+
+### Issues Identified
+1. **Limited Job Management**: Basic job form lacked categorization and advanced features
+2. **Poor Job Display**: Jobs displayed with minimal information and no visual status indicators
+3. **Missing Job Features**: No bulk actions, statistics, or advanced job management tools
+4. **No Job Filtering**: Unable to filter jobs by status or type
+5. **Basic Job Actions**: Limited to edit and delete, missing duplication and bulk operations
+
+### Solutions Implemented
+
+#### **Enhanced Job Management Interface**
+- **Job Type Categorization**: Added job type dropdown with Photography, Videography, Event Coverage, Portrait Session, Commercial, Wedding, and Other options
+- **Improved Job Status**: Enhanced status options to include Active, Pending, Completed, and Cancelled
+- **Better Form Layout**: Reorganized job form with two-column grid layout for better space utilization
+- **Enhanced Form Actions**: Added clear, assign to users, and export buttons with better organization
+
+#### **Advanced Job Display Features**
+- **Visual Status Indicators**: Color-coded status badges (green for Active, orange for Pending, blue for Completed, red for Cancelled)
+- **Job Type Badges**: Added job type indicators with gold styling
+- **Enhanced Job Cards**: Improved job card layout with better information hierarchy and visual appeal
+- **Job Description Display**: Added dedicated description section in job cards
+- **Improved Actions**: Added duplicate job functionality alongside edit and delete
+
+#### **Job Management Tools**
+- **Job Filtering**: Added dropdown filter to show All Jobs, Active, Pending, Completed, or Cancelled jobs
+- **Job Statistics**: Implemented comprehensive job statistics modal showing total, active, pending, and completed job counts
+- **Bulk Job Actions**: Added bulk action modal for updating multiple job statuses or deleting selected jobs
+- **Job Refresh**: Added refresh button to reload job list with notification
+- **Export Functionality**: Maintained job export functionality with improved organization
+
+#### **Enhanced User Experience**
+- **Professional Modals**: Created sophisticated modal interfaces for job statistics and bulk actions
+- **Better Notifications**: Added success notifications for job operations
+- **Improved Visual Design**: Enhanced job cards with better spacing, typography, and visual hierarchy
+- **Responsive Design**: Maintained mobile-responsive design for all new features
+
+### Technical Improvements
+- **Job Type Field**: Added job.type property to job data structure
+- **Enhanced displayJobs()**: Updated to show job types, status colors, and improved layout
+- **New Functions**: Added filterJobs(), refreshJobs(), showJobStats(), bulkJobActions(), duplicateJob(), bulkUpdateStatus(), and bulkDeleteJobs()
+- **Form Enhancement**: Updated job form submission to handle new type field
+- **Edit Function**: Enhanced editJob() to populate job type field
+
+### Results Achieved
+✅ **Comprehensive Job Management**: Full-featured job management with categorization, filtering, and bulk operations
+✅ **Professional Interface**: Enhanced visual design with status indicators and better organization
+✅ **Advanced Features**: Job statistics, bulk actions, duplication, and filtering capabilities
+✅ **Improved UX**: Better user experience with professional modals and clear action buttons
+✅ **Data Integrity**: Maintained existing functionality while adding new features
+
+### Next Phase Planning
+**Phase 4** will focus on:
+- Further enhancing user management with advanced features
+- Adding performance tracking and analytics
+- Implementing advanced contract management tools
+- Creating unified dashboard analytics and reporting
+- Adding advanced notification and communication featuresd Data Fields**: `contractUploadedDate` field in users.json causing confusion
 
 ### Root Cause Analysis
 **PDF Download Issues**:
