@@ -891,6 +891,7 @@
         async function loadData() {
             await loadJobs();
             await loadUsers();
+            await loadDropdownOptions();
             updateStats();
         }
 
@@ -2584,6 +2585,13 @@
                 return;
             }
             
+            // Safety check for dropdownOptions
+            if (!window.dropdownOptions) {
+                console.error('❌ Dropdown options not loaded yet');
+                showNotification('Dropdown options are still loading. Please try again.', 'error');
+                return;
+            }
+            
             if (!window.dropdownOptions[category]) {
                 window.dropdownOptions[category] = [];
             }
@@ -2607,6 +2615,13 @@
         
         // Remove dropdown option
         function removeDropdownOption(category, value) {
+            // Safety check for dropdownOptions
+            if (!window.dropdownOptions) {
+                console.error('❌ Dropdown options not loaded yet');
+                showNotification('Dropdown options are still loading. Please try again.', 'error');
+                return;
+            }
+            
             if (window.dropdownOptions[category]) {
                 window.dropdownOptions[category] = window.dropdownOptions[category].filter(item => item !== value);
                 populateDropdownManagementInterface();
