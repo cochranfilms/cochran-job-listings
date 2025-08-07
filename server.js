@@ -9,6 +9,7 @@ const notificationsRouter = require('./api/notifications');
 
 const deletePdfRouter = require('./api/delete-pdf');
 const contractsRouter = require('./api/contracts');
+const updateUsersRouter = require('./api/update-users');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -291,6 +292,9 @@ app.use('/api/notifications', notificationsRouter);
 // PDF Deletion API route
 app.use('/api/delete-pdf', deletePdfRouter);
 
+// Update Users API route
+app.use('/api/update-users', updateUsersRouter);
+
 // Contracts API routes
 app.get('/api/contracts', contractsRouter);
 app.post('/api/contracts', contractsRouter);
@@ -355,6 +359,7 @@ app.listen(PORT, () => {
     console.log(`   - GET  /api/notifications`);
     console.log(`   - POST /api/notifications`);
     console.log(`   - DELETE /api/delete-pdf`);
+    console.log(`   - POST  /api/update-users`);
     console.log(`📋 Admin dashboard: http://localhost:${PORT}/admin-dashboard.html`);
     console.log(`👤 User portal: http://localhost:${PORT}/user-portal.html`);
 }); 
