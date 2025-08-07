@@ -524,6 +524,76 @@
                 </div>
             </div>
 
+            <!-- Dropdown Management -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>⚙️ Dropdown Management</h2>
+                </div>
+                <div class="card-content">
+                    <div class="form-section">
+                        <h3>Manage Dropdown Options</h3>
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+                            Add or remove options for roles, locations, rates, and project types used throughout the system.
+                        </p>
+                        
+                        <!-- Roles Management -->
+                        <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">🎭 Roles</h4>
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" id="newRole" placeholder="Add new role" style="flex: 1;">
+                                <button onclick="addDropdownOption('roles', 'newRole')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                            <div id="rolesList" style="max-height: 150px; overflow-y: auto;"></div>
+                        </div>
+                        
+                        <!-- Locations Management -->
+                        <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">📍 Locations</h4>
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" id="newLocation" placeholder="Add new location" style="flex: 1;">
+                                <button onclick="addDropdownOption('locations', 'newLocation')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                            <div id="locationsList" style="max-height: 150px; overflow-y: auto;"></div>
+                        </div>
+                        
+                        <!-- Rates Management -->
+                        <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">💰 Rates</h4>
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" id="newRate" placeholder="Add new rate" style="flex: 1;">
+                                <button onclick="addDropdownOption('rates', 'newRate')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                            <div id="ratesList" style="max-height: 150px; overflow-y: auto;"></div>
+                        </div>
+                        
+                        <!-- Project Types Management -->
+                        <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">🎬 Project Types</h4>
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" id="newProjectType" placeholder="Add new project type" style="flex: 1;">
+                                <button onclick="addDropdownOption('projectTypes', 'newProjectType')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                            <div id="projectTypesList" style="max-height: 150px; overflow-y: auto;"></div>
+                        </div>
+                        
+                        <!-- Save Button -->
+                        <div style="text-align: center; margin-top: 1.5rem;">
+                            <button onclick="saveDropdownOptions()" style="background: linear-gradient(135deg, #FFB200, #FF8C00); color: #1a1a1a; border: none; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem;">
+                                <i class="fas fa-save"></i> Save All Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Enhanced Job Management -->
             <div class="content-card">
                 <div class="card-header">
@@ -2410,6 +2480,95 @@
             console.log('📋 Populated dropdown management interface');
         }
         
+        // Add dropdown option
+        function addDropdownOption(category, inputId) {
+            const input = document.getElementById(inputId);
+            const value = input.value.trim();
+            
+            if (!value) {
+                showNotification('Please enter a value to add.', 'error');
+                return;
+            }
+            
+            if (!window.dropdownOptions[category]) {
+                window.dropdownOptions[category] = [];
+            }
+            
+            if (window.dropdownOptions[category].includes(value)) {
+                showNotification('This option already exists.', 'warning');
+                return;
+            }
+            
+            window.dropdownOptions[category].push(value);
+            input.value = '';
+            
+            // Update the management interface
+            populateDropdownManagementInterface();
+            
+            // Update job assignment dropdowns
+            populateJobAssignmentDropdowns();
+            
+            console.log(`✅ Added ${value} to ${category}`);
+        }
+        
+        // Remove dropdown option
+        function removeDropdownOption(category, value) {
+            if (window.dropdownOptions[category]) {
+                window.dropdownOptions[category] = window.dropdownOptions[category].filter(item => item !== value);
+                populateDropdownManagementInterface();
+                populateJobAssignmentDropdowns();
+                console.log(`✅ Removed ${value} from ${category}`);
+            }
+        }
+        
+        // Save dropdown options to GitHub API
+        async function saveDropdownOptions() {
+            if (!window.dropdownOptions) {
+                showNotification('❌ No dropdown options to save.', 'error');
+                return;
+            }
+            
+            try {
+                console.log('🔄 Saving dropdown options to GitHub via server...');
+                
+                // Get current SHA for the file
+                const shaResponse = await fetch('/api/github/info');
+                if (!shaResponse.ok) {
+                    throw new Error('Failed to get GitHub info');
+                }
+                
+                const shaData = await shaResponse.json();
+                const currentSha = shaData.sha;
+                
+                console.log('🔍 Retrieved current SHA:', currentSha);
+                
+                // Update the file on GitHub
+                const updateResponse = await fetch('/api/github/file/dropdown-options.json', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'Update dropdown options via admin dashboard',
+                        content: btoa(JSON.stringify(window.dropdownOptions, null, 2)),
+                        sha: currentSha
+                    })
+                });
+                
+                if (updateResponse.ok) {
+                    console.log('✅ Successfully saved dropdown options to GitHub');
+                    console.log('✅ Dropdown options saved successfully to GitHub!');
+                    showNotification('✅ Dropdown options saved successfully to GitHub!', 'success');
+                } else {
+                    const errorData = await updateResponse.json();
+                    throw new Error(`GitHub API error: ${errorData.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('❌ Error saving dropdown options:', error);
+                showNotification(`❌ Failed to save dropdown options: ${error.message}`, 'error');
+            }
+        }
+
         // Populate job assignment dropdowns
         function populateJobAssignmentDropdowns() {
             if (!window.dropdownOptions) return;
