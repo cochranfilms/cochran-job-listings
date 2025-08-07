@@ -2013,6 +2013,71 @@
             }
         }
 
+        // ==================== DATA SOURCE ARCHITECTURE ====================
+        
+        /*
+        DATA SOURCE CLARIFICATION:
+        
+        📋 dropdown-options.json (MASTER SOURCE)
+        - Purpose: Centralized source for ALL dropdown options
+        - Controls: roles, locations, rates, projectTypes
+        - Managed by: Admin Dashboard Dropdown Management
+        - Structure:
+          {
+            "roles": ["Photographer", "Videographer", "Editor", ...],
+            "locations": ["Atlanta, GA", "Los Angeles, CA", "New York, NY", ...],
+            "rates": ["$50/hour", "$100/hour", "$200/hour", ...],
+            "projectTypes": ["Wedding", "Commercial", "Corporate Event", ...]
+          }
+        
+        👥 users.json (USER DATA)
+        - Purpose: Stores user profile data (references dropdown options)
+        - References: dropdown-options.json for role, location, rate
+        - Structure:
+          {
+            "users": {
+              "userName": {
+                "profile": {
+                  "role": "Photographer", // from dropdown-options.json
+                  "location": "Atlanta, GA", // from dropdown-options.json
+                  "rate": "$100/hour" // from dropdown-options.json
+                },
+                "contract": { /* contract data */ },
+                "jobs": { /* job assignments */ }
+              }
+            }
+          }
+        
+        📋 jobs-data.json (JOB DATA)
+        - Purpose: Stores job listings (references dropdown options)
+        - References: dropdown-options.json for location, projectType
+        - Structure:
+          {
+            "jobs": [
+              {
+                "title": "Backdrop Photographer Base",
+                "location": "Douglasville, GA", // from dropdown-options.json
+                "projectType": "Event Coverage", // from dropdown-options.json
+                "pay": "$400" // from dropdown-options.json
+              }
+            ]
+          }
+        
+        DATA FLOW:
+        dropdown-options.json (Master) 
+            ↓ (provides options)
+        users.json (User Profiles) ←→ jobs-data.json (Job Listings)
+            ↓ (uses options)
+        Admin Dashboard & User Portal
+        
+        BENEFITS:
+        ✅ Single source of truth for all dropdown options
+        ✅ Consistent data across user and job systems
+        ✅ Easy management from one interface
+        ✅ No data conflicts or inconsistencies
+        ✅ Scalable architecture for future additions
+        */
+        
         // ==================== CORE FUNCTION RESTORATION ====================
         
         // Firebase Management Functions
