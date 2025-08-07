@@ -2660,16 +2660,29 @@
             try {
                 console.log('🔄 Saving dropdown options to GitHub via server...');
                 
-                // Get current SHA for the file
-                const shaResponse = await fetch('/api/github/info');
-                if (!shaResponse.ok) {
-                    throw new Error('Failed to get GitHub info');
+                // First, get the current file SHA
+                const getResponse = await fetch('/api/github/file/dropdown-options.json');
+                let sha = null;
+                
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                    console.log('📄 Got current file SHA:', sha.substring(0, 7));
+                } else if (getResponse.status === 404) {
+                    console.log('📄 File does not exist, will create new file');
+                } else {
+                    console.warn('⚠️ Could not get current file SHA, proceeding without it');
                 }
                 
-                const shaData = await shaResponse.json();
-                const currentSha = shaData.sha;
+                const updateBody = {
+                    content: btoa(JSON.stringify(window.dropdownOptions, null, 2)),
+                    message: `Update dropdown options via admin dashboard - ${new Date().toLocaleString()}`
+                };
                 
-                console.log('🔍 Retrieved current SHA:', currentSha);
+                // Include SHA if we have it (for updates)
+                if (sha) {
+                    updateBody.sha = sha;
+                }
                 
                 // Update the file on GitHub
                 const updateResponse = await fetch('/api/github/file/dropdown-options.json', {
@@ -2677,16 +2690,11 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        message: 'Update dropdown options via admin dashboard',
-                        content: btoa(JSON.stringify(window.dropdownOptions, null, 2)),
-                        sha: currentSha
-                    })
+                    body: JSON.stringify(updateBody)
                 });
                 
                 if (updateResponse.ok) {
                     console.log('✅ Successfully saved dropdown options to GitHub');
-                    console.log('✅ Dropdown options saved successfully to GitHub!');
                     showNotification('✅ Dropdown options saved successfully to GitHub!', 'success');
                 } else {
                     const errorData = await updateResponse.json();
