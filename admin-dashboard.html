@@ -1771,6 +1771,99 @@
 
         // ==================== CORE FUNCTION RESTORATION ====================
         
+        // Generate temporary password for Firebase account
+        function generateTempPassword() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let password = '';
+            for (let i = 0; i < 12; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        }
+        
+        // Send job acceptance email
+        async function sendJobAcceptanceEmail(userName, userData) {
+            try {
+                // Prepare email parameters (no contract ID until user actually signs)
+                const emailParams = {
+                    to_email: userData.profile.email,
+                    freelancer_name: userName || 'User',
+                    role: userData.profile.role || 'Contractor',
+                    location: userData.profile.location || 'Atlanta Area',
+                    rate: userData.profile.rate || 'Rate to be determined',
+                    project_start: userData.profile.projectStart || 'TBD',
+                    contract_id: 'Will be generated when you sign the contract'
+                };
+
+                console.log('📧 Sending job acceptance email to:', userData.profile.email);
+
+                // Send email using EmailJS
+                if (typeof emailjs !== 'undefined') {
+                    try {
+                        const response = await emailjs.send(
+                            EMAILJS_CONFIG.serviceId, 
+                            EMAILJS_CONFIG.jobAcceptanceTemplateId, 
+                            emailParams
+                        );
+                        
+                        console.log('✅ Job acceptance email sent successfully:', response);
+                        
+                        // Show success message
+                        setTimeout(() => {
+                            showNotification(`🎉 User approved and email sent!\n\n📧 Email sent to: ${userData.profile.email}\n\n✅ The user will receive the job acceptance email with contract signing instructions.`, 'success');
+                        }, 1000);
+                        
+                    } catch (emailError) {
+                        console.error('❌ EmailJS error:', emailError);
+                        showNotification(`✅ User saved successfully!\n\n⚠️ Email failed to send: ${emailError.message}\n\nPlease check EmailJS template configuration.`, 'warning');
+                    }
+                    
+                } else {
+                    console.warn('⚠️ EmailJS not available, skipping email send');
+                    showNotification('✅ User saved successfully!\n\n⚠️ EmailJS not configured - please set up EmailJS to send automatic job acceptance emails.', 'warning');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error sending job acceptance email:', error);
+                showNotification('✅ User saved successfully!\n\n⚠️ Email sending failed. Please check EmailJS configuration.', 'warning');
+            }
+        }
+
+        // Validate user data
+        function validateUserData(userName, userData) {
+            if (!userName.trim() || !userData.profile.email.trim() || !userData.profile.role.trim()) {
+                showNotification('Name, email, and role are required', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Approve existing user (for users already in the system)
+        async function approveUser(userName) {
+            const userData = window.users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to approve ${userName}?\n\nThis will send them a job acceptance email with contract signing instructions.`)) {
+                // Update approval date if not set
+                if (!userData.profile.approvedDate) {
+                    userData.profile.approvedDate = new Date().toISOString().split('T')[0];
+                }
+                
+                // Send job acceptance email
+                sendJobAcceptanceEmail(userName, userData);
+                
+                // Save updated user data
+                localStorage.setItem('users', JSON.stringify(window.users));
+                await updateUsersOnGitHub();
+                displayUsers();
+                
+                showNotification(`✅ ${userName} approved successfully!`, 'success');
+            }
+        }
+        
         // Populate user dropdowns
         function populateUserDropdowns() {
             // Populate contract upload user dropdown
