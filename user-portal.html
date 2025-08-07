@@ -2053,11 +2053,11 @@
                     </div>
                     <div class="info-item">
                         <span class="label">Location</span>
-                        <span class="value">${currentUser.location || 'N/A'}</span>
+                        <span class="value">${currentUser.profile?.location || getSelectedJob()?.location || 'N/A'}</span>
                     </div>
                     <div class="info-item">
                         <span class="label">Rate</span>
-                        <span class="value highlight">${currentUser.rate || 'N/A'}</span>
+                        <span class="value highlight">${getSelectedJob()?.rate || currentUser.profile?.rate || 'N/A'}</span>
                     </div>
                 </div>
             `;

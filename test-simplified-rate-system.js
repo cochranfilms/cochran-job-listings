@@ -81,11 +81,11 @@ function testAdminDashboardRateUsage() {
     try {
         const adminCode = fs.readFileSync('admin-dashboard.html', 'utf8');
         
-        // Check for problematic pay references
-        const payReferences = adminCode.match(/job\.pay/g) || [];
+        // Check for problematic pay references - be more specific to avoid false positives
+        const payReferences = adminCode.match(/job\.pay(?!mentStatus)/g) || [];
         const rateReferences = adminCode.match(/job\.rate/g) || [];
         
-        console.log(`📊 Job.pay references: ${payReferences.length} (should be 0)`);
+        console.log(`📊 Job.pay references (excluding paymentStatus): ${payReferences.length} (should be 0)`);
         console.log(`📊 Job.rate references: ${rateReferences.length} (should be > 0)`);
         
         if (payReferences.length > 0) {
