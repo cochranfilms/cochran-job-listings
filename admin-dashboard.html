@@ -2573,18 +2573,6 @@
             
             console.log('📋 Populated dropdown management interface');
         }
-            if (ratesSelect) {
-                ratesSelect.innerHTML = '<option value="">Select Rate...</option>';
-                window.dropdownOptions.rates.forEach(rate => {
-                    const option = document.createElement('option');
-                    option.value = rate;
-                    option.textContent = rate;
-                    ratesSelect.appendChild(option);
-                });
-            }
-            
-            console.log('📋 Populated dropdown management interface');
-        }
         
         // Add dropdown option
         function addDropdownOption(category, inputId) {
