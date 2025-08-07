@@ -2576,7 +2576,7 @@
         }
         
         // Add dropdown option
-        function addDropdownOption(category, inputId) {
+        async function addDropdownOption(category, inputId) {
             const input = document.getElementById(inputId);
             const value = input.value.trim();
             
@@ -2611,10 +2611,20 @@
             populateJobAssignmentDropdowns();
             
             console.log(`✅ Added ${value} to ${category}`);
+            
+            // Automatically save to GitHub
+            try {
+                console.log('🔄 Saving dropdown options to GitHub...');
+                await saveDropdownOptions();
+                showNotification(`✅ Added "${value}" to ${category} and saved to GitHub`, 'success');
+            } catch (error) {
+                console.error('❌ Error saving dropdown options:', error);
+                showNotification(`❌ Added "${value}" to ${category} but failed to save to GitHub: ${error.message}`, 'error');
+            }
         }
         
         // Remove dropdown option
-        function removeDropdownOption(category, value) {
+        async function removeDropdownOption(category, value) {
             // Safety check for dropdownOptions
             if (!window.dropdownOptions) {
                 console.error('❌ Dropdown options not loaded yet');
@@ -2627,6 +2637,16 @@
                 populateDropdownManagementInterface();
                 populateJobAssignmentDropdowns();
                 console.log(`✅ Removed ${value} from ${category}`);
+                
+                // Automatically save to GitHub
+                try {
+                    console.log('🔄 Saving dropdown options to GitHub...');
+                    await saveDropdownOptions();
+                    showNotification(`✅ Removed "${value}" from ${category} and saved to GitHub`, 'success');
+                } catch (error) {
+                    console.error('❌ Error saving dropdown options:', error);
+                    showNotification(`❌ Removed "${value}" from ${category} but failed to save to GitHub: ${error.message}`, 'error');
+                }
             }
         }
         
