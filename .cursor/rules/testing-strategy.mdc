@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+If I ask you to run a test script, I'm looking for you to run an automatic JS test script for the specific function we are trying to fix in which you open a browser automatically yourself, check the logs, report back and start fixing the problem on your own automatically.

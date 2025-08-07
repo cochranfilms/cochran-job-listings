@@ -1453,8 +1453,25 @@
                     // 3. Delete from local users object
                     delete window.users[name];
                     
-                    // 4. Update users.json file
-                    await updateUsersOnGitHub('delete', name);
+                    // 4. Update users.json file via API
+                    const updateResponse = await fetch('/api/update-users', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            users: window.users,
+                            action: 'delete',
+                            userName: name
+                        })
+                    });
+                    
+                    if (!updateResponse.ok) {
+                        throw new Error('Failed to persist deletion to server');
+                    }
+                    
+                    const result = await updateResponse.json();
+                    console.log('✅ User deletion persisted to server:', result);
                     
                     // 5. Refresh display
                     displayUsers();
@@ -1826,14 +1843,66 @@
             });
         }
 
-        // Delete user
-        function deleteUser(userName) {
+        // Delete user (FIXED - Now persists to server)
+        async function deleteUser(userName) {
             if (confirm(`Are you sure you want to delete ${userName}?`)) {
-                delete window.users[userName];
-                displayUsers();
-                updateStats();
-                showNotification(`User ${userName} deleted successfully`, 'success');
+                try {
+                    // Show loading state
+                    showNotification('Deleting user...', 'info');
+                    
+                    // Get current users from server
+                    const response = await fetch('users.json');
+                    if (!response.ok) {
+                        throw new Error('Failed to load current users');
+                    }
+                    
+                    const data = await response.json();
+                    const currentUsers = data.users || {};
+                    
+                    // Check if user exists
+                    if (!currentUsers[userName]) {
+                        throw new Error(`User ${userName} not found`);
+                    }
+                    
+                    // Delete the user
+                    delete currentUsers[userName];
+                    console.log(`🗑️ Deleted ${userName} from users object`);
+                    
+                    // Update server via API
+                    const updateResponse = await fetch('/api/update-users', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            users: currentUsers,
+                            action: 'delete',
+                            userName: userName
+                        })
+                    });
+                    
+                    if (updateResponse.ok) {
+                        const result = await updateResponse.json();
+                        console.log('✅ User deletion persisted to server:', result);
+                        
+                        // Update local state
+                        window.users = currentUsers;
+                        displayUsers();
+                        updateStats();
+                        
+                        showNotification(`User ${userName} deleted successfully and persisted to server`, 'success');
+                        return true;
+                    } else {
+                        const errorData = await updateResponse.json();
+                        throw new Error(`Server error: ${errorData.message || 'Unknown error'}`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error deleting user:', error);
+                    showNotification(`Failed to delete user: ${error.message}`, 'error');
+                    return false;
+                }
             }
+            return false;
         }
 
         // Show bank details with encryption
