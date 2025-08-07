@@ -1936,6 +1936,117 @@
 
         // ==================== CORE FUNCTION RESTORATION ====================
         
+        // Firebase Management Functions
+        function showFirebaseManagement() {
+            const container = document.getElementById('firebase-tab');
+            if (!container) {
+                console.error('❌ Firebase tab container not found');
+                showNotification('Error: Firebase tab not found', 'error');
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="form-section">
+                    <h2><i class="fas fa-fire"></i> Firebase Authentication Management</h2>
+                    <div class="firebase-management">
+                        <div class="info-card">
+                            <h3><i class="fas fa-info-circle"></i> Current Authentication Setup</h3>
+                            <p><strong>Admin Dashboard:</strong> Uses Firebase Authentication with role-based access</p>
+                            <p><strong>User Portal:</strong> Now uses Firebase Authentication (updated)</p>
+                            <p><strong>Security:</strong> Only admin emails can access admin dashboard</p>
+                        </div>
+                        
+                        <div class="action-card">
+                            <h3><i class="fas fa-users"></i> Create Firebase Accounts</h3>
+                            <p>Create Firebase authentication accounts for all existing users in the system.</p>
+                            <button onclick="createFirebaseAccountsForExistingUsers()" class="action-btn">
+                                <i class="fas fa-plus"></i> Create Firebase Accounts
+                            </button>
+                        </div>
+                        
+                        <div class="info-card">
+                            <h3><i class="fas fa-shield-alt"></i> Security Notes</h3>
+                            <ul>
+                                <li>Admin emails: ${ADMIN_EMAILS.join(', ')}</li>
+                                <li>Users can only access their own portal</li>
+                                <li>Admins can access both admin dashboard and user portal</li>
+                                <li>Firebase handles password security and authentication</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update existing users with missing job data
+        async function updateExistingUsersWithJobData() {
+            try {
+                console.log('🔄 Updating existing users with missing job data...');
+                
+                let updatedCount = 0;
+                
+                for (const [userName, userData] of Object.entries(window.users || {})) {
+                    // Check if user has empty jobs object or null primaryJob
+                    if (!userData.jobs || Object.keys(userData.jobs).length === 0 || !userData.primaryJob) {
+                        console.log(`🔄 Updating job data for user: ${userName}`);
+                        
+                        const role = userData.profile?.role || 'Producer';
+                        const location = userData.profile?.location || 'Atlanta, GA';
+                        
+                        // Assign job data
+                        const assignedJobs = await assignJobsToUser(role, location);
+                        
+                        // Update user data
+                        window.users[userName].jobs = assignedJobs.jobs;
+                        window.users[userName].primaryJob = assignedJobs.primaryJob;
+                        
+                        updatedCount++;
+                        console.log(`✅ Updated job data for ${userName}`);
+                    }
+                }
+                
+                if (updatedCount > 0) {
+                    // Update localStorage
+                    localStorage.setItem('users', JSON.stringify(window.users));
+                    
+                    // Update GitHub repository
+                    await updateUsersOnGitHub();
+                    
+                    showNotification(`✅ Updated job data for ${updatedCount} existing users`, 'success');
+                } else {
+                    console.log('✅ All users already have job data');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error updating existing users with job data:', error);
+                showNotification('❌ Error updating existing users with job data', 'error');
+            }
+        }
+
+        // Manual refresh function
+        async function refreshFreelancers() {
+            try {
+                console.log('🔄 Refreshing freelancers data...');
+                
+                // Reload users data
+                await loadUsers();
+                
+                // Reload jobs data
+                await loadJobs();
+                
+                // Update display
+                displayUsers();
+                displayJobs();
+                updateStats();
+                
+                showNotification('✅ Data refreshed successfully', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error refreshing data:', error);
+                showNotification('❌ Error refreshing data', 'error');
+            }
+        }
+        
         // Check if performance review should be shown for a user
         function shouldShowPerformanceReview(userData) {
             // Check if user has completed projects with paid status
