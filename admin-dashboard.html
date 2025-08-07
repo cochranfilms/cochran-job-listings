@@ -514,15 +514,15 @@
                 </div>
                 <div class="card-content">
                     <div class="form-section">
-                        <h3>Add New Freelancer</h3>
+                        <h3>Add New User</h3>
                         <form id="contractForm">
                             <input type="text" id="freelancerName" placeholder="Full Name" required>
                             <input type="email" id="freelancerEmail" placeholder="Email Address" required>
                             <input type="url" id="contractUrl" placeholder="Contract URL" required>
                             <input type="text" id="freelancerRole" placeholder="Role (Optional)">
                             <input type="date" id="approvedDate" placeholder="Approved Date">
-                            <button type="submit" class="btn">Save Freelancer</button>
-                            <button type="button" class="btn btn-secondary" onclick="clearContractForm()">Clear</button>
+                                                    <button type="submit" class="btn">Save User</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearContractForm()">Clear</button>
                         </form>
                     </div>
                     
@@ -540,9 +540,9 @@
                     </div>
                     
                     <div class="form-section">
-                        <h3>Current Freelancers</h3>
+                        <h3>Current Users</h3>
                         <div class="item-list" id="contractsList">
-                            <!-- Freelancers will be loaded here -->
+                            <!-- Users will be loaded here -->
                         </div>
                     </div>
                 </div>
@@ -601,7 +601,7 @@
         // Session management - Make these global
         window.isAuthenticated = false;
         window.jobs = [];
-        window.approvedFreelancers = {};
+        window.users = {};
 
         // Check if already authenticated
         function checkAuth() {
@@ -712,7 +712,6 @@
         // Load data
         async function loadData() {
             await loadJobs();
-            await loadFreelancers();
             await loadUsers();
             updateStats();
         }
@@ -722,7 +721,7 @@
             document.getElementById('totalCreators').textContent = Object.keys(window.users).length;
             document.getElementById('activeJobs').textContent = window.jobs.filter(job => job.status === 'Active').length;
             document.getElementById('pendingReviews').textContent = window.jobs.filter(job => !job.reviewed).length;
-            document.getElementById('totalContracts').textContent = Object.keys(window.approvedFreelancers).length;
+            document.getElementById('totalContracts').textContent = Object.keys(window.users).length;
         }
 
         // Load existing jobs
@@ -850,20 +849,7 @@
             URL.revokeObjectURL(url);
         }
 
-        // Load existing freelancers
-        async function loadFreelancers() {
-            try {
-                const response = await fetch('freelancers.json');
-                if (response.ok) {
-                    const data = await response.json();
-                    window.approvedFreelancers = data.approvedFreelancers || {};
-                }
-            } catch (error) {
-                console.log('No existing freelancers file found, starting fresh');
-                window.approvedFreelancers = {};
-            }
-            displayFreelancers();
-        }
+
 
         // Load existing users
         async function loadUsers() {
@@ -880,108 +866,118 @@
             displayUsers();
         }
 
-        // Display freelancers
-        function displayFreelancers() {
-            const contractsList = document.getElementById('contractsList');
-            contractsList.innerHTML = '';
-
-            Object.keys(window.approvedFreelancers).forEach((name, index) => {
-                const freelancer = window.approvedFreelancers[name];
-                const contractDiv = document.createElement('div');
-                contractDiv.className = 'item-card';
-                contractDiv.innerHTML = `
-                    <h4>${name}</h4>
-                    <div class="item-meta">
-                        <span>📧 ${freelancer.email}</span>
-                        <span>🎭 ${freelancer.role || 'Role not specified'}</span>
-                        <span>📅 ${freelancer.approvedDate || 'Date not specified'}</span>
-                    </div>
-                    <div class="item-actions">
-                        <button class="btn btn-small" onclick="editFreelancer('${name}')">Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteFreelancer('${name}')">Delete</button>
-                    </div>
-                `;
-                contractsList.appendChild(contractDiv);
-            });
-        }
-
-        // Display users
+        // Display users (for contract management)
         function displayUsers() {
             const usersList = document.getElementById('usersList');
-            if (!usersList) return;
+            const contractsList = document.getElementById('contractsList');
             
-            usersList.innerHTML = '';
+            if (usersList) {
+                usersList.innerHTML = '';
+            }
+            if (contractsList) {
+                contractsList.innerHTML = '';
+            }
 
             Object.keys(window.users).forEach((name, index) => {
                 const user = window.users[name];
-                const userDiv = document.createElement('div');
-                userDiv.className = 'item-card';
-                userDiv.innerHTML = `
-                    <h4>${name}</h4>
-                    <div class="item-meta">
-                        <span>📧 ${user.profile?.email || 'Email not specified'}</span>
-                        <span>🎭 ${user.profile?.role || 'Role not specified'}</span>
-                        <span>📍 ${user.profile?.location || 'Location not specified'}</span>
-                        <span>📅 ${user.profile?.approvedDate || 'Date not specified'}</span>
-                    </div>
-                    <div class="item-description">
-                        <strong>Primary Job:</strong> ${user.primaryJob || 'None'}<br>
-                        <strong>Payment Method:</strong> ${user.paymentMethod || 'Not specified'}<br>
-                        <strong>Contract Status:</strong> ${user.contract?.contractStatus || 'Not specified'}
-                    </div>
-                    <div class="item-actions">
-                        <button class="btn btn-small" onclick="viewUserDetails('${name}')">View Details</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">Delete</button>
-                    </div>
-                `;
-                usersList.appendChild(userDiv);
+                
+                // Display in users list
+                if (usersList) {
+                    const userDiv = document.createElement('div');
+                    userDiv.className = 'item-card';
+                    userDiv.innerHTML = `
+                        <h4>${name}</h4>
+                        <div class="item-meta">
+                            <span>📧 ${user.profile?.email || 'Email not specified'}</span>
+                            <span>🎭 ${user.profile?.role || 'Role not specified'}</span>
+                            <span>📍 ${user.profile?.location || 'Location not specified'}</span>
+                            <span>📅 ${user.profile?.approvedDate || 'Date not specified'}</span>
+                        </div>
+                        <div class="item-description">
+                            <strong>Primary Job:</strong> ${user.primaryJob || 'None'}<br>
+                            <strong>Payment Method:</strong> ${user.paymentMethod || 'Not specified'}<br>
+                            <strong>Contract Status:</strong> ${user.contract?.contractStatus || 'Not specified'}
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-small" onclick="viewUserDetails('${name}')">View Details</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">Delete</button>
+                        </div>
+                    `;
+                    usersList.appendChild(userDiv);
+                }
+                
+                // Display in contracts list (for contract management)
+                if (contractsList) {
+                    const contractDiv = document.createElement('div');
+                    contractDiv.className = 'item-card';
+                    contractDiv.innerHTML = `
+                        <h4>${name}</h4>
+                        <div class="item-meta">
+                            <span>📧 ${user.profile?.email || 'Email not specified'}</span>
+                            <span>🎭 ${user.profile?.role || 'Role not specified'}</span>
+                            <span>📅 ${user.profile?.approvedDate || 'Date not specified'}</span>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-small" onclick="editUser('${name}')">Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">Delete</button>
+                        </div>
+                    `;
+                    contractsList.appendChild(contractDiv);
+                }
             });
         }
 
-        // Add/Edit freelancer
+
+
+        // Add/Edit user
         document.getElementById('contractForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
-            const freelancer = {
-                email: formData.get('email'),
-                contractUrl: formData.get('contractUrl'),
-                role: formData.get('role'),
-                approvedDate: formData.get('approvedDate')
+            const userData = {
+                profile: {
+                    email: formData.get('email'),
+                    role: formData.get('role'),
+                    approvedDate: formData.get('approvedDate')
+                },
+                contract: {
+                    contractUrl: formData.get('contractUrl'),
+                    contractStatus: 'pending'
+                }
             };
 
             const name = formData.get('name');
             const editName = e.target.dataset.editName;
             
             if (editName && editName !== name) {
-                delete window.approvedFreelancers[editName];
+                delete window.users[editName];
             }
             
-            window.approvedFreelancers[name] = freelancer;
+            window.users[name] = userData;
             delete e.target.dataset.editName;
 
-            displayFreelancers();
+            displayUsers();
             updateStats();
             clearContractForm();
         });
 
-        // Edit freelancer
-        function editFreelancer(name) {
-            const freelancer = window.approvedFreelancers[name];
+        // Edit user
+        function editUser(name) {
+            const user = window.users[name];
             document.getElementById('freelancerName').value = name;
-            document.getElementById('freelancerEmail').value = freelancer.email || '';
-            document.getElementById('contractUrl').value = freelancer.contractUrl || '';
-            document.getElementById('freelancerRole').value = freelancer.role || '';
-            document.getElementById('approvedDate').value = freelancer.approvedDate || '';
+            document.getElementById('freelancerEmail').value = user.profile?.email || '';
+            document.getElementById('contractUrl').value = user.contract?.contractUrl || '';
+            document.getElementById('freelancerRole').value = user.profile?.role || '';
+            document.getElementById('approvedDate').value = user.profile?.approvedDate || '';
             
             document.getElementById('contractForm').dataset.editName = name;
         }
 
-        // Delete freelancer
-        function deleteFreelancer(name) {
+        // Delete user (for contract management)
+        function deleteUser(name) {
             if (confirm(`Are you sure you want to delete ${name}?`)) {
-                delete window.approvedFreelancers[name];
-                displayFreelancers();
+                delete window.users[name];
+                displayUsers();
                 updateStats();
             }
         }
@@ -995,9 +991,9 @@
         // Export contract data
         function exportContractData() {
             const data = {
-                approvedFreelancers: window.approvedFreelancers,
+                users: window.users,
                 lastUpdated: new Date().toISOString().split('T')[0],
-                totalFreelancers: Object.keys(window.approvedFreelancers).length
+                totalUsers: Object.keys(window.users).length
             };
             
             document.getElementById('downloadContractBtn').style.display = 'block';
@@ -1006,16 +1002,16 @@
         // Download contract JSON
         function downloadContractJSON() {
             const data = {
-                approvedFreelancers: window.approvedFreelancers,
+                users: window.users,
                 lastUpdated: new Date().toISOString().split('T')[0],
-                totalFreelancers: Object.keys(window.approvedFreelancers).length
+                totalUsers: Object.keys(window.users).length
             };
             const jsonString = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'freelancers.json';
+            a.download = 'users.json';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1087,10 +1083,10 @@ Contract ID: ${user.contract?.contractId || 'Not specified'}
             
             const contracts = {};
             
-            Object.keys(window.approvedFreelancers).forEach(freelancerName => {
-                const freelancerData = window.approvedFreelancers[freelancerName];
-                const fileName = freelancerName.toLowerCase().replace(/\s+/g, '-') + '.html';
-                contracts[fileName] = generateContractHTML(freelancerName, freelancerData);
+            Object.keys(window.users).forEach(userName => {
+                const userData = window.users[userName];
+                const fileName = userName.toLowerCase().replace(/\s+/g, '-') + '.html';
+                contracts[fileName] = generateContractHTML(userName, userData);
             });
             
             window.generatedContracts = contracts;
@@ -1103,11 +1099,11 @@ Contract ID: ${user.contract?.contractId || 'Not specified'}
         }
 
         // Generate contract HTML
-        function generateContractHTML(freelancerName, freelancerData) {
+        function generateContractHTML(userName, userData) {
             return `<!DOCTYPE html>
 <html>
 <head>
-    <title>Contract - ${freelancerName}</title>
+    <title>Contract - ${userName}</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         .contract { max-width: 800px; margin: auto; }
@@ -1116,11 +1112,11 @@ Contract ID: ${user.contract?.contractId || 'Not specified'}
 </head>
 <body>
     <div class="contract">
-        <h1>Contract for ${freelancerName}</h1>
-        <p>Role: ${freelancerData.role || 'Contractor'}</p>
-        <p>Email: ${freelancerData.email}</p>
-        <p>Contract URL: ${freelancerData.contractUrl}</p>
-        <p>Approved Date: ${freelancerData.approvedDate || 'TBD'}</p>
+        <h1>Contract for ${userName}</h1>
+        <p>Role: ${userData.profile?.role || 'Contractor'}</p>
+        <p>Email: ${userData.profile?.email}</p>
+        <p>Contract URL: ${userData.contract?.contractUrl}</p>
+        <p>Approved Date: ${userData.profile?.approvedDate || 'TBD'}</p>
     </div>
 </body>
 </html>`;
@@ -1207,20 +1203,20 @@ Contract ID: ${user.contract?.contractId || 'Not specified'}
             }
             
             try {
-                const freelancersResponse = await fetch('freelancers.json');
-                if (freelancersResponse.ok) {
-                    const freelancersData = await freelancersResponse.json();
-                    console.log(`✅ freelancers.json - Working (${Object.keys(freelancersData.approvedFreelancers || {}).length} freelancers)`);
+                const usersResponse = await fetch('users.json');
+                if (usersResponse.ok) {
+                    const usersData = await usersResponse.json();
+                    console.log(`✅ users.json - Working (${Object.keys(usersData.users || {}).length} users)`);
                 } else {
-                    console.log(`❌ freelancers.json - Status: ${freelancersResponse.status}`);
+                    console.log(`❌ users.json - Status: ${usersResponse.status}`);
                 }
             } catch (error) {
-                console.log('❌ freelancers.json - Error:', error.message);
+                console.log('❌ users.json - Error:', error.message);
             }
             
             // Test 4: Check functions
             console.log('\n📋 Test 4: Core Functions');
-            const functions = ['loadJobs', 'displayJobs', 'loadFreelancers', 'displayFreelancers', 'updateStats'];
+            const functions = ['loadJobs', 'displayJobs', 'loadUsers', 'displayUsers', 'updateStats'];
             functions.forEach(funcName => {
                 if (typeof window[funcName] === 'function') {
                     console.log(`✅ ${funcName}() - Available`);
@@ -1231,7 +1227,7 @@ Contract ID: ${user.contract?.contractId || 'Not specified'}
             
             // Test 5: Check global variables
             console.log('\n📋 Test 5: Global Variables');
-            const variables = ['jobs', 'approvedFreelancers', 'isAuthenticated'];
+            const variables = ['jobs', 'users', 'isAuthenticated'];
             variables.forEach(varName => {
                 if (typeof window[varName] !== 'undefined') {
                     console.log(`✅ ${varName} - Available`);
