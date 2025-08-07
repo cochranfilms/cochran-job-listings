@@ -33,7 +33,8 @@
         }
       },
       "primaryJob": "job-backdrop-photographer-base-1754521842040",
-      "paymentMethod": "bank"
+      "paymentMethod": "bank",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
@@ -55,5 +56,10 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-07"
+  },
+  "_metadata": {
+    "dataSource": "github",
+    "fetchedAt": "2025-08-07T06:33:20.922Z",
+    "totalUsers": 1
   }
 }
