@@ -371,6 +371,13 @@
             margin-top: 1rem;
         }
         
+        .item-description {
+            margin: 1rem 0;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9rem;
+        }
+        
         .btn-small {
             padding: 0.5rem 1rem;
             font-size: 0.9rem;
@@ -541,6 +548,27 @@
                 </div>
             </div>
         </div>
+
+        <!-- Users Management -->
+        <div class="content-card">
+            <div class="card-header">
+                <h2>👥 User Management</h2>
+            </div>
+            <div class="card-content">
+                <div class="form-section">
+                    <h3>Current Users</h3>
+                    <div class="item-list" id="usersList">
+                        <!-- Users will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>Export Users</h3>
+                    <button class="btn" onclick="exportUsersData()">Generate JSON</button>
+                    <button class="btn btn-secondary" onclick="downloadUsersJSON()" id="downloadUsersBtn" style="display: none;">Download</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -685,12 +713,13 @@
         async function loadData() {
             await loadJobs();
             await loadFreelancers();
+            await loadUsers();
             updateStats();
         }
 
         // Update stats
         function updateStats() {
-            document.getElementById('totalCreators').textContent = Object.keys(window.approvedFreelancers).length;
+            document.getElementById('totalCreators').textContent = Object.keys(window.users).length;
             document.getElementById('activeJobs').textContent = window.jobs.filter(job => job.status === 'Active').length;
             document.getElementById('pendingReviews').textContent = window.jobs.filter(job => !job.reviewed).length;
             document.getElementById('totalContracts').textContent = Object.keys(window.approvedFreelancers).length;
@@ -836,6 +865,21 @@
             displayFreelancers();
         }
 
+        // Load existing users
+        async function loadUsers() {
+            try {
+                const response = await fetch('users.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    window.users = data.users || {};
+                }
+            } catch (error) {
+                console.log('No existing users file found, starting fresh');
+                window.users = {};
+            }
+            displayUsers();
+        }
+
         // Display freelancers
         function displayFreelancers() {
             const contractsList = document.getElementById('contractsList');
@@ -858,6 +902,39 @@
                     </div>
                 `;
                 contractsList.appendChild(contractDiv);
+            });
+        }
+
+        // Display users
+        function displayUsers() {
+            const usersList = document.getElementById('usersList');
+            if (!usersList) return;
+            
+            usersList.innerHTML = '';
+
+            Object.keys(window.users).forEach((name, index) => {
+                const user = window.users[name];
+                const userDiv = document.createElement('div');
+                userDiv.className = 'item-card';
+                userDiv.innerHTML = `
+                    <h4>${name}</h4>
+                    <div class="item-meta">
+                        <span>📧 ${user.profile?.email || 'Email not specified'}</span>
+                        <span>🎭 ${user.profile?.role || 'Role not specified'}</span>
+                        <span>📍 ${user.profile?.location || 'Location not specified'}</span>
+                        <span>📅 ${user.profile?.approvedDate || 'Date not specified'}</span>
+                    </div>
+                    <div class="item-description">
+                        <strong>Primary Job:</strong> ${user.primaryJob || 'None'}<br>
+                        <strong>Payment Method:</strong> ${user.paymentMethod || 'Not specified'}<br>
+                        <strong>Contract Status:</strong> ${user.contract?.contractStatus || 'Not specified'}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-small" onclick="viewUserDetails('${name}')">View Details</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">Delete</button>
+                    </div>
+                `;
+                usersList.appendChild(userDiv);
             });
         }
 
@@ -943,6 +1020,64 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        // Export users data
+        function exportUsersData() {
+            const data = {
+                users: window.users,
+                lastUpdated: new Date().toISOString().split('T')[0],
+                totalUsers: Object.keys(window.users).length
+            };
+            
+            document.getElementById('downloadUsersBtn').style.display = 'block';
+        }
+
+        // Download users JSON
+        function downloadUsersJSON() {
+            const data = {
+                users: window.users,
+                lastUpdated: new Date().toISOString().split('T')[0],
+                totalUsers: Object.keys(window.users).length
+            };
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'users.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // View user details
+        function viewUserDetails(userName) {
+            const user = window.users[userName];
+            if (!user) return;
+            
+            const details = `
+User: ${userName}
+Email: ${user.profile?.email || 'Not specified'}
+Role: ${user.profile?.role || 'Not specified'}
+Location: ${user.profile?.location || 'Not specified'}
+Primary Job: ${user.primaryJob || 'None'}
+Payment Method: ${user.paymentMethod || 'Not specified'}
+Contract Status: ${user.contract?.contractStatus || 'Not specified'}
+Contract ID: ${user.contract?.contractId || 'Not specified'}
+            `;
+            
+            alert(details);
+        }
+
+        // Delete user
+        function deleteUser(userName) {
+            if (confirm(`Are you sure you want to delete ${userName}?`)) {
+                delete window.users[userName];
+                displayUsers();
+                updateStats();
+            }
         }
 
         // Generate all contract files
