@@ -1453,25 +1453,8 @@
                     // 3. Delete from local users object
                     delete window.users[name];
                     
-                    // 4. Update users.json file via API
-                    const updateResponse = await fetch('/api/update-users', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            users: window.users,
-                            action: 'delete',
-                            userName: name
-                        })
-                    });
-                    
-                    if (!updateResponse.ok) {
-                        throw new Error('Failed to persist deletion to server');
-                    }
-                    
-                    const result = await updateResponse.json();
-                    console.log('✅ User deletion persisted to server:', result);
+                    // 4. Update GitHub repository
+                    await updateUsersOnGitHub('delete', name);
                     
                     // 5. Refresh display
                     displayUsers();
@@ -1534,42 +1517,75 @@
         // Update users.json on GitHub
         async function updateUsersOnGitHub(action = 'update', userName = '') {
             try {
-                console.log('🔄 Updating users.json via API...');
+                console.log('🔄 Updating users.json on GitHub...');
                 
-                const response = await fetch('/api/update-users', {
-                    method: 'POST',
+                // Count performance reviews in users
+                let totalReviews = 0;
+                for (const user of Object.values(window.users)) {
+                    if (user.performance) {
+                        totalReviews++;
+                    }
+                }
+                
+                const usersData = {
+                    users: window.users,
+                    statusOptions: {
+                        projectStatus: ["upcoming", "in-progress", "completed", "cancelled"],
+                        paymentStatus: ["pending", "processing", "paid", "overdue"]
+                    },
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    totalUsers: Object.keys(window.users).length,
+                    system: {
+                        totalReviews: totalReviews,
+                        lastUpdated: new Date().toISOString().split('T')[0]
+                    }
+                };
+                
+                // First, get the current file SHA
+                const getResponse = await fetch('/api/github/file/users.json');
+                let sha = null;
+                
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                    console.log('📄 Got current file SHA:', sha.substring(0, 7));
+                } else if (getResponse.status === 404) {
+                    console.log('📄 File does not exist, will create new file');
+                } else {
+                    console.warn('⚠️ Could not get current file SHA, proceeding without it');
+                }
+                
+                const updateBody = {
+                    content: JSON.stringify(usersData, null, 2),
+                    message: `Update users.json - ${action} ${userName} - ${new Date().toLocaleString()}`
+                };
+                
+                // Include SHA if we have it (for updates)
+                if (sha) {
+                    updateBody.sha = sha;
+                }
+                
+                const response = await fetch('/api/github/file/users.json', {
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        users: window.users,
-                        action: action,
-                        userName: userName
-                    })
+                    body: JSON.stringify(updateBody)
                 });
                 
                 if (response.ok) {
-                    const result = await response.json();
-                    console.log('✅ Users data updated successfully:', result);
-                    
-                    let message = '✅ Users data updated successfully';
-                    if (result.githubUpdated) {
-                        message += ' and pushed to GitHub';
-                    } else {
-                        message += ` (GitHub: ${result.githubMessage})`;
-                    }
-                    
-                    showNotification(message, 'success');
+                    console.log('✅ users.json updated on GitHub successfully');
+                    showNotification('✅ Users data updated successfully and pushed to GitHub', 'success');
                     return true;
                 } else {
-                    const error = await response.json();
-                    console.error('❌ Failed to update users:', error);
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ Failed to update users.json on GitHub:', response.status, errorData);
                     showNotification('❌ Failed to update users data', 'error');
                     return false;
                 }
                 
             } catch (error) {
-                console.error('❌ Error updating users:', error);
+                console.error('❌ Error updating users.json on GitHub:', error);
                 showNotification('❌ Error updating users data', 'error');
                 return false;
             }
@@ -1868,34 +1884,16 @@
                     delete currentUsers[userName];
                     console.log(`🗑️ Deleted ${userName} from users object`);
                     
-                    // Update server via API
-                    const updateResponse = await fetch('/api/update-users', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            users: currentUsers,
-                            action: 'delete',
-                            userName: userName
-                        })
-                    });
-                    
-                    if (updateResponse.ok) {
-                        const result = await updateResponse.json();
-                        console.log('✅ User deletion persisted to server:', result);
-                        
-                        // Update local state
-                        window.users = currentUsers;
-                        displayUsers();
-                        updateStats();
-                        
-                        showNotification(`User ${userName} deleted successfully and persisted to server`, 'success');
-                        return true;
-                    } else {
-                        const errorData = await updateResponse.json();
-                        throw new Error(`Server error: ${errorData.message || 'Unknown error'}`);
-                    }
+                                // Update GitHub repository
+            await updateUsersOnGitHub('delete', userName);
+            
+            // Update local state
+            window.users = currentUsers;
+            displayUsers();
+            updateStats();
+            
+            showNotification(`User ${userName} deleted successfully and persisted to GitHub`, 'success');
+            return true;
                 } catch (error) {
                     console.error('❌ Error deleting user:', error);
                     showNotification(`Failed to delete user: ${error.message}`, 'error');
