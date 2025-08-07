@@ -491,11 +491,20 @@
                                 <input type="email" id="freelancerEmail" placeholder="Email Address" required>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <input type="text" id="freelancerRole" placeholder="Role (Optional)">
-                                <input type="text" id="freelancerLocation" placeholder="Location" value="Atlanta Area">
+                                <select id="freelancerRole" required>
+                                    <option value="">Select Role...</option>
+                                    <!-- Populated with roles from dropdown-options.json -->
+                                </select>
+                                <select id="freelancerLocation" required>
+                                    <option value="">Select Location...</option>
+                                    <!-- Populated with locations from dropdown-options.json -->
+                                </select>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <input type="text" id="freelancerRate" placeholder="Pay Rate">
+                                <select id="freelancerRate" required>
+                                    <option value="">Select Rate...</option>
+                                    <!-- Populated with rates from dropdown-options.json -->
+                                </select>
                                 <input type="date" id="approvedDate" placeholder="Approved Date">
                             </div>
                             <input type="url" id="contractUrl" placeholder="Contract URL" required>
@@ -2433,6 +2442,9 @@
             // Populate the management interface
             populateDropdownManagementInterface();
             
+            // Populate user creation dropdowns
+            populateUserCreationDropdowns();
+            
             // Populate job assignment dropdowns
             populateJobAssignmentDropdowns();
         }
@@ -2595,6 +2607,49 @@
                 console.error('❌ Error saving dropdown options:', error);
                 showNotification(`❌ Failed to save dropdown options: ${error.message}`, 'error');
             }
+        }
+
+        // Populate user creation dropdowns
+        function populateUserCreationDropdowns() {
+            if (!window.dropdownOptions) return;
+            
+            // Populate role dropdown
+            const roleSelect = document.getElementById('freelancerRole');
+            if (roleSelect) {
+                roleSelect.innerHTML = '<option value="">Select Role...</option>';
+                window.dropdownOptions.roles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role;
+                    option.textContent = role;
+                    roleSelect.appendChild(option);
+                });
+            }
+            
+            // Populate location dropdown
+            const locationSelect = document.getElementById('freelancerLocation');
+            if (locationSelect) {
+                locationSelect.innerHTML = '<option value="">Select Location...</option>';
+                window.dropdownOptions.locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location;
+                    option.textContent = location;
+                    locationSelect.appendChild(option);
+                });
+            }
+            
+            // Populate rate dropdown
+            const rateSelect = document.getElementById('freelancerRate');
+            if (rateSelect) {
+                rateSelect.innerHTML = '<option value="">Select Rate...</option>';
+                window.dropdownOptions.rates.forEach(rate => {
+                    const option = document.createElement('option');
+                    option.value = rate;
+                    option.textContent = rate;
+                    rateSelect.appendChild(option);
+                });
+            }
+            
+            console.log('📋 Populated user creation dropdowns');
         }
 
         // Populate job assignment dropdowns
