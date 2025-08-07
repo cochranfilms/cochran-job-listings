@@ -2441,32 +2441,60 @@
         function populateDropdownManagementInterface() {
             if (!window.dropdownOptions) return;
             
-            // Populate roles dropdown
-            const rolesSelect = document.getElementById('roleSelect');
-            if (rolesSelect) {
-                rolesSelect.innerHTML = '<option value="">Select Role...</option>';
-                window.dropdownOptions.roles.forEach(role => {
-                    const option = document.createElement('option');
-                    option.value = role;
-                    option.textContent = role;
-                    rolesSelect.appendChild(option);
-                });
+            // Populate roles list
+            const rolesList = document.getElementById('rolesList');
+            if (rolesList) {
+                rolesList.innerHTML = window.dropdownOptions.roles.map(role => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.25rem;">
+                        <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">${role}</span>
+                        <button onclick="removeDropdownOption('roles', '${role}')" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
             }
             
-            // Populate locations dropdown
-            const locationsSelect = document.getElementById('locationSelect');
-            if (locationsSelect) {
-                locationsSelect.innerHTML = '<option value="">Select Location...</option>';
-                window.dropdownOptions.locations.forEach(location => {
-                    const option = document.createElement('option');
-                    option.value = location;
-                    option.textContent = location;
-                    locationsSelect.appendChild(option);
-                });
+            // Populate locations list
+            const locationsList = document.getElementById('locationsList');
+            if (locationsList) {
+                locationsList.innerHTML = window.dropdownOptions.locations.map(location => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.25rem;">
+                        <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">${location}</span>
+                        <button onclick="removeDropdownOption('locations', '${location}')" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
             }
             
-            // Populate rates dropdown
-            const ratesSelect = document.getElementById('rateSelect');
+            // Populate rates list
+            const ratesList = document.getElementById('ratesList');
+            if (ratesList) {
+                ratesList.innerHTML = window.dropdownOptions.rates.map(rate => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.25rem;">
+                        <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">${rate}</span>
+                        <button onclick="removeDropdownOption('rates', '${rate}')" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+            
+            // Populate project types list
+            const projectTypesList = document.getElementById('projectTypesList');
+            if (projectTypesList) {
+                projectTypesList.innerHTML = window.dropdownOptions.projectTypes.map(type => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.25rem;">
+                        <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">${type}</span>
+                        <button onclick="removeDropdownOption('projectTypes', '${type}')" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+            
+            console.log('📋 Populated dropdown management interface');
+        }
             if (ratesSelect) {
                 ratesSelect.innerHTML = '<option value="">Select Rate...</option>';
                 window.dropdownOptions.rates.forEach(rate => {
