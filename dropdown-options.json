@@ -1,1 +1,46 @@
-ewogICJyb2xlcyI6IFsKICAgICJQaG90b2dyYXBoZXIiLAogICAgIlZpZGVvZ3JhcGhlciIsCiAgICAiRWRpdG9yIiwKICAgICJBc3Npc3RhbnQiLAogICAgIlByb2R1Y2VyIiwKICAgICJEaXJlY3RvciIsCiAgICAiQmFja2Ryb3AgUGhvdG9ncmFwaGVyIEJhc2UiLAogICAgIkJhY2tkcm9wIFBob3RvZ3JhcGhlciBTcG90bGlnaHQiCiAgXSwKICAibG9jYXRpb25zIjogWwogICAgIkxvcyBBbmdlbGVzLCBDQSIsCiAgICAiTmV3IFlvcmssIE5ZIiwKICAgICJNaWFtaSwgRkwiLAogICAgIkNoaWNhZ28sIElMIiwKICAgICJBdGxhbnRhLCBHQSIsCiAgICAiU2FuIEZyYW5jaXNjbywgQ0EiLAogICAgIkRvdWdsYXN2aWxsZSwgR0EiCiAgXSwKICAicmF0ZXMiOiBbCiAgICAiJDc1L2hvdXIiLAogICAgIiQxMDAvaG91ciIsCiAgICAiJDEyNS9ob3VyIiwKICAgICIkMTUwL2hvdXIiLAogICAgIiQyMDAvaG91ciIsCiAgICAiJDI1MC9ob3VyIiwKICAgICIkMzAwL2hvdXIiLAogICAgIiQ0MDAiLAogICAgIiQzMDAgKyBUaXAiCiAgXSwKICAicHJvamVjdFR5cGVzIjogWwogICAgIldlZGRpbmcgUGhvdG9ncmFwaHkiLAogICAgIkNvcnBvcmF0ZSBFdmVudCIsCiAgICAiUHJvZHVjdCBQaG90b2dyYXBoeSIsCiAgICAiUmVhbCBFc3RhdGUiLAogICAgIkZhc2hpb24gU2hvb3QiLAogICAgIlBvcnRyYWl0IFNlc3Npb24iLAogICAgIkV2ZW50IENvdmVyYWdlIiwKICAgICJDb21tZXJjaWFsIFZpZGVvIiwKICAgICJNdXNpYyBWaWRlbyIsCiAgICAiRG9jdW1lbnRhcnkiLAogICAgIkJsb2NrIFBhcnR5IFBob3RvZ3JhcGh5IiwKICAgICJPbi1zaXRlIFByaW50aW5nIgogIF0KfQ==
+{
+  "roles": [
+    "Photographer",
+    "Videographer",
+    "Editor",
+    "Assistant",
+    "Producer",
+    "Director",
+    "Backdrop Photographer Base",
+    "Backdrop Photographer Spotlight"
+  ],
+  "locations": [
+    "Los Angeles, CA",
+    "New York, NY",
+    "Miami, FL",
+    "Chicago, IL",
+    "Atlanta, GA",
+    "San Francisco, CA",
+    "Douglasville, GA"
+  ],
+  "rates": [
+    "$75/hour",
+    "$100/hour",
+    "$125/hour",
+    "$150/hour",
+    "$200/hour",
+    "$250/hour",
+    "$300/hour",
+    "$400",
+    "$300 + Tip"
+  ],
+  "projectTypes": [
+    "Wedding Photography",
+    "Corporate Event",
+    "Product Photography",
+    "Real Estate",
+    "Fashion Shoot",
+    "Portrait Session",
+    "Event Coverage",
+    "Commercial Video",
+    "Music Video",
+    "Documentary",
+    "Block Party Photography",
+    "On-site Printing"
+  ]
+}
