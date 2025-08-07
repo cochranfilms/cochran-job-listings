@@ -1328,6 +1328,101 @@
             document.body.appendChild(modal);
         }
 
+        // Assign jobs to user based on role and location
+        async function assignJobsToUser(role, location) {
+            try {
+                // Load jobs data
+                const jobsResponse = await fetch('jobs-data.json');
+                const jobsData = await jobsResponse.json();
+                
+                const assignedJobs = {};
+                let primaryJob = null;
+                
+                // Match jobs based on role and location
+                jobsData.jobs.forEach(job => {
+                    // Check if job matches user's role and location
+                    if (job.title.toLowerCase().includes(role.toLowerCase()) || 
+                        role.toLowerCase().includes(job.title.toLowerCase())) {
+                        
+                        // Create job ID
+                        const jobId = `job-${job.title.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+                        
+                        assignedJobs[jobId] = {
+                            id: jobId,
+                            title: job.title,
+                            date: job.date,
+                            location: job.location,
+                            rate: job.rate,
+                            description: job.description,
+                            status: job.status,
+                            projectStatus: job.status || 'upcoming',
+                            paymentStatus: 'pending',
+                            assignedDate: new Date().toISOString().split('T')[0],
+                            projectStart: document.getElementById('projectStart')?.value || 'TBD'
+                        };
+                        
+                        // Set as primary job if it's the first match
+                        if (!primaryJob) {
+                            primaryJob = jobId;
+                        }
+                    }
+                });
+                
+                // If no specific job matches, create a default job based on role
+                if (Object.keys(assignedJobs).length === 0) {
+                    const defaultJobId = `job-${role.toLowerCase().replace(/\s+/g, '-')}-default`;
+                    
+                    assignedJobs[defaultJobId] = {
+                        id: defaultJobId,
+                        title: `${role} Position`,
+                        date: new Date().toISOString().split('T')[0],
+                        location: location,
+                        rate: document.getElementById('freelancerRate')?.value || '$200',
+                        description: `Professional ${role} position in ${location}. Details to be provided.`,
+                        status: 'upcoming',
+                        projectStatus: 'upcoming',
+                        paymentStatus: 'pending',
+                        assignedDate: new Date().toISOString().split('T')[0],
+                        projectStart: document.getElementById('projectStart')?.value || 'TBD'
+                    };
+                    
+                    primaryJob = defaultJobId;
+                }
+                
+                console.log('✅ Assigned jobs to user:', assignedJobs);
+                console.log('✅ Primary job:', primaryJob);
+                
+                return {
+                    jobs: assignedJobs,
+                    primaryJob: primaryJob
+                };
+                
+            } catch (error) {
+                console.error('❌ Error assigning jobs to user:', error);
+                
+                // Fallback: create a default job
+                const defaultJobId = `job-${role.toLowerCase().replace(/\s+/g, '-')}-fallback`;
+                const defaultJob = {
+                    id: defaultJobId,
+                    title: `${role} Position`,
+                    date: new Date().toISOString().split('T')[0],
+                    location: location,
+                    rate: document.getElementById('freelancerRate')?.value || '$200',
+                    description: `Professional ${role} position in ${location}. Details to be provided.`,
+                    status: 'upcoming',
+                    projectStatus: 'upcoming',
+                    paymentStatus: 'pending',
+                    assignedDate: new Date().toISOString().split('T')[0],
+                    projectStart: document.getElementById('projectStart')?.value || 'TBD'
+                };
+                
+                return {
+                    jobs: { [defaultJobId]: defaultJob },
+                    primaryJob: defaultJobId
+                };
+            }
+        }
+
         // Process job assignments
         function processJobAssignments() {
             const assignments = [];
