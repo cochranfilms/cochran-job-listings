@@ -154,15 +154,7 @@
             box-shadow: 0 6px 20px rgba(255,178,0,0.4);
         }
         
-        .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #ef4444;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            display: none;
-        }
+
         
         /* Dashboard Layout */
         .dashboard {
@@ -425,9 +417,7 @@
             <h1 class="login-title">⚙️ Admin Dashboard</h1>
             <p class="login-subtitle">Manage jobs and contracts from one central location</p>
             
-            <div id="errorMessage" class="error-message">
-                Incorrect password. Please try again.
-            </div>
+
             
             <form class="login-form" id="loginForm">
                 <div class="form-group">
@@ -832,12 +822,10 @@
                     }));
                     isAuthenticated = true;
                     showDashboard();
-                    document.getElementById('errorMessage').style.display = 'none';
                     document.getElementById('password').value = '';
                 } else {
                     // For non-admin users, show access denied
-                    document.getElementById('errorMessage').textContent = 'Access denied. Admin privileges required.';
-                    document.getElementById('errorMessage').style.display = 'block';
+                    showNotification('Access denied. Admin privileges required.', 'error');
                     document.getElementById('password').value = '';
                 }
                 
@@ -861,8 +849,7 @@
                         break;
                 }
                 
-                document.getElementById('errorMessage').textContent = errorMessage;
-                document.getElementById('errorMessage').style.display = 'block';
+                showNotification(errorMessage, 'error');
                 document.getElementById('password').value = '';
             } finally {
                 // Reset button state
@@ -3707,7 +3694,7 @@
         // Download all contract files as a zip
         function downloadContractFiles() {
             if (!window.generatedContracts) {
-                alert('Please generate contracts first.');
+                showNotification('Please generate contracts first.', 'warning');
                 return;
             }
             
