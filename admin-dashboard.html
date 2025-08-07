@@ -626,6 +626,76 @@
         function isAdminUser(email) {
             return ADMIN_EMAILS.includes(email.toLowerCase());
         }
+
+        // Create Firebase account for new user
+        async function createFirebaseAccount(email, password) {
+            try {
+                // Create user in Firebase Authentication
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                console.log('✅ Firebase account created for:', email);
+                
+                // Sign out the admin user after creating the account
+                await auth.signOut();
+                
+                return { success: true, uid: userCredential.user.uid };
+            } catch (error) {
+                console.error('❌ Error creating Firebase account:', error);
+                
+                // Handle specific errors
+                let errorMessage = 'Failed to create account.';
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'Email already exists in Firebase.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Invalid email format.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'Password is too weak.';
+                        break;
+                }
+                
+                return { success: false, error: errorMessage };
+            }
+        }
+
+        // Create Firebase accounts for existing users
+        async function createFirebaseAccountsForExistingUsers() {
+            try {
+                await loadUsers();
+                
+                let createdCount = 0;
+                let errorCount = 0;
+                
+                for (const [userName, userData] of Object.entries(window.users || {})) {
+                    const email = userData.profile?.email;
+                    const password = userData.profile?.password;
+                    
+                    if (email && password) {
+                        console.log(`🔄 Creating Firebase account for: ${email}`);
+                        
+                        const result = await createFirebaseAccount(email, password);
+                        
+                        if (result.success) {
+                            createdCount++;
+                            showNotification(`✅ Created Firebase account for ${email}`, 'success');
+                        } else {
+                            errorCount++;
+                            showNotification(`❌ Failed to create account for ${email}: ${result.error}`, 'error');
+                        }
+                        
+                        // Small delay to avoid rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+                
+                showNotification(`🎉 Firebase account creation complete! Created: ${createdCount}, Errors: ${errorCount}`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Error creating Firebase accounts:', error);
+                showNotification('❌ Error creating Firebase accounts. Please try again.', 'error');
+            }
+                }
         
         // Session management - Make these global
         window.isAuthenticated = false;
