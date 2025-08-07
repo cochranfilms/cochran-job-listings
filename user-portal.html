@@ -1706,11 +1706,11 @@
                     fileName: `${currentUser.name}.pdf`,
                     notes: null,
                     githubUrl: null,
-                    role: currentUser.role || currentUser.profile?.role,
-                    rate: currentUser.rate || currentUser.profile?.rate,
-                    location: currentUser.location || currentUser.profile?.location,
+                    role: currentUser.profile?.role || getSelectedJob()?.role,
+                    rate: currentUser.profile?.rate || getSelectedJob()?.rate,
+                    location: currentUser.profile?.location || getSelectedJob()?.location,
                     jobId: jobId || 'legacy-job',
-                    jobRole: currentUser.role || currentUser.profile?.role,
+                    jobRole: getSelectedJob()?.role || currentUser.profile?.role,
                     jobDescription: currentUser.description || currentUser.profile?.description
                 };
             } else {
@@ -2049,7 +2049,7 @@
                     </div>
                     <div class="info-item">
                         <span class="label">Role</span>
-                        <span class="value">${currentUser.role || 'Creator'}</span>
+                        <span class="value">${currentUser.profile?.role || getSelectedJob()?.role || 'Creator'}</span>
                     </div>
                     <div class="info-item">
                         <span class="label">Location</span>
@@ -3079,7 +3079,7 @@
                 container.innerHTML = `
                     <div class="contract-card">
                         <div class="contract-header">
-                            <h4><i class="fas fa-file-contract"></i> ${currentUser.jobs ? Object.values(currentUser.jobs)[0]?.title || Object.values(currentUser.jobs)[0]?.role || 'Assistant Position' : currentUser.role || 'Assistant Position'}</h4>
+                            <h4><i class="fas fa-file-contract"></i> ${getSelectedJob()?.title || getSelectedJob()?.role || currentUser.profile?.role || 'Assistant Position'}</h4>
                             <span class="status-badge signed">✅ CONTRACT COMPLETE</span>
                         </div>
                         <div class="contract-details">
@@ -3825,7 +3825,7 @@
                     icon: 'fas fa-check',
                     status: 'completed',
                     date: approvedDate,
-                    details: `Congratulations! You were selected for the ${selectedJob?.role || currentUser.role} position.`
+                    details: `Congratulations! You were selected for the ${selectedJob?.role || currentUser.profile?.role} position.`
                 },
                 {
                     id: 'contract',
@@ -4823,7 +4823,7 @@
                     contractId: userContract.contractId || currentUser.name,
                     freelancerName: currentUser.name,
                     freelancerEmail: currentUser.email,
-                    role: currentUser.role || currentUser.profile?.role || 'Contractor',
+                    role: getSelectedJob()?.role || currentUser.profile?.role || 'Contractor',
                     location: currentUser.location || currentUser.profile?.location || 'Atlanta Area',
                     projectStart: currentUser.projectStart || currentUser.profile?.projectStart || 'TBD',
                     rate: currentUser.rate || currentUser.profile?.rate || 'Not specified',
@@ -5124,7 +5124,7 @@
                                 <div><strong>Contract ID:</strong> ${userContract.contractId || 'Not specified'}</div>
                                 <div><strong>Freelancer:</strong> ${currentUser.name || currentUser.email || 'Not specified'}</div>
                                 <div><strong>Email:</strong> ${currentUser.email || 'Not specified'}</div>
-                                <div><strong>Role:</strong> ${userContract.role || currentUser.role || 'Not specified'}</div>
+                                <div><strong>Role:</strong> ${userContract.role || getSelectedJob()?.role || currentUser.profile?.role || 'Not specified'}</div>
                                 <div><strong>Rate:</strong> ${userContract.rate || currentUser.rate || 'Not specified'}</div>
                                 <div><strong>Location:</strong> ${userContract.location || currentUser.location || 'Not specified'}</div>
                                 <div><strong>Contract Date:</strong> ${userContract.signedDate ? new Date(userContract.signedDate).toLocaleDateString() : 'Not specified'}</div>
