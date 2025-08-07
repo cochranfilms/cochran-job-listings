@@ -1622,6 +1622,317 @@
 
         // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
         
+        // Enhanced notification system - SILENT VERSION (notifications disabled)
+        function showNotification(message, type = 'info', duration = 5000) {
+            // Silent notification - only log to console
+            console.log(`🔇 Suppressed notification: ${message} (${type})`);
+            // No popup display - notifications are handled by sophisticated system
+        }
+        
+        function getNotificationIcon(type) {
+            return '🔇'; // Silent icon
+        }
+        
+        function getNotificationColors(type) {
+            return { background: 'transparent', border: 'transparent' };
+        }
+        
+        // Replace all console.log() calls with silent notifications
+        function showAlert(message, type = 'info') {
+            console.log(`🔇 Suppressed alert: ${message} (${type})`);
+        }
+
+        // ==================== SOPHISTICATED NOTIFICATION SYSTEM ====================
+        
+        // Centralized notification system with real-time updates
+        let notifications = [];
+        let notificationUpdateInterval;
+        
+        // Initialize notification system
+        async function initializeNotificationSystem() {
+            console.log('🔔 Initializing sophisticated notification system...');
+            await loadNotifications();
+            startNotificationPolling();
+            updateNotificationBadge();
+            updateNotificationList();
+        }
+        
+        // Load notifications from centralized storage
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications');
+                if (response.ok) {
+                    const data = await response.json();
+                    notifications = data.notifications || [];
+                    console.log('✅ Loaded notifications from API:', notifications.length);
+                } else {
+                    // Fallback to localStorage
+                    notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+                    console.log('⚠️ Using localStorage fallback for notifications');
+                }
+            } catch (error) {
+                console.error('❌ Error loading notifications:', error);
+                notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            }
+        }
+        
+        // Save notifications to centralized storage
+        async function saveNotifications() {
+            try {
+                const response = await fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        notifications: notifications,
+                        lastUpdated: new Date().toISOString()
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Notifications saved to centralized storage');
+                } else {
+                    // Fallback to localStorage
+                    localStorage.setItem('notifications', JSON.stringify(notifications));
+                    console.log('⚠️ Using localStorage fallback for notifications');
+                }
+            } catch (error) {
+                console.error('❌ Error saving notifications:', error);
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+            }
+        }
+        
+        // Add notification with rich data
+        async function addNotification(title, message, type = 'info', data = {}) {
+            const notification = {
+                id: Math.floor(Date.now() + Math.random() * 1000),
+                title: title,
+                message: message,
+                type: type,
+                data: data,
+                timestamp: new Date().toISOString(),
+                read: false,
+                actionRequired: data.actionRequired || false,
+                priority: data.priority || 'normal'
+            };
+            
+            notifications.unshift(notification);
+            await saveNotifications();
+            updateNotificationBadge();
+            updateNotificationList();
+        }
+        
+        // Update notification badge
+        function updateNotificationBadge() {
+            const unreadCount = notifications.filter(n => !n.read).length;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                badge.textContent = unreadCount;
+                badge.style.display = unreadCount > 0 ? 'block' : 'none';
+            }
+        }
+        
+        // Update notification list
+        function updateNotificationList() {
+            const container = document.getElementById('notificationList');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            notifications.slice(0, 10).forEach(notification => {
+                const item = document.createElement('div');
+                item.className = `notification-item ${notification.read ? 'read' : 'unread'}`;
+                item.innerHTML = `
+                    <div class="notification-header">
+                        <strong>${notification.title}</strong>
+                        <span class="notification-time">${new Date(notification.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div class="notification-message">${notification.message}</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        // Start notification polling
+        function startNotificationPolling() {
+            notificationUpdateInterval = setInterval(async () => {
+                await loadNotifications();
+                updateNotificationBadge();
+                updateNotificationList();
+            }, 30000); // Check every 30 seconds
+        }
+        
+        // Stop notification polling
+        function stopNotificationPolling() {
+            if (notificationUpdateInterval) {
+                clearInterval(notificationUpdateInterval);
+            }
+        }
+
+        // ==================== CORE FUNCTION RESTORATION ====================
+        
+        // Populate user dropdowns
+        function populateUserDropdowns() {
+            // Populate contract upload user dropdown
+            const uploadUserSelect = document.getElementById('uploadFreelancerName');
+            if (uploadUserSelect) {
+                uploadUserSelect.innerHTML = '<option value="">Select a user...</option>';
+                Object.keys(window.users || {}).forEach(userName => {
+                    const option = document.createElement('option');
+                    option.value = userName;
+                    option.textContent = userName;
+                    uploadUserSelect.appendChild(option);
+                });
+            }
+            
+            // Populate job assignment user dropdown
+            const jobAssignmentSelect = document.getElementById('jobAssignmentFreelancer');
+            if (jobAssignmentSelect) {
+                jobAssignmentSelect.innerHTML = '<option value="">Choose a user...</option>';
+                Object.keys(window.users || {}).forEach(userName => {
+                    const option = document.createElement('option');
+                    option.value = userName;
+                    option.textContent = userName;
+                    jobAssignmentSelect.appendChild(option);
+                });
+            }
+            
+            console.log('👥 Populated user dropdowns with', Object.keys(window.users || {}).length, 'options');
+        }
+
+        // Load dropdown options from API or use defaults
+        async function loadDropdownOptions() {
+            try {
+                console.log('🔄 Loading dropdown options...');
+                
+                // Add timeout to prevent hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                
+                const response = await fetch('/api/dropdown-options', {
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    window.dropdownOptions = await response.json();
+                    console.log('📋 Loaded dropdown options from API:', window.dropdownOptions);
+                } else {
+                    console.warn(`⚠️ API returned status ${response.status}, using defaults`);
+                    // Initialize with default options if API fails
+                    window.dropdownOptions = {
+                        roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Photographer', 'Full Stack Designer', 'Video Editor', 'Corporate Videographer'],
+                        locations: ['6695 Church Street, Douglasville, GA 30134', 'Sandy Springs, GA', 'Douglasville, GA', 'Atlanta, GA', 'Atlanta Area'],
+                        rates: ['$400.00 USD (Flat)', '$450.00 USD (Flat)', '$500.00 USD (Flat)', '$750.00 USD (Flat)', '$900.00 USD (Flat)', '$150/day', '$200/day'],
+                        projectTypes: ['Photography', 'Video', 'Editor Project', 'Corporate Video', 'Event Coverage', 'Product Photography', 'Real Estate', 'Wedding', 'Commercial'],
+                        paymentMethods: ['Cash', 'Check', 'Zelle', 'PayPal', 'Invoice Request'],
+                        projectStatuses: ['upcoming', 'in-progress', 'completed', 'cancelled'],
+                        paymentStatuses: ['pending', 'processing', 'paid', 'overdue']
+                    };
+                    console.log('📋 Initialized default dropdown options (API failed):', window.dropdownOptions);
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.warn('⚠️ Dropdown options request timed out, using defaults');
+                } else {
+                    console.error('❌ Error loading dropdown options from API:', error);
+                }
+                
+                // Initialize with default options
+                window.dropdownOptions = {
+                    roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Douglasville, GA', 'Atlanta, GA', 'Atlanta Area'],
+                    locations: ['6695 Church Street, Douglasville, GA 30134', 'Sandy Springs, GA', 'Douglasville, GA', 'Atlanta, GA', 'Atlanta Area'],
+                    rates: ['$400.00 USD (Flat)', '$450.00 USD (Flat)', '$500.00 USD (Flat)', '$750.00 USD (Flat)', '$900.00 USD (Flat)', '$150/day', '$200/day'],
+                    projectTypes: ['Photography', 'Video', 'Editor Project', 'Corporate Video', 'Event Coverage', 'Product Photography', 'Real Estate', 'Wedding', 'Commercial'],
+                    paymentMethods: ['Cash', 'Check', 'Zelle', 'PayPal', 'Invoice Request'],
+                    projectStatuses: ['upcoming', 'in-progress', 'completed', 'cancelled'],
+                    paymentStatuses: ['pending', 'processing', 'paid', 'overdue']
+                };
+                console.log('📋 Initialized default dropdown options (error):', window.dropdownOptions);
+            }
+            
+            // Populate the management interface
+            populateDropdownManagementInterface();
+            
+            // Populate job assignment dropdowns
+            populateJobAssignmentDropdowns();
+        }
+        
+        // Populate dropdown management interface
+        function populateDropdownManagementInterface() {
+            if (!window.dropdownOptions) return;
+            
+            // Populate roles dropdown
+            const rolesSelect = document.getElementById('roleSelect');
+            if (rolesSelect) {
+                rolesSelect.innerHTML = '<option value="">Select Role...</option>';
+                window.dropdownOptions.roles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role;
+                    option.textContent = role;
+                    rolesSelect.appendChild(option);
+                });
+            }
+            
+            // Populate locations dropdown
+            const locationsSelect = document.getElementById('locationSelect');
+            if (locationsSelect) {
+                locationsSelect.innerHTML = '<option value="">Select Location...</option>';
+                window.dropdownOptions.locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location;
+                    option.textContent = location;
+                    locationsSelect.appendChild(option);
+                });
+            }
+            
+            // Populate rates dropdown
+            const ratesSelect = document.getElementById('rateSelect');
+            if (ratesSelect) {
+                ratesSelect.innerHTML = '<option value="">Select Rate...</option>';
+                window.dropdownOptions.rates.forEach(rate => {
+                    const option = document.createElement('option');
+                    option.value = rate;
+                    option.textContent = rate;
+                    ratesSelect.appendChild(option);
+                });
+            }
+            
+            console.log('📋 Populated dropdown management interface');
+        }
+        
+        // Populate job assignment dropdowns
+        function populateJobAssignmentDropdowns() {
+            if (!window.dropdownOptions) return;
+            
+            // Populate project types dropdown
+            const projectTypesSelect = document.getElementById('projectTypeSelect');
+            if (projectTypesSelect) {
+                projectTypesSelect.innerHTML = '<option value="">Select Project Type...</option>';
+                window.dropdownOptions.projectTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    projectTypesSelect.appendChild(option);
+                });
+            }
+            
+            // Populate payment methods dropdown
+            const paymentMethodsSelect = document.getElementById('paymentMethodSelect');
+            if (paymentMethodsSelect) {
+                paymentMethodsSelect.innerHTML = '<option value="">Select Payment Method...</option>';
+                window.dropdownOptions.paymentMethods.forEach(method => {
+                    const option = document.createElement('option');
+                    option.value = method;
+                    option.textContent = method;
+                    paymentMethodsSelect.appendChild(option);
+                });
+            }
+            
+            console.log('📋 Populated job assignment dropdowns');
+        }
+
         // Enhanced notification system
         function showNotification(message, type = 'info', duration = 5000) {
             const notification = document.createElement('div');
