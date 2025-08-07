@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Admin Dashboard Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #FFB200;
+        }
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-header h1 {
+            color: #FFB200;
+            margin-bottom: 10px;
+        }
+        .test-results {
+            background: rgba(0,0,0,0.6);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255,178,0,0.3);
+        }
+        .test-button {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,178,0,0.3);
+        }
+        .console-output {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.success {
+            background: rgba(34,197,94,0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+        .status.error {
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        .status.warning {
+            background: rgba(245,158,11,0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245,158,11,0.3);
+        }
+        .dashboard-frame {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #FFB200;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🧪 Direct Admin Dashboard Test</h1>
+            <p>Testing admin dashboard functionality directly</p>
+        </div>
+        
+        <div class="test-results">
+            <h3>📋 Test Instructions:</h3>
+            <ol>
+                <li>Click "Load Dashboard" to load the admin dashboard in the frame below</li>
+                <li>Log in with the admin password: <strong>Deannajack3#</strong></li>
+                <li>Click "Run Tests" to test the functionality</li>
+                <li>Check the console output for results</li>
+            </ol>
+            
+            <div class="test-controls">
+                <button class="test-button" onclick="loadDashboard()">📊 Load Dashboard</button>
+                <button class="test-button" onclick="runTests()">🚀 Run Tests</button>
+                <button class="test-button" onclick="clearConsole()">🗑️ Clear Console</button>
+                <button class="test-button" onclick="openInNewTab()">🔄 Open in New Tab</button>
+            </div>
+            
+            <div id="testStatus"></div>
+        </div>
+        
+        <iframe id="dashboardFrame" class="dashboard-frame" style="display: none;"></iframe>
+        
+        <div class="console-output" id="consoleOutput">
+            Ready to test admin dashboard...
+            Click "Load Dashboard" to start.
+        </div>
+    </div>
+
+    <script>
+        const consoleOutput = document.getElementById('consoleOutput');
+        const testStatus = document.getElementById('testStatus');
+        const dashboardFrame = document.getElementById('dashboardFrame');
+        
+        // Override console.log to capture output
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            consoleOutput.textContent += '\n' + message;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            originalConsoleLog.apply(console, args);
+        };
+        
+        function loadDashboard() {
+            console.log('📊 Loading admin dashboard...');
+            dashboardFrame.style.display = 'block';
+            dashboardFrame.src = 'admin-dashboard.html';
+            testStatus.innerHTML = '<div class="status warning">🔄 Loading dashboard...</div>';
+            
+            dashboardFrame.onload = function() {
+                console.log('✅ Dashboard loaded successfully');
+                testStatus.innerHTML = '<div class="status success">✅ Dashboard loaded! Please log in and then run tests.</div>';
+            };
+        }
+        
+        function runTests() {
+            console.log('🧪 Starting direct tests...');
+            testStatus.innerHTML = '<div class="status warning">🔄 Running tests...</div>';
+            
+            try {
+                // Get the dashboard document
+                const dashboardDoc = dashboardFrame.contentDocument || dashboardFrame.contentWindow.document;
+                
+                if (!dashboardDoc) {
+                    console.log('❌ Cannot access dashboard document. Make sure dashboard is loaded.');
+                    testStatus.innerHTML = '<div class="status error">❌ Cannot access dashboard. Please load dashboard first.</div>';
+                    return;
+                }
+                
+                // Test 1: Check basic elements
+                console.log('\n--- Test 1: Basic Elements ---');
+                const elements = ['loginScreen', 'adminInterface', 'loginForm', 'password'];
+                let passed = 0;
+                let failed = 0;
+                
+                elements.forEach(elementId => {
+                    const element = dashboardDoc.getElementById(elementId);
+                    if (element) {
+                        console.log(`✅ ${elementId} - Found`);
+                        passed++;
+                    } else {
+                        console.log(`❌ ${elementId} - Missing`);
+                        failed++;
+                    }
+                });
+                
+                console.log(`📊 Basic Elements: ${passed} passed, ${failed} failed`);
+                
+                // Test 2: Check authentication
+                console.log('\n--- Test 2: Authentication System ---');
+                try {
+                    const dashboardWindow = dashboardFrame.contentWindow;
+                    if (typeof dashboardWindow.ADMIN_PASSWORD !== 'undefined') {
+                        console.log('✅ ADMIN_PASSWORD - Configured');
+                    } else {
+                        console.log('❌ ADMIN_PASSWORD - Missing');
+                    }
+                } catch (error) {
+                    console.log('❌ Cannot access dashboard variables:', error.message);
+                }
+                
+                // Test 3: Check if logged in
+                console.log('\n--- Test 3: Login Status ---');
+                const loginScreen = dashboardDoc.getElementById('loginScreen');
+                const adminInterface = dashboardDoc.getElementById('adminInterface');
+                
+                if (loginScreen && adminInterface) {
+                    const loginDisplay = loginScreen.style.display;
+                    const adminDisplay = adminInterface.style.display;
+                    
+                    if (loginDisplay === 'none' && adminDisplay === 'block') {
+                        console.log('✅ User is logged in');
+                    } else {
+                        console.log('⚠️ User is not logged in - please log in first');
+                        console.log(`Login screen display: ${loginDisplay}`);
+                        console.log(`Admin interface display: ${adminDisplay}`);
+                    }
+                } else {
+                    console.log('❌ Cannot determine login status');
+                }
+                
+                // Test 4: Check tab elements
+                console.log('\n--- Test 4: Tab Elements ---');
+                const tabElements = ['jobs-tab', 'contracts-tab'];
+                let tabPassed = 0;
+                let tabFailed = 0;
+                
+                tabElements.forEach(elementId => {
+                    const element = dashboardDoc.getElementById(elementId);
+                    if (element) {
+                        console.log(`✅ ${elementId} - Found`);
+                        tabPassed++;
+                    } else {
+                        console.log(`❌ ${elementId} - Missing`);
+                        tabFailed++;
+                    }
+                });
+                
+                console.log(`📊 Tab Elements: ${tabPassed} passed, ${tabFailed} failed`);
+                
+                // Test 5: Check forms
+                console.log('\n--- Test 5: Form Elements ---');
+                const formElements = ['jobForm', 'contractForm'];
+                let formPassed = 0;
+                let formFailed = 0;
+                
+                formElements.forEach(elementId => {
+                    const element = dashboardDoc.getElementById(elementId);
+                    if (element) {
+                        console.log(`✅ ${elementId} - Found`);
+                        formPassed++;
+                    } else {
+                        console.log(`❌ ${elementId} - Missing`);
+                        formFailed++;
+                    }
+                });
+                
+                console.log(`📊 Form Elements: ${formPassed} passed, ${formFailed} failed`);
+                
+                // Test 6: Check CSS classes
+                console.log('\n--- Test 6: CSS Classes ---');
+                const cssClasses = ['login-screen', 'admin-interface', 'tab-content', 'form-section'];
+                let cssPassed = 0;
+                let cssFailed = 0;
+                
+                cssClasses.forEach(className => {
+                    const elements = dashboardDoc.getElementsByClassName(className);
+                    if (elements.length > 0) {
+                        console.log(`✅ .${className} - Found (${elements.length} elements)`);
+                        cssPassed++;
+                    } else {
+                        console.log(`❌ .${className} - Missing`);
+                        cssFailed++;
+                    }
+                });
+                
+                console.log(`📊 CSS Classes: ${cssPassed} passed, ${cssFailed} failed`);
+                
+                // Summary
+                const totalTests = 6;
+                const totalPassed = (passed + tabPassed + formPassed + cssPassed);
+                const totalFailed = (failed + tabFailed + formFailed + cssFailed);
+                
+                console.log('\n📊 FINAL RESULTS:');
+                console.log(`✅ Passed: ${totalPassed} tests`);
+                console.log(`❌ Failed: ${totalFailed} tests`);
+                console.log(`📈 Success Rate: ${((totalPassed / (totalPassed + totalFailed)) * 100).toFixed(1)}%`);
+                
+                if (totalFailed === 0) {
+                    console.log('\n🎉 ALL TESTS PASSED! Dashboard is working correctly.');
+                    testStatus.innerHTML = '<div class="status success">✅ All tests passed! Dashboard is working correctly.</div>';
+                } else {
+                    console.log('\n⚠️ Some tests failed. Check the issues above.');
+                    testStatus.innerHTML = '<div class="status warning">⚠️ Some tests failed. Check console for details.</div>';
+                }
+                
+            } catch (error) {
+                console.log('❌ Error running tests:', error);
+                testStatus.innerHTML = '<div class="status error">❌ Error running tests. Check console for details.</div>';
+            }
+        }
+        
+        function clearConsole() {
+            consoleOutput.textContent = 'Console cleared...\n';
+            testStatus.innerHTML = '';
+        }
+        
+        function openInNewTab() {
+            window.open('admin-dashboard.html', '_blank');
+        }
+        
+        // Auto-load dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📝 Direct test page loaded. Click "Load Dashboard" to start testing.');
+        });
+    </script>
+</body>
+</html> 

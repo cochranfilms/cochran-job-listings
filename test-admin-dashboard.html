@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #FFB200;
+        }
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-header h1 {
+            color: #FFB200;
+            margin-bottom: 10px;
+        }
+        .test-results {
+            background: rgba(0,0,0,0.6);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255,178,0,0.3);
+        }
+        .test-button {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,178,0,0.3);
+        }
+        .console-output {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.success {
+            background: rgba(34,197,94,0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+        .status.error {
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        .status.warning {
+            background: rgba(245,158,11,0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245,158,11,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🧪 Admin Dashboard Test Suite</h1>
+            <p>Testing current admin dashboard functionality before redesign</p>
+        </div>
+        
+        <div class="test-results">
+            <h3>📋 Test Instructions:</h3>
+            <ol>
+                <li>Open the admin dashboard in another tab: <a href="admin-dashboard.html" target="_blank" style="color: #FFB200;">admin-dashboard.html</a></li>
+                <li>Log in with the admin password</li>
+                <li>Come back to this tab and click "Run Tests"</li>
+                <li>Check the console output below for results</li>
+            </ol>
+            
+            <div style="margin: 20px 0;">
+                <button class="test-button" onclick="runTests()">🚀 Run Tests</button>
+                <button class="test-button" onclick="clearConsole()">🗑️ Clear Console</button>
+                <button class="test-button" onclick="openDashboard()">📊 Open Dashboard</button>
+            </div>
+            
+            <div id="testStatus"></div>
+        </div>
+        
+        <div class="console-output" id="consoleOutput">
+            Ready to run tests...
+            Click "Run Tests" to start testing the admin dashboard.
+        </div>
+    </div>
+
+    <script src="test-current-admin-dashboard.js"></script>
+    <script>
+        // Override console.log to capture output
+        const originalConsoleLog = console.log;
+        const consoleOutput = document.getElementById('consoleOutput');
+        const testStatus = document.getElementById('testStatus');
+        
+        console.log = function(...args) {
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            consoleOutput.textContent += '\n' + message;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            originalConsoleLog.apply(console, args);
+        };
+        
+        function runTests() {
+            consoleOutput.textContent = 'Running tests...\n';
+            testStatus.innerHTML = '<div class="status warning">🔄 Running tests...</div>';
+            
+            // Run tests after a short delay to ensure everything is loaded
+            setTimeout(() => {
+                try {
+                    runAllTests();
+                    testStatus.innerHTML = '<div class="status success">✅ Tests completed! Check console output above.</div>';
+                } catch (error) {
+                    console.log('❌ Error running tests:', error);
+                    testStatus.innerHTML = '<div class="status error">❌ Error running tests. Check console for details.</div>';
+                }
+            }, 1000);
+        }
+        
+        function clearConsole() {
+            consoleOutput.textContent = 'Console cleared...\n';
+            testStatus.innerHTML = '';
+        }
+        
+        function openDashboard() {
+            window.open('admin-dashboard.html', '_blank');
+        }
+        
+        // Auto-run tests when page loads (optional)
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     console.log('📝 Test page loaded. Click "Run Tests" to start testing.');
+        // });
+    </script>
+</body>
+</html> 
