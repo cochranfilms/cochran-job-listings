@@ -1386,7 +1386,7 @@
                     <div class="item-meta">
                         <span>📅 ${job.date || 'No date set'}</span>
                         <span>📍 ${job.location || 'No location'}</span>
-                        <span>💰 ${job.pay || 'No pay listed'}</span>
+                        <span>💰 ${job.rate || 'No rate listed'}</span>
                     </div>
                     
                     <div class="item-description">
@@ -1459,7 +1459,7 @@
             document.getElementById('jobTitle').value = job.title;
             document.getElementById('jobDate').value = job.date;
             document.getElementById('jobLocation').value = job.location;
-            document.getElementById('jobPay').value = job.pay;
+                            // jobPay field removed - using only rate field
             document.getElementById('jobDescription').value = job.description;
             document.getElementById('jobStatus').value = job.status;
             editingJobIndex = index;
@@ -1945,7 +1945,7 @@
             });
             
             // Populate rate dropdowns
-            const rateSelects = ['assignmentJobRate', 'freelancerRate', 'jobPay'];
+            const rateSelects = ['assignmentJobRate', 'freelancerRate'];
             rateSelects.forEach(selectId => {
                 const rateSelect = document.getElementById(selectId);
                 if (rateSelect) {
@@ -3301,7 +3301,7 @@
                             title: job.title,
                             date: job.date,
                             location: job.location,
-                            pay: job.pay,
+                            rate: job.rate,
                             description: job.description,
                             status: job.status,
                             projectStatus: job.status || 'upcoming',
@@ -3326,7 +3326,7 @@
                         title: `${role} Position`,
                         date: new Date().toISOString().split('T')[0],
                         location: location,
-                        pay: document.getElementById('freelancerRate').value || '$200/hour',
+                        rate: document.getElementById('freelancerRate').value || '$200',
                         description: `Professional ${role} position in ${location}. Details to be provided.`,
                         status: 'upcoming',
                         projectStatus: 'upcoming',
@@ -3356,7 +3356,7 @@
                     title: `${role} Position`,
                     date: new Date().toISOString().split('T')[0],
                     location: location,
-                    pay: document.getElementById('freelancerRate').value || '$200/hour',
+                    rate: document.getElementById('freelancerRate').value || '$200',
                     description: `Professional ${role} position in ${location}. Details to be provided.`,
                     status: 'upcoming',
                     projectStatus: 'upcoming',
@@ -4462,7 +4462,7 @@
                 role: job.title,
                 location: job.location,
                 projectStart: job.date,
-                rate: job.pay || '$TBD',
+                rate: job.rate || '$TBD',
                 projectType: job.title,
                 description: job.description || `Assigned job: ${job.title}`,
                 status: 'upcoming'
@@ -7601,12 +7601,7 @@
                             <option value="">Select a location...</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="jobPay">Pay Rate</label>
-                        <select id="jobPay" name="pay" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid #FFB200; color: white; border-radius: 6px;">
-                            <option value="">Select a rate...</option>
-                        </select>
-                    </div>
+                    <!-- jobPay field removed - using only rate field from freelancer form -->
                     <div class="form-group">
                         <label for="jobDescription">Description</label>
                         <textarea id="jobDescription" name="description" placeholder="Describe the role, requirements, and responsibilities..."></textarea>

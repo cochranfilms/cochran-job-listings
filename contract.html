@@ -1863,7 +1863,7 @@
                     role: userData.profile?.role,
                     location: userData.profile?.location,
                     projectStart: userData.profile?.projectStart,
-                    rate: userData.profile?.rate,
+                    rate: userData.jobs?.[userData.primaryJob]?.rate || userData.profile?.rate,
                     approvedDate: userData.profile?.approvedDate,
                     contractStatus: userData.contract?.contractStatus,
                     contractSignedDate: userData.contract?.contractSignedDate,
@@ -1976,7 +1976,9 @@
             const role = data.profile?.role || 'Contractor';
             const location = data.profile?.location || 'Atlanta Area';
             const projectStart = data.profile?.projectStart || 'TBD';
-            const rate = data.profile?.rate || '$150/day';
+            // Get job-specific rate from primary job
+            const primaryJob = data.jobs?.[data.primaryJob];
+            const rate = primaryJob?.rate || data.profile?.rate || '$150/day';
             
             const contractDetailsDiv = document.getElementById('contractDetails');
             contractDetailsDiv.innerHTML = `
@@ -2158,7 +2160,7 @@
                                 <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin: 0;">
                                     <i class="fas fa-external-link-alt"></i> Open Creator Portal
                                 </a>
-                                <button onclick="downloadContractPDF({contractId: userData.contract?.contractId, freelancerName: userData.profile?.name, freelancerEmail: userData.profile?.email, role: userData.profile?.role, location: userData.profile?.location, projectStart: userData.profile?.projectStart, rate: userData.profile?.rate, effectiveDate: userData.profile?.approvedDate, signatureDate: userData.contract?.contractSignedDate, signature: userData.profile?.name})" class="contract-link" style="margin: 0;">
+                                <button onclick="downloadContractPDF({contractId: userData.contract?.contractId, freelancerName: userData.profile?.name, freelancerEmail: userData.profile?.email, role: userData.profile?.role, location: userData.profile?.location, projectStart: userData.profile?.projectStart, rate: userData.jobs?.[userData.primaryJob]?.rate || userData.profile?.rate, effectiveDate: userData.profile?.approvedDate, signatureDate: userData.contract?.contractSignedDate, signature: userData.profile?.name})" class="contract-link" style="margin: 0;">
                                     <i class="fas fa-download"></i> Download Contract PDF
                                 </button>
                             </div>

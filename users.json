@@ -7,7 +7,6 @@
         "role": "Editor",
         "location": "Test City, GA",
         "projectStart": "2025-08-06T10:00",
-        "rate": "$50/hour",
         "approvedDate": "2025-08-06"
       },
       "contract": {
@@ -27,8 +26,7 @@
           "role": "Editor",
           "location": "Test City, GA",
           "projectStart": "2025-08-06T10:00",
-          "rate": "$200/hour",
-          "pay": "$200/hour",
+          "rate": "$200",
           "description": "Professional Editor position in Test City, GA. Details to be provided.",
           "status": "upcoming",
           "projectStatus": "upcoming",
@@ -46,7 +44,6 @@
         "role": "Producer",
         "location": "Los Angeles, CA",
         "projectStart": "2025-10-10T21:00",
-        "rate": "$250/hour",
         "approvedDate": "2025-08-06"
       },
       "contract": {
@@ -64,7 +61,6 @@
           "date": "2025-11-08",
           "location": "Douglasville, GA",
           "rate": "$400",
-          "pay": "$400",
           "description": "You will be taking pictures for on-site printing at the 2nd annual Stranger Things block party from 4-9pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
           "status": "Inactive",
           "projectStatus": "Inactive",

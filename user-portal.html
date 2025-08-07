@@ -2187,7 +2187,7 @@
                                 </div>
                                 <div class="info-item">
                                     <span class="label">Rate:</span>
-                                    <span class="value highlight">${job.pay || job.rate || 'N/A'}</span>
+                                    <span class="value highlight">${job.rate || 'N/A'}</span>
                                 </div>
                                 <div class="info-item">
                                     <span class="label">Start Date:</span>
@@ -3513,7 +3513,7 @@
                 role: selectedJob.title || selectedJob.role || 'Assistant Position',
                 location: selectedJob.location || 'New York, NY',
                 projectStart: selectedJob.projectStart || selectedJob.date || '2026-10-10T20:00',
-                rate: selectedJob.pay || selectedJob.rate || '$75/hour',
+                rate: selectedJob.rate || '$75',
                 status: jobProjectStatus.projectStatus || getJobStatus(selectedJob.projectStart),
                 paymentStatus: jobProjectStatus.paymentStatus || 'pending',
                 projectType: selectedJob.projectType || 'Assistant',
@@ -4702,7 +4702,7 @@
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Rate:</span>
-                                        <span class="value highlight">${data.job.pay || data.job.rate || '$75/hour'}</span>
+                                        <span class="value highlight">${data.job.rate || '$75'}</span>
                                     </div>
 
                                 </div>
