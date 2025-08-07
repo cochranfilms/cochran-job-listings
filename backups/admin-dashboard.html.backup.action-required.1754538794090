@@ -5697,7 +5697,7 @@
                                         contractId: user.contract.contractId,
                                         freelancerName: user.profile?.name || userName,
                                         userEmail: user.profile?.email,
-                                        actionRequired: false,
+                                        actionRequired: true,
                                         priority: 'high'
                                     }
                                 );

@@ -583,7 +583,7 @@
                                 'contract',
                                 {
                                     notificationKey: notificationKey,
-                                    actionRequired: false,
+                                    actionRequired: true,
                                     priority: 'high'
                                 }
                             );
