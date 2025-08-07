@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Contract - Test User</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .header { text-align: center; border-bottom: 2px solid #FFB200; padding-bottom: 20px; }
+        .section { margin: 20px 0; }
+        .info-item { margin: 10px 0; }
+        .label { font-weight: bold; }
+        .signature { margin-top: 40px; border-top: 1px solid #ccc; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>COCHRAN FILMS</h1>
+        <h2>FREELANCE CONTRACT AGREEMENT</h2>
+        <p>Contract ID: CF-TEST-DELETE-001</p>
+    </div>
+    
+    <div class="section">
+        <h3>CONTRACTOR INFORMATION</h3>
+        <div class="info-item">
+            <span class="label">Name:</span> Test User
+        </div>
+        <div class="info-item">
+            <span class="label">Email:</span> test@example.com
+        </div>
+        <div class="info-item">
+            <span class="label">Role:</span> Editor
+        </div>
+        <div class="info-item">
+            <span class="label">Location:</span> Test City, GA
+        </div>
+        <div class="info-item">
+            <span class="label">Rate:</span> $200
+        </div>
+        <div class="info-item">
+            <span class="label">Effective Date:</span> 8/6/2025
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>CONTRACT TERMS</h3>
+        <p>This is a test contract for the delete PDF function testing.</p>
+        <p>Contractor agrees to provide professional services as specified.</p>
+        <p>Payment will be made within 24 hours of completion.</p>
+    </div>
+    
+    <div class="signature">
+        <h3>SIGNATURES</h3>
+        <div class="info-item">
+            <span class="label">Company:</span> Cody Cochran (Cochran Films)
+        </div>
+        <div class="info-item">
+            <span class="label">Contractor:</span> Test User
+        </div>
+        <div class="info-item">
+            <span class="label">Date:</span> 8/6/2025
+        </div>
+    </div>
+    
+    <div style="margin-top: 40px; font-size: 12px; color: #666; text-align: center;">
+        <p>This is a test contract generated for delete PDF function testing.</p>
+        <p>Contract ID: CF-TEST-DELETE-001</p>
+    </div>
+</body>
+</html>
+    

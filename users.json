@@ -10,12 +10,12 @@
         "approvedDate": "2025-08-06"
       },
       "contract": {
-        "contractId": "CF-TEST-USER-001",
+        "contractId": "CF-TEST-DELETE-001",
         "fileName": "Test User.pdf",
         "status": "signed",
-        "signedDate": "8/6/2025, 10:00:00 AM",
-        "uploadDate": "8/6/2025, 10:00:00 AM",
-        "githubUrl": "https://github.com/cochranfilms/cochran-job-listings/blob/main/contracts/Test%20User.pdf"
+        "signedDate": "8/6/2025, 9:30:53 PM",
+        "uploadDate": "8/6/2025, 9:30:53 PM",
+        "githubUrl": "https://github.com/cochranfilms/cochran-job-listings/blob/main/contracts/Test User.pdf"
       },
       "paymentMethod": "paypal",
       "paymentStatus": "configured",
@@ -25,14 +25,13 @@
           "title": "Editor Position",
           "role": "Editor",
           "location": "Test City, GA",
-          "projectStart": "2025-08-06T10:00",
+          "projectStart": "TBD",
           "rate": "$200",
           "description": "Professional Editor position in Test City, GA. Details to be provided.",
           "status": "upcoming",
           "projectStatus": "upcoming",
           "paymentStatus": "pending",
-          "assignedDate": "2025-08-06",
-          "projectStart": "TBD"
+          "assignedDate": "2025-08-06"
         }
       },
       "primaryJob": "job-editor-default"
