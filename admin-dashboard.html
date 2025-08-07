@@ -1866,6 +1866,145 @@
 
         // ==================== CORE FUNCTION RESTORATION ====================
         
+        // Check if performance review should be shown for a user
+        function shouldShowPerformanceReview(userData) {
+            // Check if user has completed projects with paid status
+            if (userData.jobs && Object.keys(userData.jobs).length > 0) {
+                const completedJobs = Object.values(userData.jobs).filter(job => 
+                    job.projectStatus === 'completed' && job.paymentStatus === 'paid'
+                );
+                
+                // Show if there are completed paid jobs and no performance review exists
+                if (completedJobs.length > 0) {
+                    const existingReview = performanceReviews[userData.profile?.email];
+                    return !existingReview || existingReview.status === 'pending';
+                }
+            }
+            return false;
+        }
+        
+        // Check for performance review alerts
+        function checkPerformanceReviewAlerts() {
+            const pendingReviews = Object.values(window.users || {}).filter(userData => shouldShowPerformanceReview(userData));
+            
+            if (pendingReviews.length > 0) {
+                const alertContainer = document.createElement('div');
+                alertContainer.id = 'performanceReviewAlert';
+                alertContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: linear-gradient(135deg, #f59e0b, #d97706);
+                    color: white;
+                    padding: 1rem 1.5rem;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    z-index: 1000;
+                    max-width: 300px;
+                    border: 1px solid rgba(255,255,255,0.2);
+                `;
+                
+                alertContainer.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0; color: white;"><i class="fas fa-star"></i> Performance Reviews Due</h4>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer;">×</button>
+                    </div>
+                    <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">
+                        ${pendingReviews.length} user${pendingReviews.length > 1 ? 's' : ''} need${pendingReviews.length > 1 ? '' : 's'} performance review.
+                    </p>
+                    <div style="margin-top: 0.5rem;">
+                        <button onclick="showPerformanceReviewList()" 
+                                style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+                            View All
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(alertContainer);
+                
+                // Auto-remove after 10 seconds
+                setTimeout(() => {
+                    const alert = document.getElementById('performanceReviewAlert');
+                    if (alert) alert.remove();
+                }, 10000);
+            }
+        }
+
+        // Show performance review list
+        function showPerformanceReviewList() {
+            const pendingReviews = Object.values(window.users || {}).filter(userData => shouldShowPerformanceReview(userData));
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a1a; padding: 2rem; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,178,0,0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="color: #FFB200; margin: 0;"><i class="fas fa-star"></i> Performance Reviews Due</h2>
+                        <button onclick="closeModal(this)" 
+                                style="background: none; border: none; color: #FFB200; font-size: 1.5rem; cursor: pointer;">×</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+                            The following users have completed paid projects and need performance reviews:
+                        </p>
+                        ${pendingReviews.map(userData => `
+                            <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <h4 style="color: #FFB200; margin: 0 0 0.5rem 0;">${Object.keys(window.users || {}).find(key => window.users[key] === userData)}</h4>
+                                        <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.9rem;">${userData.profile?.email || 'No email'}</p>
+                                    </div>
+                                    <button onclick="showPerformanceReviewModal('${Object.keys(window.users || {}).find(key => window.users[key] === userData)}'); closeModal(this);" 
+                                            style="background: #FFB200; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                        Review Now
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,178,0,0.2);">
+                        <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                            <i class="fas fa-info-circle"></i> Performance reviews help improve collaboration and future opportunities.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Get performance review status badge
+        function getPerformanceReviewStatus(userData) {
+            // Try multiple ways to get the email
+            const userEmail = userData.profile?.email || userData.email || userData.profile?.userEmail;
+            const userName = userData.profile?.name || userData.name || 'Unknown User';
+            console.log('🔍 Checking performance review for user:', userName, 'Email:', userEmail);
+            console.log('🔍 Available performance reviews:', Object.keys(performanceReviews));
+            
+            const existingReview = performanceReviews[userEmail];
+            
+            if (existingReview) {
+                return `<span style="background: #22c55e; color: white; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">COMPLETED</span>`;
+            } else {
+                return `<span style="background: #f59e0b; color: white; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">PENDING</span>`;
+            }
+        }
+        
         // Generate temporary password for Firebase account
         function generateTempPassword() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
