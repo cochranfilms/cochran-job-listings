@@ -2030,39 +2030,16 @@
             "projectTypes": ["Wedding", "Commercial", "Corporate Event", ...]
           }
         
+        /*
         👥 users.json (USER DATA)
         - Purpose: Stores user profile data (references dropdown options)
         - References: dropdown-options.json for role, location, rate
-        - Structure:
-          {
-            "users": {
-              "userName": {
-                "profile": {
-                  "role": "Photographer", // from dropdown-options.json
-                  "location": "Atlanta, GA", // from dropdown-options.json
-                  "rate": "$100/hour" // from dropdown-options.json
-                },
-                "contract": { /* contract data */ },
-                "jobs": { /* job assignments */ }
-              }
-            }
-          }
+        - Structure: Contains user profiles with role, location, rate from dropdown options
         
-        /*
         📋 jobs-data.json (JOB DATA)
         - Purpose: Stores job listings (references dropdown options)
         - References: dropdown-options.json for location, projectType
-        - Structure:
-          {
-            "jobs": [
-              {
-                "title": "Backdrop Photographer Base",
-                "location": "Douglasville, GA", // from dropdown-options.json
-                "projectType": "Event Coverage", // from dropdown-options.json
-                "pay": "$400" // from dropdown-options.json
-              }
-            ]
-          }
+        - Structure: Contains job listings with location, projectType, pay from dropdown options
         
         DATA FLOW:
         dropdown-options.json (Master) 
