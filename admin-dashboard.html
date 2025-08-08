@@ -1581,14 +1581,14 @@
         async function assignJobsToUser(role, location) {
             try {
                 // Load jobs data
-                const jobsResponse = await fetch('jobs-data.json');
+                const jobsResponse = await fetch('/api/jobs-data');
                 const jobsData = await jobsResponse.json();
                 
                 const assignedJobs = {};
                 let primaryJob = null;
                 
                 // Match jobs based on role and location
-                jobsData.jobs.forEach(job => {
+                jobsData.jobs.forEach((job, idx) => {
                     // Check if job matches user's role and location
                     if (job.title.toLowerCase().includes(role.toLowerCase()) || 
                         role.toLowerCase().includes(job.title.toLowerCase())) {
@@ -1601,14 +1601,15 @@
                             title: job.title,
                             date: job.date,
                             location: job.location,
-                            rate: job.rate,
+                            rate: job.pay,
                             description: job.description,
                             status: job.status,
                             projectStatus: job.status || 'upcoming',
                             projectType: job.projectType || job.type || (document.getElementById('freelancerProjectType')?.value || ''),
                             paymentStatus: 'pending',
                             assignedDate: new Date().toISOString().split('T')[0],
-                            projectStart: document.getElementById('projectStart')?.value || 'TBD'
+                            projectStart: document.getElementById('projectStart')?.value || 'TBD',
+                            jobRef: { source: 'jobs-data', index: idx, key: `${job.title}|${job.date}` }
                         };
                         
                         // Set as primary job if it's the first match
@@ -1675,7 +1676,7 @@
         }
 
         // Process job assignments
-        function processJobAssignments() {
+        async function processJobAssignments() {
             const assignments = [];
             let assignedCount = 0;
             
@@ -1684,10 +1685,7 @@
                 const selectedUser = selectElement.value;
                 
                 if (selectedUser) {
-                    assignments.push({
-                        job: job,
-                        user: selectedUser
-                    });
+                    assignments.push({ job, jobIndex: index, user: selectedUser });
                     assignedCount++;
                 }
             });
@@ -1701,6 +1699,7 @@
             assignments.forEach(assignment => {
                 const userName = assignment.user;
                 const job = assignment.job;
+                const jobIndex = assignment.jobIndex;
                 
                 if (!window.users[userName].jobs) {
                     window.users[userName].jobs = {};
@@ -1717,7 +1716,8 @@
                     status: job.status,
                     projectStatus: 'upcoming',
                     paymentStatus: 'pending',
-                    assignedDate: new Date().toISOString().split('T')[0]
+                    assignedDate: new Date().toISOString().split('T')[0],
+                    jobRef: { source: 'jobs-data', index: jobIndex, key: `${job.title}|${job.date}` }
                 };
                 
                 // Set as primary job if user doesn't have one
@@ -1733,6 +1733,12 @@
             document.getElementById('jobAssignmentModal').remove();
             
             showNotification(`Successfully assigned ${assignedCount} job(s) to users`, 'success');
+            try {
+                await updateUsersOnGitHub('update');
+                showNotification('✅ users.json updated on GitHub', 'success');
+            } catch (e) {
+                showNotification('⚠️ Failed to persist users.json to GitHub', 'warning');
+            }
         }
 
         // Delete user (for contract management)
