@@ -2375,6 +2375,18 @@
                 `;
             }
         }
+
+        // Lightweight toast utility for quick admin-visible feedback
+        function showToast(message, type = 'info', duration = 3500) {
+            try {
+                const colors = { success: '#22c55e', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+                const el = document.createElement('div');
+                el.style.cssText = `position: fixed; right: 16px; bottom: 16px; z-index: 9999; background: ${colors[type] || colors.info}; color: #fff; padding: 10px 14px; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.35); font-size: 14px; font-weight: 600; max-width: 90vw;`;
+                el.textContent = message;
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), duration);
+            } catch (_) {}
+        }
         
         // Close notification
         function closeNotification() {
@@ -2391,10 +2403,14 @@
         // Update Firebase password for user
         async function updateFirebasePassword(email, newPassword) {
             try {
-                // Note: Firebase client SDK doesn't allow password updates for other users
-                // This would need to be handled server-side with Firebase Admin SDK
-                console.log('⚠️ Firebase password update requires server-side implementation');
-                return { success: true, message: 'Password update requires server-side implementation' };
+                const res = await fetch('/api/firebase', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    // No oldPassword available; this call is server-managed or can be extended
+                    body: JSON.stringify({ email, oldPassword: newPassword, newPassword })
+                });
+                const json = await res.json();
+                return json;
             } catch (error) {
                 console.error('❌ Error updating Firebase password:', error);
                 return { success: false, error: error.message };
@@ -2481,8 +2497,10 @@
                 
                 if (firebaseResult.success) {
                     console.log('✅ Firebase password updated for:', signatureData.freelancerEmail);
+                    try { showToast('✅ Password saved securely', 'success'); } catch (e) {}
                 } else {
                     console.warn('⚠️ Could not update Firebase password:', firebaseResult.error);
+                    try { showToast(`⚠️ Password not saved: ${firebaseResult.error || 'Unknown error'}`, 'warning'); } catch (e) {}
                 }
                 
                 // Update freelancer data status to "signed" (not fully processed until admin uploads)
@@ -2559,19 +2577,7 @@
                 
                 // Contract data saved to GitHub (no local backup needed)
                 
-                // Securely store password for admin access
-                let adminPasswords = JSON.parse(localStorage.getItem('adminPortalPasswords') || '{}');
-                adminPasswords[signedContractData.freelancerEmail] = {
-                    password: signedContractData.portalPassword,
-                    contractId: signedContractData.contractId,
-                    timestamp: new Date().toISOString(),
-                    freelancerName: signedContractData.freelancerName
-                };
-                localStorage.setItem('adminPortalPasswords', JSON.stringify(adminPasswords));
-                console.log('📱 Contract and password saved to local storage');
-                
-                // Update users.json with the new password
-                await updateUsersJsonWithPassword(signedContractData);
+                // Do not persist or store plaintext passwords anywhere
                 
                 // WAIT 3 seconds between JSON updates to avoid conflicts
                 console.log('⏳ Waiting 3 seconds before updating uploaded-contracts.json...');
@@ -2590,17 +2596,21 @@
                     try {
                         await sendUserConfirmationEmail(signedContractData);
                         console.log('✅ User confirmation email sent');
+                        showToast('✅ Email sent to user', 'success');
                     } catch (userEmailError) {
                         console.warn('⚠️ User confirmation email failed (this is OK if template not set up yet):', userEmailError);
+                        showToast(`⚠️ User email failed: ${userEmailError?.message || userEmailError}`, 'error');
                         // Don't fail the whole process for user email
                     }
                     
                     // Send admin notification (required)
                     await sendAdminNotificationEmail(signedContractData, pdfContent);
                     console.log('✅ Admin notification email sent');
+                    showToast('✅ Email sent to admin', 'success');
                     
                 } catch (emailError) {
                     console.warn('⚠️ Email sending failed:', emailError);
+                    showToast(`⚠️ Email sending failed: ${emailError?.message || emailError}`, 'error');
                 }
                 
                 updateNotificationProgress('Contract signed successfully!', 100);
@@ -2622,7 +2632,7 @@
         // Update users.json with password when contract is signed
         async function updateUsersJsonWithPassword(contractData) {
             try {
-                console.log('🔄 Updating users.json with password on GitHub...');
+                console.log('🔄 Updating users.json with contract status...');
                 
                 // Add a small delay to ensure GitHub API is ready
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -2685,8 +2695,7 @@
                         users[userKey].contract = {};
                     }
                     
-                    // Update the user's password and contract status
-                    users[userKey].profile.password = contractData.portalPassword;
+                    // Update only contract status metadata; never store passwords
                     users[userKey].contract.contractStatus = 'signed';
                     users[userKey].contract.contractSignedDate = contractData.signedDateTime;
                     users[userKey].contract.contractId = contractData.contractId;

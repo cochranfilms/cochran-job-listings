@@ -2732,7 +2732,7 @@
                     status: currentUser.paymentMethod ? 'completed' : 'pending',
                     date: null,
                     details: 'Set up your preferred payment method for project payments.',
-                    action: 'Configure payment method'
+                    action: { onclick: 'showPaymentModal()', text: 'Configure', icon: 'fas fa-credit-card' }
                 },
                 {
                     id: 'project',
