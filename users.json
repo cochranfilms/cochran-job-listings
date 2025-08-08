@@ -1,14 +1,14 @@
 {
   "users": {
-    "Erica Cochran": {
+    "Thing One": {
       "profile": {
-        "email": "dedejackson727@gmail.com",
-        "role": "Photographer",
-        "location": "Miami, FL",
-        "rate": "$100/hour",
-        "projectType": "Product Photography",
-        "approvedDate": "2025-08-07",
-        "projectDate": "2025-10-17"
+        "email": "codylcochran89@gmail.com",
+        "role": "Videographer",
+        "location": "Chicago, IL",
+        "rate": "$200/hour",
+        "projectType": "Corporate Event",
+        "approvedDate": "2025-08-08",
+        "projectDate": "2025-11-16"
       },
       "contract": {
         "contractUrl": "contract.html",
