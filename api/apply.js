@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const { fullName, email, phone, location, applyingFor, eventDate, pay, description, source } = req.body || {};
+    const { fullName, email, phone, location, applyingFor, eventDate, pay, description, portfolio, source } = req.body || {};
     if (!fullName || !email) return res.status(400).json({ error: 'fullName and email are required' });
 
     // Build base URL to call internal GitHub file API on same host
@@ -49,6 +49,7 @@ module.exports = async (req, res) => {
         pay: pay || '',
         description: description || '',
         phone: phone || '',
+        portfolio: portfolio || '',
         source: source || 'apply-form'
       },
       jobs: existing?.jobs || {},

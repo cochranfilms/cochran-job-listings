@@ -21,7 +21,8 @@
     p.lead{font-size:1.1rem;color:var(--text-secondary);margin-bottom:1.5rem}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.25rem}
     .form-group label{display:block;color:var(--text-secondary);font-weight:500;margin-bottom:.5rem}
-    .form-group input,.form-group select,.form-group textarea{width:100%;padding:1rem;background:rgba(15,23,42,.8);border:2px solid rgba(99,102,241,.3);border-radius:8px;color:var(--text-primary);font-size:1rem;transition:var(--transition)}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:1rem;background:rgba(15,23,42,.8);border:2px solid rgba(99,102,241,.3);border-radius:12px;color:var(--text-primary);font-size:1rem;transition:var(--transition)}
+    select{appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white"><path d="M5.516 7.548l4.484 4.337 4.484-4.337 1.516 1.565-6 5.815-6-5.815z"/></svg>');background-repeat:no-repeat;background-position:right 12px center;background-size:16px 16px}
     .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
     textarea{min-height:120px}
     .actions{display:flex;justify-content:flex-end;margin-top:1rem}
@@ -47,6 +48,7 @@
           eventDate: payload.eventDate,
           pay: payload.pay,
           description: payload.description,
+          portfolio: payload.portfolio,
           source: 'apply-html'
         })});
         const j = await res.json();
@@ -57,7 +59,14 @@
   </script>
 </head>
 <body>
-  <nav class="navbar"><div class="nav-container"><a href="/" class="nav-logo"><i class="fas fa-film"></i><span>Cochran Films</span></a></div></nav>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-logo">
+        <img src="/Logo.png" alt="Cochran Films" style="height:28px; width:auto;" />
+        <span>Cochran Films</span>
+      </a>
+    </div>
+  </nav>
   <div class="container">
     <div class="card" data-aos="fade-up">
       <h1><i class="fas fa-user-plus"></i> Apply to a Job</h1>
@@ -84,28 +93,30 @@
           </div>
         </div>
         <div class="grid">
-          <div>
+          <div class="form-group">
             <label>Applying For (Job Title)</label>
-            <input name="applyingFor" placeholder="e.g., Backdrop Photographer Base" />
+            <select name="applyingFor" id="applyJobSelect"></select>
           </div>
-          <div>
+          <div class="form-group">
             <label>Event Date</label>
             <input type="date" name="eventDate" />
           </div>
         </div>
         <div class="grid">
-          <div>
+          <div class="form-group">
             <label>Pay</label>
             <input name="pay" placeholder="$300 + Tip" />
           </div>
-          <div>
+          <div class="form-group">
             <label>Instagram or Portfolio</label>
-            <input name="portfolio" />
+            <input name="portfolio" placeholder="https://... or @handle" />
           </div>
         </div>
         <div>
-          <label>Description</label>
-          <textarea name="description" placeholder="Tell us about your experience"></textarea>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea name="description" placeholder="Tell us about your experience"></textarea>
+          </div>
         </div>
         <div class="actions">
           <button class="btn" type="submit"><i class="fas fa-paper-plane"></i> Submit Application</button>
@@ -114,6 +125,22 @@
     </div>
   </div>
   <div id="toast" class="toast"></div>
+  <script>
+    // Prefill from query
+    (function(){
+      const p=new URLSearchParams(location.search);
+      const set=(n)=>{const el=document.querySelector(`[name="${n}"]`); if(el&&p.get(n)) el.value=p.get(n);};
+      ['fullName','email','phone','location','applyingFor','eventDate','pay','description','portfolio'].forEach(set);
+    })();
+    // Populate job dropdown from jobs-data
+    (async function(){
+      const sel=document.getElementById('applyJobSelect'); if(!sel) return;
+      sel.innerHTML='<option value="">Select a job...</option>';
+      try{ const r=await fetch('/api/jobs-data'); const j=await r.json(); (j.jobs||[]).forEach(job=>{ const o=document.createElement('option'); o.value=job.title; o.textContent=`${job.title} — ${job.date||'TBD'} — ${job.location||'Location'}`; sel.appendChild(o); }); }catch{}
+      // If query provided applyingFor, ensure it's selected
+      const q=new URLSearchParams(location.search).get('applyingFor'); if(q) sel.value=q;
+    })();
+  </script>
 </body>
 </html>
 
