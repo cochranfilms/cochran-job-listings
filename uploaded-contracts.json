@@ -95,8 +95,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-06",
       "signedDate": "2025-08-06"
+    },
+    {
+      "contractId": "CF-1754625919894-UOL8S",
+      "freelancerName": "Thing One",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Videographer",
+      "rate": "$200/hour",
+      "location": "Chicago, IL",
+      "fileName": "Thing One.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-08T04:05:33.399Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Thing One.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-08",
+      "signedDate": "2025-08-08"
     }
   ],
-  "lastUpdated": "2025-08-06T23:12:13.341Z",
-  "totalContracts": 6
+  "lastUpdated": "2025-08-08T04:05:33.399Z",
+  "totalContracts": 7
 }
