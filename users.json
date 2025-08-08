@@ -8,11 +8,14 @@
         "rate": "$200/hour",
         "projectType": "Corporate Event",
         "approvedDate": "2025-08-08",
-        "projectDate": "2025-11-16"
+        "projectDate": "2025-11-16",
+        "password": "test1234"
       },
       "contract": {
         "contractUrl": "contract.html",
-        "contractStatus": "pending"
+        "contractStatus": "signed",
+        "contractSignedDate": "8/8/2025, 12:05:19 AM",
+        "contractId": "CF-1754625919894-UOL8S"
       }
     }
   },
@@ -35,5 +38,10 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-08"
+  },
+  "_metadata": {
+    "dataSource": "github",
+    "fetchedAt": "2025-08-08T04:05:29.476Z",
+    "totalUsers": 1
   }
 }
