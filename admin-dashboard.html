@@ -2481,15 +2481,7 @@
             try {
                 console.log('🔄 Loading dropdown options...');
                 
-                // Add timeout to prevent hanging
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-                
-                const response = await fetch('/api/dropdown-options', {
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
+                const response = await fetch('/api/dropdown-options');
                 
                 if (response.ok) {
                     window.dropdownOptions = await response.json();
@@ -2509,15 +2501,11 @@
                     console.log('📋 Initialized default dropdown options (API failed):', window.dropdownOptions);
                 }
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    console.warn('⚠️ Dropdown options request timed out, using defaults');
-                } else {
-                    console.error('❌ Error loading dropdown options from API:', error);
-                }
+                console.error('❌ Error loading dropdown options from API:', error);
                 
                 // Initialize with default options
                 window.dropdownOptions = {
-                    roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Douglasville, GA', 'Atlanta, GA', 'Atlanta Area'],
+                    roles: ['Backdrop Photographer', 'Editor', 'Videographer', 'Photographer', 'Full Stack Designer', 'Video Editor', 'Corporate Videographer'],
                     locations: ['6695 Church Street, Douglasville, GA 30134', 'Sandy Springs, GA', 'Douglasville, GA', 'Atlanta, GA', 'Atlanta Area'],
                     rates: ['$400.00 USD (Flat)', '$450.00 USD (Flat)', '$500.00 USD (Flat)', '$750.00 USD (Flat)', '$900.00 USD (Flat)', '$150/day', '$200/day'],
                     projectTypes: ['Photography', 'Video', 'Editor Project', 'Corporate Video', 'Event Coverage', 'Product Photography', 'Real Estate', 'Wedding', 'Commercial'],
@@ -2697,7 +2685,7 @@
                 }
                 
                 const updateBody = {
-                    content: JSON.stringify(window.dropdownOptions, null, 2),
+                    content: btoa(JSON.stringify(window.dropdownOptions, null, 2)),
                     message: `Update dropdown options via admin dashboard - ${new Date().toLocaleString()}`
                 };
                 
