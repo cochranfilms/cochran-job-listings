@@ -250,9 +250,20 @@
         
         /* Main Content Grid */
         .content-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 2rem;
+        }
+        
+        .content-row {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .content-card {
+            flex: 1;
+            min-width: 400px;
         }
         
         .content-card {
@@ -467,201 +478,222 @@
 
         <!-- Main Content Grid -->
         <div class="content-grid">
-            <!-- Unified User & Contract Management -->
-            <div class="content-card">
-                <div class="card-header">
-                    <h2>👥 User & Contract Management</h2>
-                </div>
-                <div class="card-content">
-                    <div class="form-section">
-                        <h3>Add New User</h3>
-                        <form id="contractForm">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <input type="text" id="freelancerName" placeholder="Full Name" required>
-                                <input type="email" id="freelancerEmail" placeholder="Email Address" required>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <select id="freelancerRole" required>
-                                    <option value="">Select Role...</option>
-                                    <!-- Populated with roles from dropdown-options.json -->
-                                </select>
-                                <select id="freelancerLocation" required>
-                                    <option value="">Select Location...</option>
-                                    <!-- Populated with locations from dropdown-options.json -->
-                                </select>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <select id="freelancerRate" required>
-                                    <option value="">Select Rate...</option>
-                                    <!-- Populated with rates from dropdown-options.json -->
-                                </select>
-                                <input type="date" id="approvedDate" placeholder="Approved Date">
-                            </div>
-                            <input type="url" id="contractUrl" placeholder="Contract URL" required>
-                            <button type="submit" class="btn">Save User</button>
-                            <button type="button" class="btn btn-secondary" onclick="clearContractForm()">Clear</button>
-                        </form>
+            <!-- Row 1: User Management and Job Management -->
+            <div class="content-row">
+                <!-- Unified User & Contract Management -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>👥 User & Contract Management</h2>
                     </div>
-                    
-                    <div class="form-section">
-                        <h3>Quick Actions</h3>
-                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                            <button class="btn" onclick="generateAllContracts()">📄 Generate All Contracts</button>
-                            <button class="btn btn-secondary" onclick="exportUsersData()">📊 Export Users</button>
-                            <button class="btn btn-secondary" onclick="downloadUsersJSON()" id="downloadUsersBtn" style="display: none;">📥 Download Users</button>
-                            <button class="btn btn-secondary" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📥 Download Contracts</button>
+                    <div class="card-content">
+                        <div class="form-section">
+                            <h3>Add New User</h3>
+                            <form id="contractForm">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <input type="text" id="freelancerName" name="name" placeholder="Full Name" required>
+                                    <input type="email" id="freelancerEmail" name="email" placeholder="Email Address" required>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <select id="freelancerRole" name="role" required>
+                                        <option value="">Select Role...</option>
+                                        <!-- Populated with roles from dropdown-options.json -->
+                                    </select>
+                                    <select id="freelancerLocation" name="location" required>
+                                        <option value="">Select Location...</option>
+                                        <!-- Populated with locations from dropdown-options.json -->
+                                    </select>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <select id="freelancerRate" name="rate" required>
+                                        <option value="">Select Rate...</option>
+                                        <!-- Populated with rates from dropdown-options.json -->
+                                    </select>
+                                    <div>
+                                        <label for="approvedDate" style="display: block; margin-bottom: 0.5rem; color: rgba(255,255,255,0.9); font-size: 0.9rem;">Approved Date</label>
+                                        <input type="date" id="approvedDate" name="approvedDate" placeholder="Approved Date">
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <label for="projectDate" style="display: block; margin-bottom: 0.5rem; color: rgba(255,255,255,0.9); font-size: 0.9rem;">Project Start Date</label>
+                                        <input type="date" id="projectDate" name="projectDate" placeholder="Project Start Date">
+                                    </div>
+                                    <div>
+                                        <label for="contractUrl" style="display: block; margin-bottom: 0.5rem; color: rgba(255,255,255,0.9); font-size: 0.9rem;">Contract URL</label>
+                                        <input type="text" id="contractUrl" name="contractUrl" placeholder="contract.html" value="contract.html" readonly style="background: rgba(255,255,255,0.1);">
+                                        <small style="color: rgba(255,255,255,0.7); font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                                            📝 All creators use the same contract.html portal. No individual files needed!
+                                        </small>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn">Save User</button>
+                                <button type="button" class="btn btn-secondary" onclick="clearContractForm()">Clear</button>
+                            </form>
                         </div>
-                        <div id="contractGenerationStatus"></div>
+                        
+                        <div class="form-section">
+                            <h3>Quick Actions</h3>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button class="btn" onclick="generateAllContracts()">📄 Generate All Contracts</button>
+                                <button class="btn btn-secondary" onclick="exportUsersData()">📊 Export Users</button>
+                                <button class="btn btn-secondary" onclick="downloadUsersJSON()" id="downloadUsersBtn" style="display: none;">📥 Download Users</button>
+                                <button class="btn btn-secondary" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📥 Download Contracts</button>
+                            </div>
+                            <div id="contractGenerationStatus"></div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h3>Current Users & Contracts</h3>
+                            <div class="item-list" id="usersList">
+                                <!-- Users will be loaded here -->
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="form-section">
-                        <h3>Current Users & Contracts</h3>
-                        <div class="item-list" id="usersList">
-                            <!-- Users will be loaded here -->
+                </div>
+
+                <!-- Enhanced Job Management -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>📋 Job Management</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-section">
+                            <h3>Add New Job</h3>
+                            <form id="jobForm">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <input type="text" id="jobTitle" placeholder="Job Title" required>
+                                    <input type="date" id="jobDate" placeholder="Event Date">
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <input type="text" id="jobLocation" placeholder="Location" value="Atlanta Area">
+                                    <input type="text" id="jobPay" placeholder="Pay Rate">
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <select id="jobType">
+                                        <option value="Photography">Photography</option>
+                                        <option value="Videography">Videography</option>
+                                        <option value="Event Coverage">Event Coverage</option>
+                                        <option value="Portrait Session">Portrait Session</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Wedding">Wedding</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <select id="jobStatus">
+                                        <option value="Active">Active</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <textarea id="jobDescription" placeholder="Job Description" rows="3"></textarea>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn">➕ Add Job</button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearJobForm()">🔄 Clear</button>
+                                    <button type="button" class="btn btn-secondary" onclick="assignJobsToUsers()">🎯 Assign to Users</button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h3>Job Management Tools</h3>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button class="btn" onclick="exportJobData()">📊 Export Jobs</button>
+                                <button class="btn btn-secondary" onclick="downloadJobJSON()" id="downloadJobBtn" style="display: none;">📥 Download Jobs</button>
+                                <button class="btn btn-secondary" onclick="showJobStats()">📈 Job Statistics</button>
+                                <button class="btn btn-secondary" onclick="bulkJobActions()">⚡ Bulk Actions</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h3>Current Jobs</h3>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <select id="jobFilter" onchange="filterJobs()" style="width: auto; margin: 0;">
+                                        <option value="all">All Jobs</option>
+                                        <option value="Active">Active</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                    </select>
+                                    <button class="btn btn-small" onclick="refreshJobs()">🔄 Refresh</button>
+                                </div>
+                            </div>
+                            <div class="item-list" id="jobsList">
+                                <!-- Jobs will be loaded here -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Dropdown Management -->
-            <div class="content-card">
-                <div class="card-header">
-                    <h2>⚙️ Dropdown Management</h2>
-                </div>
-                <div class="card-content">
-                    <div class="form-section">
-                        <h3>Manage Dropdown Options</h3>
-                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
-                            Add or remove options for roles, locations, rates, and project types used throughout the system.
-                        </p>
-                        
-                        <!-- Roles Management -->
-                        <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
-                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">🎭 Roles</h4>
-                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <input type="text" id="newRole" placeholder="Add new role" style="flex: 1;">
-                                <button onclick="addDropdownOption('roles', 'newRole')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
-                                    <i class="fas fa-plus"></i> Add
-                                </button>
-                            </div>
-                            <div id="rolesList" style="max-height: 150px; overflow-y: auto;"></div>
-                        </div>
-                        
-                        <!-- Locations Management -->
-                        <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
-                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">📍 Locations</h4>
-                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <input type="text" id="newLocation" placeholder="Add new location" style="flex: 1;">
-                                <button onclick="addDropdownOption('locations', 'newLocation')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
-                                    <i class="fas fa-plus"></i> Add
-                                </button>
-                            </div>
-                            <div id="locationsList" style="max-height: 150px; overflow-y: auto;"></div>
-                        </div>
-                        
-                        <!-- Rates Management -->
-                        <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
-                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">💰 Rates</h4>
-                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <input type="text" id="newRate" placeholder="Add new rate" style="flex: 1;">
-                                <button onclick="addDropdownOption('rates', 'newRate')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
-                                    <i class="fas fa-plus"></i> Add
-                                </button>
-                            </div>
-                            <div id="ratesList" style="max-height: 150px; overflow-y: auto;"></div>
-                        </div>
-                        
-                        <!-- Project Types Management -->
-                        <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
-                            <h4 style="color: #FFB200; margin-bottom: 0.5rem;">🎬 Project Types</h4>
-                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <input type="text" id="newProjectType" placeholder="Add new project type" style="flex: 1;">
-                                <button onclick="addDropdownOption('projectTypes', 'newProjectType')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
-                                    <i class="fas fa-plus"></i> Add
-                                </button>
-                            </div>
-                            <div id="projectTypesList" style="max-height: 150px; overflow-y: auto;"></div>
-                        </div>
-                        
-                        <!-- Save Button -->
-                        <div style="text-align: center; margin-top: 1.5rem;">
-                            <button onclick="saveDropdownOptions()" style="background: linear-gradient(135deg, #FFB200, #FF8C00); color: #1a1a1a; border: none; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem;">
-                                <i class="fas fa-save"></i> Save All Changes
-                            </button>
-                        </div>
+            <!-- Row 2: Dropdown Management -->
+            <div class="content-row">
+                <!-- Dropdown Management -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>⚙️ Dropdown Management</h2>
                     </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Job Management -->
-            <div class="content-card">
-                <div class="card-header">
-                    <h2>📋 Job Management</h2>
-                </div>
-                <div class="card-content">
-                    <div class="form-section">
-                        <h3>Add New Job</h3>
-                        <form id="jobForm">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <input type="text" id="jobTitle" placeholder="Job Title" required>
-                                <input type="date" id="jobDate" placeholder="Event Date">
+                    <div class="card-content">
+                        <div class="form-section">
+                            <h3>Manage Dropdown Options</h3>
+                            <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+                                Add or remove options for roles, locations, rates, and project types used throughout the system.
+                            </p>
+                            
+                            <!-- Roles Management -->
+                            <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                                <h4 style="color: #FFB200; margin-bottom: 0.5rem;">🎭 Roles</h4>
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <input type="text" id="newRole" placeholder="Add new role" style="flex: 1;">
+                                    <button onclick="addDropdownOption('roles', 'newRole')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div id="rolesList" style="max-height: 150px; overflow-y: auto;"></div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <input type="text" id="jobLocation" placeholder="Location" value="Atlanta Area">
-                                <input type="text" id="jobPay" placeholder="Pay Rate">
+                            
+                            <!-- Locations Management -->
+                            <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                                <h4 style="color: #FFB200; margin-bottom: 0.5rem;">📍 Locations</h4>
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <input type="text" id="newLocation" placeholder="Add new location" style="flex: 1;">
+                                    <button onclick="addDropdownOption('locations', 'newLocation')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div id="locationsList" style="max-height: 150px; overflow-y: auto;"></div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <select id="jobType">
-                                    <option value="Photography">Photography</option>
-                                    <option value="Videography">Videography</option>
-                                    <option value="Event Coverage">Event Coverage</option>
-                                    <option value="Portrait Session">Portrait Session</option>
-                                    <option value="Commercial">Commercial</option>
-                                    <option value="Wedding">Wedding</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                <select id="jobStatus">
-                                    <option value="Active">Active</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Completed">Completed</option>
-                                    <option value="Cancelled">Cancelled</option>
-                                </select>
+                            
+                            <!-- Rates Management -->
+                            <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                                <h4 style="color: #FFB200; margin-bottom: 0.5rem;">💰 Rates</h4>
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <input type="text" id="newRate" placeholder="Add new rate" style="flex: 1;">
+                                    <button onclick="addDropdownOption('rates', 'newRate')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div id="ratesList" style="max-height: 150px; overflow-y: auto;"></div>
                             </div>
-                            <textarea id="jobDescription" placeholder="Job Description" rows="3"></textarea>
-                            <div class="form-actions">
-                                <button type="submit" class="btn">➕ Add Job</button>
-                                <button type="button" class="btn btn-secondary" onclick="clearJobForm()">🔄 Clear</button>
-                                <button type="button" class="btn btn-secondary" onclick="assignJobsToUsers()">🎯 Assign to Users</button>
+                            
+                            <!-- Project Types Management -->
+                            <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
+                                <h4 style="color: #FFB200; margin-bottom: 0.5rem;">🎬 Project Types</h4>
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <input type="text" id="newProjectType" placeholder="Add new project type" style="flex: 1;">
+                                    <button onclick="addDropdownOption('projectTypes', 'newProjectType')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div id="projectTypesList" style="max-height: 150px; overflow-y: auto;"></div>
                             </div>
-                        </form>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h3>Job Management Tools</h3>
-                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                            <button class="btn" onclick="exportJobData()">📊 Export Jobs</button>
-                            <button class="btn btn-secondary" onclick="downloadJobJSON()" id="downloadJobBtn" style="display: none;">📥 Download Jobs</button>
-                            <button class="btn btn-secondary" onclick="showJobStats()">📈 Job Statistics</button>
-                            <button class="btn btn-secondary" onclick="bulkJobActions()">⚡ Bulk Actions</button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-section">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3>Current Jobs</h3>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <select id="jobFilter" onchange="filterJobs()" style="width: auto; margin: 0;">
-                                    <option value="all">All Jobs</option>
-                                    <option value="Active">Active</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Completed">Completed</option>
-                                    <option value="Cancelled">Cancelled</option>
-                                </select>
-                                <button class="btn btn-small" onclick="refreshJobs()">🔄 Refresh</button>
+                            
+                            <!-- Save Button -->
+                            <div style="text-align: center; margin-top: 1.5rem;">
+                                <button onclick="saveDropdownOptions()" style="background: linear-gradient(135deg, #FFB200, #FF8C00); color: #1a1a1a; border: none; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem;">
+                                    <i class="fas fa-save"></i> Save All Changes
+                                </button>
                             </div>
-                        </div>
-                        <div class="item-list" id="jobsList">
-                            <!-- Jobs will be loaded here -->
                         </div>
                     </div>
                 </div>
@@ -1304,7 +1336,8 @@
                     role: formData.get('role'),
                     location: formData.get('location'),
                     rate: formData.get('rate'),
-                    approvedDate: formData.get('approvedDate')
+                    approvedDate: formData.get('approvedDate'),
+                    projectDate: formData.get('projectDate')
                 },
                 contract: {
                     contractUrl: formData.get('contractUrl'),
@@ -1332,11 +1365,12 @@
             const user = window.users[name];
             document.getElementById('freelancerName').value = name;
             document.getElementById('freelancerEmail').value = user.profile?.email || '';
-            document.getElementById('contractUrl').value = user.contract?.contractUrl || '';
+            document.getElementById('contractUrl').value = user.contract?.contractUrl || 'contract.html';
             document.getElementById('freelancerRole').value = user.profile?.role || '';
             document.getElementById('freelancerLocation').value = user.profile?.location || 'Atlanta Area';
             document.getElementById('freelancerRate').value = user.profile?.rate || '';
             document.getElementById('approvedDate').value = user.profile?.approvedDate || '';
+            document.getElementById('projectDate').value = user.profile?.projectDate || '';
             
             document.getElementById('contractForm').dataset.editName = name;
         }
@@ -1711,6 +1745,7 @@
         function clearContractForm() {
             document.getElementById('contractForm').reset();
             document.getElementById('freelancerLocation').value = 'Atlanta Area';
+            document.getElementById('contractUrl').value = 'contract.html';
             delete document.getElementById('contractForm').dataset.editName;
         }
 
