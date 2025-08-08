@@ -1332,7 +1332,7 @@
 
 
         // Add/Edit user
-        document.getElementById('contractForm').addEventListener('submit', function(e) {
+        document.getElementById('contractForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
@@ -1360,6 +1360,20 @@
             }
             
             window.users[name] = userData;
+            
+            // Persist to GitHub
+            try {
+                const ok = await updateUsersOnGitHub(editName ? 'update' : 'create', name);
+                if (ok) {
+                    showNotification(`✅ User "${name}" saved and pushed to GitHub`, 'success');
+                } else {
+                    showNotification('❌ Failed to persist user to GitHub', 'error');
+                }
+            } catch (persistError) {
+                console.error('❌ Error persisting users.json to GitHub:', persistError);
+                showNotification('❌ Error saving user to GitHub. Please try again.', 'error');
+            }
+
             delete e.target.dataset.editName;
 
             displayUsers();
