@@ -15,8 +15,17 @@
       "pay": "$300 + Tip",
       "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
       "status": "Inactive"
+    },
+    {
+      "title": null,
+      "date": null,
+      "location": null,
+      "pay": null,
+      "type": null,
+      "description": null,
+      "status": null
     }
   ],
-  "lastUpdated": "2025-08-05",
-  "totalJobs": 2
+  "lastUpdated": "2025-08-08",
+  "totalJobs": 3
 }
