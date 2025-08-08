@@ -761,14 +761,18 @@
         // Create Firebase account for new user
         async function createFirebaseAccount(email, password) {
             try {
-                // Create user in Firebase Authentication
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                console.log('✅ Firebase account created for:', email);
-                
-                // Sign out the admin user after creating the account
-                await auth.signOut();
-                
-                return { success: true, uid: userCredential.user.uid };
+                // Create via server API (does not sign out admin)
+                const res = await fetch('/api/firebase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    console.log('✅ Firebase account created for:', email);
+                    return { success: true, uid: json.localId };
+                }
+                return { success: false, error: json.error || 'Failed to create user' };
             } catch (error) {
                 console.error('❌ Error creating Firebase account:', error);
                 
@@ -1396,6 +1400,19 @@
             } catch (persistError) {
                 console.error('❌ Error persisting users.json to GitHub:', persistError);
                 showNotification('❌ Error saving user to GitHub. Please try again.', 'error');
+            }
+
+            // Create Firebase auth account for the new user with a temp password
+            try {
+                const tempPassword = generateTempPassword();
+                const fb = await createFirebaseAccount(userData.profile.email, tempPassword);
+                if (fb.success) {
+                    showNotification(`✅ Firebase account created for ${userData.profile.email}`, 'success');
+                } else {
+                    showNotification(`⚠️ Firebase account not created: ${fb.error}`, 'warning');
+                }
+            } catch (fbErr) {
+                console.warn('⚠️ Firebase create account failed:', fbErr?.message || fbErr);
             }
 
             // Send job acceptance email automatically after save

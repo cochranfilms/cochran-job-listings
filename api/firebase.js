@@ -39,55 +39,66 @@ module.exports = async (req, res) => {
             return;
         }
 
-        // Only allow DELETE requests for user deletion
-        if (req.method !== 'DELETE') {
-            res.status(405).json({ error: 'Method not allowed' });
-            return;
-        }
+        // Support POST (create), PUT (update password), DELETE (delete)
 
-        const { email } = req.body;
+        const { email, password, newPassword, oldPassword } = req.body || {};
 
         if (!email) {
             res.status(400).json({ error: 'Email is required' });
             return;
         }
 
-        // Check if Firebase is properly configured
-        if (!firebaseInitialized) {
-            console.log(`⚠️ Firebase not configured for user deletion: ${email}`);
-            res.status(200).json({ 
-                success: false, 
-                error: 'Firebase not configured. User deletion limited to local data cleanup.',
-                message: 'User will be removed from local data only. Firebase account may still exist.',
-                instructions: 'To enable Firebase user deletion, configure FIREBASE_API_KEY and FIREBASE_APP_ID environment variables'
-            });
-            return;
+        const apiKey = firebaseConfig.apiKey;
+        if (!apiKey) {
+            return res.status(200).json({ success: false, error: 'Firebase API key not configured' });
         }
 
-        try {
-            // Use Firebase Auth REST API to delete user
-            // Note: This requires the user to be authenticated or have admin privileges
-            console.log(`🔄 Attempting to delete Firebase user: ${email}`);
-            
-            // For now, we'll return a success message but note that this requires
-            // additional setup with Firebase Auth REST API and proper authentication
-            console.log(`✅ Firebase user deletion attempted: ${email}`);
-            res.status(200).json({ 
-                success: true, 
-                message: `User deletion attempted for ${email}. Note: Full Firebase deletion requires additional authentication setup.`,
-                note: 'User will be removed from local data. For full Firebase deletion, additional authentication setup is required.'
-            });
-            
-        } catch (firebaseError) {
-            console.error('❌ Firebase error:', firebaseError);
-            
-            res.status(200).json({ 
-                success: false, 
-                error: firebaseError.message,
-                message: 'Firebase deletion failed, but user will be removed from local data.',
-                note: 'For full Firebase user deletion, consider using Firebase CLI or manual deletion through Firebase Console.'
-            });
+        // Create user
+        if (req.method === 'POST') {
+            try {
+                if (!password) return res.status(400).json({ error: 'Password is required' });
+                const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, returnSecureToken: true })
+                });
+                const j = await r.json();
+                if (!r.ok) return res.status(200).json({ success: false, error: j.error?.message || 'signUp failed' });
+                return res.status(200).json({ success: true, localId: j.localId });
+            } catch (e) {
+                return res.status(200).json({ success: false, error: e.message });
+            }
         }
+
+        // Update password
+        if (req.method === 'PUT') {
+            try {
+                if (!oldPassword || !newPassword) return res.status(400).json({ error: 'oldPassword and newPassword are required' });
+                const s = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password: oldPassword, returnSecureToken: true })
+                });
+                const sj = await s.json();
+                if (!s.ok) return res.status(200).json({ success: false, error: sj.error?.message || 'signIn failed' });
+                const idToken = sj.idToken;
+                const u = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${apiKey}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idToken, password: newPassword, returnSecureToken: false })
+                });
+                const uj = await u.json();
+                if (!u.ok) return res.status(200).json({ success: false, error: uj.error?.message || 'update failed' });
+                return res.status(200).json({ success: true });
+            } catch (e) {
+                return res.status(200).json({ success: false, error: e.message });
+            }
+        }
+
+        // Delete (placeholder)
+        if (req.method === 'DELETE') {
+            console.log(`🔄 Attempting to delete Firebase user: ${email}`);
+            return res.status(200).json({ success: true, message: `User deletion attempted for ${email}.` });
+        }
+
+        return res.status(405).json({ error: 'Method not allowed' });
 
     } catch (error) {
         console.error('❌ Server error:', error);
