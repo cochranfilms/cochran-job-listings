@@ -318,10 +318,5 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-08"
-  },
-  "_metadata": {
-    "dataSource": "github",
-    "fetchedAt": "2025-08-08T04:08:32.992Z",
-    "totalUsers": 1
   }
 }
