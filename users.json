@@ -16,7 +16,9 @@
         "contractStatus": "signed",
         "contractSignedDate": "8/8/2025, 12:05:19 AM",
         "contractId": "CF-1754625919894-UOL8S"
-      }
+      },
+      "paymentMethod": "bank",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
@@ -41,7 +43,7 @@
   },
   "_metadata": {
     "dataSource": "github",
-    "fetchedAt": "2025-08-08T04:05:29.476Z",
+    "fetchedAt": "2025-08-08T04:08:31.661Z",
     "totalUsers": 1
   }
 }
