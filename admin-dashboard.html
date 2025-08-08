@@ -503,6 +503,12 @@
                                         <!-- Populated with locations from dropdown-options.json -->
                                     </select>
                                 </div>
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                                    <select id="freelancerProjectType" name="projectType">
+                                        <option value="">Select Project Type...</option>
+                                        <!-- Populated with projectTypes from dropdown-options.json -->
+                                    </select>
+                                </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                     <select id="freelancerRate" name="rate" required>
                                         <option value="">Select Rate...</option>
@@ -1336,6 +1342,7 @@
                     role: formData.get('role'),
                     location: formData.get('location'),
                     rate: formData.get('rate'),
+                    projectType: formData.get('projectType') || '',
                     approvedDate: formData.get('approvedDate'),
                     projectDate: formData.get('projectDate')
                 },
@@ -1369,6 +1376,8 @@
             document.getElementById('freelancerRole').value = user.profile?.role || '';
             document.getElementById('freelancerLocation').value = user.profile?.location || 'Atlanta Area';
             document.getElementById('freelancerRate').value = user.profile?.rate || '';
+            const pt = document.getElementById('freelancerProjectType');
+            if (pt) pt.value = user.profile?.projectType || '';
             document.getElementById('approvedDate').value = user.profile?.approvedDate || '';
             document.getElementById('projectDate').value = user.profile?.projectDate || '';
             
@@ -1527,6 +1536,7 @@
                             description: job.description,
                             status: job.status,
                             projectStatus: job.status || 'upcoming',
+                            projectType: job.projectType || job.type || (document.getElementById('freelancerProjectType')?.value || ''),
                             paymentStatus: 'pending',
                             assignedDate: new Date().toISOString().split('T')[0],
                             projectStart: document.getElementById('projectStart')?.value || 'TBD'
@@ -1582,6 +1592,7 @@
                     description: `Professional ${role} position in ${location}. Details to be provided.`,
                     status: 'upcoming',
                     projectStatus: 'upcoming',
+                    projectType: document.getElementById('freelancerProjectType')?.value || role || 'Assistant',
                     paymentStatus: 'pending',
                     assignedDate: new Date().toISOString().split('T')[0],
                     projectStart: document.getElementById('projectStart')?.value || 'TBD'
@@ -2753,6 +2764,18 @@
                     option.value = rate;
                     option.textContent = rate;
                     rateSelect.appendChild(option);
+                });
+            }
+            
+            // Populate project type dropdown
+            const projectTypeSelect = document.getElementById('freelancerProjectType');
+            if (projectTypeSelect) {
+                projectTypeSelect.innerHTML = '<option value="">Select Project Type...</option>';
+                (window.dropdownOptions.projectTypes || []).forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    projectTypeSelect.appendChild(option);
                 });
             }
             
