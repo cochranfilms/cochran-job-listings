@@ -75,9 +75,24 @@ module.exports = async (req, res) => {
             console.log(`🔄 Updating ${filename} on GitHub...`);
             console.log(`📝 Commit message: ${message}`);
             
+            // Determine if the provided content is raw JSON or already base64-encoded.
+            // If it looks like JSON (starts with { or [), encode it. Otherwise pass through.
+            let encodedContent;
+            try {
+                const trimmed = typeof content === 'string' ? content.trim() : '';
+                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                    encodedContent = Buffer.from(trimmed).toString('base64');
+                } else {
+                    encodedContent = trimmed;
+                }
+            } catch (e) {
+                // Fallback to encoding if any doubt
+                encodedContent = Buffer.from(String(content)).toString('base64');
+            }
+
             const requestBody = {
                 message: message,
-                content: Buffer.from(content).toString('base64'),
+                content: encodedContent,
                 branch: GITHUB_CONFIG.branch
             };
             
