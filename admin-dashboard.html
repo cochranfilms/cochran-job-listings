@@ -583,15 +583,15 @@
                             <h3>Add New Job</h3>
                             <form id="jobForm">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <input type="text" id="jobTitle" placeholder="Job Title" required>
-                                    <input type="date" id="jobDate" placeholder="Event Date">
+                                    <input type="text" id="jobTitle" name="title" placeholder="Job Title" required>
+                                    <input type="date" id="jobDate" name="date" placeholder="Event Date">
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <input type="text" id="jobLocation" placeholder="Location" value="Atlanta Area">
-                                    <input type="text" id="jobPay" placeholder="Pay Rate">
+                                    <input type="text" id="jobLocation" name="location" placeholder="Location" value="Atlanta Area">
+                                    <input type="text" id="jobPay" name="pay" placeholder="Pay Rate">
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <select id="jobType">
+                                    <select id="jobType" name="type">
                                         <option value="Photography">Photography</option>
                                         <option value="Videography">Videography</option>
                                         <option value="Event Coverage">Event Coverage</option>
@@ -600,14 +600,14 @@
                                         <option value="Wedding">Wedding</option>
                                         <option value="Other">Other</option>
                                     </select>
-                                    <select id="jobStatus">
+                                    <select id="jobStatus" name="status">
                                         <option value="Active">Active</option>
                                         <option value="Pending">Pending</option>
                                         <option value="Completed">Completed</option>
                                         <option value="Cancelled">Cancelled</option>
                                     </select>
                                 </div>
-                                <textarea id="jobDescription" placeholder="Job Description" rows="3"></textarea>
+                                <textarea id="jobDescription" name="description" placeholder="Job Description" rows="3"></textarea>
                                 <div class="form-actions">
                                     <button type="submit" class="btn">➕ Add Job</button>
                                     <button type="button" class="btn btn-secondary" onclick="clearJobForm()">🔄 Clear</button>
