@@ -1812,7 +1812,7 @@
         status: "Active"
       }
     ];
-    const BASE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdA6Gw-w1wbs1RiLtu2cVz6e0hrrIFdv3A62NNIrQWTC6yegA/viewform?usp=pp_url";
+    const APPLY_URL = '/apply.html';
     
     // Google Form Field IDs
     const FORM_FIELDS = {
@@ -1852,37 +1852,15 @@
       return isoDate;
     }
     
-    // Generate apply link with pre-filled job title and event date
+    // Generate apply link to first-party form with query prefill
     function generateApplyLink(jobTitle, eventDate, location, pay, description) {
       const params = new URLSearchParams();
-      
-      // Always include job title
-      if (jobTitle) {
-        params.append(FORM_FIELDS.jobTitle, jobTitle);
-      }
-      
-      // Always include event date (formatted for Google Forms)
-      if (eventDate) {
-        const formattedDate = formatDateForForm(eventDate);
-        params.append(FORM_FIELDS.eventDate, formattedDate);
-      }
-      
-      // Optionally pre-fill other fields for admin convenience
-      if (location) {
-        params.append(FORM_FIELDS.location, location);
-      }
-      
-      if (pay) {
-        params.append(FORM_FIELDS.pay, pay);
-      }
-      
-      if (description) {
-        params.append(FORM_FIELDS.description, description);
-      }
-      
-      const finalUrl = `${BASE_FORM_URL}&${params.toString()}`;
-      
-      return finalUrl;
+      if (jobTitle) params.append('applyingFor', jobTitle);
+      if (eventDate) params.append('eventDate', formatDateForForm(eventDate));
+      if (location) params.append('location', location);
+      if (pay) params.append('pay', pay);
+      if (description) params.append('description', description);
+      return `${APPLY_URL}?${params.toString()}`;
     }
     
     // Format date string

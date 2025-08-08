@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 module.exports = async (req, res) => {
   try {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,11 +9,16 @@ module.exports = async (req, res) => {
     const { fullName, email, phone, location, applyingFor, eventDate, pay, description, source } = req.body || {};
     if (!fullName || !email) return res.status(400).json({ error: 'fullName and email are required' });
 
+    // Build base URL to call internal GitHub file API on same host
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host;
+    const base = `${proto}://${host}`;
+
     // 1) Pull current users.json sha and contents
     let sha = null;
     let current = { users: {}, statusOptions: {}, system: {} };
     try {
-      const getRes = await fetch('http://localhost:3000/api/github/file/users.json');
+      const getRes = await fetch(`${base}/api/github/file/users.json`);
       if (getRes.ok) {
         const j = await getRes.json();
         sha = j.sha || null;
@@ -69,7 +72,7 @@ module.exports = async (req, res) => {
     };
     if (sha) body.sha = sha;
 
-    const putRes = await fetch('http://localhost:3000/api/github/file/users.json', {
+    const putRes = await fetch(`${base}/api/github/file/users.json`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
