@@ -2697,7 +2697,7 @@
                 }
                 
                 const updateBody = {
-                    content: btoa(JSON.stringify(window.dropdownOptions, null, 2)),
+                    content: JSON.stringify(window.dropdownOptions, null, 2),
                     message: `Update dropdown options via admin dashboard - ${new Date().toLocaleString()}`
                 };
                 
