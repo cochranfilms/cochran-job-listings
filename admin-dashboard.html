@@ -1042,7 +1042,7 @@
         }
 
         // Add/Edit job
-        document.getElementById('jobForm').addEventListener('submit', function(e) {
+        document.getElementById('jobForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
@@ -1057,6 +1057,7 @@
             };
 
             const editIndex = e.target.dataset.editIndex;
+            const actionType = (editIndex !== undefined) ? 'update' : 'create';
             if (editIndex !== undefined) {
                 window.jobs[editIndex] = job;
                 delete e.target.dataset.editIndex;
@@ -1067,6 +1068,14 @@
             displayJobs();
             updateStats();
             clearJobForm();
+
+            // Persist jobs to GitHub
+            try {
+                await updateJobsOnGitHub(actionType, job.title);
+            } catch (persistErr) {
+                console.warn('⚠️ Failed to persist jobs-data.json:', persistErr);
+                showNotification('⚠️ Could not save jobs to GitHub', 'warning');
+            }
         });
 
         // Edit job
@@ -1084,7 +1093,7 @@
         }
 
         // Duplicate job
-        function duplicateJob(index) {
+        async function duplicateJob(index) {
             const originalJob = window.jobs[index];
             const newJob = {
                 ...originalJob,
@@ -1096,14 +1105,18 @@
             displayJobs();
             updateStats();
             showNotification('Job duplicated successfully', 'success');
+
+            try { await updateJobsOnGitHub('duplicate', newJob.title); } catch {}
         }
 
         // Delete job
-        function deleteJob(index) {
+        async function deleteJob(index) {
             if (confirm('Are you sure you want to delete this job?')) {
+                const removed = window.jobs[index];
                 window.jobs.splice(index, 1);
                 displayJobs();
                 updateStats();
+                try { await updateJobsOnGitHub('delete', removed?.title || 'job'); } catch {}
             }
         }
 
@@ -1136,6 +1149,46 @@
         function refreshJobs() {
             displayJobs();
             showNotification('Jobs list refreshed', 'success');
+        }
+
+        // Update jobs-data.json on GitHub
+        async function updateJobsOnGitHub(action = 'update', jobTitle = '') {
+            try {
+                const jobsPayload = {
+                    jobs: window.jobs || [],
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    totalJobs: (window.jobs || []).length
+                };
+
+                // Get current SHA if exists
+                let sha = null;
+                try {
+                    const getRes = await fetch('/api/github/file/jobs-data.json');
+                    if (getRes.ok) {
+                        const j = await getRes.json();
+                        sha = j.sha || null;
+                    }
+                } catch (_) {}
+
+                const body = { content: JSON.stringify(jobsPayload, null, 2), message: `Update jobs-data.json - ${action} ${jobTitle} - ${new Date().toLocaleString()}` };
+                if (sha) body.sha = sha;
+
+                const res = await fetch('/api/github/file/jobs-data.json', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (res.ok) {
+                    showNotification('✅ jobs-data.json updated on GitHub', 'success');
+                    return true;
+                }
+                const err = await res.json().catch(() => ({}));
+                console.warn('❌ Failed to update jobs-data.json', err);
+                return false;
+            } catch (e) {
+                console.error('❌ Error updating jobs-data.json:', e);
+                return false;
+            }
         }
 
         // Show job statistics
