@@ -514,6 +514,12 @@
                                     </select>
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                                    <select id="freelancerJob" name="jobSelection">
+                                        <option value="">Select Job (from jobs-data)...</option>
+                                        <!-- Populated with /api/jobs-data -->
+                                    </select>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
                                     <select id="freelancerProjectType" name="projectType">
                                         <option value="">Select Project Type...</option>
                                         <!-- Populated with projectTypes from dropdown-options.json -->
@@ -723,7 +729,8 @@
             publicKey: 'p4pF3OWvh-DXtae4c',
             serviceId: 'service_t11yvru',
             // Template IDs must exist in your EmailJS account
-            jobAcceptanceTemplateId: 'template_job_acceptance'
+            jobAcceptanceTemplateId: 'template_job_acceptance',
+            jobClosedTemplateId: 'template_jobs_closed'
         };
 
         // Initialize EmailJS
@@ -1357,6 +1364,8 @@
                         <button class="btn btn-small" onclick="downloadUserContract('${name}')">📄 Download Contract</button>
                         <button class="btn btn-small" onclick="showBankDetails('${name}')">🏦 Bank Details</button>
                         <button class="btn btn-small" onclick="showPerformanceReview('${name}')">⭐ Performance</button>
+                        <button class="btn btn-small" onclick="approveUser('${name}')">✅ Approve</button>
+                        <button class="btn btn-small btn-danger" onclick="denyUser('${name}')">⛔ Deny</button>
                         <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">🗑️ Delete</button>
                     </div>
                 `;
@@ -1394,6 +1403,33 @@
                 delete window.users[editName];
             }
             
+            // If a specific job was selected, attach it as primary
+            const jobIndex = formData.get('jobSelection');
+            if (jobIndex !== null && jobIndex !== '') {
+                const idx = parseInt(jobIndex, 10);
+                const job = Array.isArray(window.jobs) ? window.jobs[idx] : null;
+                if (job) {
+                    const jobId = `job-${job.title.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+                    userData.jobs = userData.jobs || {};
+                    userData.jobs[jobId] = {
+                        id: jobId,
+                        title: job.title,
+                        date: job.date,
+                        location: job.location,
+                        rate: job.pay,
+                        description: job.description,
+                        status: job.status,
+                        projectStatus: job.status || 'upcoming',
+                        projectType: job.type || userData.profile.projectType || '',
+                        paymentStatus: 'pending',
+                        assignedDate: new Date().toISOString().split('T')[0],
+                        projectStart: userData.profile.projectDate || 'TBD',
+                        jobRef: { source: 'jobs-data', index: idx, key: `${job.title}|${job.date}` }
+                    };
+                    userData.primaryJob = jobId;
+                }
+            }
+
             window.users[name] = userData;
             
             // Persist to GitHub
@@ -2610,6 +2646,51 @@
                 showNotification(`✅ ${userName} approved successfully!`, 'success');
             }
         }
+
+        // Deny user application and send job-closed email
+        async function denyUser(userName) {
+            const userData = window.users[userName];
+            if (!userData) {
+                showNotification('User not found', 'error');
+                return;
+            }
+            if (!confirm(`Deny application for ${userName}?`)) return;
+
+            try {
+                // Prepare job reference/details if any
+                const primaryJobId = userData.primaryJob;
+                const job = primaryJobId && userData.jobs ? userData.jobs[primaryJobId] : null;
+                const jobTitle = job?.title || 'the position';
+                const jobDate = job?.date || 'TBD';
+
+                if (typeof emailjs !== 'undefined') {
+                    const params = {
+                        to_email: userData.profile.email,
+                        user_name: userName,
+                        job_title: jobTitle,
+                        job_date: jobDate
+                    };
+                    try {
+                        await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.jobClosedTemplateId, params);
+                        showNotification(`✅ Denial email sent to ${userData.profile.email}`, 'success');
+                    } catch (e) {
+                        showNotification(`⚠️ Denial email failed: ${e.message}`, 'warning');
+                    }
+                }
+
+                // Optional: mark status
+                userData.application = userData.application || {};
+                userData.application.status = 'denied';
+                userData.application.updatedAt = new Date().toISOString();
+                
+                await updateUsersOnGitHub('update', userName);
+                displayUsers();
+                showNotification(`⛔ ${userName} denied`, 'info');
+            } catch (err) {
+                console.error(err);
+                showNotification('❌ Failed to process denial', 'error');
+            }
+        }
         
         // Populate user dropdowns
         function populateUserDropdowns() {
@@ -2929,6 +3010,19 @@
                     option.value = type;
                     option.textContent = type;
                     projectTypeSelect.appendChild(option);
+                });
+            }
+            
+            // Populate job selection dropdown from jobs-data
+            const jobSelect = document.getElementById('freelancerJob');
+            if (jobSelect) {
+                jobSelect.innerHTML = '<option value="">Select Job (from jobs-data)...</option>';
+                (window.jobs || []).forEach((job, idx) => {
+                    const label = `${job.title} — ${job.date || 'TBD'} — ${job.location || 'Location'}`;
+                    const option = document.createElement('option');
+                    option.value = String(idx);
+                    option.textContent = label;
+                    jobSelect.appendChild(option);
                 });
             }
             
