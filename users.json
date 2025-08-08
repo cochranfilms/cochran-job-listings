@@ -1,5 +1,21 @@
 {
-  "users": {},
+  "users": {
+    "Erica Cochran": {
+      "profile": {
+        "email": "dedejackson727@gmail.com",
+        "role": "Photographer",
+        "location": "Miami, FL",
+        "rate": "$100/hour",
+        "projectType": "Product Photography",
+        "approvedDate": "2025-08-07",
+        "projectDate": "2025-10-17"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending"
+      }
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -14,10 +30,10 @@
       "overdue"
     ]
   },
-  "lastUpdated": "2025-08-07",
-  "totalUsers": 0,
+  "lastUpdated": "2025-08-08",
+  "totalUsers": 1,
   "system": {
     "totalReviews": 0,
-    "lastUpdated": "2025-08-07"
+    "lastUpdated": "2025-08-08"
   }
 }
