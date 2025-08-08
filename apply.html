@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apply – Cochran Films</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, sans-serif; background:#0b0b0c; color:#fff; margin:0; }
+    .container{ max-width:900px; margin:0 auto; padding:24px; }
+    .card{ background:#121214; border:1px solid rgba(255,178,0,.25); border-radius:16px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+    h1{ margin:0 0 12px; color:#FFB200; }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .grid-1{ display:grid; grid-template-columns:1fr; gap:16px; }
+    label{ display:block; margin:6px 0; opacity:.9; font-size:14px; }
+    input, select, textarea{ width:100%; padding:12px; border-radius:10px; background:#0e0e10; color:#fff; border:1px solid rgba(255,255,255,.15); }
+    textarea{ min-height:120px; }
+    .actions{ display:flex; gap:12px; justify-content:flex-end; margin-top:16px; }
+    .btn{ padding:12px 16px; border:none; border-radius:10px; cursor:pointer; font-weight:700; }
+    .btn-primary{ background:linear-gradient(135deg,#FFB200,#FFD700); color:#000; }
+    .toast{ position:fixed; right:16px; bottom:16px; background:#22c55e; color:#fff; padding:10px 14px; border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,.35); display:none; }
+  </style>
+  <script>
+    function showToast(msg, type='success'){ const t=document.getElementById('toast'); t.style.background = type==='error'?'#ef4444':'#22c55e'; t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
+    async function submitApplication(e){
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const payload = Object.fromEntries(fd.entries());
+      try{
+        const res = await fetch('/api/apply', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+          fullName: payload.fullName,
+          email: payload.email,
+          phone: payload.phone,
+          location: payload.location,
+          applyingFor: payload.applyingFor,
+          eventDate: payload.eventDate,
+          pay: payload.pay,
+          description: payload.description,
+          source: 'apply-html'
+        })});
+        const j = await res.json();
+        if (j.success){ showToast('Application received!'); e.target.reset(); }
+        else { showToast('Failed to submit: '+(j.error||'Unknown'), 'error'); }
+      }catch(err){ showToast('Error: '+err.message, 'error'); }
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Apply to a Job</h1>
+      <p style="opacity:.85; margin-bottom:18px;">Submit your info and we’ll review. You’ll appear in the admin queue as pending. Approval will attach a job and send onboarding automatically.</p>
+      <form class="grid-1" onsubmit="submitApplication(event)">
+        <div class="grid">
+          <div>
+            <label>Full Name</label>
+            <input name="fullName" required />
+          </div>
+          <div>
+            <label>Email</label>
+            <input type="email" name="email" required />
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label>Phone</label>
+            <input name="phone" />
+          </div>
+          <div>
+            <label>Location</label>
+            <input name="location" placeholder="City, State" />
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label>Applying For (Job Title)</label>
+            <input name="applyingFor" placeholder="e.g., Backdrop Photographer Base" />
+          </div>
+          <div>
+            <label>Event Date</label>
+            <input type="date" name="eventDate" />
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label>Pay</label>
+            <input name="pay" placeholder="$300 + Tip" />
+          </div>
+          <div>
+            <label>Instagram or Portfolio</label>
+            <input name="portfolio" />
+          </div>
+        </div>
+        <div>
+          <label>Description</label>
+          <textarea name="description" placeholder="Tell us about your experience"></textarea>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Submit Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+</body>
+</html>
+
+

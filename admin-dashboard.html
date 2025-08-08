@@ -1387,8 +1387,8 @@
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                         <h4 style="margin: 0;">${name}</h4>
                         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <span style="background: ${user.contract?.contractStatus === 'signed' ? '#22c55e' : '#f59e0b'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
-                                ${user.contract?.contractStatus === 'signed' ? '✅ Contract Signed' : '⏳ Contract Pending'}
+                            <span style="background: ${user.application?.status === 'pending' ? '#f59e0b' : (user.contract?.contractStatus === 'signed' ? '#22c55e' : '#6b7280')}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                ${user.application?.status === 'pending' ? '🕒 Pending' : (user.contract?.contractStatus === 'signed' ? '✅ Contract Signed' : '—')}
                             </span>
                             <span style="background: ${user.paymentMethod ? '#22c55e' : '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
                                 ${user.paymentMethod ? '💳 Payment Set' : '💳 No Payment'}
@@ -1402,11 +1402,12 @@
                     </div>
                     <div class="item-meta">
                         <span>📧 ${user.profile?.email || 'Email not specified'}</span>
-                        <span>🎭 ${user.profile?.role || 'Role not specified'}</span>
+                        <span>🎭 ${user.profile?.role || 'Role not set'}</span>
                         <span>📍 ${user.profile?.location || 'Location not specified'}</span>
                         <span>💰 ${user.profile?.rate || 'Rate not specified'}</span>
                     </div>
                     <div class="item-description">
+                        ${user.application?.jobTitle ? `<div><strong>Applied For:</strong> ${user.application.jobTitle}</div>` : ''}
                         <strong>Primary Job:</strong> ${user.primaryJob || 'None'}<br>
                         <strong>Payment Method:</strong> ${user.paymentMethod || 'Not specified'}<br>
                         <strong>Contract Status:</strong> ${user.contract?.contractStatus || 'Not specified'}
@@ -1834,7 +1835,7 @@
             }
         }
 
-        // Delete user (for contract management)
+        // Delete user (archive instead of hard delete)
         async function deleteUser(name) {
             if (confirm(`Are you sure you want to delete ${name}?`)) {
                 try {
@@ -1895,7 +1896,11 @@
                         }
                     }
                     
-                    // 3. Delete from local users object
+                    // 3. Archive instead of delete
+                    window.users._archived = window.users._archived || {};
+                    const archived = { ...userData };
+                    archived.application = { ...(archived.application||{}), status: 'denied', updatedAt: new Date().toISOString() };
+                    window.users._archived[name] = archived;
                     delete window.users[name];
                     
                     // 4. Update GitHub repository
@@ -1906,7 +1911,7 @@
                     updateStats();
                     
                     // 6. Show comprehensive success message
-                    let successMessage = `✅ User "${name}" deleted successfully!`;
+                    let successMessage = `✅ User "${name}" archived successfully!`;
                     if (firebaseDeleted) successMessage += ` ${firebaseMessage}`;
                     if (pdfDeleted) successMessage += ` ${pdfMessage}`;
                     
@@ -1914,7 +1919,7 @@
                     
                 } catch (error) {
                     console.error('❌ Error deleting user:', error);
-                    showNotification(`❌ Error deleting user: ${error.message}`, 'error');
+                    showNotification(`❌ Error archiving user: ${error.message}`, 'error');
                     displayUsers(); // Still update the display
                 }
             }
