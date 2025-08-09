@@ -175,8 +175,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-09",
       "signedDate": "2025-08-09"
+    },
+    {
+      "contractId": "CF-1754761542041-BFSXR",
+      "freelancerName": "Thing Five",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Test Job Title",
+      "rate": "$400",
+      "location": "Atlanta Area",
+      "fileName": "Thing Five.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-09T17:45:52.939Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Thing Five.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-09",
+      "signedDate": "2025-08-09"
     }
   ],
-  "lastUpdated": "2025-08-09T05:39:20.047Z",
-  "totalContracts": 11
+  "lastUpdated": "2025-08-09T17:45:52.939Z",
+  "totalContracts": 12
 }
