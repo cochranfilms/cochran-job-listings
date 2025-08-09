@@ -985,8 +985,6 @@
                 if (response.ok) {
                     const data = await response.json();
                     window.jobs = data.jobs || [];
-                    // Background refresh to make sure latest deploy assets load
-                    setTimeout(() => { try { location.reload(); } catch(e) {} }, 400);
                 }
             } catch (error) {
                 console.log('No existing jobs file found, starting fresh');
@@ -1182,7 +1180,7 @@
                 });
                 if (res.ok) {
                     showNotification('✅ jobs-data.json updated on GitHub', 'success');
-                    try { setTimeout(()=>location.reload(), 600); } catch(_){}
+                    try { await loadJobs(); } catch(_){}
                     return true;
                 }
                 const err = await res.json().catch(() => ({}));
@@ -1497,7 +1495,8 @@
                 const ok = await updateUsersOnGitHub(editName ? 'update' : 'create', name);
                 if (ok) {
                     showNotification(`✅ User "${name}" saved and pushed to GitHub`, 'success');
-                    try { setTimeout(()=>location.reload(), 600); } catch(_){}
+                    // Soft refresh: re-fetch users from GitHub without full page reload
+                    try { await syncUsersFromGitHub(); } catch(_){}
                 } else {
                     showNotification('❌ Failed to persist user to GitHub', 'error');
                 }
@@ -2032,6 +2031,7 @@
                 if (response.ok) {
                     console.log('✅ users.json updated on GitHub successfully');
                     showNotification('✅ Users data updated successfully and pushed to GitHub', 'success');
+                    try { await loadUsers(); } catch(_){}
                     return true;
                 } else {
                     const errorData = await response.json().catch(() => ({}));
