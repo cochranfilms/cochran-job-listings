@@ -70,7 +70,8 @@ module.exports = async (req, res) => {
     }));
 
     const from = process.env.SMTP_FROM || 'no-reply@cochranfilms.com';
-    await transporter.sendMail({ from, to, subject: mailSubject, html, attachments: att });
+    const replyTo = process.env.SMTP_REPLY_TO || undefined;
+    await transporter.sendMail({ from, to, subject: mailSubject, html, attachments: att, replyTo });
 
     return res.status(200).json({ success: true });
   } catch (e) {

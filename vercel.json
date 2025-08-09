@@ -20,6 +20,21 @@
     },
     "api/contracts.js": {
       "maxDuration": 30
+    },
+    "api/email/send.js": {
+      "maxDuration": 30
+    },
+    "api/dropdown-options.js": {
+      "maxDuration": 15
+    },
+    "api/jobs-data.js": {
+      "maxDuration": 15
+    },
+    "api/firebase.js": {
+      "maxDuration": 30
+    },
+    "api/apply.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
