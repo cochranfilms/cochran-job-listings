@@ -23,19 +23,11 @@
     },
     "api/email/send.js": {
       "maxDuration": 30,
-      "includeFiles": [
-        "job-acceptance-template.html",
-        "Jobs-Closed.html",
-        "user-confirmation-template.html"
-      ]
+      "includeFiles": "{job-acceptance-template.html,Jobs-Closed.html,user-confirmation-template.html}"
     },
     "api/emailjs-sync.js": {
       "maxDuration": 15,
-      "includeFiles": [
-        "job-acceptance-template.html",
-        "Jobs-Closed.html",
-        "user-confirmation-template.html"
-      ]
+      "includeFiles": "{job-acceptance-template.html,Jobs-Closed.html,user-confirmation-template.html}"
     },
     "api/emailjs-config.js": {
       "maxDuration": 10
