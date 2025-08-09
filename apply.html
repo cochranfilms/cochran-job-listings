@@ -12,30 +12,6 @@
   <script>
     document.addEventListener('DOMContentLoaded',()=>AOS.init({duration:1000,once:true,offset:100}));
     function showToast(msg, type='success'){ const t=document.getElementById('toast'); t.style.background = type==='error'?'#ef4444':'#22c55e'; t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
-    function showThanksModal(){
-      const m=document.createElement('div');
-      m.id='apply-thanks-modal';
-      m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:9999;';
-      m.innerHTML=`
-        <div style="max-width:560px;width:90%;background:linear-gradient(135deg,#0b0b0c,#1a1a1a);border:1px solid rgba(255,178,0,.35);box-shadow:0 20px 60px rgba(0,0,0,.6);border-radius:16px;color:#fff;overflow:hidden;">
-          <div style="padding:22px 22px 0 22px;text-align:center">
-            <img src="/Logo.png" alt="Cochran Films" style="height:54px;width:auto;opacity:.95;filter:drop-shadow(0 0 6px rgba(255,178,0,.25))"/>
-            <h2 style="margin:14px 0 6px 0;font-family:Inter,system-ui,sans-serif;font-weight:800;letter-spacing:.3px;color:#FFB200;font-size:22px;">Application Received</h2>
-            <p style="margin:0 0 14px 0;color:rgba(255,255,255,.85);line-height:1.6;font-size:14px">Thank you for applying. Our team will review all candidates and notify the selected creative by email. You’ll receive an update once a decision is made.</p>
-          </div>
-          <div style="padding:0 22px 12px 22px">
-            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
-              <a href="/" style="text-decoration:none;background:#000;border:1px solid #FFB200;color:#FFB200;padding:10px 14px;border-radius:10px;font-weight:700">View More Listings</a>
-              <a href="https://www.cochranfilms.com/portfolio" target="_blank" style="text-decoration:none;background:linear-gradient(135deg,#FFB200,#FFD36A);color:#000;padding:10px 14px;border-radius:10px;font-weight:800">See Our Work</a>
-              <a href="https://www.cochranfilms.com/contact" target="_blank" style="text-decoration:none;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);color:#fff;padding:10px 14px;border-radius:10px;font-weight:700">Contact Us</a>
-            </div>
-          </div>
-          <div style="padding:12px 22px 22px 22px;text-align:center">
-            <button onclick="document.getElementById('apply-thanks-modal').remove()" style="background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:600">Close</button>
-          </div>
-        </div>`;
-      document.body.appendChild(m);
-    }
     async function submitApplication(e){
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -54,7 +30,7 @@
           source: 'apply-html'
         })});
         const j = await res.json();
-        if (j.success){ showThanksModal(); e.target.reset(); }
+        if (j.success){ showToast('Application received!'); e.target.reset(); try{ location.reload(); }catch(_){} }
         else { showToast('Failed to submit: '+(j.error||'Unknown'), 'error'); }
       }catch(err){ showToast('Error: '+err.message, 'error'); }
     }

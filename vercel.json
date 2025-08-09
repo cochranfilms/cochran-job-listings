@@ -20,29 +20,6 @@
     },
     "api/contracts.js": {
       "maxDuration": 30
-    },
-    "api/email/send.js": {
-      "maxDuration": 30,
-      "includeFiles": "{job-acceptance-template.html,Jobs-Closed.html,user-confirmation-template.html}"
-    },
-    "api/emailjs-sync.js": {
-      "maxDuration": 15,
-      "includeFiles": "{job-acceptance-template.html,Jobs-Closed.html,user-confirmation-template.html}"
-    },
-    "api/emailjs-config.js": {
-      "maxDuration": 10
-    },
-    "api/dropdown-options.js": {
-      "maxDuration": 15
-    },
-    "api/jobs-data.js": {
-      "maxDuration": 15
-    },
-    "api/firebase.js": {
-      "maxDuration": 30
-    },
-    "api/apply.js": {
-      "maxDuration": 30
     }
   },
   "rewrites": [
