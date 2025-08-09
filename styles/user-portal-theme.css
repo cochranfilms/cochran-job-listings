@@ -1,0 +1,792 @@
+/* ==========================================================================
+   Reset
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body, h1, h2, h3, h4, h5, h6,
+p, figure, blockquote, dl, dd {
+  margin: 0;
+}
+
+ul[role="list"], ol[role="list"] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+:focus {
+  outline: none;
+}
+
+/* ==========================================================================
+   Variables (Design Tokens)
+   ========================================================================== */
+
+:root {
+  /* Brand */
+  --color-brand: #FFB200;
+  --color-brand-strong: #e09f00;
+  --color-brand-contrast: #000000;
+
+  /* Neutrals & Surfaces */
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f3f5;
+  --color-border: #e6e8eb;
+  --color-overlay: rgba(255, 255, 255, 0.55);
+  --color-backdrop: rgba(15, 18, 20, 0.35);
+
+  /* Text */
+  --color-text: #0f1214;
+  --color-text-muted: #5f6b76;
+  --color-text-inverse: #ffffff;
+
+  /* States */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-focus: #0ea5e9;
+
+  /* Elevation */
+  --shadow-1: 0 1px 2px rgba(15, 18, 20, 0.07);
+  --shadow-2: 0 4px 12px rgba(15, 18, 20, 0.10);
+  --shadow-3: 0 12px 28px rgba(15, 18, 20, 0.12);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Spacing */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;  --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-7: 32px;  --space-8: 40px;
+
+  /* Typography */
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  --font-size-xs: 12px; --font-size-sm: 14px; --font-size-md: 16px;
+  --font-size-lg: 18px; --font-size-xl: 22px; --font-size-2xl: 28px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 120ms; --dur-med: 200ms; --dur-slow: 320ms;
+
+  /* Translucency */
+  --glass-surface: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-shadow: 0 10px 30px rgba(15, 18, 20, 0.12);
+
+  /* Focus ring system */
+  --focus-outline: 2px;
+  --focus-ring: 4px;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(14, 165, 233, 0.18);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: clamp(26px, 2.4vw, 34px); }
+h2 { font-size: clamp(22px, 2.0vw, 28px); }
+h3 { font-size: clamp(18px, 1.6vw, 22px); }
+h4 { font-size: clamp(16px, 1.4vw, 18px); }
+h5 { font-size: var(--font-size-md); }
+h6 { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+
+p { color: var(--color-text); }
+
+a {
+  color: var(--color-text);
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  transition: color var(--dur-fast) var(--ease);
+}
+a:hover {
+  color: var(--color-brand-strong);
+}
+
+/* ==========================================================================
+   Layout helpers
+   ========================================================================== */
+
+.container, .wrap, .content {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+}
+
+.stack > * + * { margin-top: var(--space-4); }
+.flow > * + * { margin-top: var(--space-3); }
+.cluster { display: inline-flex; gap: var(--space-3); align-items: center; }
+.divider { height: 1px; background: var(--color-border); width: 100%; }
+
+.visually-hidden, .sr-only {
+  position: absolute !important;
+  clip: rect(1px,1px,1px,1px) !important;
+  clip-path: inset(50%) !important;
+  height: 1px !important; width: 1px !important;
+  overflow: hidden !important; white-space: nowrap !important; border: 0 !important;
+}
+
+/* ==========================================================================
+   Login
+   (Targets common login wrappers without requiring new HTML classes)
+   ========================================================================== */
+
+/* Subtle vignette + gradient background for login views */
+body.login, .login-page, .auth-page, .login-screen {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(15,18,20,0.06), rgba(15,18,20,0) 55%),
+    linear-gradient(180deg, #fbfcfe 0%, #f7f8fa 100%);
+}
+
+/* Center panel if these wrappers exist; no impact otherwise */
+.login, .auth, .auth-container {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-7) var(--space-6);
+}
+
+.login-panel, .auth-panel, .login-card, .auth-card {
+  width: min(500px, 100%);
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: var(--space-7);
+}
+
+.login-panel header, .auth-panel header {
+  margin-bottom: var(--space-5);
+}
+
+.login-panel h1, .auth-panel h1 {
+  font-size: clamp(22px, 2.2vw, var(--font-size-2xl));
+}
+
+.login-panel p.subtle, .auth-panel p.subtle {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Login form controls */
+.login-panel form .form-group,
+.auth-panel form .form-group {
+  margin-bottom: var(--space-5);
+}
+
+.login-panel label,
+.auth-panel label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.login-panel input,
+.auth-panel input,
+.login-panel select,
+.auth-panel select,
+.login-panel textarea,
+.auth-panel textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: linear-gradient(0deg, var(--color-surface) 0%, var(--color-surface) 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+
+.login-panel input::placeholder,
+.auth-panel input::placeholder { color: #8a95a0; }
+
+.login-panel input:focus,
+.auth-panel input:focus,
+.login-panel select:focus,
+.auth-panel select:focus,
+.login-panel textarea:focus,
+.auth-panel textarea:focus {
+  border-color: var(--color-focus);
+  box-shadow:
+    0 0 0 var(--focus-outline) var(--color-surface),
+    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
+}
+
+.login-actions, .auth-actions {
+  margin-top: var(--space-6);
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+/* Primary login button */
+.login-panel .btn-primary,
+.auth-panel .btn-primary,
+.login-panel button[type="submit"],
+.auth-panel button[type="submit"] {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-brand);
+  color: var(--color-brand-contrast);
+  border: 1px solid color-mix(in oklab, var(--color-brand), #000 8%);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  will-change: transform;
+}
+
+.login-panel .btn-primary:hover,
+.auth-panel .btn-primary:hover,
+.login-panel button[type="submit"]:hover,
+.auth-panel button[type="submit"]:hover {
+  background: var(--color-brand-strong);
+  box-shadow: var(--shadow-2);
+}
+
+.login-panel .btn-primary:active,
+.auth-panel .btn-primary:active,
+.login-panel button[type="submit"]:active,
+.auth-panel button[type="submit"]:active {
+  transform: translateY(0.5px);
+  box-shadow: var(--shadow-1);
+}
+
+.login-panel .btn-primary:focus-visible,
+.auth-panel .btn-primary:focus-visible,
+.login-panel button[type="submit"]:focus-visible,
+.auth-panel button[type="submit"]:focus-visible {
+  outline: var(--focus-outline) solid var(--color-focus);
+  outline-offset: 0;
+  box-shadow:
+    0 0 0 var(--focus-outline) var(--color-surface),
+    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
+}
+
+/* ==========================================================================
+   Navigation (top nav, side nav)
+   ========================================================================== */
+
+nav, .nav, .navbar {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-1);
+  color: var(--color-text);
+}
+
+.navbar .nav-inner, nav .nav-inner, .nav .nav-inner {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-inline: var(--space-6);
+}
+
+.nav a, .navbar a, .nav .item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 var(--space-3);
+  color: var(--color-text);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.nav a:hover, .navbar a:hover, .nav .item:hover {
+  background: var(--color-surface-2);
+}
+
+.nav .active, .navbar .active, .nav a[aria-current="page"] {
+  color: var(--color-text);
+  background: color-mix(in oklab, var(--color-brand) 18%, #fff);
+  border-bottom: 2px solid var(--color-brand);
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.sidebar .item, .sidebar a {
+  display: block;
+  padding: 10px var(--space-5);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+.sidebar .item:hover, .sidebar a:hover { background: var(--color-surface-2); }
+.sidebar .item.active, .sidebar a.active {
+  background: color-mix(in oklab, var(--color-brand) 16%, #fff);
+}
+
+/* ==========================================================================
+   Cards / Sections
+   ========================================================================== */
+
+.card, .panel, .section, .content-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  padding: var(--space-6);
+}
+
+.card + .card, .panel + .panel, .section + .section { margin-top: var(--space-6); }
+
+.card header, .panel header, .section header {
+  margin-bottom: var(--space-4);
+}
+.card header h2, .panel header h2, .section header h2 {
+  font-size: var(--font-size-xl);
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+table, .table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+thead th {
+  position: sticky; /* if already sticky, this will keep it */
+  top: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--color-border);
+  padding: 12px 14px;
+  z-index: 1;
+}
+
+tbody td {
+  border-bottom: 1px solid var(--color-border);
+  padding: 12px 14px;
+  font-size: var(--font-size-sm);
+}
+
+tbody tr:nth-child(odd) td {
+  background: color-mix(in oklab, var(--color-surface-2) 50%, var(--color-surface));
+}
+
+tbody tr:hover td {
+  background: color-mix(in oklab, var(--color-surface-2) 70%, var(--color-surface));
+}
+
+.table-compact td, .table-compact th { padding: 10px 12px; }
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+.form-group { margin-bottom: var(--space-5); }
+
+label {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="tel"], input[type="search"],
+select, textarea, .form-control, .input, .select {
+  width: 100%;
+  min-height: 40px;
+  padding: 12px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+
+input::placeholder, textarea::placeholder { color: #8a95a0; }
+
+input:focus, select:focus, textarea:focus, .form-control:focus {
+  border-color: var(--color-focus);
+  box-shadow:
+    0 0 0 var(--focus-outline) var(--color-surface),
+    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
+}
+
+input[disabled], select[disabled], textarea[disabled] {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.help-text, .form-help {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.error-text, .form-error {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}
+
+.is-invalid, .has-error, input.error, select.error, textarea.error {
+  border-color: var(--color-danger);
+  background: color-mix(in oklab, var(--color-danger) 5%, var(--color-surface));
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+button, .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  will-change: transform;
+}
+
+button:hover, .btn:hover { box-shadow: var(--shadow-2); }
+
+button:active, .btn:active { transform: translateY(0.5px); }
+
+button:focus-visible, .btn:focus-visible {
+  outline: var(--focus-outline) solid var(--color-focus);
+  outline-offset: 0;
+  box-shadow:
+    var(--shadow-1),
+    0 0 0 var(--focus-outline) var(--color-surface),
+    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
+}
+
+/* Solid (brand) */
+.btn-primary, .button-primary, button.primary {
+  background: var(--color-brand);
+  color: var(--color-brand-contrast);
+  border-color: color-mix(in oklab, var(--color-brand), #000 8%);
+}
+.btn-primary:hover, .button-primary:hover, button.primary:hover {
+  background: var(--color-brand-strong);
+}
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Outline */
+.btn-outline, .button-outline, button.outline {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.btn-outline:hover { background: var(--color-surface-2); }
+
+/* Ghost / Subtle */
+.btn-ghost, .button-ghost, button.ghost {
+  background: transparent;
+  color: var(--color-text);
+  border-color: transparent;
+  box-shadow: none;
+}
+.btn-ghost:hover { background: var(--color-surface-2); }
+
+/* Semantic variants */
+.btn-success { background: var(--color-success); color: var(--color-text-inverse); border-color: color-mix(in oklab, var(--color-success), #000 8%); }
+.btn-danger  { background: var(--color-danger);  color: var(--color-text-inverse); border-color: color-mix(in oklab, var(--color-danger), #000 8%); }
+
+.btn-sm { height: 32px; padding: 0 10px; border-radius: var(--radius-sm); font-size: var(--font-size-sm); }
+.btn-lg { height: 48px; padding: 0 18px; border-radius: var(--radius-lg); font-size: var(--font-size-lg); }
+
+/* ==========================================================================
+   States: Badges, Alerts, Toasts, Modals, Tooltips
+   ========================================================================== */
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 10px;
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+.badge.brand   { background: color-mix(in oklab, var(--color-brand) 20%, #fff); color: var(--color-text); border-color: color-mix(in oklab, var(--color-brand), #000 10%); }
+.badge.success { background: color-mix(in oklab, var(--color-success) 20%, #fff); color: #08361a; border-color: color-mix(in oklab, var(--color-success), #000 10%); }
+.badge.warn    { background: color-mix(in oklab, var(--color-warning) 20%, #fff); color: #3b2a05; border-color: color-mix(in oklab, var(--color-warning), #000 10%); }
+.badge.danger  { background: color-mix(in oklab, var(--color-danger) 20%, #fff); color: #3b0a0a; border-color: color-mix(in oklab, var(--color-danger), #000 10%); }
+
+/* Alerts */
+.alert {
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+.alert.success { border-color: color-mix(in oklab, var(--color-success), #000 12%); background: color-mix(in oklab, var(--color-success) 6%, #fff); }
+.alert.warn    { border-color: color-mix(in oklab, var(--color-warning), #000 12%); background: color-mix(in oklab, var(--color-warning) 6%, #fff); }
+.alert.danger  { border-color: color-mix(in oklab, var(--color-danger), #000 12%); background: color-mix(in oklab, var(--color-danger) 6%, #fff); }
+
+/* Toast */
+.toast {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+/* Modal */
+.modal-backdrop, .modal-overlay {
+  position: fixed; inset: 0;
+  background: var(--color-backdrop);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.modal, .modal-content {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+}
+
+/* Tooltip */
+.tooltip {
+  background: #0f1214;
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-size: var(--font-size-xs);
+  box-shadow: 0 4px 10px rgba(15,18,20,0.25);
+}
+
+/* ==========================================================================
+   Pagination & Tabs
+   ========================================================================== */
+
+.pagination {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3) 0;
+}
+.pagination .page, .pagination a, .pagination button {
+  height: 32px; min-width: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.pagination .page[aria-current="page"], .pagination .active {
+  border-color: var(--color-brand);
+  background: color-mix(in oklab, var(--color-brand) 18%, #fff);
+}
+
+.tabs, .tablist {
+  display: flex; gap: var(--space-2); align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-2);
+}
+.tab, .tabs .tab {
+  display: inline-flex; align-items: center; height: 36px;
+  padding: 0 var(--space-3); border-radius: var(--radius-pill);
+  color: var(--color-text); text-decoration: none;
+}
+.tab[aria-selected="true"], .tab.active {
+  background: color-mix(in oklab, var(--color-brand) 16%, #fff);
+  border-bottom: 2px solid var(--color-brand);
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+.shadow-1 { box-shadow: var(--shadow-1) !important; }
+.shadow-2 { box-shadow: var(--shadow-2) !important; }
+.shadow-3 { box-shadow: var(--shadow-3) !important; }
+
+.radius-sm { border-radius: var(--radius-sm) !important; }
+.radius-md { border-radius: var(--radius-md) !important; }
+.radius-lg { border-radius: var(--radius-lg) !important; }
+.pill      { border-radius: var(--radius-pill) !important; }
+
+.text-muted, .muted { color: var(--color-text-muted) !important; }
+.brand { color: var(--color-brand) !important; }
+
+.bg-surface { background: var(--color-surface) !important; }
+.bg-surface-2 { background: var(--color-surface-2) !important; }
+.bordered { border: 1px solid var(--color-border) !important; }
+
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ring-focus {
+  box-shadow:
+    0 0 0 var(--focus-outline) var(--color-surface),
+    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35) !important;
+}
+
+/* Motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* ==========================================================================
+   Dark Mode (prefers-color-scheme)
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0b0d0f;
+    --color-surface: #121417;
+    --color-surface-2: #181b1f;
+    --color-border: #262a30;
+    --color-text: #e7e9ee;
+    --color-text-muted: #9aa3ad;
+
+    --shadow-1: 0 1px 2px rgba(0,0,0,0.40);
+    --shadow-2: 0 4px 12px rgba(0,0,0,0.45);
+    --shadow-3: 0 12px 28px rgba(0,0,0,0.55);
+
+    --glass-surface: rgba(18, 20, 24, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 10px 30px rgba(0,0,0,0.55);
+
+    --color-backdrop: rgba(0,0,0,0.55);
+  }
+
+  body.login, .login-page, .auth-page, .login-screen {
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.06), rgba(255,255,255,0) 55%),
+      linear-gradient(180deg, #0b0d0f 0%, #0d1013 100%);
+  }
+
+  a:hover { color: var(--color-brand); }
+
+  .tooltip {
+    background: #e7e9ee;
+    color: #0b0d0f;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+  }
+
+  .login-panel input,
+  .auth-panel input,
+  .login-panel select,
+  .auth-panel select,
+  .login-panel textarea,
+  .auth-panel textarea,
+  input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="tel"], input[type="search"],
+  select, textarea, .form-control, .input, .select {
+    background: #0f1214;
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .nav a:hover, .navbar a:hover, .nav .item:hover,
+  .sidebar .item:hover, .sidebar a:hover {
+    background: #1a1e23;
+  }
+
+  tbody tr:nth-child(odd) td {
+    background: color-mix(in oklab, var(--color-surface-2) 60%, var(--color-surface));
+  }
+  tbody tr:hover td {
+    background: color-mix(in oklab, var(--color-surface-2) 80%, var(--color-surface));
+  }
+}
+
+/* ==========================================================================
+   End
+   ========================================================================== */
+
+/*
+Assumptions (map these to your existing classes if they differ):
+- Login wrappers: #loginScreen, .login-screen, .login, .auth, .auth-container, .login-panel, .auth-panel, .login-card
+- Navigation: nav, .nav, .navbar, .sidebar, .active
+- Cards/Sections: .card, .panel, .section, .content-section
+- Tables: table, .table, thead/th/tbody/td
+- Forms: .form-group, .form-control, .input, .select, label, .help-text, .error-text, .is-invalid
+- Buttons: button, .btn, .btn-primary, .btn-outline, .btn-ghost, .btn-success, .btn-danger, .btn-sm, .btn-lg
+- States/Feedback: .badge, .alert, .toast, .modal, .modal-backdrop, .modal-overlay, .tooltip
+- Pagination/Tabs: .pagination, .page, .tabs, .tablist, .tab
+- Utilities: .shadow-1/2/3, .radius-sm/md/lg, .pill, .text-muted, .brand, .bg-surface, .bg-surface-2, .bordered, .truncate, .ring-focus
+
+Notes:
+- This stylesheet is designed to be loaded AFTER existing styles so it can gently override visuals without altering layout.
+- Focus states meet WCAG AA via outline + ring using --color-focus; brand foreground uses #000 on brand background for contrast.
+*/
