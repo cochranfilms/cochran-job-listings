@@ -323,33 +323,6 @@
       },
       "jobs": {},
       "primaryJob": null
-    },
-    "Thing Two": {
-      "profile": {
-        "email": "dedejackson727@gmail.com",
-        "location": "Atlanta Area",
-        "role": "",
-        "rate": "",
-        "projectType": "",
-        "approvedDate": "2025-08-09"
-      },
-      "contract": {
-        "contractStatus": "pending"
-      },
-      "application": {
-        "status": "denied",
-        "submittedAt": "2025-08-09T00:55:46.049Z",
-        "jobTitle": "Test Job Title",
-        "eventDate": "2025-10-12",
-        "pay": "$400",
-        "description": "Test Job Description",
-        "phone": "4704202169",
-        "portfolio": "",
-        "source": "apply-html",
-        "updatedAt": "2025-08-09T02:25:07.922Z"
-      },
-      "jobs": {},
-      "primaryJob": null
     }
   },
   "statusOptions": {
@@ -367,7 +340,7 @@
     ]
   },
   "lastUpdated": "2025-08-09",
-  "totalUsers": 3,
+  "totalUsers": 2,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-09"
