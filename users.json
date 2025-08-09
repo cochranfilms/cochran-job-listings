@@ -38,31 +38,34 @@
       },
       "primaryJob": "job-test-job-title-1754710244529"
     },
-    "Erica Cochran": {
-      "profile": {
-        "email": "dedejackson727@gmail.com",
-        "location": "Atlanta Area",
-        "role": "",
-        "rate": "",
-        "projectType": "",
-        "approvedDate": "2025-08-08"
-      },
-      "contract": {
-        "contractStatus": "pending"
-      },
-      "application": {
-        "status": "pending",
-        "submittedAt": "2025-08-08T13:09:59.390Z",
-        "jobTitle": "Test Job Title",
-        "eventDate": "2025-10-12",
-        "pay": "$400",
-        "description": "Test Job Description",
-        "phone": "4704202169",
-        "portfolio": "https://www.cochranfilms.com",
-        "source": "apply-html"
-      },
-      "jobs": {},
-      "primaryJob": null
+    "_archived": {
+      "Erica Cochran": {
+        "profile": {
+          "email": "dedejackson727@gmail.com",
+          "location": "Atlanta Area",
+          "role": "",
+          "rate": "",
+          "projectType": "",
+          "approvedDate": "2025-08-08"
+        },
+        "contract": {
+          "contractStatus": "pending"
+        },
+        "application": {
+          "status": "denied",
+          "submittedAt": "2025-08-08T13:09:59.390Z",
+          "jobTitle": "Test Job Title",
+          "eventDate": "2025-10-12",
+          "pay": "$400",
+          "description": "Test Job Description",
+          "phone": "4704202169",
+          "portfolio": "https://www.cochranfilms.com",
+          "source": "apply-html",
+          "updatedAt": "2025-08-09T03:43:06.965Z"
+        },
+        "jobs": {},
+        "primaryJob": null
+      }
     }
   },
   "statusOptions": {
