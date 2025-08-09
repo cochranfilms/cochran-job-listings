@@ -208,6 +208,8 @@ body.login, .login-page, .auth-page, .login-screen {
   filter: grayscale(100%);
   animation: none !important; /* reduce motion and cartoon feel */
 }
+/* Hard-disable floaters to prevent UI overlap */
+.floating-elements, .floating-icon { display: none !important; }
 
 .login-panel, .auth-panel, .login-card, .auth-card, .login-container {
   width: min(500px, 100%);
@@ -248,6 +250,17 @@ body.login, .login-page, .auth-page, .login-screen {
   opacity: 0.6;
   text-shadow: none !important;
 }
+
+/* Fix login form layout: remove decorative side rail and ensure full-width form */
+.login-form-container::before,
+.login-form-container:hover::before { content: none !important; display: none !important; }
+.login-form-container { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+.login-container { width: min(520px, 100%); }
+.login-form { width: 100% !important; position: static !important; }
+.login-form .form-group { margin-bottom: var(--space-4) !important; }
+.input-line { display: none !important; }
+.input-container { width: 100% !important; }
+.input-container input { min-height: 44px; }
 
 .login-panel header, .auth-panel header {
   margin-bottom: var(--space-5);
