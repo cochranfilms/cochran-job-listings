@@ -1,5 +1,43 @@
 {
   "users": {
+    "Thing One": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "role": "Videographer",
+        "location": "Chicago, IL",
+        "rate": "$200/hour",
+        "projectType": "Corporate Event",
+        "approvedDate": "2025-08-08",
+        "projectDate": "2025-11-16"
+      },
+      "contract": {
+        "contractUrl": "contract.html",
+        "contractStatus": "pending"
+      },
+      "jobs": {
+        "job-test-job-title-1754710244529": {
+          "id": "job-test-job-title-1754710244529",
+          "title": "Test Job Title",
+          "date": "2025-10-12",
+          "location": "Atlanta Area",
+          "rate": "$400",
+          "description": "Test Job Description",
+          "listingStatus": "Active",
+          "status": "upcoming",
+          "projectStatus": "upcoming",
+          "projectType": "Event Coverage",
+          "paymentStatus": "pending",
+          "assignedDate": "2025-08-09",
+          "projectStart": "2025-11-16",
+          "jobRef": {
+            "source": "jobs-data",
+            "index": 2,
+            "key": "Test Job Title|2025-10-12"
+          }
+        }
+      },
+      "primaryJob": "job-test-job-title-1754710244529"
+    },
     "Erica Cochran": {
       "profile": {
         "email": "dedejackson727@gmail.com",
@@ -13,7 +51,7 @@
         "contractStatus": "pending"
       },
       "application": {
-        "status": "denied",
+        "status": "pending",
         "submittedAt": "2025-08-08T13:09:59.390Z",
         "jobTitle": "Test Job Title",
         "eventDate": "2025-10-12",
@@ -21,8 +59,7 @@
         "description": "Test Job Description",
         "phone": "4704202169",
         "portfolio": "https://www.cochranfilms.com",
-        "source": "apply-html",
-        "updatedAt": "2025-08-09T02:46:23.823Z"
+        "source": "apply-html"
       },
       "jobs": {},
       "primaryJob": null
@@ -43,7 +80,7 @@
     ]
   },
   "lastUpdated": "2025-08-09",
-  "totalUsers": 1,
+  "totalUsers": 2,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-09"
