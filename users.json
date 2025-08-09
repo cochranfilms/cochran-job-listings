@@ -12,7 +12,7 @@
         "contractStatus": "pending"
       },
       "application": {
-        "status": "pending",
+        "status": "denied",
         "submittedAt": "2025-08-09T04:22:05.874Z",
         "jobTitle": "Test Job Title",
         "eventDate": "2025-10-12",
@@ -20,7 +20,8 @@
         "description": "Test Job Description",
         "phone": "4704202169",
         "portfolio": "https://www.cochranfilms.com",
-        "source": "apply-html"
+        "source": "apply-html",
+        "updatedAt": "2025-08-09T04:24:07.835Z"
       },
       "jobs": {},
       "primaryJob": null
