@@ -1558,9 +1558,13 @@
                 console.warn('⚠️ Firebase create account failed:', fbErr?.message || fbErr);
             }
 
-            // Send job acceptance email automatically after save
+            // Optional auto email on manual add (disabled by default)
+            const isEdit = !!e.target.dataset.editName;
+            const AUTO_EMAIL_ON_MANUAL_ADD = false; // manual-add auto-email gating [[memory:5583137]]
             try {
-                await sendJobAcceptanceEmail(name, window.users[name]);
+                if (!isEdit && AUTO_EMAIL_ON_MANUAL_ADD) {
+                    await sendJobAcceptanceEmail(name, window.users[name]);
+                }
             } catch (emailErr) {
                 console.warn('⚠️ Could not send job acceptance email:', emailErr?.message || emailErr);
             }
@@ -3454,7 +3458,8 @@
             });
         }
 
-        // Delete user (FIXED - Now persists to server)
+        // Remove duplicate deleteUser definition (consolidated above)
+        /*
         async function deleteUser(userName) {
             if (confirm(`Are you sure you want to delete ${userName}?`)) {
                 try {
@@ -3497,6 +3502,7 @@
             }
             return false;
         }
+        */
 
         // Show bank details with encryption
         function showBankDetails(userName) {
