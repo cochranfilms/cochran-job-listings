@@ -2852,7 +2852,9 @@
                 location: contractData.location,
                 rate: contractData.rate,
                 project_start: contractData.projectStart,
-                contract_id: contractData.contractId
+                contract_id: contractData.contractId,
+                // New: consistent download link for EmailJS templates
+                download_link: `/api/contracts?filename=${encodeURIComponent(contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim())}.pdf`
             };
             
             console.log('📧 Sending user confirmation email with template:', EMAILJS_CONFIG.userTemplateId);
@@ -2881,7 +2883,8 @@
                 signed_timestamp: new Date(contractData.signedTimestamp).toLocaleString(),
                 portal_password_reference: `Password set for ${contractData.freelancerEmail} - Check admin dashboard for secure access`,
                 
-                // Contract PDF will be available for download via the email link
+                // Contract PDF download link for admin
+                download_link: `/api/contracts?filename=${encodeURIComponent(contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim())}.pdf`
             };
             
             console.log('📧 Sending admin notification email with template:', EMAILJS_CONFIG.templateId);

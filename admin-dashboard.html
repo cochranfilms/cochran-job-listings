@@ -2720,9 +2720,12 @@
                 if (typeof emailjs !== 'undefined') {
                     try {
                         const response = await emailjs.send(
-                            EMAILJS_CONFIG.serviceId, 
-                            EMAILJS_CONFIG.jobAcceptanceTemplateId, 
-                            emailParams
+                            EMAILJS_CONFIG.serviceId,
+                            EMAILJS_CONFIG.jobAcceptanceTemplateId,
+                            {
+                                ...emailParams,
+                                download_link: `/api/contracts?filename=${encodeURIComponent((userName||'').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim())}.pdf`
+                            }
                         );
                         
                         console.log('✅ Job acceptance email sent successfully:', response);
