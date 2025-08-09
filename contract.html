@@ -2416,6 +2416,31 @@
                 return { success: false, error: error.message };
             }
         }
+
+        // Ensure a Firebase account exists and set password
+        async function ensureFirebaseAccount(email, password) {
+            try {
+                // First try to update password (existing user path)
+                const updateResult = await updateFirebasePassword(email, password);
+                if (updateResult && updateResult.success) {
+                    return updateResult;
+                }
+                // If update failed due to user not existing, create the account
+                try {
+                    const createRes = await fetch('/api/firebase', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const createJson = await createRes.json();
+                    return createJson;
+                } catch (createErr) {
+                    return { success: false, error: createErr?.message || 'Account creation failed' };
+                }
+            } catch (err) {
+                return { success: false, error: err?.message || 'Unknown error' };
+            }
+        }
         
         // Add notification function for contract signing
         async function addNotification(title, message, type = 'info', data = {}) {
@@ -2491,15 +2516,15 @@
 
                 updateNotificationProgress('Securing your data...', 50);
                 
-                // Update Firebase password for user
+                // Ensure Firebase account exists and set password
                 const newPassword = document.getElementById('portalPassword').value;
-                const firebaseResult = await updateFirebasePassword(signatureData.freelancerEmail, newPassword);
+                const firebaseResult = await ensureFirebaseAccount(signatureData.freelancerEmail, newPassword);
                 
                 if (firebaseResult.success) {
-                    console.log('✅ Firebase password updated for:', signatureData.freelancerEmail);
-                    try { showToast('✅ Password saved securely', 'success'); } catch (e) {}
+                    console.log('✅ Firebase account ready for:', signatureData.freelancerEmail);
+                    try { showToast('✅ Portal password set successfully', 'success'); } catch (e) {}
                 } else {
-                    console.warn('⚠️ Could not update Firebase password:', firebaseResult.error);
+                    console.warn('⚠️ Could not set Firebase password:', firebaseResult.error);
                     try { showToast(`⚠️ Password not saved: ${firebaseResult.error || 'Unknown error'}`, 'warning'); } catch (e) {}
                 }
                 
@@ -2789,20 +2814,28 @@
         }
         
         // Send user confirmation email
+        function getCurrentJobTitle() {
+            try {
+                const primaryKey = currentFreelancerData?.primaryJob;
+                const jobObj = currentFreelancerData?.jobs?.[primaryKey];
+                return jobObj?.title || jobObj?.jobTitle || currentFreelancerData?.role || 'Assigned Role';
+            } catch (_) { return currentFreelancerData?.role || 'Assigned Role'; }
+        }
+
         async function sendUserConfirmationEmail(contractData) {
             if (typeof emailjs === 'undefined') {
                 throw new Error('EmailJS not available');
             }
             
             const userEmailParams = {
-                to_email: contractData.freelancerEmail,  // Match the template variable name
-                user_name: contractData.freelancerName,
-                contract_id: contractData.contractId,
+                to_email: contractData.freelancerEmail,
+                freelancer_name: contractData.freelancerName,
+                job: getCurrentJobTitle(),
                 role: contractData.role,
-                project_start: contractData.projectStart,
-                rate: contractData.rate,
                 location: contractData.location,
-                signed_date: new Date(contractData.signedTimestamp).toLocaleDateString()
+                rate: contractData.rate,
+                project_start: contractData.projectStart,
+                contract_id: contractData.contractId
             };
             
             console.log('📧 Sending user confirmation email with template:', EMAILJS_CONFIG.userTemplateId);
