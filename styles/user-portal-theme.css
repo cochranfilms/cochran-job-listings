@@ -184,11 +184,29 @@ body.login, .login-page, .auth-page, .login-screen {
 }
 
 /* Center panel if these wrappers exist; no impact otherwise */
-.login, .auth, .auth-container {
+.login, .auth, .auth-container, .login-screen {
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: var(--space-7) var(--space-6);
+}
+
+/* Existing decorative login background and floaters → make subtle and premium */
+.login-background {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(1000px 500px at 20% -10%, rgba(15,18,20,0.05), rgba(15,18,20,0) 50%),
+    radial-gradient(900px 480px at 80% 110%, rgba(15,18,20,0.04), rgba(15,18,20,0) 55%);
+  pointer-events: none;
+}
+
+.floating-elements { filter: blur(0.5px); }
+.floating-icon {
+  font-size: 18px !important;
+  opacity: 0.08 !important;
+  text-shadow: none !important;
+  filter: grayscale(100%);
+  animation: none !important; /* reduce motion and cartoon feel */
 }
 
 .login-panel, .auth-panel, .login-card, .auth-card, .login-container {
@@ -200,6 +218,35 @@ body.login, .login-page, .auth-page, .login-screen {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   padding: var(--space-7);
+}
+
+/* Brand unit refinements */
+.logo-circle {
+  background: var(--color-surface) !important;
+  color: var(--color-brand) !important;
+  border: 2px solid var(--color-brand) !important;
+  border-radius: var(--radius-pill) !important;
+  box-shadow: var(--shadow-1) !important;
+}
+.logo-circle::before { box-shadow: none !important; opacity: 0 !important; }
+.logo-text { text-shadow: none !important; }
+
+.brand-title, .brand-subtitle, .login-title, .login-subtitle {
+  text-shadow: none !important;
+  letter-spacing: -0.01em;
+  color: var(--color-text) !important;
+}
+.brand-title { font-weight: 700 !important; }
+.brand-subtitle { font-weight: 500 !important; color: var(--color-text-muted) !important; }
+.login-title { font-weight: 700 !important; }
+.login-subtitle { color: var(--color-text-muted) !important; }
+
+/* Simplify avatar/emoji icon */
+.portal-icon {
+  font-size: 24px !important;
+  filter: grayscale(100%);
+  opacity: 0.6;
+  text-shadow: none !important;
 }
 
 .login-panel header, .auth-panel header {
@@ -266,6 +313,46 @@ body.login, .login-page, .auth-page, .login-screen {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
+}
+
+/* Map existing input structure to premium style */
+.login-form, .auth-form { width: 100%; }
+.input-container {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+.input-container:focus-within {
+  border-color: var(--color-focus);
+  box-shadow:
+    0 0 0 var(--focus-outline) var(--color-surface),
+    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
+}
+.input-icon {
+  width: 24px; height: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--color-text-muted);
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.input-container input {
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+  border: none !important;
+  color: var(--color-text);
+}
+.input-container input::placeholder { color: #8a95a0; }
+.input-line {
+  height: 1px !important;
+  background: transparent !important;
 }
 
 /* Primary login button */
@@ -594,6 +681,9 @@ button:focus-visible, .btn:focus-visible {
     0 0 0 var(--focus-outline) var(--color-surface),
     0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
 }
+
+/* Reduce heavy glow around brand circle button variations that might exist */
+.login-btn::before { display: none !important; }
 
 /* Semantic variants */
 .btn-success { background: var(--color-success); color: var(--color-text-inverse); border-color: color-mix(in oklab, var(--color-success), #000 8%); }
