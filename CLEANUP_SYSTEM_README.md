@@ -306,3 +306,11 @@ npm run cleanup:ai-full
 - Utilizes current performance monitoring
 
 This comprehensive cleanup system ensures both the original Cochran Films Landing functionality and the revolutionary AI Video Editor system maintain optimal performance and data integrity. 
+
+## Recent Cleanup Notes (2025-01-09)
+
+### CSS Overflow and Absolute Normalization (Login)
+- Context: Some decorative/absolute elements were escaping the viewport on the login route, causing right-edge clipping and horizontal scroll.
+- Action: Added a scoped normalization block at the end of `styles/user-portal-theme.css` titled "LAYOUT FIXES: LOGIN + OVERFLOW/ABSOLUTE NORMALIZATION".
+- Effect: Neutralizes absolute/fixed and transform-based elements inside `#loginScreen`, prevents overflow, and disables portal-only effects on the login route without impacting `#userPortal`.
+- Cleanup Impact: Reduces visual noise and layout drift; no removal of assets required.

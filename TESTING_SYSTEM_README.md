@@ -258,3 +258,18 @@ For issues with the testing system:
 - **Error Handling**: Comprehensive error messages and recovery
 
 **Status**: 🟢 **READY FOR PRODUCTION** 
+
+## Recent UI Fixes (2025-01-09)
+
+### Login Screen Layout Normalization
+- File: `styles/user-portal-theme.css`
+- Change: Appended section "LAYOUT FIXES: LOGIN + OVERFLOW/ABSOLUTE NORMALIZATION" to center `#loginScreen`, prevent horizontal overflow, constrain the auth panel, normalize form layout, and disable portal-only effects on the login route.
+- Selectors affected: `#loginScreen`, `#userPortal`, `#email`, `#password`, `#loginError`, `.card`, `.nav-link`, `.timeline`, `.job-card`, `.dashboard-header` (login-scoped).
+- Acceptance criteria: no horizontal scroll on login, panel centered, fields fully contained, no stray pills/effects, post-login unchanged.
+
+### Manual Verification Steps
+1. Load the login page (`#loginScreen` in DOM).
+2. Verify no horizontal scrollbar; resize window to <=480px and >=768px.
+3. Confirm panel is centered and inputs/buttons are fully inside the card.
+4. Ensure `#loginError` stays within the panel without overflow.
+5. Confirm no hover sheen/particles/ripples/animations on login; confirm they still work inside `#userPortal`.
