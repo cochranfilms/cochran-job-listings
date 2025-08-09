@@ -1,3 +1,31 @@
+.login-screen .login-brand,
+.login-screen .login-form-container,
+.login-screen .login-form,
+.login-screen .form-group,
+.login-screen .input-container,
+.login-screen .login-btn {
+  position: static !important;
+}
+
+/* Kill any absolute-positioned UI rail elements inside login */
+.login-screen [style*="position: absolute"],
+.login-screen .vertical-rail,
+.login-screen .quick-actions,
+.login-screen .toolbar,
+.login-screen .rail {
+  position: static !important;
+  float: none !important;
+  inset: auto !important;
+  right: auto !important;
+  left: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+/* Ensure inputs and button are not squeezed */
+.login-screen .input-container { display: grid !important; grid-template-columns: 1fr !important; }
+.login-screen .input-container .input-icon { position: absolute; left: 12px; }
+.login-screen .login-btn { width: 100% !important; min-height: 48px !important; pointer-events: auto !important; }
 /* ==========================================================================
    Reset
    ========================================================================== */
