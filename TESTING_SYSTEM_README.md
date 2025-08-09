@@ -273,3 +273,29 @@ For issues with the testing system:
 3. Confirm panel is centered and inputs/buttons are fully inside the card.
 4. Ensure `#loginError` stays within the panel without overflow.
 5. Confirm no hover sheen/particles/ripples/animations on login; confirm they still work inside `#userPortal`.
+
+---
+
+## User Portal Authentication Update (2025-01-10)
+
+- The user portal now authenticates with Firebase (`auth.signInWithEmailAndPassword`).
+- Passwords are not stored in `users.json`. Contract signing updates Firebase credentials and only writes contract metadata to `users.json`.
+- After Firebase sign-in, the portal cross-checks the user by email via `/api/users`. Missing entries will show “Account not found in system.”
+
+### Testing Guidance
+- Use valid Firebase credentials for user portal automation.
+- Prefer clicking the submit button or dispatching a `submit` event (avoid `form.submit()` which bypasses JS handlers).
+
+Example:
+```javascript
+await page.click('button[type="submit"]');
+// or
+await page.evaluate(() => {
+  const form = document.querySelector('form');
+  form.dispatchEvent(new Event('submit', { bubbles: true }));
+});
+```
+
+### Expected Console Signals
+- `✅ User authenticated:` followed by `✅ User found in system:` after `/api/users` lookup.
+- If Firebase auth succeeds but user is missing in `users.json`, expect an error notification about account not found.

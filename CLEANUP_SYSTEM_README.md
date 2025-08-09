@@ -45,6 +45,11 @@ npm run cleanup:all
 - **Profile Cleanup**: Removal of user profile data and preferences
 - **Session Cleanup**: Clear expired user sessions and authentication data
 
+#### Authentication Cleanup (2025-01-10)
+- User authentication is handled by Firebase; do not persist plaintext `profile.password` in `users.json`.
+- Contract signing should only update contract status fields in `users.json` and ensure the Firebase account exists/updated via `/api/firebase`.
+- The user portal validates the user by email against `/api/users` after Firebase login; if missing, onboard via admin flows rather than writing a password field.
+
 #### File System Cleanup
 - **Backup Management**: Rotate and compress backup files
 - **Log Cleanup**: Archive and remove old log files

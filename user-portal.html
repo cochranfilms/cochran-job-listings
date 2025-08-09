@@ -1595,61 +1595,57 @@
 
 
 
-        // Handle login with custom authentication (not Firebase)
+        // Handle login via Firebase authentication
         async function handleLogin(event) {
             event.preventDefault();
             
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             
-            // Show loading state
             const submitBtn = event.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Signing in...';
             submitBtn.disabled = true;
             
             try {
-                // Quick user validation first (without heavy data loading)
-                const user = await validateUserQuickly(email, password);
-                
-                if (!user) {
-                    throw new Error('Invalid credentials');
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const fbUser = userCredential && userCredential.user;
+                if (!fbUser || !fbUser.email) {
+                    throw new Error('auth/user-not-found');
                 }
-                
-                // Set current user and show portal immediately
-                currentUser = user;
-                sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
-                showUserPortal();
-                
-                // Load full data in background after successful login
-                setTimeout(() => {
-                    loadUsersData().then(() => {
-                        console.log('✅ Full user data loaded in background');
-                    }).catch(error => {
-                        console.warn('⚠️ Background data loading failed:', error);
-                    });
-                }, 100);
-                
+                // After Firebase auth, ensure the user exists in our centralized system
+                await checkUserInSystem(fbUser.email);
             } catch (error) {
                 console.error('Login error:', error);
-                
-                // Handle specific errors
+                let code = error && (error.code || error.message) || '';
                 let errorMessage = 'Login failed. Please try again.';
-                if (error.message === 'User not found') {
-                    errorMessage = 'User not found. Please check your email.';
-                } else if (error.message === 'Incorrect password') {
-                    errorMessage = 'Incorrect password. Please try again.';
-                } else if (error.message === 'Invalid credentials') {
-                    errorMessage = 'Invalid email or password. Please try again.';
+                switch (code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'User not found. Please check your email.';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Incorrect password. Please try again.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Invalid email format.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Too many attempts. Please wait a moment and try again.';
+                        break;
+                    default:
+                        // Fallback for prior custom errors
+                        if (code === 'User not found') errorMessage = 'User not found. Please check your email.';
+                        if (code === 'Invalid credentials') errorMessage = 'Invalid email or password. Please try again.';
+                        break;
                 }
-                
+                // Persist a hint flag so the UI can suggest password reset on next load
+                try { sessionStorage.setItem('lastSignInError', code || 'error'); } catch(_) {}
                 const errorElement = document.getElementById('loginError');
                 if (errorElement) {
                     errorElement.textContent = errorMessage;
                     errorElement.style.display = 'block';
                 }
             } finally {
-                // Reset button state
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             }
