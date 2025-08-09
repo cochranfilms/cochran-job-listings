@@ -363,7 +363,7 @@
         "contractStatus": "pending"
       },
       "application": {
-        "status": "pending",
+        "status": "denied",
         "submittedAt": "2025-08-09T02:27:18.713Z",
         "jobTitle": "Test Job Title",
         "eventDate": "2025-10-12",
@@ -371,7 +371,8 @@
         "description": "Test Job Description",
         "phone": "4704202169",
         "portfolio": "",
-        "source": "apply-html"
+        "source": "apply-html",
+        "updatedAt": "2025-08-09T02:30:21.725Z"
       },
       "jobs": {},
       "primaryJob": null
