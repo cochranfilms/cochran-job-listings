@@ -76,7 +76,8 @@
         "location": "Atlanta Area",
         "role": "",
         "rate": "",
-        "projectType": ""
+        "projectType": "",
+        "approvedDate": "2025-08-09"
       },
       "contract": {
         "contractStatus": "pending"
@@ -93,8 +94,23 @@
         "source": "apply-html",
         "updatedAt": "2025-08-09T17:28:37.739Z"
       },
-      "jobs": {},
-      "primaryJob": null
+      "jobs": {
+        "Test Job Title": {
+          "title": "Test Job Title",
+          "date": "2025-10-12",
+          "location": "Atlanta Area",
+          "rate": "$400",
+          "description": "Test Job Description",
+          "type": "Event Coverage",
+          "status": "upcoming",
+          "listingStatus": "Active",
+          "jobRef": {
+            "source": "jobs-data",
+            "index": 2
+          }
+        }
+      },
+      "primaryJob": "Test Job Title"
     }
   },
   "statusOptions": {
