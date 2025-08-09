@@ -2827,22 +2827,42 @@
                 // Prepare job reference/details if any
                 const primaryJobId = userData.primaryJob;
                 const job = primaryJobId && userData.jobs ? userData.jobs[primaryJobId] : null;
-                const jobTitle = job?.title || 'the position';
-                const jobDate = job?.date || 'TBD';
+                const jobTitle = userData?.application?.jobTitle || job?.title || 'a Cochran Films role';
+                const projectStart = job?.date || userData?.profile?.projectDate || 'TBD';
 
+                // Send EmailJS template for jobs closed (template_jobs_closed)
                 if (typeof emailjs !== 'undefined') {
                     const params = {
+                        // Match template variable names used in Jobs-Closed.html
                         to_email: userData.profile.email,
-                        user_name: userName,
-                        job_title: jobTitle,
-                        job_date: jobDate
+                        freelancer_name: userName,
+                        job: jobTitle,
+                        project_start: projectStart,
+                        // Helpful extras commonly used by EmailJS
+                        to_name: userName,
+                        reply_to: 'info@cochranfilms.com',
+                        from_name: 'Cochran Films Admin'
                     };
                     try {
-                        await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.jobClosedTemplateId, params);
+                        console.log('📧 Sending denial email via EmailJS:', {
+                            service: EMAILJS_CONFIG.serviceId,
+                            template: EMAILJS_CONFIG.jobClosedTemplateId,
+                            to: params.to_email,
+                            job: params.job,
+                            project_start: params.project_start
+                        });
+                        await emailjs.send(
+                            EMAILJS_CONFIG.serviceId,
+                            EMAILJS_CONFIG.jobClosedTemplateId,
+                            params
+                        );
                         showNotification(`✅ Denial email sent to ${userData.profile.email}`, 'success');
                     } catch (e) {
+                        console.error('❌ EmailJS deny error:', e);
                         showNotification(`⚠️ Denial email failed: ${e.message}`, 'warning');
                     }
+                } else {
+                    console.warn('⚠️ EmailJS not available, skipping denial email');
                 }
 
                 // Move denied user to archive
