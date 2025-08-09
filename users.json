@@ -330,7 +330,8 @@
         "location": "Atlanta Area",
         "role": "",
         "rate": "",
-        "projectType": ""
+        "projectType": "",
+        "approvedDate": "2025-08-09"
       },
       "contract": {
         "contractStatus": "pending"
