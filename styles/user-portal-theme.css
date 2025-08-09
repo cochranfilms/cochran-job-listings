@@ -1115,3 +1115,44 @@ html, body { overflow-x: hidden; }
   right: auto;
   transform: none;
 }
+
+/* ---- Additional hardening for login layout (stack + hide rails) ---- */
+/* Force any container inside #loginScreen to stack rather than form rows/columns */
+#loginScreen > div,
+#loginScreen .container,
+#loginScreen .wrap,
+#loginScreen .content,
+#loginScreen [class*="row"],
+#loginScreen [class*="grid"],
+#loginScreen [class*="column"],
+#loginScreen [class^="col-"],
+#loginScreen [class*="col-"] {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Ensure the primary panel targets are blocks (stops side-by-side cards) */
+#loginScreen .card,
+#loginScreen form,
+#loginScreen > div:not(script):not(style) { display: block !important; margin-inline: auto !important; }
+
+/* Hide/neutralize quick action rails or floating icon stacks on the right */
+#loginScreen .vertical-rail,
+#loginScreen .quick-actions,
+#loginScreen .toolbar,
+#loginScreen .rail,
+#loginScreen .action-rail,
+#loginScreen .fab,
+#loginScreen .fab-container,
+#loginScreen .floating-actions {
+  display: none !important;
+}
+
+/* Make any nav links inside login non-floating and inline */
+#loginScreen .nav-link {
+  position: static !important;
+  transform: none !important;
+  float: none !important;
+  display: inline-flex !important;
+}
