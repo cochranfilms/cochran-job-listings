@@ -113,7 +113,7 @@
     (async function(){
       const sel=document.getElementById('applyJobSelect'); if(!sel) return;
       sel.innerHTML='<option value="">Select a job...</option>';
-      try{ const r=await fetch('/api/jobs-data'); const j=await r.json(); (j.jobs||[]).forEach(job=>{ const o=document.createElement('option'); o.value=job.title; o.textContent=`${job.title} — ${job.date||'TBD'} — ${job.location||'Location'}`; sel.appendChild(o); }); }catch{}
+      try{ const r=await fetch('/api/jobs-data'); const j=await r.json(); (j.jobs||[]).forEach(job=>{ const o=document.createElement('option'); o.value=job.title; o.textContent=(job.title||'Untitled Job'); sel.appendChild(o); }); }catch{}
       // If query provided applyingFor, ensure it's selected
       const q=new URLSearchParams(location.search).get('applyingFor'); if(q) sel.value=q;
     })();

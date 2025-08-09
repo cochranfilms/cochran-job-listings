@@ -3103,10 +3103,9 @@
             if (jobSelect) {
                 jobSelect.innerHTML = '<option value="">Select Job (from jobs-data)...</option>';
                 (window.jobs || []).forEach((job, idx) => {
-                    const label = `${job.title} — ${job.date || 'TBD'} — ${job.location || 'Location'}`;
                     const option = document.createElement('option');
                     option.value = String(idx);
-                    option.textContent = label;
+                    option.textContent = job.title || 'Untitled Job';
                     jobSelect.appendChild(option);
                 });
             }
