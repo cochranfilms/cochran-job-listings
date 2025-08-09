@@ -1383,6 +1383,7 @@
                 
                 const userDiv = document.createElement('div');
                 userDiv.className = 'item-card';
+                const showApproval = (user.application?.status === 'pending' && ['apply-form','apply-html','apply'].includes((user.application?.source||'').toLowerCase()));
                 userDiv.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                         <h4 style="margin: 0;">${name}</h4>
@@ -1418,8 +1419,8 @@
                         <button class="btn btn-small" onclick="downloadUserContract('${name}')">📄 Download Contract</button>
                         <button class="btn btn-small" onclick="showBankDetails('${name}')">🏦 Bank Details</button>
                         <button class="btn btn-small" onclick="showPerformanceReview('${name}')">⭐ Performance</button>
-                        <button class="btn btn-small" onclick="approveUser('${name}')">✅ Approve</button>
-                        <button class="btn btn-small btn-danger" onclick="denyUser('${name}')">⛔ Deny</button>
+                        ${showApproval ? `<button class=\"btn btn-small\" onclick=\"approveUser('${name}')\">✅ Approve</button>` : ''}
+                        ${showApproval ? `<button class=\"btn btn-small btn-danger\" onclick=\"denyUser('${name}')\">⛔ Deny</button>` : ''}
                         <button class="btn btn-small btn-danger" onclick="deleteUser('${name}')">🗑️ Delete</button>
                     </div>
                 `;
@@ -2700,6 +2701,24 @@
                 // Send job acceptance email
                 sendJobAcceptanceEmail(userName, userData);
                 
+                // If user applied via site and has a primary job, set that job listing to Inactive
+                if (['apply-form','apply-html','apply'].includes((userData.application?.source||'').toLowerCase())) {
+                    try {
+                        const primaryJobId = userData.primaryJob;
+                        const jobTitle = primaryJobId && userData.jobs ? userData.jobs[primaryJobId]?.title : null;
+                        if (jobTitle && Array.isArray(window.jobs)) {
+                            const j = window.jobs.find(j => j.title === jobTitle);
+                            if (j) {
+                                j.status = 'Inactive';
+                                displayJobs();
+                                await updateJobsOnGitHub('set-inactive', jobTitle);
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('⚠️ Could not set job inactive on approval:', err);
+                    }
+                }
+
                 // Save updated user data
                 localStorage.setItem('users', JSON.stringify(window.users));
                 await updateUsersOnGitHub();
