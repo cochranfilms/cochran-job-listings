@@ -30,7 +30,7 @@
           source: 'apply-html'
         })});
         const j = await res.json();
-        if (j.success){ showToast('Application received!'); e.target.reset(); }
+        if (j.success){ showToast('Application received!'); e.target.reset(); try{ location.reload(); }catch(_){} }
         else { showToast('Failed to submit: '+(j.error||'Unknown'), 'error'); }
       }catch(err){ showToast('Error: '+err.message, 'error'); }
     }
@@ -40,8 +40,7 @@
   <nav class="navbar">
     <div class="nav-container">
       <a href="/" class="nav-logo">
-        <img src="/Logo.png" alt="Cochran Films" style="height:28px; width:auto;" />
-        <span>Cochran Films</span>
+        <img src="/Logo.png" alt="Cochran Films" style="height:46px; width:auto;" />
       </a>
     </div>
   </nav>

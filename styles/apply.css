@@ -39,7 +39,7 @@ body {
 }
 .nav-container { max-width: 1200px; margin: 0 auto; height: 100%; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
 .nav-logo { display: flex; align-items: center; gap: 12px; color: var(--brand-gold); text-decoration: none; font-weight: 800; letter-spacing: .2px; }
-.nav-logo img { height: 30px; width: auto; filter: drop-shadow(0 6px 16px rgba(255,178,0,.25)); }
+.nav-logo img { height: 46px; width: auto; filter: drop-shadow(0 8px 20px rgba(255,178,0,.25)); }
 
 /* Page container */
 .container { max-width: 1000px; margin: 0 auto; padding: 120px 24px 56px; }
