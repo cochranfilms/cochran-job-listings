@@ -554,6 +554,81 @@ thead th {
   z-index: 1;
 }
 
+/* ========================================================================== */
+/* Splash Login Redesign (minimal, light, centered)                          */
+/* ========================================================================== */
+.login-screen { background: linear-gradient(180deg, #fbfcfe 0%, #f7f8fa 100%); }
+.login-screen .login-background { display: none !important; }
+.login-screen .login-container {
+  width: min(520px, 100%);
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: var(--radius-lg) !important;
+  padding: calc(var(--space-7) + 8px) var(--space-7) var(--space-7) var(--space-7) !important;
+}
+.login-screen .login-brand {
+  display: grid; place-items: center; gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  text-align: center;
+}
+.login-screen .logo-circle { width: 88px; height: 88px; font-size: 28px; }
+.login-screen .brand-title { font-size: clamp(24px, 2.6vw, 30px); }
+.login-screen .brand-subtitle { font-size: clamp(12px, 1.6vw, 14px); }
+.login-screen .login-title { font-size: clamp(18px, 2.0vw, 22px); }
+.login-screen .login-subtitle { margin-top: -8px; color: var(--color-text-muted) !important; }
+
+.login-screen .login-form { gap: var(--space-5) !important; }
+.login-screen .input-container { grid-template-columns: 1fr !important; padding: 0 !important; gap: 0 !important; border: none !important; background: transparent !important; }
+.login-screen .input-container .input-icon,
+.login-screen .input-line { display: none !important; }
+.login-screen .input-container input {
+  width: 100%;
+  padding: 12px 14px !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+.login-screen .input-container input:focus {
+  border-color: var(--color-focus) !important;
+  box-shadow:
+    0 0 0 var(--focus-outline) var(--color-surface),
+    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35) !important;
+}
+.login-screen .login-btn { font-weight: 700; letter-spacing: 0.02em; }
+
+/* ========================================================================== */
+/* Portal Light Theme Normalization (ensure visibility on light theme)        */
+/* ========================================================================== */
+.app-container, .main-content, .content-section { background: var(--color-bg) !important; color: var(--color-text) !important; }
+.card, .job-card, .project-card, .payment-card, .profile-card, .contract-card {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-1) !important;
+}
+.card-header, .dashboard-header { color: var(--color-text) !important; border-color: var(--color-border) !important; }
+.dashboard-header h1, .dashboard-header p { color: var(--color-text) !important; }
+
+/* Status badges tuned for light surfaces */
+.status-badge {
+  background: color-mix(in oklab, var(--color-brand) 8%, #fff) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+}
+.status-badge.status-completed, .status-badge.signed { background: color-mix(in oklab, #22c55e 16%, #fff) !important; color: #14532d !important; }
+.status-badge.status-pending { background: color-mix(in oklab, #f59e0b 14%, #fff) !important; color: #7c2d12 !important; }
+
+/* Timeline on light theme */
+.timeline { color: var(--color-text) !important; }
+.timeline::before { background: var(--color-border) !important; }
+.timeline-item::before { background: var(--color-surface) !important; border: 3px solid var(--color-border) !important; }
+.timeline-content h4 { color: var(--color-text) !important; }
+.timeline-content p { color: var(--color-text-muted) !important; }
+
 tbody td {
   border-bottom: 1px solid var(--color-border);
   padding: 12px 14px;
