@@ -2705,21 +2705,50 @@
                 // Send job acceptance email
                 sendJobAcceptanceEmail(userName, userData);
                 
-                // If user applied via site and has a primary job, set that job listing to Inactive
+                // If user applied via site, ensure their selected job is attached and set the public listing to Inactive
                 if (['apply-form','apply-html','apply'].includes((userData.application?.source||'').toLowerCase())) {
                     try {
-                        const primaryJobId = userData.primaryJob;
-                        const jobTitle = primaryJobId && userData.jobs ? userData.jobs[primaryJobId]?.title : null;
-                        if (jobTitle && Array.isArray(window.jobs)) {
-                            const j = window.jobs.find(j => j.title === jobTitle);
-                            if (j) {
-                                j.status = 'Inactive';
+                        // Resolve job title from existing primaryJob or application form
+                        let primaryJobId = userData.primaryJob;
+                        let resolvedJobTitle = (primaryJobId && userData.jobs) ? (userData.jobs[primaryJobId]?.title) : null;
+                        if (!resolvedJobTitle) {
+                            resolvedJobTitle = userData.application?.jobTitle || userData.application?.job || userData.application?.title || null;
+                        }
+
+                        // Attach the job to the user if missing
+                        if (resolvedJobTitle) {
+                            if (!userData.jobs) userData.jobs = {};
+
+                            // Use the job title as the key if we don't have a generated ID
+                            const jobKey = primaryJobId || resolvedJobTitle;
+                            const jobPublic = Array.isArray(window.jobs) ? window.jobs.find(j => j.title === resolvedJobTitle) : null;
+
+                            if (!userData.jobs[jobKey] && jobPublic) {
+                                userData.jobs[jobKey] = {
+                                    title: jobPublic.title || resolvedJobTitle,
+                                    date: jobPublic.date || userData.application?.eventDate || '',
+                                    location: jobPublic.location || userData.profile?.location || '',
+                                    rate: jobPublic.pay || jobPublic.rate || userData.profile?.rate || '',
+                                    description: jobPublic.description || userData.application?.description || '',
+                                    type: jobPublic.type || '',
+                                    status: 'upcoming',                // user-side status
+                                    listingStatus: jobPublic.status || 'Active',
+                                    jobRef: { source: 'jobs-data', index: Array.isArray(window.jobs) ? window.jobs.indexOf(jobPublic) : -1 }
+                                };
+                            }
+
+                            // Ensure primaryJob points at the attached job
+                            if (!userData.primaryJob) userData.primaryJob = jobKey;
+
+                            // Mark public job listing as Inactive and persist
+                            if (jobPublic) {
+                                jobPublic.status = 'Inactive';
                                 displayJobs();
-                                await updateJobsOnGitHub('set-inactive', jobTitle);
+                                await updateJobsOnGitHub('set-inactive', jobPublic.title || resolvedJobTitle);
                             }
                         }
                     } catch (err) {
-                        console.warn('⚠️ Could not set job inactive on approval:', err);
+                        console.warn('⚠️ Could not attach job or set inactive on approval:', err);
                     }
                 }
 
