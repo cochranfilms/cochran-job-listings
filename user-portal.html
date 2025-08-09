@@ -67,6 +67,10 @@
                 setupAuthStateObserver();
             });
 
+        // Utility: show quick toast
+        function toast(msg, type='info'){
+            try{ const el=document.createElement('div'); el.style.cssText=`position:fixed;right:16px;bottom:16px;z-index:9999;padding:10px 14px;border-radius:10px;color:#fff;background:${type==='error'?'#ef4444':type==='success'?'#22c55e':'#3b82f6'};box-shadow:0 6px 24px rgba(0,0,0,.35);font-weight:600`; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),3000);}catch(_){}}
+
         // Setup authentication state observer
         function setupAuthStateObserver() {
             auth.onAuthStateChanged(function(user) {
@@ -83,6 +87,12 @@
                 } else {
                     console.log('❌ User signed out');
                     showLoginScreen();
+                    // If sign-in just failed recently, hint the password reset path
+                    const lastErr = sessionStorage.getItem('lastSignInError');
+                    if (lastErr) {
+                        toast('Having trouble signing in? Ask admin to reset your password.', 'error');
+                        sessionStorage.removeItem('lastSignInError');
+                    }
                 }
             });
         }

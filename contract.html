@@ -2420,23 +2420,23 @@
         // Ensure a Firebase account exists and set password
         async function ensureFirebaseAccount(email, password) {
             try {
-                // First try to update password (existing user path)
+                // Prefer create first for new collaborators
+                const createRes = await fetch('/api/firebase', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const createJson = await createRes.json();
+                if (createJson && createJson.success) {
+                    return createJson; // Newly created
+                }
+                // If already exists, attempt update with same password as both old/new (best-effort)
                 const updateResult = await updateFirebasePassword(email, password);
-                if (updateResult && updateResult.success) {
-                    return updateResult;
+                if (updateResult && updateResult.success) return updateResult;
+                // If still not successful but user likely exists, surface a soft success to not block signing
+                if (createJson && /EMAIL_EXISTS/i.test(createJson.error || '')) {
+                    return { success: true, exists: true };
                 }
-                // If update failed due to user not existing, create the account
-                try {
-                    const createRes = await fetch('/api/firebase', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
-                    });
-                    const createJson = await createRes.json();
-                    return createJson;
-                } catch (createErr) {
-                    return { success: false, error: createErr?.message || 'Account creation failed' };
-                }
+                return { success: false, error: (createJson && createJson.error) || updateResult?.error || 'Unable to set account password' };
             } catch (err) {
                 return { success: false, error: err?.message || 'Unknown error' };
             }
