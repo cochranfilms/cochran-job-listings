@@ -2849,7 +2849,7 @@
             }
         }
 
-        // Deny user application and send job-closed email (server mailer)
+        // Deny user application: send job-closed email and archive the user
         async function denyUser(userName) {
             const userData = window.users[userName];
             if (!userData) {
@@ -2892,14 +2892,19 @@
                     showNotification(`⚠️ Denial email failed: ${e.message}`, 'warning');
                 }
 
-                // Optional: mark status
+                // Archive instead of leaving in active list
                 userData.application = userData.application || {};
                 userData.application.status = 'denied';
                 userData.application.updatedAt = new Date().toISOString();
-                
-                await updateUsersOnGitHub('update', userName);
+
+                window.users._archived = window.users._archived || {};
+                const archivedUser = { ...userData };
+                window.users._archived[userName] = archivedUser;
+                delete window.users[userName];
+
+                await updateUsersOnGitHub('deny', userName);
                 displayUsers();
-                showNotification(`⛔ ${userName} denied`, 'info');
+                showNotification(`⛔ ${userName} denied and archived`, 'info');
             } catch (err) {
                 console.error(err);
                 showNotification('❌ Failed to process denial', 'error');
