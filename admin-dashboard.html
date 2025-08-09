@@ -1495,6 +1495,12 @@
                 const archived = window.users._archived[userName];
                 // Restore to active users
                 window.users[userName] = archived;
+                // Ensure restored applicants return to pending state for review
+                window.users[userName].application = {
+                    ...(window.users[userName].application || {}),
+                    status: 'pending',
+                    updatedAt: new Date().toISOString(),
+                };
                 delete window.users._archived[userName];
                 // Optionally reset status back to pending
                 window.users[userName].application = window.users[userName].application || {};
@@ -2683,17 +2689,28 @@
         async function sendJobAcceptanceEmail(userName, userData) {
             try {
                 // Prepare email parameters (no contract ID until user actually signs)
-                const projectStart = (userData?.jobs && userData?.primaryJob && userData.jobs[userData.primaryJob]?.projectStart)
+                const projectStart = (userData?.jobs && userData?.primaryJob && (userData.jobs[userData.primaryJob]?.projectStart || userData.jobs[userData.primaryJob]?.date))
                     || userData?.profile?.projectDate
                     || userData?.profile?.projectStart
+                    || userData?.application?.eventDate
                     || 'TBD';
+                const jobTitle = (userData?.primaryJob && userData?.jobs?.[userData.primaryJob]?.title)
+                    || userData?.application?.jobTitle
+                    || userData?.application?.job
+                    || userData?.profile?.role
+                    || 'Contractor';
+                const rate = (userData?.primaryJob && userData?.jobs?.[userData.primaryJob]?.rate)
+                    || userData?.profile?.rate
+                    || 'Rate to be determined';
+
                 const emailParams = {
                     to_email: userData.profile.email,
                     freelancer_name: userName || 'User',
-                    role: userData.profile.role || 'Contractor',
+                    role: userData.profile.role || jobTitle || 'Contractor',
                     location: userData.profile.location || 'Atlanta Area',
-                    rate: userData.profile.rate || 'Rate to be determined',
+                    rate: rate,
                     project_start: projectStart,
+                    job: jobTitle,
                     contract_id: 'Will be generated when you sign the contract'
                 };
 
@@ -2750,11 +2767,23 @@
             }
             
             if (confirm(`Are you sure you want to approve ${userName}?\n\nThis will send them a job acceptance email with contract signing instructions.`)) {
-                // Update approval date if not set
+                // Update approval date if not set and set application status to approved
+                userData.profile = userData.profile || {};
                 if (!userData.profile.approvedDate) {
                     userData.profile.approvedDate = new Date().toISOString().split('T')[0];
                 }
+                userData.application = { ...(userData.application || {}), status: 'approved', updatedAt: new Date().toISOString() };
                 
+                // Normalize role/rate defaults for email params
+                if (!userData.profile.role) {
+                    const inferredRole = userData.application?.jobTitle || userData.application?.role || 'Contractor';
+                    userData.profile.role = inferredRole;
+                }
+                if (!userData.profile.rate) {
+                    const inferredRate = (userData.primaryJob && userData.jobs?.[userData.primaryJob]?.rate) || '$200';
+                    userData.profile.rate = inferredRate;
+                }
+
                 // Send job acceptance email
                 sendJobAcceptanceEmail(userName, userData);
                 
