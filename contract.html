@@ -2823,11 +2823,7 @@
         }
 
         async function sendUserConfirmationEmail(contractData) {
-            if (typeof emailjs === 'undefined') {
-                throw new Error('EmailJS not available');
-            }
-            
-            const userEmailParams = {
+            const variables = {
                 to_email: contractData.freelancerEmail,
                 freelancer_name: contractData.freelancerName,
                 job: getCurrentJobTitle(),
@@ -2837,11 +2833,17 @@
                 project_start: contractData.projectStart,
                 contract_id: contractData.contractId
             };
-            
-            console.log('📧 Sending user confirmation email with template:', EMAILJS_CONFIG.userTemplateId);
-            console.log('📧 User email params:', userEmailParams);
-            
-            return emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.userTemplateId, userEmailParams);
+            const resp = await fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: contractData.freelancerEmail,
+                    subject: 'Cochran Films – Contract Signed Successfully',
+                    template: 'user_confirm',
+                    variables
+                })
+            });
+            return resp.json();
         }
         
         // Send admin notification email with PDF content

@@ -2666,7 +2666,7 @@
             return password;
         }
         
-        // Send job acceptance email
+        // Send job acceptance email (server mailer)
         async function sendJobAcceptanceEmail(userName, userData) {
             try {
                 // Prepare email parameters (no contract ID until user actually signs)
@@ -2674,43 +2674,35 @@
                     || userData?.profile?.projectDate
                     || userData?.profile?.projectStart
                     || 'TBD';
-                const emailParams = {
+                const variables = {
                     to_email: userData.profile.email,
                     freelancer_name: userName || 'User',
                     role: userData.profile.role || 'Contractor',
                     location: userData.profile.location || 'Atlanta Area',
                     rate: userData.profile.rate || 'Rate to be determined',
                     project_start: projectStart,
-                    contract_id: 'Will be generated when you sign the contract'
+                    contract_id: 'Will be generated when you sign the contract',
+                    job: (userData?.jobs && userData?.primaryJob && userData.jobs[userData.primaryJob]?.title) || userData?.application?.jobTitle || ''
                 };
 
-                console.log('📧 Sending job acceptance email to:', userData.profile.email);
-
-                // Send email using EmailJS
-                if (typeof emailjs !== 'undefined') {
-                    try {
-                        const response = await emailjs.send(
-                            EMAILJS_CONFIG.serviceId, 
-                            EMAILJS_CONFIG.jobAcceptanceTemplateId, 
-                            emailParams
-                        );
-                        
-                        console.log('✅ Job acceptance email sent successfully:', response);
-                        showNotification(`✅ Email sent to ${userData.profile.email}`, 'success');
-                        
-                        // Show success message
-                        setTimeout(() => {
-                            showNotification(`🎉 User approved and email sent!\n\n📧 Email sent to: ${userData.profile.email}\n\n✅ The user will receive the job acceptance email with contract signing instructions.`, 'success');
-                        }, 1000);
-                        
-                    } catch (emailError) {
-                        console.error('❌ EmailJS error:', emailError);
-                        showNotification(`⚠️ Email failed: ${emailError.message}`, 'error');
-                    }
-                    
+                const resp = await fetch('/api/email/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: userData.profile.email,
+                        subject: 'Cochran Films – Welcome to the Team',
+                        template: 'job_acceptance',
+                        variables
+                    })
+                });
+                const j = await resp.json();
+                if (j.success) {
+                    showNotification(`✅ Email sent to ${userData.profile.email}`, 'success');
+                    setTimeout(() => {
+                        showNotification(`🎉 User approved and email sent!\n\n📧 Email sent to: ${userData.profile.email}\n\n✅ The user will receive the job acceptance email with contract signing instructions.`, 'success');
+                    }, 800);
                 } else {
-                    console.warn('⚠️ EmailJS not available, skipping email send');
-                    showNotification('✅ User saved successfully!\n\n⚠️ EmailJS not configured - please set up EmailJS to send automatic job acceptance emails.', 'warning');
+                    showNotification(`⚠️ Email failed: ${j.error || 'Unknown error'}`, 'error');
                 }
                 
             } catch (error) {
@@ -2801,7 +2793,7 @@
             }
         }
 
-        // Deny user application and send job-closed email
+        // Deny user application and send job-closed email (server mailer)
         async function denyUser(userName) {
             const userData = window.users[userName];
             if (!userData) {
@@ -2815,21 +2807,33 @@
                 const primaryJobId = userData.primaryJob;
                 const job = primaryJobId && userData.jobs ? userData.jobs[primaryJobId] : null;
                 const jobTitle = job?.title || 'the position';
-                const jobDate = job?.date || 'TBD';
+                const jobDate = job?.date || userData?.application?.eventDate || 'TBD';
 
-                if (typeof emailjs !== 'undefined') {
-                    const params = {
+                try {
+                    const variables = {
                         to_email: userData.profile.email,
-                        user_name: userName,
-                        job_title: jobTitle,
-                        job_date: jobDate
+                        freelancer_name: userName,
+                        job: jobTitle,
+                        project_start: jobDate
                     };
-                    try {
-                        await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.jobClosedTemplateId, params);
+                    const resp = await fetch('/api/email/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: userData.profile.email,
+                            subject: 'Cochran Films – Position Update',
+                            template: 'job_closed',
+                            variables
+                        })
+                    });
+                    const j = await resp.json();
+                    if (j.success) {
                         showNotification(`✅ Denial email sent to ${userData.profile.email}`, 'success');
-                    } catch (e) {
-                        showNotification(`⚠️ Denial email failed: ${e.message}`, 'warning');
+                    } else {
+                        showNotification(`⚠️ Denial email failed: ${j.error || 'Unknown error'}`, 'warning');
                     }
+                } catch(e) {
+                    showNotification(`⚠️ Denial email failed: ${e.message}`, 'warning');
                 }
 
                 // Optional: mark status
