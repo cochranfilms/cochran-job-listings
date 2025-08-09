@@ -3886,7 +3886,7 @@
             modal.remove();
         }
 
-        // Download user contract - Generate PDF on-the-fly
+        // Download user contract - Prefer stored PDF from /contracts when available, fallback to PDF generation
         async function downloadUserContract(userName) {
             console.log('🔍 downloadUserContract function called with:', userName);
             
@@ -3925,9 +3925,21 @@
             const userContract = userData.contract;
             console.log('📄 Contract data from centralized system:', userContract);
             
-            // Check if contract is signed
+            // If a fileUrl exists (uploaded), download directly from API
+            if (userContract.fileUrl || userContract.contractStatus === 'uploaded') {
+                try {
+                    const guessedFile = `${userName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`;
+                    const dlUrl = `/api/contracts?filename=${encodeURIComponent(guessedFile)}`;
+                    window.open(dlUrl, '_blank');
+                    showNotification('⬇️ Downloading signed contract PDF...', 'success');
+                    return;
+                } catch (openErr) {
+                    console.warn('⚠️ Could not open direct contract download, falling back to PDF generation:', openErr);
+                }
+            }
+            // Otherwise require a signed status before generating
             if (userContract.contractStatus !== 'signed') {
-                console.log('❌ Contract not signed yet for user:', userName);
+                console.log('❌ Contract not signed or uploaded yet for user:', userName);
                 showNotification('Contract not signed yet for user', 'error');
                 return;
             }

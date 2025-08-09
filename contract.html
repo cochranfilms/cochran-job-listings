@@ -2598,6 +2598,13 @@
                     console.warn('⚠️ PDF upload failed (contract still signed):', uploadError);
                 }
                 
+                // Persist contract status to users.json (includes file URL when available)
+                try {
+                    await updateUsersJsonWithPassword(signedContractData);
+                } catch (jsonUpdateErr) {
+                    console.warn('⚠️ Could not update users.json with contract status:', jsonUpdateErr);
+                }
+
                 updateNotificationProgress('Sending confirmation emails...', 90);
                 
                 // Contract data saved to GitHub (no local backup needed)
@@ -2721,9 +2728,16 @@
                     }
                     
                     // Update only contract status metadata; never store passwords
-                    users[userKey].contract.contractStatus = 'signed';
+                    const fileUrl = contractData?.uploadedContract?.githubUrl || null;
+                    users[userKey].contract.contractStatus = fileUrl ? 'uploaded' : 'signed';
                     users[userKey].contract.contractSignedDate = contractData.signedDateTime;
+                    if (fileUrl) {
+                        users[userKey].contract.contractUploadedDate = new Date().toISOString();
+                        users[userKey].contract.fileUrl = fileUrl;
+                    }
                     users[userKey].contract.contractId = contractData.contractId;
+                    // Ensure profile basics exist for downstream emails
+                    users[userKey].profile.approvedDate = users[userKey].profile.approvedDate || new Date().toISOString().split('T')[0];
                     
                     // Update the JSON structure
                     const updatedUsersData = {
@@ -2734,7 +2748,10 @@
                     };
                     
                     // Update users.json on GitHub directly
-                    await updateGitHubFile('users.json', JSON.stringify(updatedUsersData, null, 2), `Update users.json - Contract signed by ${contractData.freelancerName} - ${new Date().toLocaleString()}`);
+                    const commitMsg = fileUrl
+                        ? `Update users.json - Contract uploaded for ${contractData.freelancerName}`
+                        : `Update users.json - Contract signed by ${contractData.freelancerName}`;
+                    await updateGitHubFile('users.json', JSON.stringify(updatedUsersData, null, 2), `${commitMsg} - ${new Date().toLocaleString()}`);
                     
                     console.log('✅ Users.json updated on GitHub with password and contract status');
                     
