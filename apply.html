@@ -50,21 +50,21 @@
       <p class="lead">Submit your info and we’ll review. You’ll appear in the admin queue as pending. Approval will attach a job and send onboarding automatically.</p>
       <form class="grid-1" onsubmit="submitApplication(event)">
         <div class="grid">
-          <div>
+          <div class="form-group">
             <label>Full Name</label>
             <input name="fullName" required />
           </div>
-          <div>
+          <div class="form-group">
             <label>Email</label>
             <input type="email" name="email" required />
           </div>
         </div>
         <div class="grid">
-          <div>
+          <div class="form-group">
             <label>Phone</label>
             <input name="phone" />
           </div>
-          <div>
+          <div class="form-group">
             <label>Location</label>
             <input name="location" placeholder="City, State" />
           </div>
@@ -109,13 +109,36 @@
       const set=(n)=>{const el=document.querySelector(`[name="${n}"]`); if(el&&p.get(n)) el.value=p.get(n);};
       ['fullName','email','phone','location','applyingFor','eventDate','pay','description','portfolio'].forEach(set);
     })();
-    // Populate job dropdown from jobs-data
+    // Populate job dropdown from jobs-data and lock prefilled fields
     (async function(){
       const sel=document.getElementById('applyJobSelect'); if(!sel) return;
       sel.innerHTML='<option value="">Select a job...</option>';
-      try{ const r=await fetch('/api/jobs-data'); const j=await r.json(); (j.jobs||[]).forEach(job=>{ const o=document.createElement('option'); o.value=job.title; o.textContent=(job.title||'Untitled Job'); sel.appendChild(o); }); }catch{}
+      const jobsIndex = {};
+      try{ const r=await fetch('/api/jobs-data'); const j=await r.json(); (j.jobs||[]).forEach(job=>{ const o=document.createElement('option'); o.value=job.title; o.textContent=(job.title||'Untitled Job'); sel.appendChild(o); jobsIndex[job.title]=job; }); }catch{}
       // If query provided applyingFor, ensure it's selected
-      const q=new URLSearchParams(location.search).get('applyingFor'); if(q) sel.value=q;
+      const q=new URLSearchParams(location.search).get('applyingFor'); if(q) { sel.value=q; }
+
+      const lock = (el, val)=>{ if(!el) return; el.value = val || ''; el.readOnly = true; el.classList.add('locked'); el.addEventListener('input', ()=>{ el.value = val || ''; }); };
+      let currentJob = null;
+      const applyPrefill = (title)=>{
+        const job = jobsIndex[title];
+        if(!job) return;
+        currentJob = job;
+        const ev = document.querySelector('[name="eventDate"]');
+        const loc = document.querySelector('[name="location"]');
+        const pay = document.querySelector('[name="pay"]');
+        const desc = document.querySelector('[name="description"]');
+        lock(ev, job.date || '');
+        lock(loc, job.location || '');
+        lock(pay, job.pay || '');
+        lock(desc, job.description || '');
+      };
+
+      sel.addEventListener('change', (e)=>{ if(e.target.value) applyPrefill(e.target.value); });
+      if (q) applyPrefill(q);
+
+      // Override payload with locked job data to ensure integrity
+      window.__getCurrentJobPrefill = ()=> currentJob;
     })();
   </script>
 </body>

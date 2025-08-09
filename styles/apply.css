@@ -81,6 +81,7 @@ h1 {
   outline: none;
   transition: border-color .2s ease, box-shadow .2s ease, transform .12s ease;
 }
+.form-group input.locked, .form-group textarea.locked { opacity: .9; background: linear-gradient(180deg, rgba(10,10,10,.45), rgba(10,10,10,.35)); cursor: not-allowed; }
 .form-group input::placeholder, .form-group textarea::placeholder { color: rgba(255,255,255,.35); }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   border-color: var(--brand-gold);
