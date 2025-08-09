@@ -1,30 +1,32 @@
 {
   "users": {
-    "Cody Cochran": {
-      "profile": {
-        "email": "codylcochran87@gmail.com",
-        "location": "Atlanta Area",
-        "role": "",
-        "rate": "",
-        "projectType": ""
-      },
-      "contract": {
-        "contractStatus": "pending"
-      },
-      "application": {
-        "status": "denied",
-        "submittedAt": "2025-08-09T04:22:05.874Z",
-        "jobTitle": "Test Job Title",
-        "eventDate": "2025-10-12",
-        "pay": "$400",
-        "description": "Test Job Description",
-        "phone": "4704202169",
-        "portfolio": "https://www.cochranfilms.com",
-        "source": "apply-html",
-        "updatedAt": "2025-08-09T04:24:07.835Z"
-      },
-      "jobs": {},
-      "primaryJob": null
+    "_archived": {
+      "Cody Cochran": {
+        "profile": {
+          "email": "codylcochran87@gmail.com",
+          "location": "Atlanta Area",
+          "role": "",
+          "rate": "",
+          "projectType": ""
+        },
+        "contract": {
+          "contractStatus": "pending"
+        },
+        "application": {
+          "status": "denied",
+          "submittedAt": "2025-08-09T04:22:05.874Z",
+          "jobTitle": "Test Job Title",
+          "eventDate": "2025-10-12",
+          "pay": "$400",
+          "description": "Test Job Description",
+          "phone": "4704202169",
+          "portfolio": "https://www.cochranfilms.com",
+          "source": "apply-html",
+          "updatedAt": "2025-08-09T04:45:09.258Z"
+        },
+        "jobs": {},
+        "primaryJob": null
+      }
     }
   },
   "statusOptions": {
