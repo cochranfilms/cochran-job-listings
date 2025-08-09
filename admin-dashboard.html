@@ -570,6 +570,13 @@
                                 <!-- Users will be loaded here -->
                             </div>
                         </div>
+
+                        <div class="form-section">
+                            <h3>Archived Applicants</h3>
+                            <div class="item-list" id="archivedUsersList">
+                                <!-- Archived users will be loaded here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1369,9 +1376,10 @@
                 window.users = {};
             }
             displayUsers();
+            displayArchivedUsers();
         }
 
-        // Display users (unified display)
+        // Display active users (exclude archived/meta keys)
         function displayUsers() {
             const usersList = document.getElementById('usersList');
             
@@ -1379,7 +1387,9 @@
                 usersList.innerHTML = '';
             }
 
-            Object.keys(window.users).forEach((name, index) => {
+            Object.keys(window.users)
+                .filter(name => name !== '_archived' && !name.startsWith('_'))
+                .forEach((name, index) => {
                 const user = window.users[name];
                 
                 const userDiv = document.createElement('div');
@@ -1427,6 +1437,80 @@
                 `;
                 usersList.appendChild(userDiv);
             });
+        }
+
+        // Display archived users
+        function displayArchivedUsers() {
+            const archivedList = document.getElementById('archivedUsersList');
+            if (!archivedList) return;
+            archivedList.innerHTML = '';
+
+            const archivedUsers = (window.users && window.users._archived) ? window.users._archived : {};
+            const names = Object.keys(archivedUsers);
+
+            if (names.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'item-card';
+                empty.innerHTML = '<div class="item-description">No archived applicants</div>';
+                archivedList.appendChild(empty);
+                return;
+            }
+
+            names.forEach((name) => {
+                const user = archivedUsers[name] || {};
+                const userDiv = document.createElement('div');
+                userDiv.className = 'item-card';
+                userDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <h4 style="margin: 0;">${name}</h4>
+                        <span style="background:#6b7280;color:#fff;padding:0.25rem 0.75rem;border-radius:12px;font-size:0.8rem;">Archived</span>
+                    </div>
+                    <div class="item-meta">
+                        <span>📧 ${user.profile?.email || 'Email not specified'}</span>
+                        <span>🎭 ${user.profile?.role || 'Role not set'}</span>
+                        <span>📍 ${user.profile?.location || 'Location not specified'}</span>
+                        <span>🕒 ${user.application?.updatedAt ? new Date(user.application.updatedAt).toLocaleString() : '—'}</span>
+                    </div>
+                    <div class="item-actions" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        <button class="btn btn-small" onclick="viewArchivedUserDetails('${name}')">👤 View Details</button>
+                        <button class="btn btn-small" onclick="restoreUser('${name}')">↩️ Restore</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteUser('${name}', true)">🗑️ Delete</button>
+                    </div>
+                `;
+                archivedList.appendChild(userDiv);
+            });
+        }
+
+        function viewArchivedUserDetails(userName) {
+            const user = (window.users && window.users._archived) ? window.users._archived[userName] : null;
+            if (!user) return showNotification('Archived user not found', 'error');
+            alert(`Archived Applicant\n\nName: ${userName}\nEmail: ${user.profile?.email || 'N/A'}\nRole: ${user.profile?.role || 'N/A'}\nStatus: ${user.application?.status || 'denied'}`);
+        }
+
+        async function restoreUser(userName) {
+            try {
+                if (!window.users || !window.users._archived || !window.users._archived[userName]) {
+                    return showNotification('Archived user not found', 'error');
+                }
+                const archived = window.users._archived[userName];
+                // Restore to active users
+                window.users[userName] = archived;
+                delete window.users._archived[userName];
+                // Optionally reset status back to pending
+                window.users[userName].application = window.users[userName].application || {};
+                if (window.users[userName].application.status === 'denied') {
+                    window.users[userName].application.status = 'pending';
+                    window.users[userName].application.updatedAt = new Date().toISOString();
+                }
+                await updateUsersOnGitHub('restore', userName);
+                displayUsers();
+                displayArchivedUsers();
+                updateStats();
+                showNotification(`✅ Restored ${userName} to active users`, 'success');
+            } catch (e) {
+                console.error(e);
+                showNotification('Failed to restore user', 'error');
+            }
         }
 
 
@@ -1839,93 +1923,62 @@
             }
         }
 
-        // Delete user (archive instead of hard delete)
-        async function deleteUser(name) {
-            if (confirm(`Are you sure you want to delete ${name}?`)) {
-                try {
-                    const userData = window.users[name];
-                    const userEmail = userData?.profile?.email;
-                    const contractId = userData?.contract?.contractId;
-                    const contractFileName = userData?.contract?.fileName;
-                    
-                    let firebaseDeleted = false;
-                    let firebaseMessage = '';
-                    let pdfDeleted = false;
-                    let pdfMessage = '';
-                    
-                    // 1. Delete associated PDF file if contract exists
-                    if (contractFileName) {
-                        try {
-                            console.log(`🗑️ Attempting to delete PDF: ${contractFileName}`);
-                            const deletePdfResponse = await fetch('/api/delete-pdf', {
-                                method: 'DELETE',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    filename: contractFileName
-                                })
-                            });
-                            
-                            if (deletePdfResponse.ok) {
-                                const pdfResult = await deletePdfResponse.json();
-                                console.log('✅ PDF file deleted successfully:', pdfResult);
-                                pdfDeleted = true;
-                                pdfMessage = 'PDF file deleted from server.';
-                            } else {
-                                console.warn('⚠️ PDF deletion request failed:', deletePdfResponse.status);
-                                pdfMessage = 'PDF file may still exist on server.';
-                            }
-                        } catch (pdfError) {
-                            console.warn('⚠️ Could not delete PDF file:', pdfError);
-                            pdfMessage = 'PDF file may still exist.';
+        // Delete user (hard delete from active or archive)
+        async function deleteUser(name, isArchived = false) {
+            if (!confirm(`Are you sure you want to permanently delete ${name}? This cannot be undone.`)) return;
+            try {
+                const userData = isArchived ? (window.users._archived?.[name]) : window.users[name];
+                const userEmail = userData?.profile?.email;
+                let firebaseMessage = '';
+                let pdfMessage = '';
+
+                // Clean up PDF if any
+                if (userData?.contract?.contractId || userData?.contract?.fileName) {
+                    try {
+                        const fileName = userData.contract.fileName;
+                        const method = fileName ? 'DELETE' : 'POST';
+                        const body = fileName ? { filename: fileName } : { contractId: userData.contract.contractId };
+                        const deletePdfResponse = await fetch('/api/delete-pdf', {
+                            method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body)
+                        });
+                        if (deletePdfResponse.ok) {
+                            pdfMessage = 'Contract PDF deleted.';
                         }
-                    }
-                    
-                    // 2. Delete from Firebase (if email exists)
-                    if (userEmail) {
-                        try {
-                            const firebaseResult = await deleteFirebaseAccount(userEmail);
-                            if (firebaseResult.success) {
-                                console.log('✅ Firebase account deleted for:', userEmail);
-                                firebaseDeleted = true;
-                                firebaseMessage = 'Removed from Firebase and GitHub.';
-                            } else {
-                                console.warn('⚠️ Firebase account deletion limited:', firebaseResult.error);
-                                firebaseMessage = firebaseResult.message || 'Firebase account may still exist.';
-                            }
-                        } catch (firebaseError) {
-                            console.warn('⚠️ Could not delete Firebase account:', firebaseError);
-                            firebaseMessage = 'Firebase account may still exist.';
-                        }
-                    }
-                    
-                    // 3. Archive instead of delete
-                    window.users._archived = window.users._archived || {};
-                    const archived = { ...userData };
-                    archived.application = { ...(archived.application||{}), status: 'denied', updatedAt: new Date().toISOString() };
-                    window.users._archived[name] = archived;
-                    delete window.users[name];
-                    
-                    // 4. Update GitHub repository
-                    await updateUsersOnGitHub('delete', name);
-                    
-                    // 5. Refresh display
-                    displayUsers();
-                    updateStats();
-                    
-                    // 6. Show comprehensive success message
-                    let successMessage = `✅ User "${name}" archived successfully!`;
-                    if (firebaseDeleted) successMessage += ` ${firebaseMessage}`;
-                    if (pdfDeleted) successMessage += ` ${pdfMessage}`;
-                    
-                    showNotification(successMessage, 'success');
-                    
-                } catch (error) {
-                    console.error('❌ Error deleting user:', error);
-                    showNotification(`❌ Error archiving user: ${error.message}`, 'error');
-                    displayUsers(); // Still update the display
+                    } catch(_) {}
                 }
+
+                // Remove Firebase account if present
+                if (userEmail) {
+                    try {
+                        const firebaseResult = await deleteFirebaseAccount(userEmail);
+                        if (firebaseResult.success) {
+                            firebaseMessage = 'Firebase account removed.';
+                        }
+                    } catch(_) {}
+                }
+
+                // Remove from in-memory object
+                if (isArchived) {
+                    if (window.users._archived) delete window.users._archived[name];
+                } else {
+                    delete window.users[name];
+                }
+
+                // Persist to GitHub and refresh
+                await updateUsersOnGitHub('hard-delete', name);
+                displayUsers();
+                displayArchivedUsers();
+                updateStats();
+
+                let msg = `🗑️ Deleted ${name} permanently.`;
+                if (firebaseMessage) msg += ` ${firebaseMessage}`;
+                if (pdfMessage) msg += ` ${pdfMessage}`;
+                showNotification(msg, 'success');
+            } catch (error) {
+                console.error('❌ Error deleting user:', error);
+                showNotification(`Failed to delete user: ${error.message}`, 'error');
             }
         }
 
@@ -2761,7 +2814,7 @@
             }
         }
 
-        // Deny user application and send job-closed email
+        // Deny user application and send job-closed email (move to archive)
         async function denyUser(userName) {
             const userData = window.users[userName];
             if (!userData) {
@@ -2792,14 +2845,18 @@
                     }
                 }
 
-                // Optional: mark status
-                userData.application = userData.application || {};
-                userData.application.status = 'denied';
-                userData.application.updatedAt = new Date().toISOString();
-                
-                await updateUsersOnGitHub('update', userName);
+                // Move denied user to archive
+                window.users._archived = window.users._archived || {};
+                const archivedCopy = { ...userData };
+                archivedCopy.application = { ...(archivedCopy.application || {}), status: 'denied', updatedAt: new Date().toISOString() };
+                window.users._archived[userName] = archivedCopy;
+                delete window.users[userName];
+
+                await updateUsersOnGitHub('deny->archive', userName);
                 displayUsers();
-                showNotification(`⛔ ${userName} denied`, 'info');
+                displayArchivedUsers();
+                updateStats();
+                showNotification(`⛔ ${userName} denied and moved to archive`, 'info');
             } catch (err) {
                 console.error(err);
                 showNotification('❌ Failed to process denial', 'error');
@@ -3410,48 +3467,58 @@
             });
         }
 
-        // Delete user (FIXED - Now persists to server)
+        // Delete user (unified - handles active or archived)
         async function deleteUser(userName) {
-            if (confirm(`Are you sure you want to delete ${userName}?`)) {
+            if (!confirm(`Are you sure you want to permanently delete ${userName}? This cannot be undone.`)) return false;
+            try {
+                // Determine if user is archived
+                const isArchived = !!(window.users && window.users._archived && window.users._archived[userName]);
+                const userData = isArchived ? window.users._archived[userName] : window.users[userName];
+                if (!userData) throw new Error(`User ${userName} not found`);
+
+                showNotification('Deleting user...', 'info');
+
+                // Attempt PDF cleanup
                 try {
-                    // Show loading state
-                    showNotification('Deleting user...', 'info');
-                    
-                    // Get current users from server
-                    const response = await fetch('users.json');
-                    if (!response.ok) {
-                        throw new Error('Failed to load current users');
+                    const contract = userData.contract || {};
+                    if (contract.fileName || contract.contractId) {
+                        const fileName = contract.fileName;
+                        const method = fileName ? 'DELETE' : 'POST';
+                        const body = fileName ? { filename: fileName } : { contractId: contract.contractId };
+                        await fetch('/api/delete-pdf', {
+                            method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body)
+                        });
                     }
-                    
-                    const data = await response.json();
-                    const currentUsers = data.users || {};
-                    
-                    // Check if user exists
-                    if (!currentUsers[userName]) {
-                        throw new Error(`User ${userName} not found`);
-                    }
-                    
-                    // Delete the user
-                    delete currentUsers[userName];
-                    console.log(`🗑️ Deleted ${userName} from users object`);
-                    
-                                // Update GitHub repository
-            await updateUsersOnGitHub('delete', userName);
-            
-            // Update local state
-            window.users = currentUsers;
-            displayUsers();
-            updateStats();
-            
-            showNotification(`User ${userName} deleted successfully and persisted to GitHub`, 'success');
-            return true;
-                } catch (error) {
-                    console.error('❌ Error deleting user:', error);
-                    showNotification(`Failed to delete user: ${error.message}`, 'error');
-                    return false;
+                } catch(_) {}
+
+                // Attempt Firebase deletion
+                try {
+                    const email = userData.profile?.email;
+                    if (email) await deleteFirebaseAccount(email);
+                } catch(_) {}
+
+                // Remove from data
+                if (isArchived) {
+                    delete window.users._archived[userName];
+                } else {
+                    delete window.users[userName];
                 }
+
+                // Persist and refresh
+                await updateUsersOnGitHub('hard-delete', userName);
+                displayUsers();
+                if (typeof displayArchivedUsers === 'function') displayArchivedUsers();
+                updateStats();
+
+                showNotification(`🗑️ Deleted ${userName} permanently.`, 'success');
+                return true;
+            } catch (error) {
+                console.error('❌ Error deleting user:', error);
+                showNotification(`Failed to delete user: ${error.message}`, 'error');
+                return false;
             }
-            return false;
         }
 
         // Show bank details with encryption

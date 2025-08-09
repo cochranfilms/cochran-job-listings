@@ -191,7 +191,7 @@ body.login, .login-page, .auth-page, .login-screen {
   padding: var(--space-7) var(--space-6);
 }
 
-.login-panel, .auth-panel, .login-card, .auth-card {
+.login-panel, .auth-panel, .login-card, .auth-card, .login-container {
   width: min(500px, 100%);
   background: var(--glass-surface);
   border: 1px solid var(--glass-border);
@@ -334,7 +334,7 @@ nav, .nav, .navbar {
   padding-inline: var(--space-6);
 }
 
-.nav a, .navbar a, .nav .item {
+.nav a, .navbar a, .nav .item, .nav-menu .nav-link {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -346,11 +346,11 @@ nav, .nav, .navbar {
   transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
-.nav a:hover, .navbar a:hover, .nav .item:hover {
+.nav a:hover, .navbar a:hover, .nav .item:hover, .nav-menu .nav-link:hover {
   background: var(--color-surface-2);
 }
 
-.nav .active, .navbar .active, .nav a[aria-current="page"] {
+.nav .active, .navbar .active, .nav a[aria-current="page"], .nav-menu .nav-link.active {
   color: var(--color-text);
   background: color-mix(in oklab, var(--color-brand) 18%, #fff);
   border-bottom: 2px solid var(--color-brand);
@@ -551,6 +551,14 @@ button:focus-visible, .btn:focus-visible {
 }
 .btn-outline:hover { background: var(--color-surface-2); }
 
+/* Secondary (neutral outline) */
+.btn-secondary, button.btn-secondary, .button-secondary {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.btn-secondary:hover { background: var(--color-surface-2); }
+
 /* Ghost / Subtle */
 .btn-ghost, .button-ghost, button.ghost {
   background: transparent;
@@ -559,6 +567,33 @@ button:focus-visible, .btn:focus-visible {
   box-shadow: none;
 }
 .btn-ghost:hover { background: var(--color-surface-2); }
+
+/* Login primary button (maps to existing markup) */
+.login-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-brand);
+  color: var(--color-brand-contrast);
+  border: 1px solid color-mix(in oklab, var(--color-brand), #000 8%);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  will-change: transform;
+}
+.login-btn:hover { background: var(--color-brand-strong); box-shadow: var(--shadow-2); }
+.login-btn:active { transform: translateY(0.5px); box-shadow: var(--shadow-1); }
+.login-btn:focus-visible {
+  outline: var(--focus-outline) solid var(--color-focus);
+  outline-offset: 0;
+  box-shadow:
+    0 0 0 var(--focus-outline) var(--color-surface),
+    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
+}
 
 /* Semantic variants */
 .btn-success { background: var(--color-success); color: var(--color-text-inverse); border-color: color-mix(in oklab, var(--color-success), #000 8%); }
