@@ -74,8 +74,8 @@
       "profile": {
         "email": "codylcochran89@gmail.com",
         "location": "Atlanta Area",
-        "role": "",
-        "rate": "",
+        "role": "Test Job Title",
+        "rate": "$400",
         "projectType": "",
         "approvedDate": "2025-08-09"
       },
@@ -83,7 +83,7 @@
         "contractStatus": "pending"
       },
       "application": {
-        "status": "pending",
+        "status": "approved",
         "submittedAt": "2025-08-09T17:25:27.704Z",
         "jobTitle": "Test Job Title",
         "eventDate": "2025-10-12",
@@ -92,7 +92,7 @@
         "phone": "4704202169",
         "portfolio": "https://www.cochranfilms.com",
         "source": "apply-html",
-        "updatedAt": "2025-08-09T17:28:37.739Z"
+        "updatedAt": "2025-08-09T17:40:31.523Z"
       },
       "jobs": {
         "Test Job Title": {
