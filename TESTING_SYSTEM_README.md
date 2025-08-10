@@ -299,3 +299,17 @@ await page.evaluate(() => {
 ### Expected Console Signals
 - `✅ User authenticated:` followed by `✅ User found in system:` after `/api/users` lookup.
 - If Firebase auth succeeds but user is missing in `users.json`, expect an error notification about account not found.
+
+---
+
+## Dashboard Metrics Logic Update (2025-08-10)
+
+- The Admin Dashboard `Total Creators` metric now counts only active users, excluding `_archived` and any underscore-prefixed keys in `users`.
+- `Pending Reviews` and `Signed Contracts` metrics are also computed from active users only.
+
+### Manual Verification
+1. Ensure `users.json` contains an `_archived` section with one or more users and at least one active user at the root.
+2. Load the admin dashboard and verify:
+   - `Total Creators` equals the number of active (non-archived) users.
+   - `Signed Contracts` reflects signed contracts among active users only.
+   - `Pending Reviews` excludes archived users.

@@ -971,18 +971,26 @@
 
         // Update stats
         function updateStats() {
-            document.getElementById('totalCreators').textContent = Object.keys(window.users).length;
-            document.getElementById('activeJobs').textContent = window.jobs.filter(job => job.status === 'Active').length;
+            // Only count active users (exclude `_archived` and any underscore-prefixed keys)
+            const activeUserNames = Object.keys(window.users || {})
+                .filter(name => name !== '_archived' && !name.startsWith('_'));
+            const activeUsers = activeUserNames.map(name => window.users[name]);
+
+            // Total creators = active users only
+            document.getElementById('totalCreators').textContent = activeUserNames.length;
+
+            // Active jobs from jobs dataset
+            document.getElementById('activeJobs').textContent = (window.jobs || []).filter(job => job.status === 'Active').length;
             
-            // Count pending reviews (users who haven't been reviewed yet)
-            const pendingReviews = Object.keys(window.users).filter(userName => {
-                const user = window.users[userName];
-                // Consider a user as needing review if they have a contract but no review data
-                return user.contract?.contractStatus === 'signed' && !user.performanceReview;
+            // Count pending reviews (active users who have a signed contract but no review data)
+            const pendingReviews = activeUsers.filter(user => {
+                return user?.contract?.contractStatus === 'signed' && !user?.performanceReview;
             }).length;
-            
             document.getElementById('pendingReviews').textContent = pendingReviews;
-            document.getElementById('totalContracts').textContent = Object.keys(window.users).length;
+
+            // Signed contracts among active users
+            const signedContracts = activeUsers.filter(user => user?.contract?.contractStatus === 'signed').length;
+            document.getElementById('totalContracts').textContent = signedContracts;
         }
 
         // Load existing jobs

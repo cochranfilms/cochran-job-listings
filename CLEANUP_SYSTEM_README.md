@@ -319,3 +319,11 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
 - Action: Added a scoped normalization block at the end of `styles/user-portal-theme.css` titled "LAYOUT FIXES: LOGIN + OVERFLOW/ABSOLUTE NORMALIZATION".
 - Effect: Neutralizes absolute/fixed and transform-based elements inside `#loginScreen`, prevents overflow, and disables portal-only effects on the login route without impacting `#userPortal`.
 - Cleanup Impact: Reduces visual noise and layout drift; no removal of assets required.
+
+---
+
+## Data Hygiene: Archived Users Exclusion (2025-08-10)
+
+- Dashboard metrics now intentionally exclude users in the `_archived` bucket and any underscore-prefixed keys in `users`.
+- When cleaning datasets, ensure archived users remain under `users._archived` to keep counts accurate.
+- If restoring a user, move their record from `users._archived` back to the root and remove any leading-underscore keys.
