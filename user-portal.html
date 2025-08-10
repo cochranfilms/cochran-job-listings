@@ -1633,8 +1633,11 @@
         }
 
         // Handle login via Firebase authentication (with optional dev fallback)
+        let isLoggingIn = false;
         async function handleLogin(event) {
             event.preventDefault();
+            if (isLoggingIn) return;
+            isLoggingIn = true;
             
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -1695,6 +1698,7 @@
             } finally {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
+                isLoggingIn = false;
             }
         }
 
@@ -1804,11 +1808,39 @@
             }
         }
 
+        // Utility to update welcome name with retries
+        function updateWelcomeName() {
+            const tryUpdate = (attemptsLeft) => {
+                const el = document.getElementById('userName') || document.querySelector('#userPortal #userName')
+                    || document.querySelector('.user-name') || document.querySelector('[data-user-name]') || document.querySelector('h1 span');
+                if (el && currentUser && currentUser.name) {
+                    el.textContent = currentUser.name;
+                    return true;
+                }
+                if (attemptsLeft > 0) {
+                    requestAnimationFrame(() => tryUpdate(attemptsLeft - 1));
+                } else {
+                    console.warn('⚠️ userName element not found in DOM after retries');
+                }
+                return false;
+            };
+            tryUpdate(10);
+        }
+
         // Show user portal
         function showUserPortal() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('userPortal').style.display = 'block';
-            loadUserData();
+            const loginEl = document.getElementById('loginScreen');
+            const portalEl = document.getElementById('userPortal');
+            if (loginEl) loginEl.style.display = 'none';
+            if (portalEl) portalEl.style.display = 'block';
+            // Defer data/UI updates to next frame to ensure DOM is painted
+            requestAnimationFrame(() => {
+                updateWelcomeName();
+                // Small defer to ensure data loads against visible DOM
+                setTimeout(() => {
+                    loadUserData();
+                }, 0);
+            });
             
             // Initialize creative features after portal is shown
             setTimeout(() => {
@@ -1872,7 +1904,7 @@
             await checkAutomaticProjectStatusUpdates();
 
             // Update welcome message
-            const userNameElement = document.getElementById('userName');
+            const userNameElement = document.getElementById('userName') || document.querySelector('#userPortal #userName');
             if (userNameElement) {
                 userNameElement.textContent = currentUser.name;
             } else {
@@ -1895,21 +1927,15 @@
                 }
                 
                 if (!found) {
-                    console.warn('⚠️ userName element not found in DOM');
-                    // Try again after a short delay in case DOM isn't ready
-                    setTimeout(() => {
-                        const retryElement = document.getElementById('userName');
-                        if (retryElement) {
-                            retryElement.textContent = currentUser.name;
-                            console.log('✅ userName element updated on retry');
-                        }
-                    }, 100);
+                    updateWelcomeName();
                 }
             }
             
             // Display user info
             displayUserInfo();
             displayUserContracts();
+            // Also update the simplified contracts card renderer if present
+            try { if (typeof displayContracts === 'function') displayContracts(); } catch(_) {}
             displayUserJobs();
             displayUserPerformanceReviews();
         }
