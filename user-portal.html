@@ -152,8 +152,8 @@
             return review;
         }
 
-        // Load freelancer data from JSON file
-        async function loadUsersData() {
+        // Load freelancer data from JSON file (legacy duplicate - renamed to avoid shadowing)
+        async function loadUsersData_legacyNeverUsed() { // UNUSED shim to avoid duplicate definition
             try {
                 console.log('🔄 Loading users data...');
                 
@@ -1547,51 +1547,13 @@
             }
         }
 
-        // Get user's contract status from centralized system
-        function getUserContractStatus(userEmail, jobId = null) {
-            console.log('🔍 Getting contract status for user:', currentUser?.name);
-            console.log('📄 Current user structure:', currentUser);
-            
-            // Check if current user has contract data in centralized system
-            if (!currentUser) {
-                console.log('❌ No current user found');
-                return null;
+        // Get user's contract status from centralized system (legacy duplicate - renamed)
+        function getUserContractStatus_legacy(userEmail, jobId = null) {
+            // Delegate to the primary implementation defined later in the file
+            if (typeof getUserContractStatus === 'function') {
+                return getUserContractStatus(userEmail, jobId);
             }
-            
-            // The contract data is flattened on currentUser (not nested)
-            // Based on the data loading process, contract data is flattened like this:
-            // contractStatus, contractSignedDate, contractUploadedDate, contractId
-            if (currentUser.contractStatus) {
-                const userContract = {
-                    contractStatus: currentUser.contractStatus,
-                    contractSignedDate: currentUser.contractSignedDate,
-                    contractId: currentUser.contractId || currentUser.name,
-                    contractUploadedDate: currentUser.contractUploadedDate
-                };
-                console.log('✅ Found flattened contract data on currentUser:', userContract);
-                
-                // Return contract data in the expected format
-                return {
-                    status: userContract.contractStatus,
-                    contractId: userContract.contractId,
-                    signedDate: userContract.contractSignedDate,
-                    fileName: `${currentUser.name}.pdf`,
-                    notes: null,
-                    githubUrl: null,
-                    role: currentUser.profile?.role || getSelectedJob()?.role,
-                    rate: currentUser.profile?.rate || getSelectedJob()?.rate,
-                    location: currentUser.profile?.location || getSelectedJob()?.location,
-                    jobId: jobId || 'legacy-job',
-                    jobRole: getSelectedJob()?.role || currentUser.profile?.role,
-                    jobDescription: currentUser.description || currentUser.profile?.description
-                };
-            } else {
-                if (!sessionStorage.getItem('noContractDataLogged')) {
-                    console.log('❌ No contract data found for user in centralized system');
-                    sessionStorage.setItem('noContractDataLogged', 'true');
-                }
-                return null;
-            }
+            return null;
         }
 
 
@@ -1823,7 +1785,7 @@
             );
 
             const portalRoot = document.getElementById('userPortal') || document.body;
-            const deadline = performance.now() + 5000; // 5s combined readiness window
+            const deadline = performance.now() + 10000; // Extended to 10s combined readiness window
             let nameElement = null;
             let rafId = null;
             let timeoutId = null;
@@ -1841,17 +1803,21 @@
                 nameElement = nameElement || findNameElement();
 
                 const hasElement = !!nameElement;
-                const hasUserName = !!(window.currentUser && window.currentUser.name);
+                const sessionUser = (() => {
+                    try { return JSON.parse(sessionStorage.getItem('userPortalAuthenticated') || 'null'); } catch { return null; }
+                })();
+                const displayName = (window.currentUser && window.currentUser.name) || (sessionUser && sessionUser.name) || null;
+                const hasUserName = !!displayName;
 
                 if (hasElement && hasUserName) {
-                    nameElement.textContent = window.currentUser.name;
+                    nameElement.textContent = displayName;
                     cleanup();
                     return true;
                 }
 
                 if (performance.now() > deadline) {
                     // Clarify what was missing rather than implying element absence only
-                    console.warn('⚠️ Welcome name not set before timeout', {
+                    console.info('ℹ️ Welcome name not set before readiness window', {
                         hasElement,
                         hasUserName
                     });
@@ -5482,16 +5448,24 @@
             }, 30000); // 30 seconds to reduce performance impact
         });
 
-        // Missing functions from backup file - UPDATED FOR CENTRALIZED SYSTEM
+        // Missing functions from backup file - UPDATED FOR CENTRALIZED SYSTEM (primary implementation)
+        // Also provides memoization to reduce repeated logs and redundant work in a single tick
+        const __contractStatusCache = new Map();
         function getUserContractStatus(userEmail, jobId = null) {
-            console.log('🔍 Getting contract status for user:', currentUser?.name);
-            console.log('📄 Current user structure:', currentUser);
-            
             // Check if current user has contract data in centralized system
             if (!currentUser) {
                 console.log('❌ No current user found');
                 return null;
             }
+
+            // Memoization key per email+job
+            const cacheKey = `${(userEmail||'').toLowerCase()}::${jobId || currentUser?.primaryJob || 'legacy-job'}`;
+            if (__contractStatusCache.has(cacheKey)) {
+                return __contractStatusCache.get(cacheKey);
+            }
+
+            console.log('🔍 Getting contract status for user:', currentUser?.name);
+            console.log('📄 Current user structure:', currentUser);
             
             // The contract data is flattened on currentUser (not nested)
             // Based on the data loading process, contract data is flattened like this:
@@ -5509,7 +5483,7 @@
                 const jobData = currentUser.jobs && currentUser.jobs[jobId || currentUser.primaryJob];
                 
                 // Return contract data in the expected format
-                return {
+                const result = {
                     status: userContract.contractStatus,
                     contractId: userContract.contractId,
                     signedDate: userContract.contractSignedDate,
@@ -5523,6 +5497,12 @@
                     jobRole: jobData?.title || jobData?.role || currentUser.profile?.role,
                     jobDescription: jobData?.description || currentUser.profile?.description
                 };
+                // Back-compat: some callers expect contract.contractStatus
+                result.contractStatus = result.status;
+                __contractStatusCache.set(cacheKey, result);
+                // Clear cache on next tick to avoid stale data during future cycles
+                queueMicrotask(() => __contractStatusCache.delete(cacheKey));
+                return result;
             } else {
                 if (!sessionStorage.getItem('noContractDataLogged')) {
                     console.log('❌ No contract data found for user in centralized system');

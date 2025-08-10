@@ -341,8 +341,13 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
 
 ### Name Binding Warning Cleanup (2025-08-10)
 - File: `user-portal.html`
-- Change: Made `updateWelcomeName()` idempotent; waits for both the DOM element and user data with a single 5s readiness window, uses MutationObserver + rAF, and avoids duplicate observers/warnings.
+- Change: Made `updateWelcomeName()` idempotent; waits for both the DOM element and user data with a single 10s readiness window, uses MutationObserver + rAF, and avoids duplicate observers/warnings. Falls back to session-cached user if `currentUser` isn’t hydrated yet; demotes timeout warning to info.
 - Cleanup Impact: Removes noisy, repeated console warnings and prevents multiple overlapping observers, reducing log clutter and improving portal stability.
+
+### Duplicate Function Cleanup (2025-08-10)
+- File: `user-portal.html`
+- Change: Renamed legacy duplicates to avoid shadowing (`loadUsersData_legacyNeverUsed`, `getUserContractStatus_legacy`). Kept a single canonical `getUserContractStatus()` with per-tick memoization to reduce console spam and redundant CPU work.
+- Cleanup Impact: Prevents duplicated logs like repeated `🔍 Getting contract status for user:` and centralizes contract status logic.
 
 ### Dev Login Bypass (temporary, 2025-08-10)
 - A guarded dev-only login path was added to `user-portal.html` to unblock testing when Firebase credentials are unavailable.

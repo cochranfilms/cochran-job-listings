@@ -351,3 +351,15 @@ await page.evaluate(() => {
 ### Expected Console Signals
 - `✅ User authenticated:` followed by `✅ User found in system:` after `/api/users` lookup.
 - If Firebase auth succeeds but user is missing in `users.json`, expect an error notification about account not found.
+
+### Recent Portal Stability Updates (2025-08-10)
+- `updateWelcomeName()` now waits up to 10 seconds for both the DOM element and user data, and falls back to session-stored user if `currentUser` isn't yet hydrated. Warning is downgraded to info to reduce noise during initial render.
+- Removed duplicate implementations by renaming legacy `loadUsersData` and `getUserContractStatus` definitions to avoid shadowing. A single canonical `getUserContractStatus()` remains, with lightweight memoization to avoid redundant console spam in the same tick.
+
+How to verify quickly:
+```bash
+node setup-test.js
+```
+Look for:
+- No repeated bursts of `🔍 Getting contract status for user:` in console.
+- No `Welcome name not set before timeout` warnings on normal load.
