@@ -341,8 +341,8 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
 
 ### Name Binding Warning Cleanup (2025-08-10)
 - File: `user-portal.html`
-- Change: Hardened the welcome name binding by using a MutationObserver in `updateWelcomeName()` to wait for `#userName` and set the text once available.
-- Cleanup Impact: Removes noisy console warnings ("userName element not found...") during asynchronous content/render, reducing log clutter and aiding debugging.
+- Change: Made `updateWelcomeName()` idempotent; waits for both the DOM element and user data with a single 5s readiness window, uses MutationObserver + rAF, and avoids duplicate observers/warnings.
+- Cleanup Impact: Removes noisy, repeated console warnings and prevents multiple overlapping observers, reducing log clutter and improving portal stability.
 
 ### Dev Login Bypass (temporary, 2025-08-10)
 - A guarded dev-only login path was added to `user-portal.html` to unblock testing when Firebase credentials are unavailable.

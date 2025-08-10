@@ -315,7 +315,7 @@ For issues with the testing system:
 
 ### Welcome Name Render Robustness (2025-08-10)
 - File: `user-portal.html`
-- Change: Replaced retry-loop in `updateWelcomeName()` with a MutationObserver that watches `#userPortal` subtree for `#userName` (and fallbacks like `.user-name`, `[data-user-name]`, or `#userPortal h1 span`). Includes 5s safety timeout and DOMContentLoaded fast path.
+- Change: Hardened `updateWelcomeName()` to be idempotent and wait for both the DOM element and user data. Uses a MutationObserver plus rAF polling, a single 5s readiness window, and avoids duplicate observers/warnings.
 - Reason: Avoid recurring `⚠️ userName element not found in DOM after retries` when layout/content renders asynchronously.
 - How to test:
   1. Sign in to the user portal normally (or use `?dev=1`).
