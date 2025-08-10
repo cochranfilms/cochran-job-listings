@@ -8,3 +8,6 @@ config/github-config.json
 secrets/
 tokens/ 
 node_modules
+
+# EmailJS templates (organizational only; not served)
+emailjs-templates/

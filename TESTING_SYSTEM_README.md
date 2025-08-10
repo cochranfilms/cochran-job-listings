@@ -52,6 +52,20 @@ node test-admin-deletion-simple.js
 - **Password**: Cochranfilms2@
 
 ### Test User Configuration
+### EmailJS Templates (Organized)
+- Email templates have been moved into `emailjs-templates/` and are ignored by GitHub for UI cleanliness.
+- Mappings:
+  - `emailjs-templates/admin-contract-signed-notify-admin.html` (admin notification)
+  - `emailjs-templates/user-welcome-job-acceptance.html` (user welcome after approval)
+  - `emailjs-templates/user-contract-signed-confirmation.html` (user confirmation after signing)
+  - `emailjs-templates/user-portal-access-welcome.html` (user portal access info)
+  - `emailjs-templates/user-application-denied-jobs-closed.html` (polite denial)
+  - `emailjs-templates/outreach-collaboration-invite.html` (collaboration outreach)
+
+Testing notes:
+- These files are not served; EmailJS reads content copied into its dashboard templates. File moves do not affect runtime.
+- Template IDs referenced in code remain unchanged (`EMAILJS_CONFIG`).
+
 - **Test User**: "Test User Deletion"
 - **Email**: test-deletion@cochranfilms.com
 - **Role**: Test Role

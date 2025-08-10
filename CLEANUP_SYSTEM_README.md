@@ -1,6 +1,11 @@
 # Cleanup System Documentation
 
 ## Overview
+### EmailJS Template Organization (2025-08-10)
+- Moved EmailJS HTML templates into `emailjs-templates/` with descriptive names to clarify recipient and process.
+- Added `emailjs-templates/` to `.gitignore` to reduce GitHub file noise.
+- No functional impact: EmailJS uses templates configured in the dashboard; local files are just source material.
+
 This document outlines the cleanup procedures and systems used in the Cochran Films Landing project, including the revolutionary AI-powered Premiere Pro automation system.
 
 ## 🎬 AI Video Editor Cleanup
