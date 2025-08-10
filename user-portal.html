@@ -73,18 +73,12 @@
         // Setup authentication state observer
         function setupAuthStateObserver() {
             auth.onAuthStateChanged(function(user) {
-                if (user) {
+                if (user && user.email) {
                     console.log('✅ User authenticated:', user.email);
-                    // User is signed in, check if they exist in our system
-                    // Only check if user is properly authenticated and not just a temporary state
-                    if (user.email && user.emailVerified !== false) {
-                        checkUserInSystem(user.email);
-                    } else {
-                        console.log('⚠️ User not fully authenticated, waiting for proper auth...');
-                        showLoginScreen();
-                    }
+                    // Do not block on emailVerified; allow portal access once Firebase returns a user
+                    checkUserInSystem(user.email);
                 } else {
-                    console.log('❌ User signed out');
+                    console.log('❌ User signed out or missing email');
                     showLoginScreen();
                     // If sign-in just failed recently, hint the password reset path
                     const lastErr = sessionStorage.getItem('lastSignInError');

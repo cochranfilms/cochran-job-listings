@@ -320,6 +320,9 @@ For issues with the testing system:
 - The user portal now authenticates with Firebase (`auth.signInWithEmailAndPassword`).
 - Passwords are not stored in `users.json`. Contract signing updates Firebase credentials and only writes contract metadata to `users.json`.
 - After Firebase sign-in, the portal cross-checks the user by email via `/api/users`. Missing entries will show “Account not found in system.”
+ 
+### Auth Observer Tweak (2025-08-10)
+- Relaxed gating in `onAuthStateChanged`: we no longer block on `emailVerified !== false`. We proceed if `user.email` exists and verify presence in `/api/users`. This avoids stalls that kept showing the login screen after successful Firebase authentication.
 
 ### Testing Guidance
 - Use valid Firebase credentials for user portal automation.
