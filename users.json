@@ -80,7 +80,11 @@
         "approvedDate": "2025-08-10"
       },
       "contract": {
-        "contractStatus": "pending"
+        "contractStatus": "uploaded",
+        "contractSignedDate": "8/9/2025, 9:36:18 PM",
+        "contractUploadedDate": "2025-08-10T01:36:26.822Z",
+        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Test%20User.pdf",
+        "contractId": "CF-1754789778118-PXCGH"
       },
       "application": {
         "status": "approved",
@@ -132,5 +136,10 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-10"
+  },
+  "_metadata": {
+    "dataSource": "github",
+    "fetchedAt": "2025-08-10T01:36:26.880Z",
+    "totalUsers": 2
   }
 }
