@@ -319,3 +319,13 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
 - Action: Added a scoped normalization block at the end of `styles/user-portal-theme.css` titled "LAYOUT FIXES: LOGIN + OVERFLOW/ABSOLUTE NORMALIZATION".
 - Effect: Neutralizes absolute/fixed and transform-based elements inside `#loginScreen`, prevents overflow, and disables portal-only effects on the login route without impacting `#userPortal`.
 - Cleanup Impact: Reduces visual noise and layout drift; no removal of assets required.
+
+## Recent Cleanup Notes (2025-08-10)
+
+### Login/Profile Visual Hotfix
+- Files: `styles/user-portal-theme.css`, `user-portal.html`
+- Changes:
+  - Hid `.login-background` and emoji `.floating-*` within `.login-screen` to remove a phantom white box on the left.
+  - Centered the login card and switched all login typography to dark text on a light card.
+  - Enforced readable text in Profile card: dark `.value`, muted `.label`, visible dividers/hover state on light surfaces.
+- Impact: Purely visual; no structural HTML changes; improves accessibility and contrast.

@@ -1015,6 +1015,51 @@ button:focus-visible, .btn:focus-visible {
    End
    ========================================================================== */
 
+/* ==========================================================================
+   Hotfix: Login screen layout + Profile visibility on light theme
+   These rules intentionally use !important to win over legacy inline styles
+   without restructuring markup.
+   ========================================================================== */
+
+/* 1) Remove decorative/background elements that create the left white box */
+.login-screen .login-background,
+.login-screen .floating-elements,
+.login-screen .floating-icon { display: none !important; }
+
+/* 2) Force a single, centered login card */
+.login-screen { display: grid !important; place-items: center !important; }
+.login-screen .login-container {
+  display: block !important;
+  width: min(520px, 100%) !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-2) !important;
+  padding: calc(var(--space-7) + 8px) var(--space-7) var(--space-7) var(--space-7) !important;
+  gap: var(--space-5) !important;
+}
+.login-screen .login-form-container::before { content: none !important; }
+.login-screen .login-brand { margin-bottom: var(--space-5) !important; }
+
+/* 3) Ensure all login typography is dark on light background */
+.login-screen .brand-title,
+.login-screen .brand-subtitle,
+.login-screen .login-title,
+.login-screen .login-subtitle { color: var(--color-text) !important; text-shadow: none !important; }
+.login-screen .login-subtitle { color: var(--color-text-muted) !important; }
+
+/* 4) Profile tab: enforce visible text and subtle dividers */
+.profile-card .info-item { border-bottom: 1px solid var(--color-border) !important; }
+.profile-card .info-item:hover { background: var(--color-surface-2) !important; }
+.profile-info .label { color: var(--color-text-muted) !important; }
+.profile-info .value { color: var(--color-text) !important; }
+.profile-info .value.highlight { color: var(--color-brand) !important; }
+
+/* 5) Dashboard header copy should be readable on light surfaces */
+.dashboard-header h1 { color: var(--color-text) !important; }
+.dashboard-header p  { color: var(--color-text-muted) !important; }
+
 /*
 Assumptions (map these to your existing classes if they differ):
 - Login wrappers: #loginScreen, .login-screen, .login, .auth, .auth-container, .login-panel, .auth-panel, .login-card

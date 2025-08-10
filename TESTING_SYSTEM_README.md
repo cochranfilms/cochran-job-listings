@@ -274,6 +274,16 @@ For issues with the testing system:
 4. Ensure `#loginError` stays within the panel without overflow.
 5. Confirm no hover sheen/particles/ripples/animations on login; confirm they still work inside `#userPortal`.
 
+### Visual Regression / Portal (2025-08-10)
+- Hotfix applied in `styles/user-portal-theme.css` to:
+  - Remove phantom white box on the left of the login screen by hiding `.login-background` and `.floating-*` within `.login-screen` and forcing a single centered card.
+  - Normalize login typography to dark text on light background.
+  - Fix white-on-white content in Profile tab by enforcing dark `.value` text and muted `.label` plus light dividers.
+- Manual check:
+  1. Open `user-portal.html` and view the login screen.
+  2. Verify: no left-side white box; the panel is centered; text is readable.
+  3. Sign in and open `#profile` → `Profile Information` card shows values in dark text; labels are muted; hover state uses light gray.
+
 ---
 
 ## User Portal Authentication Update (2025-01-10)
