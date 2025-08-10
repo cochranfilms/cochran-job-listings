@@ -110,7 +110,9 @@
           }
         }
       },
-      "primaryJob": "Test Job Title"
+      "primaryJob": "Test Job Title",
+      "paymentMethod": "bank",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
@@ -132,5 +134,10 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-09"
+  },
+  "_metadata": {
+    "dataSource": "github",
+    "fetchedAt": "2025-08-10T00:11:34.866Z",
+    "totalUsers": 2
   }
 }
