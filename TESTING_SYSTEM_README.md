@@ -313,6 +313,16 @@ For issues with the testing system:
 - Merge step for uploaded contracts now skips users without an email and filters contracts defensively.
 - Expected console: no TypeError at lines ~1850; warnings may show for skipped users.
 
+### Welcome Name Render Robustness (2025-08-10)
+- File: `user-portal.html`
+- Change: Replaced retry-loop in `updateWelcomeName()` with a MutationObserver that watches `#userPortal` subtree for `#userName` (and fallbacks like `.user-name`, `[data-user-name]`, or `#userPortal h1 span`). Includes 5s safety timeout and DOMContentLoaded fast path.
+- Reason: Avoid recurring `⚠️ userName element not found in DOM after retries` when layout/content renders asynchronously.
+- How to test:
+  1. Sign in to the user portal normally (or use `?dev=1`).
+  2. Open console; expect to see the user authenticated messages and no repeating warning about `userName` missing.
+  3. Verify the dashboard header shows your name in `Welcome back, <name>!`.
+  4. Navigate between tabs; the name should remain populated without warnings.
+
 ---
 
 ## User Portal Authentication Update (2025-01-10)

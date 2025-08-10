@@ -339,6 +339,11 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
   - Enforced readable text in Profile card: dark `.value`, muted `.label`, visible dividers/hover state on light surfaces.
 - Impact: Purely visual; no structural HTML changes; improves accessibility and contrast.
 
+### Name Binding Warning Cleanup (2025-08-10)
+- File: `user-portal.html`
+- Change: Hardened the welcome name binding by using a MutationObserver in `updateWelcomeName()` to wait for `#userName` and set the text once available.
+- Cleanup Impact: Removes noisy console warnings ("userName element not found...") during asynchronous content/render, reducing log clutter and aiding debugging.
+
 ### Dev Login Bypass (temporary, 2025-08-10)
 - A guarded dev-only login path was added to `user-portal.html` to unblock testing when Firebase credentials are unavailable.
 - Activation: add `?dev=1` (or set `localStorage.DEV_LOGIN='1'`).

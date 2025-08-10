@@ -1808,23 +1808,68 @@
             }
         }
 
-        // Utility to update welcome name with retries
+        // Utility to update welcome name; waits for DOM using a MutationObserver for robustness
         function updateWelcomeName() {
-            const tryUpdate = (attemptsLeft) => {
-                const el = document.getElementById('userName') || document.querySelector('#userPortal #userName')
-                    || document.querySelector('.user-name') || document.querySelector('[data-user-name]') || document.querySelector('h1 span');
+            const findNameElement = () => (
+                document.getElementById('userName') ||
+                document.querySelector('#userPortal #userName') ||
+                document.querySelector('.user-name') ||
+                document.querySelector('[data-user-name]') ||
+                document.querySelector('#userPortal h1 span')
+            );
+
+            const setNameIfPossible = (el) => {
                 if (el && currentUser && currentUser.name) {
                     el.textContent = currentUser.name;
                     return true;
                 }
-                if (attemptsLeft > 0) {
-                    requestAnimationFrame(() => tryUpdate(attemptsLeft - 1));
-                } else {
-                    console.warn('⚠️ userName element not found in DOM after retries');
-                }
                 return false;
             };
-            tryUpdate(10);
+
+            // Fast path if element already exists
+            const immediateEl = findNameElement();
+            if (setNameIfPossible(immediateEl)) return;
+
+            // Observe portal subtree until element appears, then set name and disconnect
+            const portalRoot = document.getElementById('userPortal') || document.body;
+            let timeoutId = null;
+            const observer = new MutationObserver(() => {
+                const el = findNameElement();
+                if (setNameIfPossible(el)) {
+                    observer.disconnect();
+                    if (timeoutId) clearTimeout(timeoutId);
+                }
+            });
+            try {
+                observer.observe(portalRoot, { childList: true, subtree: true });
+            } catch (_) {
+                // Fallback if observe fails; perform a few rAF retries
+                let attemptsLeft = 10;
+                const rafRetry = () => {
+                    const el = findNameElement();
+                    if (setNameIfPossible(el)) return;
+                    if (attemptsLeft-- > 0) requestAnimationFrame(rafRetry);
+                };
+                requestAnimationFrame(rafRetry);
+                return;
+            }
+
+            // Also try once on DOMContentLoaded in case this fired very early
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    const el = findNameElement();
+                    if (setNameIfPossible(el)) {
+                        observer.disconnect();
+                        if (timeoutId) clearTimeout(timeoutId);
+                    }
+                }, { once: true });
+            }
+
+            // Safety timeout to avoid observing forever
+            timeoutId = setTimeout(() => {
+                observer.disconnect();
+                console.warn('⚠️ userName element not found in DOM after observing');
+            }, 5000);
         }
 
         // Show user portal
