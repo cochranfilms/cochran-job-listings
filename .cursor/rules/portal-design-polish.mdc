@@ -1,5 +1,8 @@
 ---
-description:
-globs:
 alwaysApply: false
 ---
+When doing a polish design clean up for the user portal, not a single piece of functionality code should be munipulated. If you can't edit that section without re-arranhing it then let's brainstorm from there. 
+
+I only want you to focus on making the already beautiful layout, even more polished.
+
+The login screen needs an entire re-design

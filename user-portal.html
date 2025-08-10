@@ -1106,10 +1106,17 @@
                 
                 // Update users data with contract information from uploaded-contracts.json
                 users.forEach(user => {
+                    // Skip users with missing email to avoid errors
+                    if (!user || !user.email) {
+                        console.warn(`⚠️ Skipping contract merge for user with missing email: ${user?.name || 'Unknown User'}`);
+                        return;
+                    }
+
                     // Find ALL contracts for this user
-                    const userContracts = uploadedContracts.filter(contract => 
-                        contract.freelancerEmail && contract.freelancerEmail.toLowerCase() === user.email.toLowerCase()
-                    );
+                    const userContracts = uploadedContracts.filter(contract => {
+                        if (!contract || !contract.freelancerEmail) return false;
+                        return contract.freelancerEmail.toLowerCase() === user.email.toLowerCase();
+                    });
                     
                     if (userContracts.length > 0) {
                         // Sort by upload date to get the most recent contract
@@ -1849,8 +1856,15 @@
             await loadUsersData();
             await loadPerformanceReviews(); // Ensure performance reviews are loaded
             
-            // Find the current user with updated data
-            const updatedUser = users.find(u => u.email === currentUser.email);
+            // Find the current user with updated data (null-safe)
+            const updatedUser = Array.isArray(users)
+                ? users.find(u => {
+                    if (!u || !u.email || !currentUser || !currentUser.email) {
+                        return false;
+                    }
+                    return u.email.toLowerCase() === currentUser.email.toLowerCase();
+                })
+                : null;
             if (updatedUser) {
                 currentUser = updatedUser;
                 console.log('✅ Updated current user data:', {

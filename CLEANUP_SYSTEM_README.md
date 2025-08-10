@@ -55,6 +55,10 @@ npm run cleanup:all
 - Contract signing should only update contract status fields in `users.json` and ensure the Firebase account exists/updated via `/api/firebase`.
 - The user portal validates the user by email against `/api/users` after Firebase login; if missing, onboard via admin flows rather than writing a password field.
 
+#### User Portal Data Safety Hotfix (2025-08-10)
+- Hardened `user-portal.html` to ignore null user entries and missing emails during post-login refresh and contract merge.
+- Prevents runtime crashes from malformed data while preserving logs for audit.
+
 #### File System Cleanup
 - **Backup Management**: Rotate and compress backup files
 - **Log Cleanup**: Archive and remove old log files

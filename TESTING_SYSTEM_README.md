@@ -308,6 +308,11 @@ For issues with the testing system:
   2. Log in with the allowlisted credentials.
   3. Verify the portal loads and name populates.
 
+### Stability Hotfix (2025-08-10)
+- Null-safe guard added in `user-portal.html` when matching the current user after refresh to prevent `Cannot read properties of null (reading 'email')` when API returns null entries or missing emails.
+- Merge step for uploaded contracts now skips users without an email and filters contracts defensively.
+- Expected console: no TypeError at lines ~1850; warnings may show for skipped users.
+
 ---
 
 ## User Portal Authentication Update (2025-01-10)
