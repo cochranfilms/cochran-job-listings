@@ -73,12 +73,18 @@
         // Setup authentication state observer
         function setupAuthStateObserver() {
             auth.onAuthStateChanged(function(user) {
-                if (user && user.email) {
+                if (user) {
                     console.log('✅ User authenticated:', user.email);
-                    // Do not block on emailVerified; allow portal access once Firebase returns a user
-                    checkUserInSystem(user.email);
+                    // User is signed in, check if they exist in our system
+                    // Only check if user is properly authenticated and not just a temporary state
+                    if (user.email && user.emailVerified !== false) {
+                        checkUserInSystem(user.email);
+                    } else {
+                        console.log('⚠️ User not fully authenticated, waiting for proper auth...');
+                        showLoginScreen();
+                    }
                 } else {
-                    console.log('❌ User signed out or missing email');
+                    console.log('❌ User signed out');
                     showLoginScreen();
                     // If sign-in just failed recently, hint the password reset path
                     const lastErr = sessionStorage.getItem('lastSignInError');
@@ -152,8 +158,8 @@
             return review;
         }
 
-        // Load freelancer data from JSON file (legacy duplicate - renamed to avoid shadowing)
-        async function loadUsersData_legacyNeverUsed() { // UNUSED shim to avoid duplicate definition
+        // Load freelancer data from JSON file
+        async function loadUsersData() {
             try {
                 console.log('🔄 Loading users data...');
                 
@@ -1100,17 +1106,10 @@
                 
                 // Update users data with contract information from uploaded-contracts.json
                 users.forEach(user => {
-                    // Skip users with missing email to avoid errors
-                    if (!user || !user.email) {
-                        console.warn(`⚠️ Skipping contract merge for user with missing email: ${user?.name || 'Unknown User'}`);
-                        return;
-                    }
-
                     // Find ALL contracts for this user
-                    const userContracts = uploadedContracts.filter(contract => {
-                        if (!contract || !contract.freelancerEmail) return false;
-                        return contract.freelancerEmail.toLowerCase() === user.email.toLowerCase();
-                    });
+                    const userContracts = uploadedContracts.filter(contract => 
+                        contract.freelancerEmail && contract.freelancerEmail.toLowerCase() === user.email.toLowerCase()
+                    );
                     
                     if (userContracts.length > 0) {
                         // Sort by upload date to get the most recent contract
@@ -1547,59 +1546,58 @@
             }
         }
 
-        // Get user's contract status from centralized system (legacy duplicate - renamed)
-        function getUserContractStatus_legacy(userEmail, jobId = null) {
-            // Delegate to the primary implementation defined later in the file
-            if (typeof getUserContractStatus === 'function') {
-                return getUserContractStatus(userEmail, jobId);
+        // Get user's contract status from centralized system
+        function getUserContractStatus(userEmail, jobId = null) {
+            console.log('🔍 Getting contract status for user:', currentUser?.name);
+            console.log('📄 Current user structure:', currentUser);
+            
+            // Check if current user has contract data in centralized system
+            if (!currentUser) {
+                console.log('❌ No current user found');
+                return null;
             }
-            return null;
-        }
-
-
-
-        // Helper: dev login toggle
-        function devLoginEnabled() {
-            try {
-                const params = new URLSearchParams(location.search);
-                if (params.get('dev') === '1' || params.get('devLogin') === '1') return true;
-                if (localStorage.getItem('DEV_LOGIN') === '1') return true;
-            } catch (_) {}
-            return false;
-        }
-
-        async function devBypassLogin(email, password) {
-            try {
-                // Simple allowlist so this cannot be abused accidentally
-                const allowlist = {
-                    'codylcochran89@gmail.com': 'user1234'
+            
+            // The contract data is flattened on currentUser (not nested)
+            // Based on the data loading process, contract data is flattened like this:
+            // contractStatus, contractSignedDate, contractUploadedDate, contractId
+            if (currentUser.contractStatus) {
+                const userContract = {
+                    contractStatus: currentUser.contractStatus,
+                    contractSignedDate: currentUser.contractSignedDate,
+                    contractId: currentUser.contractId || currentUser.name,
+                    contractUploadedDate: currentUser.contractUploadedDate
                 };
-                if (!allowlist[email?.toLowerCase()]) return false;
-                if (allowlist[email.toLowerCase()] !== password) return false;
-
-                // Load users and find the user
-                await loadUsersData();
-                const user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
-                if (!user) return false;
-
-                currentUser = user;
-                sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
-                console.log('🧪 DEV LOGIN BYPASS ACTIVE for', email);
-                showUserPortal();
-                toast('Dev login enabled', 'success');
-                return true;
-            } catch (e) {
-                console.warn('Dev login bypass failed:', e);
-                return false;
+                console.log('✅ Found flattened contract data on currentUser:', userContract);
+                
+                // Return contract data in the expected format
+                return {
+                    status: userContract.contractStatus,
+                    contractId: userContract.contractId,
+                    signedDate: userContract.contractSignedDate,
+                    fileName: `${currentUser.name}.pdf`,
+                    notes: null,
+                    githubUrl: null,
+                    role: currentUser.profile?.role || getSelectedJob()?.role,
+                    rate: currentUser.profile?.rate || getSelectedJob()?.rate,
+                    location: currentUser.profile?.location || getSelectedJob()?.location,
+                    jobId: jobId || 'legacy-job',
+                    jobRole: getSelectedJob()?.role || currentUser.profile?.role,
+                    jobDescription: currentUser.description || currentUser.profile?.description
+                };
+            } else {
+                if (!sessionStorage.getItem('noContractDataLogged')) {
+                    console.log('❌ No contract data found for user in centralized system');
+                    sessionStorage.setItem('noContractDataLogged', 'true');
+                }
+                return null;
             }
         }
 
-        // Handle login via Firebase authentication (with optional dev fallback)
-        let isLoggingIn = false;
+
+
+        // Handle login via Firebase authentication
         async function handleLogin(event) {
             event.preventDefault();
-            if (isLoggingIn) return;
-            isLoggingIn = true;
             
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -1610,11 +1608,6 @@
             submitBtn.disabled = true;
             
             try {
-                // Optional dev bypass for local/testing
-                if (devLoginEnabled()) {
-                    const bypassed = await devBypassLogin(email, password);
-                    if (bypassed) return; // already transitioned
-                }
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const fbUser = userCredential && userCredential.user;
                 if (!fbUser || !fbUser.email) {
@@ -1645,11 +1638,6 @@
                         if (code === 'Invalid credentials') errorMessage = 'Invalid email or password. Please try again.';
                         break;
                 }
-                // As a fallback when dev flag present, try bypass after Firebase error
-                if (devLoginEnabled()) {
-                    const bypassed = await devBypassLogin(email, password);
-                    if (bypassed) return;
-                }
                 // Persist a hint flag so the UI can suggest password reset on next load
                 try { sessionStorage.setItem('lastSignInError', code || 'error'); } catch(_) {}
                 const errorElement = document.getElementById('loginError');
@@ -1660,7 +1648,6 @@
             } finally {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
-                isLoggingIn = false;
             }
         }
 
@@ -1770,106 +1757,11 @@
             }
         }
 
-        // Utility to update welcome name; waits for BOTH DOM element and user data, idempotent
-        function updateWelcomeName() {
-            // prevent duplicate concurrent observers
-            if (updateWelcomeName._running) return;
-            updateWelcomeName._running = true;
-
-            const findNameElement = () => (
-                document.getElementById('userName') ||
-                document.querySelector('#userPortal #userName') ||
-                document.querySelector('.user-name') ||
-                document.querySelector('[data-user-name]') ||
-                document.querySelector('#userPortal h1 span')
-            );
-
-            const portalRoot = document.getElementById('userPortal') || document.body;
-            const deadline = performance.now() + 10000; // Extended to 10s combined readiness window
-            let nameElement = null;
-            let rafId = null;
-            let timeoutId = null;
-            let observer = null;
-
-            const cleanup = () => {
-                if (observer) observer.disconnect();
-                if (timeoutId) clearTimeout(timeoutId);
-                if (rafId) cancelAnimationFrame(rafId);
-                updateWelcomeName._running = false;
-            };
-
-            const trySet = () => {
-                // discover element lazily
-                nameElement = nameElement || findNameElement();
-
-                const hasElement = !!nameElement;
-                const sessionUser = (() => {
-                    try { return JSON.parse(sessionStorage.getItem('userPortalAuthenticated') || 'null'); } catch { return null; }
-                })();
-                const displayName = (window.currentUser && window.currentUser.name) || (sessionUser && sessionUser.name) || null;
-                const hasUserName = !!displayName;
-
-                if (hasElement && hasUserName) {
-                    nameElement.textContent = displayName;
-                    cleanup();
-                    return true;
-                }
-
-                if (performance.now() > deadline) {
-                    // Clarify what was missing rather than implying element absence only
-                    console.info('ℹ️ Welcome name not set before readiness window', {
-                        hasElement,
-                        hasUserName
-                    });
-                    cleanup();
-                    return true;
-                }
-                return false;
-            };
-
-            // Fast path
-            if (trySet()) return;
-
-            // Observe DOM mutations under portal and also poll via rAF for user data readiness
-            try {
-                observer = new MutationObserver(() => {
-                    if (trySet()) return;
-                });
-                observer.observe(portalRoot, { childList: true, subtree: true });
-            } catch (_) {
-                // non-fatal; continue with polling path
-            }
-
-            const tick = () => {
-                if (!trySet()) {
-                    rafId = requestAnimationFrame(tick);
-                }
-            };
-            rafId = requestAnimationFrame(tick);
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', trySet, { once: true });
-            }
-
-            timeoutId = setTimeout(() => {
-                trySet();
-            }, 5000);
-        }
-
         // Show user portal
         function showUserPortal() {
-            const loginEl = document.getElementById('loginScreen');
-            const portalEl = document.getElementById('userPortal');
-            if (loginEl) loginEl.style.display = 'none';
-            if (portalEl) portalEl.style.display = 'block';
-            // Defer data/UI updates to next frame to ensure DOM is painted
-            requestAnimationFrame(() => {
-                updateWelcomeName();
-                // Small defer to ensure data loads against visible DOM
-                setTimeout(() => {
-                    loadUserData();
-                }, 0);
-            });
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('userPortal').style.display = 'block';
+            loadUserData();
             
             // Initialize creative features after portal is shown
             setTimeout(() => {
@@ -1911,15 +1803,8 @@
             await loadUsersData();
             await loadPerformanceReviews(); // Ensure performance reviews are loaded
             
-            // Find the current user with updated data (null-safe)
-            const updatedUser = Array.isArray(users)
-                ? users.find(u => {
-                    if (!u || !u.email || !currentUser || !currentUser.email) {
-                        return false;
-                    }
-                    return u.email.toLowerCase() === currentUser.email.toLowerCase();
-                })
-                : null;
+            // Find the current user with updated data
+            const updatedUser = users.find(u => u.email === currentUser.email);
             if (updatedUser) {
                 currentUser = updatedUser;
                 console.log('✅ Updated current user data:', {
@@ -1933,7 +1818,7 @@
             await checkAutomaticProjectStatusUpdates();
 
             // Update welcome message
-            const userNameElement = document.getElementById('userName') || document.querySelector('#userPortal #userName');
+            const userNameElement = document.getElementById('userName');
             if (userNameElement) {
                 userNameElement.textContent = currentUser.name;
             } else {
@@ -1956,15 +1841,21 @@
                 }
                 
                 if (!found) {
-                    updateWelcomeName();
+                    console.warn('⚠️ userName element not found in DOM');
+                    // Try again after a short delay in case DOM isn't ready
+                    setTimeout(() => {
+                        const retryElement = document.getElementById('userName');
+                        if (retryElement) {
+                            retryElement.textContent = currentUser.name;
+                            console.log('✅ userName element updated on retry');
+                        }
+                    }, 100);
                 }
             }
             
             // Display user info
             displayUserInfo();
             displayUserContracts();
-            // Also update the simplified contracts card renderer if present
-            try { if (typeof displayContracts === 'function') displayContracts(); } catch(_) {}
             displayUserJobs();
             displayUserPerformanceReviews();
         }
@@ -5448,24 +5339,16 @@
             }, 30000); // 30 seconds to reduce performance impact
         });
 
-        // Missing functions from backup file - UPDATED FOR CENTRALIZED SYSTEM (primary implementation)
-        // Also provides memoization to reduce repeated logs and redundant work in a single tick
-        const __contractStatusCache = new Map();
+        // Missing functions from backup file - UPDATED FOR CENTRALIZED SYSTEM
         function getUserContractStatus(userEmail, jobId = null) {
+            console.log('🔍 Getting contract status for user:', currentUser?.name);
+            console.log('📄 Current user structure:', currentUser);
+            
             // Check if current user has contract data in centralized system
             if (!currentUser) {
                 console.log('❌ No current user found');
                 return null;
             }
-
-            // Memoization key per email+job
-            const cacheKey = `${(userEmail||'').toLowerCase()}::${jobId || currentUser?.primaryJob || 'legacy-job'}`;
-            if (__contractStatusCache.has(cacheKey)) {
-                return __contractStatusCache.get(cacheKey);
-            }
-
-            console.log('🔍 Getting contract status for user:', currentUser?.name);
-            console.log('📄 Current user structure:', currentUser);
             
             // The contract data is flattened on currentUser (not nested)
             // Based on the data loading process, contract data is flattened like this:
@@ -5483,7 +5366,7 @@
                 const jobData = currentUser.jobs && currentUser.jobs[jobId || currentUser.primaryJob];
                 
                 // Return contract data in the expected format
-                const result = {
+                return {
                     status: userContract.contractStatus,
                     contractId: userContract.contractId,
                     signedDate: userContract.contractSignedDate,
@@ -5497,12 +5380,6 @@
                     jobRole: jobData?.title || jobData?.role || currentUser.profile?.role,
                     jobDescription: jobData?.description || currentUser.profile?.description
                 };
-                // Back-compat: some callers expect contract.contractStatus
-                result.contractStatus = result.status;
-                __contractStatusCache.set(cacheKey, result);
-                // Clear cache on next tick to avoid stale data during future cycles
-                queueMicrotask(() => __contractStatusCache.delete(cacheKey));
-                return result;
             } else {
                 if (!sessionStorage.getItem('noContractDataLogged')) {
                     console.log('❌ No contract data found for user in centralized system');
@@ -6795,7 +6672,7 @@
         }
 
         .dashboard-header p {
-            color: var(--color-text-muted);
+            color: rgba(255,255,255,0.7);
             font-size: 1.2rem;
             line-height: 1.6;
             max-width: 600px;
@@ -6841,14 +6718,14 @@
         }
 
         .label {
-            color: var(--color-text-muted);
+            color: rgba(255,255,255,0.7);
             font-weight: 500;
             font-size: 0.95rem;
             letter-spacing: 0.02em;
         }
 
         .value {
-            color: var(--color-text);
+            color: white;
             font-weight: 600;
             font-size: 1rem;
             letter-spacing: 0.01em;

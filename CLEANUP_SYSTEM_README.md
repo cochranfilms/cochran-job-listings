@@ -1,11 +1,6 @@
 # Cleanup System Documentation
 
 ## Overview
-### EmailJS Template Organization (2025-08-10)
-- Moved EmailJS HTML templates into `emailjs-templates/` with descriptive names to clarify recipient and process.
-- Added `emailjs-templates/` to `.gitignore` to reduce GitHub file noise.
-- No functional impact: EmailJS uses templates configured in the dashboard; local files are just source material.
-
 This document outlines the cleanup procedures and systems used in the Cochran Films Landing project, including the revolutionary AI-powered Premiere Pro automation system.
 
 ## 🎬 AI Video Editor Cleanup
@@ -54,10 +49,6 @@ npm run cleanup:all
 - User authentication is handled by Firebase; do not persist plaintext `profile.password` in `users.json`.
 - Contract signing should only update contract status fields in `users.json` and ensure the Firebase account exists/updated via `/api/firebase`.
 - The user portal validates the user by email against `/api/users` after Firebase login; if missing, onboard via admin flows rather than writing a password field.
-
-#### User Portal Data Safety Hotfix (2025-08-10)
-- Hardened `user-portal.html` to ignore null user entries and missing emails during post-login refresh and contract merge.
-- Prevents runtime crashes from malformed data while preserving logs for audit.
 
 #### File System Cleanup
 - **Backup Management**: Rotate and compress backup files
@@ -328,28 +319,3 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
 - Action: Added a scoped normalization block at the end of `styles/user-portal-theme.css` titled "LAYOUT FIXES: LOGIN + OVERFLOW/ABSOLUTE NORMALIZATION".
 - Effect: Neutralizes absolute/fixed and transform-based elements inside `#loginScreen`, prevents overflow, and disables portal-only effects on the login route without impacting `#userPortal`.
 - Cleanup Impact: Reduces visual noise and layout drift; no removal of assets required.
-
-## Recent Cleanup Notes (2025-08-10)
-
-### Login/Profile Visual Hotfix
-- Files: `styles/user-portal-theme.css`, `user-portal.html`
-- Changes:
-  - Hid `.login-background` and emoji `.floating-*` within `.login-screen` to remove a phantom white box on the left.
-  - Centered the login card and switched all login typography to dark text on a light card.
-  - Enforced readable text in Profile card: dark `.value`, muted `.label`, visible dividers/hover state on light surfaces.
-- Impact: Purely visual; no structural HTML changes; improves accessibility and contrast.
-
-### Name Binding Warning Cleanup (2025-08-10)
-- File: `user-portal.html`
-- Change: Made `updateWelcomeName()` idempotent; waits for both the DOM element and user data with a single 10s readiness window, uses MutationObserver + rAF, and avoids duplicate observers/warnings. Falls back to session-cached user if `currentUser` isn’t hydrated yet; demotes timeout warning to info.
-- Cleanup Impact: Removes noisy, repeated console warnings and prevents multiple overlapping observers, reducing log clutter and improving portal stability.
-
-### Duplicate Function Cleanup (2025-08-10)
-- File: `user-portal.html`
-- Change: Renamed legacy duplicates to avoid shadowing (`loadUsersData_legacyNeverUsed`, `getUserContractStatus_legacy`). Kept a single canonical `getUserContractStatus()` with per-tick memoization to reduce console spam and redundant CPU work.
-- Cleanup Impact: Prevents duplicated logs like repeated `🔍 Getting contract status for user:` and centralizes contract status logic.
-
-### Dev Login Bypass (temporary, 2025-08-10)
-- A guarded dev-only login path was added to `user-portal.html` to unblock testing when Firebase credentials are unavailable.
-- Activation: add `?dev=1` (or set `localStorage.DEV_LOGIN='1'`).
-- Removal plan: delete `devBypassLogin` and `devLoginEnabled` once Firebase accounts are fully provisioned for testers.

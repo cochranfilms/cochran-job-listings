@@ -52,20 +52,6 @@ node test-admin-deletion-simple.js
 - **Password**: Cochranfilms2@
 
 ### Test User Configuration
-### EmailJS Templates (Organized)
-- Email templates have been moved into `emailjs-templates/` and are ignored by GitHub for UI cleanliness.
-- Mappings:
-  - `emailjs-templates/admin-contract-signed-notify-admin.html` (admin notification)
-  - `emailjs-templates/user-welcome-job-acceptance.html` (user welcome after approval)
-  - `emailjs-templates/user-contract-signed-confirmation.html` (user confirmation after signing)
-  - `emailjs-templates/user-portal-access-welcome.html` (user portal access info)
-  - `emailjs-templates/user-application-denied-jobs-closed.html` (polite denial)
-  - `emailjs-templates/outreach-collaboration-invite.html` (collaboration outreach)
-
-Testing notes:
-- These files are not served; EmailJS reads content copied into its dashboard templates. File moves do not affect runtime.
-- Template IDs referenced in code remain unchanged (`EMAILJS_CONFIG`).
-
 - **Test User**: "Test User Deletion"
 - **Email**: test-deletion@cochranfilms.com
 - **Role**: Test Role
@@ -288,41 +274,6 @@ For issues with the testing system:
 4. Ensure `#loginError` stays within the panel without overflow.
 5. Confirm no hover sheen/particles/ripples/animations on login; confirm they still work inside `#userPortal`.
 
-### Visual Regression / Portal (2025-08-10)
-- Hotfix applied in `styles/user-portal-theme.css` to:
-  - Remove phantom white box on the left of the login screen by hiding `.login-background` and `.floating-*` within `.login-screen` and forcing a single centered card.
-  - Normalize login typography to dark text on light background.
-  - Fix white-on-white content in Profile tab by enforcing dark `.value` text and muted `.label` plus light dividers.
-- Manual check:
-  1. Open `user-portal.html` and view the login screen.
-  2. Verify: no left-side white box; the panel is centered; text is readable.
-  3. Sign in and open `#profile` → `Profile Information` card shows values in dark text; labels are muted; hover state uses light gray.
-
-### Dev Login Fallback (2025-08-10)
-- Added optional dev bypass for login in `user-portal.html`:
-  - Enable via `?dev=1` or `?devLogin=1` in URL, or set `localStorage.DEV_LOGIN = '1'`.
-  - Currently allowlisted: `codylcochran89@gmail.com` with password `user1234`.
-  - On Firebase error, bypass verifies email/password against a small allowlist, loads user from `/api/users`, and calls `showUserPortal()`.
-- How to test:
-  1. Open `user-portal.html?dev=1`.
-  2. Log in with the allowlisted credentials.
-  3. Verify the portal loads and name populates.
-
-### Stability Hotfix (2025-08-10)
-- Null-safe guard added in `user-portal.html` when matching the current user after refresh to prevent `Cannot read properties of null (reading 'email')` when API returns null entries or missing emails.
-- Merge step for uploaded contracts now skips users without an email and filters contracts defensively.
-- Expected console: no TypeError at lines ~1850; warnings may show for skipped users.
-
-### Welcome Name Render Robustness (2025-08-10)
-- File: `user-portal.html`
-- Change: Hardened `updateWelcomeName()` to be idempotent and wait for both the DOM element and user data. Uses a MutationObserver plus rAF polling, a single 5s readiness window, and avoids duplicate observers/warnings.
-- Reason: Avoid recurring `⚠️ userName element not found in DOM after retries` when layout/content renders asynchronously.
-- How to test:
-  1. Sign in to the user portal normally (or use `?dev=1`).
-  2. Open console; expect to see the user authenticated messages and no repeating warning about `userName` missing.
-  3. Verify the dashboard header shows your name in `Welcome back, <name>!`.
-  4. Navigate between tabs; the name should remain populated without warnings.
-
 ---
 
 ## User Portal Authentication Update (2025-01-10)
@@ -330,9 +281,6 @@ For issues with the testing system:
 - The user portal now authenticates with Firebase (`auth.signInWithEmailAndPassword`).
 - Passwords are not stored in `users.json`. Contract signing updates Firebase credentials and only writes contract metadata to `users.json`.
 - After Firebase sign-in, the portal cross-checks the user by email via `/api/users`. Missing entries will show “Account not found in system.”
- 
-### Auth Observer Tweak (2025-08-10)
-- Relaxed gating in `onAuthStateChanged`: we no longer block on `emailVerified !== false`. We proceed if `user.email` exists and verify presence in `/api/users`. This avoids stalls that kept showing the login screen after successful Firebase authentication.
 
 ### Testing Guidance
 - Use valid Firebase credentials for user portal automation.
@@ -351,15 +299,3 @@ await page.evaluate(() => {
 ### Expected Console Signals
 - `✅ User authenticated:` followed by `✅ User found in system:` after `/api/users` lookup.
 - If Firebase auth succeeds but user is missing in `users.json`, expect an error notification about account not found.
-
-### Recent Portal Stability Updates (2025-08-10)
-- `updateWelcomeName()` now waits up to 10 seconds for both the DOM element and user data, and falls back to session-stored user if `currentUser` isn't yet hydrated. Warning is downgraded to info to reduce noise during initial render.
-- Removed duplicate implementations by renaming legacy `loadUsersData` and `getUserContractStatus` definitions to avoid shadowing. A single canonical `getUserContractStatus()` remains, with lightweight memoization to avoid redundant console spam in the same tick.
-
-How to verify quickly:
-```bash
-node setup-test.js
-```
-Look for:
-- No repeated bursts of `🔍 Getting contract status for user:` in console.
-- No `Welcome name not set before timeout` warnings on normal load.
