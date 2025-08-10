@@ -329,3 +329,8 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
   - Centered the login card and switched all login typography to dark text on a light card.
   - Enforced readable text in Profile card: dark `.value`, muted `.label`, visible dividers/hover state on light surfaces.
 - Impact: Purely visual; no structural HTML changes; improves accessibility and contrast.
+
+### Dev Login Bypass (temporary, 2025-08-10)
+- A guarded dev-only login path was added to `user-portal.html` to unblock testing when Firebase credentials are unavailable.
+- Activation: add `?dev=1` (or set `localStorage.DEV_LOGIN='1'`).
+- Removal plan: delete `devBypassLogin` and `devLoginEnabled` once Firebase accounts are fully provisioned for testers.

@@ -1595,7 +1595,43 @@
 
 
 
-        // Handle login via Firebase authentication
+        // Helper: dev login toggle
+        function devLoginEnabled() {
+            try {
+                const params = new URLSearchParams(location.search);
+                if (params.get('dev') === '1' || params.get('devLogin') === '1') return true;
+                if (localStorage.getItem('DEV_LOGIN') === '1') return true;
+            } catch (_) {}
+            return false;
+        }
+
+        async function devBypassLogin(email, password) {
+            try {
+                // Simple allowlist so this cannot be abused accidentally
+                const allowlist = {
+                    'codylcochran89@gmail.com': 'user1234'
+                };
+                if (!allowlist[email?.toLowerCase()]) return false;
+                if (allowlist[email.toLowerCase()] !== password) return false;
+
+                // Load users and find the user
+                await loadUsersData();
+                const user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+                if (!user) return false;
+
+                currentUser = user;
+                sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
+                console.log('🧪 DEV LOGIN BYPASS ACTIVE for', email);
+                showUserPortal();
+                toast('Dev login enabled', 'success');
+                return true;
+            } catch (e) {
+                console.warn('Dev login bypass failed:', e);
+                return false;
+            }
+        }
+
+        // Handle login via Firebase authentication (with optional dev fallback)
         async function handleLogin(event) {
             event.preventDefault();
             
@@ -1608,6 +1644,11 @@
             submitBtn.disabled = true;
             
             try {
+                // Optional dev bypass for local/testing
+                if (devLoginEnabled()) {
+                    const bypassed = await devBypassLogin(email, password);
+                    if (bypassed) return; // already transitioned
+                }
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const fbUser = userCredential && userCredential.user;
                 if (!fbUser || !fbUser.email) {
@@ -1637,6 +1678,11 @@
                         if (code === 'User not found') errorMessage = 'User not found. Please check your email.';
                         if (code === 'Invalid credentials') errorMessage = 'Invalid email or password. Please try again.';
                         break;
+                }
+                // As a fallback when dev flag present, try bypass after Firebase error
+                if (devLoginEnabled()) {
+                    const bypassed = await devBypassLogin(email, password);
+                    if (bypassed) return;
                 }
                 // Persist a hint flag so the UI can suggest password reset on next load
                 try { sessionStorage.setItem('lastSignInError', code || 'error'); } catch(_) {}

@@ -284,6 +284,16 @@ For issues with the testing system:
   2. Verify: no left-side white box; the panel is centered; text is readable.
   3. Sign in and open `#profile` → `Profile Information` card shows values in dark text; labels are muted; hover state uses light gray.
 
+### Dev Login Fallback (2025-08-10)
+- Added optional dev bypass for login in `user-portal.html`:
+  - Enable via `?dev=1` or `?devLogin=1` in URL, or set `localStorage.DEV_LOGIN = '1'`.
+  - Currently allowlisted: `codylcochran89@gmail.com` with password `user1234`.
+  - On Firebase error, bypass verifies email/password against a small allowlist, loads user from `/api/users`, and calls `showUserPortal()`.
+- How to test:
+  1. Open `user-portal.html?dev=1`.
+  2. Log in with the allowlisted credentials.
+  3. Verify the portal loads and name populates.
+
 ---
 
 ## User Portal Authentication Update (2025-01-10)
