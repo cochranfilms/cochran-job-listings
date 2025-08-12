@@ -114,7 +114,9 @@
           }
         }
       },
-      "primaryJob": "Test Job Title"
+      "primaryJob": "Test Job Title",
+      "paymentMethod": "paypal",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
@@ -139,7 +141,7 @@
   },
   "_metadata": {
     "dataSource": "github",
-    "fetchedAt": "2025-08-10T01:36:26.880Z",
+    "fetchedAt": "2025-08-12T04:12:36.522Z",
     "totalUsers": 2
   }
 }
