@@ -1421,66 +1421,20 @@ html, body { overflow-x: hidden; }
 /* 9) Post-login safety (do NOT change portal layout) */
 #userPortal { overflow-x: hidden; }
 
-/* Only normalize if a component escapes via inline right/translateX; no flow changes */
-#userPortal [style*="right:"],
-#userPortal [style*="translateX("] {
-  position: static;
-  right: auto;
-  transform: none;
+/* ---- SIMPLIFIED LOGIN CENTERING ---- */
+/* Basic centering without fighting JavaScript */
+#loginScreen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 10000;
 }
 
-/* ---- Additional hardening for login layout (stack + hide rails) ---- */
-/* Force any container inside #loginScreen to stack rather than form rows/columns */
-#loginScreen > div,
-#loginScreen .container,
-#loginScreen .wrap,
-#loginScreen .content,
-#loginScreen [class*="row"],
-#loginScreen [class*="grid"],
-#loginScreen [class*="column"],
-#loginScreen [class^="col-"],
-#loginScreen [class*="col-"] {
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
+#loginScreen .login-container {
+  width: min(520px, 100%);
+  max-width: 520px;
+  margin: 0 auto;
 }
-
-/* Ensure the primary panel targets are blocks (stops side-by-side cards) */
-#loginScreen .card,
-#loginScreen form,
-#loginScreen > div:not(script):not(style) { display: block !important; margin-inline: auto !important; }
-
-/* Hide/neutralize quick action rails or floating icon stacks on the right */
-#loginScreen .vertical-rail,
-#loginScreen .quick-actions,
-#loginScreen .toolbar,
-#loginScreen .rail,
-#loginScreen .action-rail,
-#loginScreen .fab,
-#loginScreen .fab-container,
-#loginScreen .floating-actions {
-  display: none !important;
-}
-
-/* Make any nav links inside login non-floating and inline */
-#loginScreen .nav-link {
-  position: static !important;
-  transform: none !important;
-  float: none !important;
-  display: inline-flex !important;
-}
-  
-  /* ---- FINAL OVERRIDES: Guarantee centered login overlay ---- */
-  /* Some upstream rules may change layout after load; these restore intent */
-  #loginScreen {
-    position: fixed !important;
-    inset: 0 !important;
-    display: grid;
-    place-items: center !important;
-    padding: 24px !important;
-  }
-  #loginScreen .login-container {
-    width: min(520px, 100%) !important;
-    max-width: 520px !important;
-    margin-inline: auto !important;
-  }
