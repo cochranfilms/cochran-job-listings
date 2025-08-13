@@ -80,7 +80,11 @@
         "approvedDate": "2025-08-13"
       },
       "contract": {
-        "contractStatus": "pending"
+        "contractStatus": "uploaded",
+        "contractSignedDate": "8/13/2025, 1:37:18 AM",
+        "contractUploadedDate": "2025-08-13T05:37:27.509Z",
+        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Billy%20Bob.pdf",
+        "contractId": "CF-1755063438483-HQ7F4"
       },
       "application": {
         "status": "approved",
@@ -132,5 +136,10 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-13"
+  },
+  "_metadata": {
+    "dataSource": "github",
+    "fetchedAt": "2025-08-13T05:37:27.488Z",
+    "totalUsers": 2
   }
 }
