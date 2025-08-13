@@ -70,33 +70,33 @@
         "primaryJob": "Test Job Title"
       }
     },
-    "Test User": {
+    "Billy Bob": {
       "profile": {
-        "email": "codylcochran89@gmail.com",
+        "email": "codylcochran87@gmail.com",
         "location": "Atlanta Area",
         "role": "Test Job Title",
         "rate": "$200",
         "projectType": "",
-        "approvedDate": "2025-08-10"
+        "approvedDate": "2025-08-13"
       },
       "contract": {
         "contractStatus": "uploaded",
-        "contractSignedDate": "8/9/2025, 9:36:18 PM",
-        "contractUploadedDate": "2025-08-10T01:36:26.822Z",
-        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Test%20User.pdf",
-        "contractId": "CF-1754789778118-PXCGH"
+        "contractSignedDate": "8/13/2025, 1:37:18 AM",
+        "contractUploadedDate": "2025-08-13T05:37:27.509Z",
+        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Billy%20Bob.pdf",
+        "contractId": "CF-1755063438483-HQ7F4"
       },
       "application": {
         "status": "approved",
-        "submittedAt": "2025-08-10T01:32:21.941Z",
+        "submittedAt": "2025-08-13T05:26:50.724Z",
         "jobTitle": "Test Job Title",
         "eventDate": "2025-10-12",
         "pay": "$400",
         "description": "Test Job Description",
         "phone": "4704202169",
-        "portfolio": "https://www.cochranfilms.com",
+        "portfolio": "https://pitch.cochranfilms.com",
         "source": "apply-html",
-        "updatedAt": "2025-08-10T01:33:35.984Z"
+        "updatedAt": "2025-08-13T05:28:29.134Z"
       },
       "jobs": {
         "Test Job Title": {
@@ -114,9 +114,7 @@
           }
         }
       },
-      "primaryJob": "Test Job Title",
-      "paymentMethod": "paypal",
-      "paymentStatus": "configured"
+      "primaryJob": "Test Job Title"
     }
   },
   "statusOptions": {
@@ -133,15 +131,15 @@
       "overdue"
     ]
   },
-  "lastUpdated": "2025-08-10",
+  "lastUpdated": "2025-08-13",
   "totalUsers": 2,
   "system": {
     "totalReviews": 0,
-    "lastUpdated": "2025-08-10"
+    "lastUpdated": "2025-08-13"
   },
   "_metadata": {
     "dataSource": "github",
-    "fetchedAt": "2025-08-12T04:12:36.522Z",
+    "fetchedAt": "2025-08-13T05:37:27.488Z",
     "totalUsers": 2
   }
 }

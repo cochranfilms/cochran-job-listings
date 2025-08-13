@@ -207,8 +207,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-10",
       "signedDate": "2025-08-09"
+    },
+    {
+      "contractId": "CF-1755063438483-HQ7F4",
+      "freelancerName": "Billy Bob",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Test Job Title",
+      "rate": "$400",
+      "location": "Atlanta Area",
+      "fileName": "Billy Bob.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-13T05:37:31.543Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Billy Bob.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-13",
+      "signedDate": "2025-08-13"
     }
   ],
-  "lastUpdated": "2025-08-10T01:36:30.581Z",
-  "totalContracts": 13
+  "lastUpdated": "2025-08-13T05:37:31.543Z",
+  "totalContracts": 14
 }
