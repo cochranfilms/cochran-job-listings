@@ -358,3 +358,15 @@ await page.evaluate(() => {
 
 - Forced a dark translucent background on `profile-card`, `project-card`, and `payment-card` in `user-portal.html` so profile details are always legible regardless of any inherited light background.
 - Validate by logging in and confirming the Profile card shows user details with sufficient contrast.
+
+## User Portal Login Centering Fix (2025-08-13)
+
+- Files: `styles/user-portal-theme.css`
+- Change: Appended a "FINAL OVERRIDES" block to lock `#loginScreen` as a fixed full-screen grid and center the `.login-container`, preventing post-load left shift.
+- Symptoms fixed: Login panel flashed centered then jumped left after ~0.5s.
+- How to test (automated preferred [[memory:5422675]]):
+  1. Open `user-portal.html` with cache disabled, reload 3x.
+  2. Confirm the login stays centered on initial paint and after 2 seconds.
+  3. Resize window (<480px and >1200px) and verify centering persists.
+  4. Ensure post-login portal layout is unaffected.
+- Rollback: Remove the final overrides block targeting `#loginScreen` and `.login-container` at the end of `styles/user-portal-theme.css`.

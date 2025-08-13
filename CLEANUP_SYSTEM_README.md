@@ -399,3 +399,10 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
 
 - To prevent readability regressions, the user portal now enforces a dark background on the `profile-card`, `project-card`, and `payment-card` containers.
 - If adding new dashboard cards that display white text, apply the same pattern or reuse these classes to maintain contrast.
+
+## Login Overlay Centering Hardening (2025-08-13)
+
+- Files: `styles/user-portal-theme.css`
+- Change: Added a final override to enforce `#loginScreen { position: fixed; inset: 0; display: grid; place-items: center; }` and constrain `.login-container` width.
+- Purpose: Prevent late-arriving styles/JS from shifting the login panel left.
+- Cleanup guidance: If future layout systems add grids/rows at the root, ensure `#loginScreen` remains isolated and loaded last. Remove any duplicated `.login-screen` rules in inline `<style>` blocks when consolidating.
