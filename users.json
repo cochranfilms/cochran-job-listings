@@ -69,54 +69,6 @@
         },
         "primaryJob": "Test Job Title"
       }
-    },
-    "Test User": {
-      "profile": {
-        "email": "codylcochran89@gmail.com",
-        "location": "Atlanta Area",
-        "role": "Test Job Title",
-        "rate": "$200",
-        "projectType": "",
-        "approvedDate": "2025-08-10"
-      },
-      "contract": {
-        "contractStatus": "uploaded",
-        "contractSignedDate": "8/9/2025, 9:36:18 PM",
-        "contractUploadedDate": "2025-08-10T01:36:26.822Z",
-        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Test%20User.pdf",
-        "contractId": "CF-1754789778118-PXCGH"
-      },
-      "application": {
-        "status": "approved",
-        "submittedAt": "2025-08-10T01:32:21.941Z",
-        "jobTitle": "Test Job Title",
-        "eventDate": "2025-10-12",
-        "pay": "$400",
-        "description": "Test Job Description",
-        "phone": "4704202169",
-        "portfolio": "https://www.cochranfilms.com",
-        "source": "apply-html",
-        "updatedAt": "2025-08-10T01:33:35.984Z"
-      },
-      "jobs": {
-        "Test Job Title": {
-          "title": "Test Job Title",
-          "date": "2025-10-12",
-          "location": "Atlanta Area",
-          "rate": "$400",
-          "description": "Test Job Description",
-          "type": "Event Coverage",
-          "status": "upcoming",
-          "listingStatus": "Active",
-          "jobRef": {
-            "source": "jobs-data",
-            "index": 2
-          }
-        }
-      },
-      "primaryJob": "Test Job Title",
-      "paymentMethod": "paypal",
-      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
@@ -133,15 +85,10 @@
       "overdue"
     ]
   },
-  "lastUpdated": "2025-08-10",
-  "totalUsers": 2,
+  "lastUpdated": "2025-08-13",
+  "totalUsers": 1,
   "system": {
     "totalReviews": 0,
-    "lastUpdated": "2025-08-10"
-  },
-  "_metadata": {
-    "dataSource": "github",
-    "fetchedAt": "2025-08-12T04:12:36.522Z",
-    "totalUsers": 2
+    "lastUpdated": "2025-08-13"
   }
 }
