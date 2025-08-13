@@ -6605,25 +6605,58 @@
             }
         }
         
-        /* Force login screen styles to take precedence */
+        /* BULLETPROOF LOGIN SCREEN STYLES - NO EXTERNAL OVERRIDES */
         #loginScreen.login-screen {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 70%, #16213e 100%) !important;
-            padding: 120px 20px !important;
+            /* Force full viewport coverage with proper breathing room */
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
             min-height: 100vh !important;
+            
+            /* Beautiful dark gradient background */
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 70%, #16213e 100%) !important;
+            
+            /* CRITICAL: Proper breathing room around the entire login box */
+            padding: 120px 20px !important;
+            
+            /* Perfect centering */
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            
+            /* Ensure it's above everything */
+            z-index: 999999 !important;
+            
+            /* Prevent any scrolling issues */
+            overflow: hidden !important;
         }
         
         #loginScreen .login-container {
+            /* Dark, elegant container */
             background: rgba(0, 0, 0, 0.85) !important;
             border: 2px solid rgba(255, 178, 0, 0.4) !important;
             border-radius: 20px !important;
+            
+            /* Proper internal spacing */
             padding: 60px 50px !important;
+            
+            /* Perfect width constraints */
             max-width: 480px !important;
             width: 90% !important;
+            
+            /* Beautiful shadow effects */
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 178, 0, 0.1) !important;
+            
+            /* Center the container */
             margin: 0 auto !important;
+            
+            /* Prevent any external interference */
+            position: relative !important;
+            transform: none !important;
         }
         
         #loginScreen .real-logo {
@@ -6641,29 +6674,53 @@
             background: rgba(0, 0, 0, 0.3) !important;
         }
         
-        /* Fix input field readability */
+        /* BULLETPROOF INPUT FIELD STYLES - PERFECT READABILITY */
         #loginScreen .input-container {
-            background: rgba(0, 0, 0, 0.6) !important;
-            border: 2px solid rgba(255, 255, 255, 0.2) !important;
+            /* Dark, readable background */
+            background: rgba(0, 0, 0, 0.7) !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
             border-radius: 16px !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 24px !important;
+            
+            /* Ensure proper layout */
+            position: relative !important;
+            overflow: hidden !important;
         }
         
         #loginScreen .input-container:focus-within {
-            background: rgba(0, 0, 0, 0.8) !important;
+            /* Enhanced focus state */
+            background: rgba(0, 0, 0, 0.9) !important;
             border-color: #FFB200 !important;
             box-shadow: 0 0 0 4px rgba(255, 178, 0, 0.3) !important;
+            transform: translateY(-1px) !important;
         }
         
         #loginScreen .input-container input {
+            /* Perfect text visibility */
             color: #FFFFFF !important;
             background: transparent !important;
-            padding: 18px 20px !important;
+            padding: 20px 24px !important;
             font-size: 16px !important;
+            font-weight: 500 !important;
+            
+            /* Ensure full width */
+            width: 100% !important;
+            border: none !important;
+            outline: none !important;
+            
+            /* Smooth transitions */
+            transition: all 0.3s ease !important;
         }
         
         #loginScreen .input-container input::placeholder {
-            color: rgba(255, 255, 255, 0.7) !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+            font-weight: 400 !important;
+        }
+        
+        /* Hover effect for better UX */
+        #loginScreen .input-container:hover {
+            background: rgba(0, 0, 0, 0.8) !important;
+            border-color: rgba(255, 255, 255, 0.4) !important;
         }
         
         /* Fix login button */

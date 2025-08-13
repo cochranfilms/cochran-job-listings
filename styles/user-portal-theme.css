@@ -1,33 +1,13 @@
-.login-screen .login-brand,
-.login-screen .login-form-container,
-.login-screen .login-form,
-.login-screen .form-group,
-.login-screen .input-container,
-.login-screen .login-btn {
-  position: static !important;
-}
-
-/* Kill any absolute-positioned UI rail elements inside login */
-.login-screen [style*="position: absolute"],
-.login-screen .vertical-rail,
-.login-screen .quick-actions,
-.login-screen .toolbar,
-.login-screen .rail {
-  position: static !important;
-  float: none !important;
-  inset: auto !important;
-  right: auto !important;
-  left: auto !important;
-  transform: none !important;
-  margin: 0 !important;
-}
-
-/* Ensure inputs and button are not squeezed */
-.login-screen .input-container { display: grid !important; grid-template-columns: 1fr !important; }
-.login-screen .input-container .input-icon { position: absolute; left: 12px; }
-.login-screen .login-btn { width: 100% !important; min-height: 48px !important; pointer-events: auto !important; }
 /* ==========================================================================
-   Reset
+   USER PORTAL THEME - CLEAN VERSION
+   ========================================================================== */
+
+/* IMPORTANT: This file NO LONGER controls login screen styling.
+   All login screen styles are now handled inline in user-portal.html
+   to prevent conflicts and ensure proper application. */
+
+/* ==========================================================================
+   Reset & Base Styles (Non-Login Only)
    ========================================================================== */
 
 *,
@@ -99,1342 +79,204 @@ button, input, select, textarea {
   --color-danger: #ef4444;
   --color-focus: #0ea5e9;
 
-  /* Elevation */
-  --shadow-1: 0 1px 2px rgba(15, 18, 20, 0.07);
-  --shadow-2: 0 4px 12px rgba(15, 18, 20, 0.10);
-  --shadow-3: 0 12px 28px rgba(15, 18, 20, 0.12);
-
-  /* Radii */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
-
   /* Spacing */
-  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;  --space-4: 16px;
-  --space-5: 20px; --space-6: 24px; --space-7: 32px;  --space-8: 40px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(15, 18, 20, 0.05);
+  --shadow-md: 0 4px 6px rgba(15, 18, 20, 0.07);
+  --shadow-lg: 0 10px 15px rgba(15, 18, 20, 0.1);
+  --shadow-xl: 0 20px 25px rgba(15, 18, 20, 0.15);
+  --shadow-2xl: 0 25px 50px rgba(15, 18, 20, 0.25);
 
   /* Typography */
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-  --font-size-xs: 12px; --font-size-sm: 14px; --font-size-md: 16px;
-  --font-size-lg: 18px; --font-size-xl: 22px; --font-size-2xl: 28px;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
 
-  /* Motion */
-  --ease: cubic-bezier(0.2, 0, 0, 1);
-  --dur-fast: 120ms; --dur-med: 200ms; --dur-slow: 320ms;
-
-  /* Translucency */
-  --glass-surface: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.6);
-  --glass-shadow: 0 10px 30px rgba(15, 18, 20, 0.12);
-
-  /* Focus ring system */
+  /* Focus */
   --focus-outline: 2px;
   --focus-ring: 4px;
 }
 
 /* ==========================================================================
-   Base
+   Typography
    ========================================================================== */
 
 body {
-  font-family: var(--font-sans);
-  font-size: var(--font-size-md);
-  line-height: 1.5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: var(--font-size-base);
+  line-height: 1.6;
   color: var(--color-text);
-  background: var(--color-bg);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-::selection {
-  background: rgba(14, 165, 233, 0.18);
+  background-color: var(--color-bg);
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: var(--color-text);
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: var(--space-md);
 }
 
-h1 { font-size: clamp(26px, 2.4vw, 34px); }
-h2 { font-size: clamp(22px, 2.0vw, 28px); }
-h3 { font-size: clamp(18px, 1.6vw, 22px); }
-h4 { font-size: clamp(16px, 1.4vw, 18px); }
-h5 { font-size: var(--font-size-md); }
-h6 { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+h1 { font-size: var(--font-size-4xl); }
+h2 { font-size: var(--font-size-3xl); }
+h3 { font-size: var(--font-size-2xl); }
+h4 { font-size: var(--font-size-xl); }
+h5 { font-size: var(--font-size-lg); }
+h6 { font-size: var(--font-size-base); }
 
-p { color: var(--color-text); }
-
-a {
-  color: var(--color-text);
-  text-underline-offset: 2px;
-  text-decoration-thickness: 1px;
-  transition: color var(--dur-fast) var(--ease);
-}
-a:hover {
-  color: var(--color-brand-strong);
+p {
+  margin-bottom: var(--space-md);
+  line-height: 1.7;
 }
 
 /* ==========================================================================
-   Layout helpers
+   Layout & Components (Non-Login Only)
    ========================================================================== */
 
-.container, .wrap, .content {
+.container {
   max-width: 1200px;
-  margin-inline: auto;
-  padding-inline: var(--space-6);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
 }
 
-.stack > * + * { margin-top: var(--space-4); }
-.flow > * + * { margin-top: var(--space-3); }
-.cluster { display: inline-flex; gap: var(--space-3); align-items: center; }
-.divider { height: 1px; background: var(--color-border); width: 100%; }
-
-.visually-hidden, .sr-only {
-  position: absolute !important;
-  clip: rect(1px,1px,1px,1px) !important;
-  clip-path: inset(50%) !important;
-  height: 1px !important; width: 1px !important;
-  overflow: hidden !important; white-space: nowrap !important; border: 0 !important;
-}
-
-/* ==========================================================================
-   Login
-   (Targets common login wrappers without requiring new HTML classes)
-   ========================================================================== */
-
-/* Subtle vignette + gradient background for login views */
-body.login, .login-page, .auth-page, .login-screen {
-  background:
-    radial-gradient(1200px 600px at 50% -10%, rgba(15,18,20,0.06), rgba(15,18,20,0) 55%),
-    linear-gradient(180deg, #fbfcfe 0%, #f7f8fa 100%);
-}
-
-/* Center panel if these wrappers exist; no impact otherwise */
-.login, .auth, .auth-container, .login-screen {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: var(--space-7) var(--space-6);
-}
-
-/* Existing decorative login background and floaters → make subtle and premium */
-.login-background {
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(1000px 500px at 20% -10%, rgba(15,18,20,0.05), rgba(15,18,20,0) 50%),
-    radial-gradient(900px 480px at 80% 110%, rgba(15,18,20,0.04), rgba(15,18,20,0) 55%);
-  pointer-events: none;
-}
-
-.floating-elements { filter: blur(0.5px); }
-.floating-icon {
-  font-size: 18px !important;
-  opacity: 0.08 !important;
-  text-shadow: none !important;
-  filter: grayscale(100%);
-  animation: none !important; /* reduce motion and cartoon feel */
-}
-/* Hard-disable floaters to prevent UI overlap */
-.floating-elements, .floating-icon { display: none !important; }
-
-.login-panel, .auth-panel, .login-card, .auth-card, .login-container {
-  width: min(500px, 100%);
-  background: var(--glass-surface);
-  border: 1px solid var(--glass-border);
+.card {
+  background: var(--color-surface);
   border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  padding: var(--space-7);
-}
-
-/* Brand unit refinements */
-.logo-circle {
-  background: var(--color-surface) !important;
-  color: var(--color-brand) !important;
-  border: 2px solid var(--color-brand) !important;
-  border-radius: var(--radius-pill) !important;
-  box-shadow: var(--shadow-1) !important;
-}
-.logo-circle::before { box-shadow: none !important; opacity: 0 !important; }
-.logo-text { text-shadow: none !important; }
-
-.brand-title, .brand-subtitle, .login-title, .login-subtitle {
-  text-shadow: none !important;
-  letter-spacing: -0.01em;
-  color: var(--color-text) !important;
-}
-.brand-title { font-weight: 700 !important; }
-.brand-subtitle { font-weight: 500 !important; color: var(--color-text-muted) !important; }
-.login-title { font-weight: 700 !important; }
-.login-subtitle { color: var(--color-text-muted) !important; }
-
-/* Simplify avatar/emoji icon */
-.portal-icon {
-  font-size: 24px !important;
-  filter: grayscale(100%);
-  opacity: 0.6;
-  text-shadow: none !important;
-}
-
-/* Fix login form layout: remove decorative side rail and ensure full-width form */
-.login-form-container::before,
-.login-form-container:hover::before { content: none !important; display: none !important; }
-.login-form-container { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
-.login-container { width: min(520px, 100%); }
-.login-form { width: 100% !important; position: static !important; }
-.login-form .form-group { margin-bottom: var(--space-4) !important; }
-.input-line { display: none !important; }
-.input-container { width: 100% !important; }
-.input-container input { min-height: 44px; }
-
-.login-panel header, .auth-panel header {
-  margin-bottom: var(--space-5);
-}
-
-.login-panel h1, .auth-panel h1 {
-  font-size: clamp(22px, 2.2vw, var(--font-size-2xl));
-}
-
-.login-panel p.subtle, .auth-panel p.subtle {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-/* Login form controls */
-.login-panel form .form-group,
-.auth-panel form .form-group {
-  margin-bottom: var(--space-5);
-}
-
-.login-panel label,
-.auth-panel label {
-  display: block;
-  margin-bottom: var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--color-text);
-}
-
-.login-panel input,
-.auth-panel input,
-.login-panel select,
-.auth-panel select,
-.login-panel textarea,
-.auth-panel textarea {
-  width: 100%;
-  padding: 12px 14px;
-  background: linear-gradient(0deg, var(--color-surface) 0%, var(--color-surface) 100%);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
 }
 
-.login-panel input::placeholder,
-.auth-panel input::placeholder { color: #8a95a0; }
-
-.login-panel input:focus,
-.auth-panel input:focus,
-.login-panel select:focus,
-.auth-panel select:focus,
-.login-panel textarea:focus,
-.auth-panel textarea:focus {
-  border-color: var(--color-focus);
-  box-shadow:
-    0 0 0 var(--focus-outline) var(--color-surface),
-    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
-}
-
-.login-actions, .auth-actions {
-  margin-top: var(--space-6);
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-/* Map existing input structure to premium style */
-.login-form, .auth-form { width: 100%; }
-.input-container {
-  display: grid;
-  grid-template-columns: 24px 1fr;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
-}
-.input-container:focus-within {
-  border-color: var(--color-focus);
-  box-shadow:
-    0 0 0 var(--focus-outline) var(--color-surface),
-    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
-}
-.input-icon {
-  width: 24px; height: 24px;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--color-text-muted);
-  background: transparent !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-.input-container input {
-  width: 100%;
-  padding: 0;
-  background: transparent !important;
-  border: none !important;
-  color: var(--color-text);
-}
-.input-container input::placeholder { color: #8a95a0; }
-.input-line {
-  height: 1px !important;
-  background: transparent !important;
-}
-
-/* Primary login button */
-.login-panel .btn-primary,
-.auth-panel .btn-primary,
-.login-panel button[type="submit"],
-.auth-panel button[type="submit"] {
-  width: 100%;
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 12px 16px;
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
-  background: var(--color-brand);
-  color: var(--color-brand-contrast);
-  border: 1px solid color-mix(in oklab, var(--color-brand), #000 8%);
-  box-shadow: var(--shadow-1);
-  transition: transform var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
-  will-change: transform;
-}
-
-.login-panel .btn-primary:hover,
-.auth-panel .btn-primary:hover,
-.login-panel button[type="submit"]:hover,
-.auth-panel button[type="submit"]:hover {
-  background: var(--color-brand-strong);
-  box-shadow: var(--shadow-2);
-}
-
-.login-panel .btn-primary:active,
-.auth-panel .btn-primary:active,
-.login-panel button[type="submit"]:active,
-.auth-panel button[type="submit"]:active {
-  transform: translateY(0.5px);
-  box-shadow: var(--shadow-1);
-}
-
-.login-panel .btn-primary:focus-visible,
-.auth-panel .btn-primary:focus-visible,
-.login-panel button[type="submit"]:focus-visible,
-.auth-panel button[type="submit"]:focus-visible {
-  outline: var(--focus-outline) solid var(--color-focus);
-  outline-offset: 0;
-  box-shadow:
-    0 0 0 var(--focus-outline) var(--color-surface),
-    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
-}
-
-/* ==========================================================================
-   Navigation (top nav, side nav)
-   ========================================================================== */
-
-nav, .nav, .navbar {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-1);
-  color: var(--color-text);
-}
-
-.navbar .nav-inner, nav .nav-inner, .nav .nav-inner {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding-inline: var(--space-6);
-}
-
-.nav a, .navbar a, .nav .item, .nav-menu .nav-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  height: 36px;
-  padding: 0 var(--space-3);
-  color: var(--color-text);
-  border-radius: var(--radius-pill);
-  text-decoration: none;
-  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
-}
-
-.nav a:hover, .navbar a:hover, .nav .item:hover, .nav-menu .nav-link:hover {
-  background: var(--color-surface-2);
-}
-
-.nav .active, .navbar .active, .nav a[aria-current="page"], .nav-menu .nav-link.active {
-  color: var(--color-text);
-  background: color-mix(in oklab, var(--color-brand) 18%, #fff);
-  border-bottom: 2px solid var(--color-brand);
-}
-
-/* Sidebar */
-.sidebar {
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
-  color: var(--color-text);
-}
-
-.sidebar .item, .sidebar a {
-  display: block;
-  padding: 10px var(--space-5);
-  border-radius: var(--radius-sm);
-  color: inherit;
-  text-decoration: none;
-  transition: background-color var(--dur-fast) var(--ease);
-}
-.sidebar .item:hover, .sidebar a:hover { background: var(--color-surface-2); }
-.sidebar .item.active, .sidebar a.active {
-  background: color-mix(in oklab, var(--color-brand) 16%, #fff);
-}
-
-/* ==========================================================================
-   Cards / Sections
-   ========================================================================== */
-
-.card, .panel, .section, .content-section {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-1);
-  padding: var(--space-6);
-}
-
-.card + .card, .panel + .panel, .section + .section { margin-top: var(--space-6); }
-
-.card header, .panel header, .section header {
-  margin-bottom: var(--space-4);
-}
-.card header h2, .panel header h2, .section header h2 {
-  font-size: var(--font-size-xl);
-}
-
-/* ==========================================================================
-   Tables
-   ========================================================================== */
-
-table, .table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-1);
-  overflow: hidden;
-}
-
-thead th {
-  position: sticky; /* if already sticky, this will keep it */
-  top: 0;
-  background: var(--color-surface);
-  color: var(--color-text);
-  text-align: left;
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-  border-bottom: 1px solid var(--color-border);
-  padding: 12px 14px;
-  z-index: 1;
-}
-
-/* ========================================================================== */
-/* Modern Apple Glass Login Design                                            */
-/* ========================================================================== */
-.login-screen { 
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  position: relative;
-  overflow: hidden;
-}
-
-.login-screen::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.login-screen .login-background { 
-  display: none !important; 
-}
-
-.login-screen .login-container {
-  width: min(480px, 100%);
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 
-    0 25px 50px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-radius: 24px !important;
-  padding: 48px 40px !important;
-  position: relative;
-  z-index: 1;
-}
-
-.login-screen .login-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  border-radius: 24px;
-  z-index: -1;
-}
-
-.login-screen .login-brand {
-  display: grid; 
-  place-items: center; 
-  gap: 24px;
-  margin-bottom: 40px;
-  text-align: center;
-}
-
-.login-screen .logo-container {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.login-screen .logo-circle { 
-  width: 64px; 
-  height: 64px; 
-  background: linear-gradient(135deg, #FFB200, #FFD700);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: bold;
-  color: #000;
-  box-shadow: 0 8px 32px rgba(255, 178, 0, 0.3);
-}
-
-.login-screen .brand-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.login-screen .brand-title { 
-  font-size: 28px;
-  font-weight: 800;
-  color: #fff;
-  margin: 0;
-  letter-spacing: 0.02em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.login-screen .brand-subtitle { 
-  font-size: 14px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0;
-  letter-spacing: 0.1em;
-}
-
-.login-screen .portal-icon {
-  font-size: 32px;
-  margin: 8px 0;
-}
-
-.login-screen .login-title { 
-  font-size: 20px;
-  font-weight: 700;
-  color: #fff;
-  margin: 0;
-  letter-spacing: 0.05em;
-}
-
-.login-screen .login-subtitle { 
-  margin: 8px 0 0 0; 
-  color: rgba(255, 255, 255, 0.7) !important;
-  font-size: 14px;
-  font-weight: 400;
-}
-
-.login-screen .login-form { 
-  gap: 24px !important; 
-}
-
-.login-screen .form-group {
-  position: relative;
-}
-
-.login-screen .input-container { 
-  grid-template-columns: 1fr !important; 
-  padding: 0 !important; 
-  gap: 0 !important; 
-  border: none !important; 
-  background: transparent !important; 
-  position: relative;
-}
-
-.login-screen .input-container .input-icon,
-.login-screen .input-line { 
-  display: none !important; 
-}
-
-.login-screen .input-container input {
-  width: 100%;
-  padding: 16px 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 16px !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #fff !important;
-  font-size: 16px;
   font-weight: 500;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.login-screen .input-container input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 400;
-}
-
-.login-screen .input-container input:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.4) !important;
-  background: rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.15),
-    0 0 0 3px rgba(255, 255, 255, 0.1) !important;
-  transform: translateY(-2px);
-}
-
-.login-screen .input-container input:hover {
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-}
-
-.login-screen .login-btn { 
-  width: 100% !important;
-  padding: 16px 24px !important;
-  background: linear-gradient(135deg, #FFB200, #FFD700) !important;
-  color: #000 !important;
-  border: none !important;
-  border-radius: 16px !important;
-  font-size: 16px;
-  font-weight: 700 !important; 
-  letter-spacing: 0.02em !important;
+  text-decoration: none;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 8px 32px rgba(255, 178, 0, 0.3),
-    0 0 0 1px rgba(255, 178, 0, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.login-screen .login-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.login-screen .login-btn:hover::before {
-  left: 100%;
-}
-
-.login-screen .login-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 
-    0 12px 40px rgba(255, 178, 0, 0.4),
-    0 0 0 2px rgba(255, 178, 0, 0.2);
-}
-
-.login-screen .login-btn:active {
-  transform: translateY(-1px);
-}
-
-.login-screen .login-btn i {
-  margin-right: 8px;
-  font-size: 16px;
-}
-
-.login-screen .error-message {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 24px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.login-screen .error-message i {
-  color: #ef4444;
-  font-size: 16px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 480px) {
-  .login-screen .login-container {
-    padding: 32px 24px !important;
-    margin: 16px;
-  }
-  
-  .login-screen .brand-title {
-    font-size: 24px;
-  }
-  
-  .login-screen .login-title {
-    font-size: 18px;
-  }
-  
-  .login-screen .input-container input {
-    padding: 14px 18px !important;
-    font-size: 16px;
-  }
-  
-  .login-screen .login-btn {
-    padding: 14px 20px !important;
-    font-size: 16px;
-  }
-}
-
-/* ========================================================================== */
-/* Portal Light Theme Normalization (ensure visibility on light theme)        */
-/* ========================================================================== */
-.app-container, .main-content, .content-section { background: var(--color-bg) !important; color: var(--color-text) !important; }
-.card, .job-card, .project-card, .payment-card, .profile-card, .contract-card {
-  background: var(--color-surface) !important;
-  color: var(--color-text) !important;
-  border: 1px solid var(--color-border) !important;
-  box-shadow: var(--shadow-1) !important;
-}
-.card-header, .dashboard-header { color: var(--color-text) !important; border-color: var(--color-border) !important; }
-.dashboard-header h1, .dashboard-header p { color: var(--color-text) !important; }
-
-/* Status badges tuned for light surfaces */
-.status-badge {
-  background: color-mix(in oklab, var(--color-brand) 8%, #fff) !important;
-  color: var(--color-text) !important;
-  border: 1px solid var(--color-border) !important;
-}
-.status-badge.status-completed, .status-badge.signed { background: color-mix(in oklab, #22c55e 16%, #fff) !important; color: #14532d !important; }
-.status-badge.status-pending { background: color-mix(in oklab, #f59e0b 14%, #fff) !important; color: #7c2d12 !important; }
-
-/* Timeline on light theme */
-.timeline { color: var(--color-text) !important; }
-.timeline::before { background: var(--color-border) !important; }
-.timeline-item::before { background: var(--color-surface) !important; border: 3px solid var(--color-border) !important; }
-.timeline-content h4 { color: var(--color-text) !important; }
-.timeline-content p { color: var(--color-text-muted) !important; }
-
-tbody td {
-  border-bottom: 1px solid var(--color-border);
-  padding: 12px 14px;
-  font-size: var(--font-size-sm);
-}
-
-tbody tr:nth-child(odd) td {
-  background: color-mix(in oklab, var(--color-surface-2) 50%, var(--color-surface));
-}
-
-tbody tr:hover td {
-  background: color-mix(in oklab, var(--color-surface-2) 70%, var(--color-surface));
-}
-
-.table-compact td, .table-compact th { padding: 10px 12px; }
-
-/* ==========================================================================
-   Forms
-   ========================================================================== */
-
-.form-group { margin-bottom: var(--space-5); }
-
-label {
-  display: inline-block;
-  margin-bottom: var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--color-text);
-}
-
-input[type="text"], input[type="email"], input[type="password"],
-input[type="number"], input[type="tel"], input[type="search"],
-select, textarea, .form-control, .input, .select {
-  width: 100%;
-  min-height: 40px;
-  padding: 12px 14px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
-}
-
-input::placeholder, textarea::placeholder { color: #8a95a0; }
-
-input:focus, select:focus, textarea:focus, .form-control:focus {
-  border-color: var(--color-focus);
-  box-shadow:
-    0 0 0 var(--focus-outline) var(--color-surface),
-    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
-}
-
-input[disabled], select[disabled], textarea[disabled] {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.help-text, .form-help {
-  margin-top: var(--space-2);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
-.error-text, .form-error {
-  margin-top: var(--space-2);
-  font-size: var(--font-size-xs);
-  color: var(--color-danger);
-}
-
-.is-invalid, .has-error, input.error, select.error, textarea.error {
-  border-color: var(--color-danger);
-  background: color-mix(in oklab, var(--color-danger) 5%, var(--color-surface));
-}
-
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-
-button, .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  height: 40px;
-  padding: 0 14px;
-  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
   border: 1px solid transparent;
-  background: var(--color-surface);
-  color: var(--color-text);
-  box-shadow: var(--shadow-1);
-  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
-  will-change: transform;
 }
 
-button:hover, .btn:hover { box-shadow: var(--shadow-2); }
-
-button:active, .btn:active { transform: translateY(0.5px); }
-
-button:focus-visible, .btn:focus-visible {
-  outline: var(--focus-outline) solid var(--color-focus);
-  outline-offset: 0;
-  box-shadow:
-    var(--shadow-1),
-    0 0 0 var(--focus-outline) var(--color-surface),
-    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
-}
-
-/* Solid (brand) */
-.btn-primary, .button-primary, button.primary {
+.btn-primary {
   background: var(--color-brand);
   color: var(--color-brand-contrast);
-  border-color: color-mix(in oklab, var(--color-brand), #000 8%);
-}
-.btn-primary:hover, .button-primary:hover, button.primary:hover {
-  background: var(--color-brand-strong);
-}
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* Outline */
-.btn-outline, .button-outline, button.outline {
-  background: transparent;
-  color: var(--color-text);
-  border-color: var(--color-border);
-}
-.btn-outline:hover { background: var(--color-surface-2); }
-
-/* Secondary (neutral outline) */
-.btn-secondary, button.btn-secondary, .button-secondary {
-  background: transparent;
-  color: var(--color-text);
-  border-color: var(--color-border);
-}
-.btn-secondary:hover { background: var(--color-surface-2); }
-
-/* Ghost / Subtle */
-.btn-ghost, .button-ghost, button.ghost {
-  background: transparent;
-  color: var(--color-text);
-  border-color: transparent;
-  box-shadow: none;
-}
-.btn-ghost:hover { background: var(--color-surface-2); }
-
-/* Login primary button (maps to existing markup) */
-.login-btn {
-  width: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  height: 44px;
-  padding: 0 16px;
-  border-radius: var(--radius-md);
-  background: var(--color-brand);
-  color: var(--color-brand-contrast);
-  border: 1px solid color-mix(in oklab, var(--color-brand), #000 8%);
-  box-shadow: var(--shadow-1);
-  transition: transform var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
-  will-change: transform;
-}
-.login-btn:hover { background: var(--color-brand-strong); box-shadow: var(--shadow-2); }
-.login-btn:active { transform: translateY(0.5px); box-shadow: var(--shadow-1); }
-.login-btn:focus-visible {
-  outline: var(--focus-outline) solid var(--color-focus);
-  outline-offset: 0;
-  box-shadow:
-    0 0 0 var(--focus-outline) var(--color-surface),
-    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35);
-}
-
-/* Reduce heavy glow around brand circle button variations that might exist */
-.login-btn::before { display: none !important; }
-
-/* Semantic variants */
-.btn-success { background: var(--color-success); color: var(--color-text-inverse); border-color: color-mix(in oklab, var(--color-success), #000 8%); }
-.btn-danger  { background: var(--color-danger);  color: var(--color-text-inverse); border-color: color-mix(in oklab, var(--color-danger), #000 8%); }
-
-.btn-sm { height: 32px; padding: 0 10px; border-radius: var(--radius-sm); font-size: var(--font-size-sm); }
-.btn-lg { height: 48px; padding: 0 18px; border-radius: var(--radius-lg); font-size: var(--font-size-lg); }
-
-/* ==========================================================================
-   States: Badges, Alerts, Toasts, Modals, Tooltips
-   ========================================================================== */
-
-/* Badges */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 24px;
-  padding: 0 10px;
-  font-size: var(--font-size-xs);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-2);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-.badge.brand   { background: color-mix(in oklab, var(--color-brand) 20%, #fff); color: var(--color-text); border-color: color-mix(in oklab, var(--color-brand), #000 10%); }
-.badge.success { background: color-mix(in oklab, var(--color-success) 20%, #fff); color: #08361a; border-color: color-mix(in oklab, var(--color-success), #000 10%); }
-.badge.warn    { background: color-mix(in oklab, var(--color-warning) 20%, #fff); color: #3b2a05; border-color: color-mix(in oklab, var(--color-warning), #000 10%); }
-.badge.danger  { background: color-mix(in oklab, var(--color-danger) 20%, #fff); color: #3b0a0a; border-color: color-mix(in oklab, var(--color-danger), #000 10%); }
-
-/* Alerts */
-.alert {
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-1);
-}
-.alert.success { border-color: color-mix(in oklab, var(--color-success), #000 12%); background: color-mix(in oklab, var(--color-success) 6%, #fff); }
-.alert.warn    { border-color: color-mix(in oklab, var(--color-warning), #000 12%); background: color-mix(in oklab, var(--color-warning) 6%, #fff); }
-.alert.danger  { border-color: color-mix(in oklab, var(--color-danger), #000 12%); background: color-mix(in oklab, var(--color-danger) 6%, #fff); }
-
-/* Toast */
-.toast {
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-3);
-  padding: var(--space-4) var(--space-5);
-}
-
-/* Modal */
-.modal-backdrop, .modal-overlay {
-  position: fixed; inset: 0;
-  background: var(--color-backdrop);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-}
-.modal, .modal-content {
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-3);
-}
-
-/* Tooltip */
-.tooltip {
-  background: #0f1214;
-  color: var(--color-text-inverse);
-  border-radius: var(--radius-sm);
-  padding: 6px 8px;
-  font-size: var(--font-size-xs);
-  box-shadow: 0 4px 10px rgba(15,18,20,0.25);
-}
-
-/* ==========================================================================
-   Pagination & Tabs
-   ========================================================================== */
-
-.pagination {
-  display: inline-flex;
-  gap: var(--space-2);
-  align-items: center;
-  padding: var(--space-3) 0;
-}
-.pagination .page, .pagination a, .pagination button {
-  height: 32px; min-width: 32px;
-  padding: 0 10px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-.pagination .page[aria-current="page"], .pagination .active {
   border-color: var(--color-brand);
-  background: color-mix(in oklab, var(--color-brand) 18%, #fff);
 }
 
-.tabs, .tablist {
-  display: flex; gap: var(--space-2); align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-2);
-}
-.tab, .tabs .tab {
-  display: inline-flex; align-items: center; height: 36px;
-  padding: 0 var(--space-3); border-radius: var(--radius-pill);
-  color: var(--color-text); text-decoration: none;
-}
-.tab[aria-selected="true"], .tab.active {
-  background: color-mix(in oklab, var(--color-brand) 16%, #fff);
-  border-bottom: 2px solid var(--color-brand);
+.btn-primary:hover {
+  background: var(--color-brand-strong);
+  border-color: var(--color-brand-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
 }
 
 /* ==========================================================================
-   Utilities
+   User Portal Specific (Non-Login Only)
    ========================================================================== */
 
-.shadow-1 { box-shadow: var(--shadow-1) !important; }
-.shadow-2 { box-shadow: var(--shadow-2) !important; }
-.shadow-3 { box-shadow: var(--shadow-3) !important; }
-
-.radius-sm { border-radius: var(--radius-sm) !important; }
-.radius-md { border-radius: var(--radius-md) !important; }
-.radius-lg { border-radius: var(--radius-lg) !important; }
-.pill      { border-radius: var(--radius-pill) !important; }
-
-.text-muted, .muted { color: var(--color-text-muted) !important; }
-.brand { color: var(--color-brand) !important; }
-
-.bg-surface { background: var(--color-surface) !important; }
-.bg-surface-2 { background: var(--color-surface-2) !important; }
-.bordered { border: 1px solid var(--color-border) !important; }
-
-.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.ring-focus {
-  box-shadow:
-    0 0 0 var(--focus-outline) var(--color-surface),
-    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35) !important;
+/* Ensure user portal doesn't interfere with login */
+#userPortal {
+  overflow-x: hidden;
 }
 
-/* Motion preferences */
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
+/* Portal content styling */
+.portal-content {
+  padding: var(--space-lg);
+}
+
+.portal-section {
+  margin-bottom: var(--space-xl);
+}
+
+.portal-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  margin-bottom: var(--space-md);
 }
 
 /* ==========================================================================
-   Dark Mode (prefers-color-scheme)
+   Responsive Design (Non-Login Only)
    ========================================================================== */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0b0d0f;
-    --color-surface: #121417;
-    --color-surface-2: #181b1f;
-    --color-border: #262a30;
-    --color-text: #e7e9ee;
-    --color-text-muted: #9aa3ad;
-
-    --shadow-1: 0 1px 2px rgba(0,0,0,0.40);
-    --shadow-2: 0 4px 12px rgba(0,0,0,0.45);
-    --shadow-3: 0 12px 28px rgba(0,0,0,0.55);
-
-    --glass-surface: rgba(18, 20, 24, 0.55);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-shadow: 0 10px 30px rgba(0,0,0,0.55);
-
-    --color-backdrop: rgba(0,0,0,0.55);
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--space-sm);
   }
-
-  body.login, .login-page, .auth-page, .login-screen {
-    background:
-      radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.06), rgba(255,255,255,0) 55%),
-      linear-gradient(180deg, #0b0d0f 0%, #0d1013 100%);
+  
+  .portal-content {
+    padding: var(--space-md);
   }
-
-  a:hover { color: var(--color-brand); }
-
-  .tooltip {
-    background: #e7e9ee;
-    color: #0b0d0f;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.45);
-  }
-
-  .login-panel input,
-  .auth-panel input,
-  .login-panel select,
-  .auth-panel select,
-  .login-panel textarea,
-  .auth-panel textarea,
-  input[type="text"], input[type="email"], input[type="password"],
-  input[type="number"], input[type="tel"], input[type="search"],
-  select, textarea, .form-control, .input, .select {
-    background: #0f1214;
-    border-color: var(--color-border);
-    color: var(--color-text);
-  }
-
-  .nav a:hover, .navbar a:hover, .nav .item:hover,
-  .sidebar .item:hover, .sidebar a:hover {
-    background: #1a1e23;
-  }
-
-  tbody tr:nth-child(odd) td {
-    background: color-mix(in oklab, var(--color-surface-2) 60%, var(--color-surface));
-  }
-  tbody tr:hover td {
-    background: color-mix(in oklab, var(--color-surface-2) 80%, var(--color-surface));
+  
+  .portal-card {
+    padding: var(--space-md);
   }
 }
 
-/* ==========================================================================
-   End
-   ========================================================================== */
-
-/*
-Assumptions (map these to your existing classes if they differ):
-- Login wrappers: #loginScreen, .login-screen, .login, .auth, .auth-container, .login-panel, .auth-panel, .login-card
-- Navigation: nav, .nav, .navbar, .sidebar, .active
-- Cards/Sections: .card, .panel, .section, .content-section
-- Tables: table, .table, thead/th/tbody/td
-- Forms: .form-group, .form-control, .input, .select, label, .help-text, .error-text, .is-invalid
-- Buttons: button, .btn, .btn-primary, .btn-outline, .btn-ghost, .btn-success, .btn-danger, .btn-sm, .btn-lg
-- States/Feedback: .badge, .alert, .toast, .modal, .modal-backdrop, .modal-overlay, .tooltip
-- Pagination/Tabs: .pagination, .page, .tabs, .tablist, .tab
-- Utilities: .shadow-1/2/3, .radius-sm/md/lg, .pill, .text-muted, .brand, .bg-surface, .bg-surface-2, .bordered, .truncate, .ring-focus
-
-Notes:
-- This stylesheet is designed to be loaded AFTER existing styles so it can gently override visuals without altering layout.
-- Focus states meet WCAG AA via outline + ring using --color-focus; brand foreground uses #000 on brand background for contrast.
-*/
-
-/* ===== LAYOUT FIXES: LOGIN + OVERFLOW/ABSOLUTE NORMALIZATION ===== */
-
-/* 1) Global safety (non-destructive) */
-html, body { overflow-x: hidden; }
-*, *::before, *::after { box-sizing: border-box; }
-
-/* 2) Center the login screen with our actual ID */
-#loginScreen {
-  min-height: 100svh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: var(--color-bg);
-}
-#loginScreen > * { max-width: 100%; }
-
-/* 3) Constrain the auth panel without inventing wrappers */
-#loginScreen .card,
-#loginScreen form,
-#loginScreen > div:not(script):not(style) {
-  width: 100%;
-  max-width: 560px;
-  margin: 0 auto;
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-lg, 16px);
-  background: var(--color-surface, #fff);
-  box-shadow: var(--shadow-2, 0 4px 12px rgba(15,18,20,.10));
-  padding: 28px;
-}
-
-/* Headings/subtext center-aligned inside the auth panel */
-#loginScreen h1,
-#loginScreen h2,
-#loginScreen h3,
-#loginScreen .subtext,
-#loginScreen .login-subtitle { text-align: center; }
-
-/* 4) Stop anything from escaping to the right on the login route */
-#loginScreen [class*="pill"],
-#loginScreen [class*="toggle"],
-#loginScreen [class*="floating"],
-#loginScreen [style*="position:"],
-#loginScreen [style*="transform:"] {
-  position: static !important;
-  inset: auto !important;
-  transform: none !important;
-  float: none !important;
-  display: block !important;
-  margin: 0 !important;
-  max-width: 100% !important;
-}
-
-/* 5) Form normalization within login scope */
-#loginScreen form,
-#loginScreen .form-group,
-#loginScreen .field,
-#loginScreen .input-row {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-}
-
-#loginScreen label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: var(--font-size-sm, 14px);
-  color: var(--color-text);
-}
-
-/* Inputs/buttons full width */
-#loginScreen input,
-#loginScreen select,
-#loginScreen textarea,
-#loginScreen button[type="submit"] {
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Specific login field IDs */
-#loginScreen #email,
-#loginScreen #password { width: 100%; max-width: 100%; }
-
-/* Focus ring uses --color-focus and AA contrast */
-#loginScreen input:focus,
-#loginScreen select:focus,
-#loginScreen textarea:focus {
-  border-color: var(--color-focus);
-  box-shadow:
-    0 0 0 var(--focus-outline, 2px) var(--color-surface, #fff),
-    0 0 0 calc(var(--focus-outline, 2px) + var(--focus-ring, 4px)) rgba(14,165,233,0.35);
-}
-
-/* Keep #loginError contained */
-#loginScreen #loginError {
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md, 12px);
-  border: 1px solid color-mix(in oklab, var(--color-danger, #ef4444), #000 12%);
-  background: color-mix(in oklab, var(--color-danger, #ef4444) 6%, #fff);
-  color: var(--color-text);
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
-/* 6) Kill portal-only visual effects on the login screen (prevent flicker/lag) */
-#loginScreen .card::before { content: none !important; }
-#loginScreen .particle-container { display: none !important; }
-#loginScreen .nav-link .ripple { display: none !important; }
-#loginScreen [class*="progress-"],
-#loginScreen [class*="animate"],
-#loginScreen [class*="hover"] {
-  animation: none !important;
-  transition: none !important;
-}
-
-/* 7) Background/glass (optional but subtle) */
-#loginScreen .card.glass,
-#loginScreen [class*="glass"],
-#loginScreen [style*="backdrop-filter"] {
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  background: var(--glass-surface, rgba(255,255,255,.55));
-  border: 1px solid var(--glass-border, rgba(255,255,255,.6));
-  box-shadow: var(--glass-shadow, 0 10px 30px rgba(15,18,20,.12));
-}
-
-/* 8) Responsive guardrails */
 @media (max-width: 480px) {
-  #loginScreen {
-    padding: 20px;
+  .portal-content {
+    padding: var(--space-sm);
   }
-  #loginScreen .card,
-  #loginScreen form,
-  #loginScreen > div:not(script):not(style) {
-    padding: 20px;
-  }
-}
-
-@media (min-width: 768px) {
-  #loginScreen .card,
-  #loginScreen form,
-  #loginScreen > div:not(script):not(style) {
-    max-width: 560px; /* keep constraint */
+  
+  .portal-card {
+    padding: var(--space-sm);
   }
 }
 
-/* 9) Post-login safety (do NOT change portal layout) */
-#userPortal { overflow-x: hidden; }
+/* ==========================================================================
+   Utility Classes (Non-Login Only)
+   ========================================================================== */
 
-/* ---- SIMPLIFIED LOGIN CENTERING ---- */
-/* Basic centering without fighting JavaScript */
-#loginScreen {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  z-index: 10000;
-}
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
 
-#loginScreen .login-container {
-  width: min(520px, 100%);
-  max-width: 520px;
-  margin: 0 auto;
-}
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: var(--space-xs); }
+.mb-2 { margin-bottom: var(--space-sm); }
+.mb-3 { margin-bottom: var(--space-md); }
+.mb-4 { margin-bottom: var(--space-lg); }
+.mb-5 { margin-bottom: var(--space-xl); }
+
+.mt-0 { margin-top: 0; }
+.mt-1 { margin-top: var(--space-xs); }
+.mt-2 { margin-top: var(--space-sm); }
+.mt-3 { margin-top: var(--space-md); }
+.mt-4 { margin-top: var(--space-lg); }
+.mt-5 { margin-top: var(--space-xl); }
+
+.p-0 { padding: 0; }
+.p-1 { padding: var(--space-xs); }
+.p-2 { padding: var(--space-sm); }
+.p-3 { padding: var(--space-md); }
+.p-4 { padding: var(--space-lg); }
+.p-5 { padding: var(--space-xl); }
+
+/* ==========================================================================
+   END OF FILE - LOGIN STYLES ARE INLINE IN user-portal.html
+   ========================================================================== */
