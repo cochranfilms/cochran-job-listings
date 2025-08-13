@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Styling Test | Cochran Films</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Debug Script -->
+    <script src="debug-login-styles.js"></script>
+    
+    <style>
+        :root {
+            --primary: #FFB200;
+            --primary-dark: #FF9000;
+            --gold: #FFD700;
+            --black: #000000;
+            --white: #ffffff;
+            --gray-light: #f8f9fa;
+            --gray-medium: #6c757d;
+            --gray-dark: #343a40;
+            --border-radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* Login Screen */
+        .login-screen {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            min-height: 100vh !important;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%) !important;
+            position: relative !important;
+        }
+        
+        .login-container {
+            background: rgba(0, 0, 0, 0.8) !important;
+            padding: 3rem !important;
+            border-radius: 16px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+            text-align: center !important;
+            max-width: 450px !important;
+            width: 100% !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255,178,0,0.3) !important;
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            transform: none !important;
+            margin: 0 auto !important;
+        }
+        
+        .login-logo {
+            width: 140px;
+            height: auto;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 0 3px #FFB200);
+        }
+        
+        .login-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #FFB200;
+            margin-bottom: 1rem;
+        }
+        
+        .login-subtitle {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #FFB200;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+        
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,178,0,0.4);
+        }
+        
+        /* Ensure login form stays centered and doesn't get overridden */
+        .login-form {
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            transform: none !important;
+            margin: 0 !important;
+            width: 100% !important;
+        }
+        
+        /* Override any conflicting CSS that might be loaded later */
+        .login-screen * {
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            transform: none !important;
+        }
+        
+        /* Ensure the login screen maintains its flexbox centering */
+        .login-screen {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+        
+        /* Test button to simulate style changes */
+        .test-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #FFB200;
+        }
+        
+        .test-controls button {
+            background: #FFB200;
+            color: #000;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <img src="Logo.png" alt="Cochran Films" class="login-logo">
+            <h1 class="login-title">⚙️ Admin Dashboard</h1>
+            <p class="login-subtitle">Manage jobs and contracts from one central location</p>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="login-btn">🔐 Login</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Test Controls -->
+    <div class="test-controls">
+        <h3>Test Controls</h3>
+        <button onclick="testStyleOverride()">Test Style Override</button>
+        <button onclick="resetStyles()">Reset Styles</button>
+        <button onclick="logCurrentStyles()">Log Current Styles</button>
+    </div>
+    
+    <script>
+        function testStyleOverride() {
+            console.log('🧪 Testing style override...');
+            const loginContainer = document.querySelector('.login-container');
+            if (loginContainer) {
+                loginContainer.style.position = 'absolute';
+                loginContainer.style.left = '50px';
+                loginContainer.style.transform = 'translateX(0)';
+                console.log('Applied test styles that should be overridden');
+            }
+        }
+        
+        function resetStyles() {
+            console.log('🔄 Resetting styles...');
+            const loginContainer = document.querySelector('.login-container');
+            if (loginContainer) {
+                loginContainer.style.position = '';
+                loginContainer.style.left = '';
+                loginContainer.style.transform = '';
+                console.log('Reset test styles');
+            }
+        }
+        
+        function logCurrentStyles() {
+            logLoginFormStyles();
+        }
+        
+        // Prevent form submission for testing
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Form submission prevented for testing');
+        });
+    </script>
+</body>
+</html>

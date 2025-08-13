@@ -33,6 +33,9 @@
     <script src="secure-bank-storage.js"></script>
     <script src="admin-bank-viewer.js"></script>
     
+    <!-- Debug Script for Login Styling Issues -->
+    <script src="debug-login-styles.js"></script>
+    
     <style>
         :root {
             --primary: #FFB200;
@@ -64,24 +67,29 @@
         
         /* Login Screen */
         .login-screen {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
-            position: relative;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            min-height: 100vh !important;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%) !important;
+            position: relative !important;
         }
         
         .login-container {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 3rem;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            text-align: center;
-            max-width: 450px;
-            width: 100%;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,178,0,0.3);
+            background: rgba(0, 0, 0, 0.8) !important;
+            padding: 3rem !important;
+            border-radius: 16px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+            text-align: center !important;
+            max-width: 450px !important;
+            width: 100% !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255,178,0,0.3) !important;
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            transform: none !important;
+            margin: 0 auto !important;
         }
         
         .login-logo {
@@ -155,6 +163,71 @@
         .login-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255,178,0,0.4);
+        }
+        
+        /* Ensure login form stays centered and doesn't get overridden */
+        .login-form {
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            transform: none !important;
+            margin: 0 !important;
+            width: 100% !important;
+        }
+        
+        /* Override any conflicting CSS that might be loaded later */
+        .login-screen * {
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            transform: none !important;
+        }
+        
+        /* Ensure the login screen maintains its flexbox centering */
+        .login-screen {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+        
+        /* Additional safeguards against external CSS interference */
+        .login-screen,
+        .login-screen *,
+        .login-container,
+        .login-container *,
+        .login-form,
+        .login-form * {
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            top: auto !important;
+            bottom: auto !important;
+            transform: none !important;
+            float: none !important;
+            clear: both !important;
+        }
+        
+        /* Force the login container to stay centered */
+        .login-container {
+            display: block !important;
+            margin: 0 auto !important;
+            text-align: center !important;
+        }
+        
+        /* Override any potential CSS that might be loaded from external sources */
+        [class*="login"] {
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            transform: none !important;
+        }
+        
+        /* Ensure no external CSS can override our centering */
+        body .login-screen,
+        html .login-screen {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
         }
         
 
@@ -889,16 +962,18 @@
             }
         }
 
-        // Show login screen
+                // Show login screen
         function showLoginScreen() {
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('dashboard').style.display = 'none';
+            startStyleEnforcement();
         }
-
+        
         // Show dashboard
         function showDashboard() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
+            stopStyleEnforcement();
             loadData();
             updateStats();
         }
@@ -979,6 +1054,115 @@
             sessionStorage.removeItem('adminDashboardAuthenticated');
             sessionStorage.removeItem('adminUser');
             showLoginScreen();
+        }
+        
+        // Function to enforce login form styling
+        function enforceLoginFormStyling() {
+            const loginScreen = document.getElementById('loginScreen');
+            const loginContainer = document.querySelector('.login-container');
+            const loginForm = document.querySelector('.login-form');
+            
+            if (loginScreen) {
+                // Force flexbox centering
+                loginScreen.style.setProperty('display', 'flex', 'important');
+                loginScreen.style.setProperty('justify-content', 'center', 'important');
+                loginScreen.style.setProperty('align-items', 'center', 'important');
+                loginScreen.style.setProperty('position', 'relative', 'important');
+            }
+            
+            if (loginContainer) {
+                // Force centered positioning
+                loginContainer.style.setProperty('position', 'static', 'important');
+                loginContainer.style.setProperty('left', 'auto', 'important');
+                loginContainer.style.setProperty('right', 'auto', 'important');
+                loginContainer.style.setProperty('transform', 'none', 'important');
+                loginContainer.style.setProperty('margin', '0 auto', 'important');
+                loginContainer.style.setProperty('text-align', 'center', 'important');
+            }
+            
+            if (loginForm) {
+                // Force form positioning
+                loginForm.style.setProperty('position', 'static', 'important');
+                loginForm.style.setProperty('left', 'auto', 'important');
+                loginForm.style.setProperty('right', 'auto', 'important');
+                loginForm.style.setProperty('transform', 'none', 'important');
+                loginForm.style.setProperty('margin', '0', 'important');
+                loginForm.style.setProperty('width', '100%', 'important');
+            }
+        }
+        
+        // Monitor for style changes and enforce our styling
+        let styleEnforcementInterval;
+        
+        function startStyleEnforcement() {
+            // Initial enforcement
+            enforceLoginFormStyling();
+            
+            // Continuous monitoring
+            styleEnforcementInterval = setInterval(enforceLoginFormStyling, 100);
+            
+            // Also monitor for DOM changes
+            const observer = new MutationObserver(() => {
+                enforceLoginFormStyling();
+            });
+            
+            const loginScreen = document.getElementById('loginScreen');
+            if (loginScreen) {
+                observer.observe(loginScreen, { 
+                    attributes: true, 
+                    attributeFilter: ['style'],
+                    childList: true,
+                    subtree: true 
+                });
+            }
+        }
+        
+        // Stop style enforcement when dashboard is shown
+        function stopStyleEnforcement() {
+            if (styleEnforcementInterval) {
+                clearInterval(styleEnforcementInterval);
+                styleEnforcementInterval = null;
+            }
+        }
+        
+        // Function to check for external CSS interference
+        function checkForExternalCSSInterference() {
+            console.log('🔍 Checking for external CSS interference...');
+            
+            // Check all stylesheets
+            const styleSheets = Array.from(document.styleSheets);
+            styleSheets.forEach((sheet, index) => {
+                try {
+                    const rules = Array.from(sheet.cssRules || sheet.rules || []);
+                    rules.forEach((rule, ruleIndex) => {
+                        if (rule.selectorText && rule.selectorText.includes('login')) {
+                            console.log(`⚠️ Potential CSS conflict found in sheet ${index}:`, {
+                                selector: rule.selectorText,
+                                cssText: rule.cssText
+                            });
+                        }
+                    });
+                } catch (e) {
+                    if (sheet.href) {
+                        console.log(`🔒 Cross-origin stylesheet ${index}:`, sheet.href);
+                    }
+                }
+            });
+            
+            // Check for any dynamically added stylesheets
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.tagName === 'LINK' && node.rel === 'stylesheet') {
+                            console.log('🚨 New stylesheet detected:', node.href);
+                            // Force re-enforcement of our styles
+                            setTimeout(enforceLoginFormStyling, 100);
+                        }
+                    });
+                });
+            });
+            
+            observer.observe(document.head, { childList: true });
         }
 
         // Load data
@@ -4373,6 +4557,12 @@
             } else {
                 console.log('⚠️ Admin Bank Viewer not available, using fallback');
             }
+            
+            // Start style enforcement for login screen
+            startStyleEnforcement();
+            
+            // Check for external CSS interference
+            checkForExternalCSSInterference();
             
             // Auto-run tests after a short delay
             setTimeout(() => {
