@@ -555,50 +555,288 @@ thead th {
 }
 
 /* ========================================================================== */
-/* Splash Login Redesign (minimal, light, centered)                          */
+/* Modern Apple Glass Login Design                                            */
 /* ========================================================================== */
-.login-screen { background: linear-gradient(180deg, #fbfcfe 0%, #f7f8fa 100%); }
-.login-screen .login-background { display: none !important; }
-.login-screen .login-container {
-  width: min(520px, 100%);
-  background: var(--color-surface) !important;
-  border: 1px solid var(--color-border) !important;
-  box-shadow: var(--shadow-2) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-radius: var(--radius-lg) !important;
-  padding: calc(var(--space-7) + 8px) var(--space-7) var(--space-7) var(--space-7) !important;
+.login-screen { 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
 }
+
+.login-screen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.login-screen .login-background { 
+  display: none !important; 
+}
+
+.login-screen .login-container {
+  width: min(480px, 100%);
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-radius: 24px !important;
+  padding: 48px 40px !important;
+  position: relative;
+  z-index: 1;
+}
+
+.login-screen .login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-radius: 24px;
+  z-index: -1;
+}
+
 .login-screen .login-brand {
-  display: grid; place-items: center; gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  display: grid; 
+  place-items: center; 
+  gap: 24px;
+  margin-bottom: 40px;
   text-align: center;
 }
-.login-screen .logo-circle { width: 88px; height: 88px; font-size: 28px; }
-.login-screen .brand-title { font-size: clamp(24px, 2.6vw, 30px); }
-.login-screen .brand-subtitle { font-size: clamp(12px, 1.6vw, 14px); }
-.login-screen .login-title { font-size: clamp(18px, 2.0vw, 22px); }
-.login-screen .login-subtitle { margin-top: -8px; color: var(--color-text-muted) !important; }
 
-.login-screen .login-form { gap: var(--space-5) !important; }
-.login-screen .input-container { grid-template-columns: 1fr !important; padding: 0 !important; gap: 0 !important; border: none !important; background: transparent !important; }
+.login-screen .logo-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.login-screen .logo-circle { 
+  width: 64px; 
+  height: 64px; 
+  background: linear-gradient(135deg, #FFB200, #FFD700);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #000;
+  box-shadow: 0 8px 32px rgba(255, 178, 0, 0.3);
+}
+
+.login-screen .brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.login-screen .brand-title { 
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-screen .brand-subtitle { 
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  letter-spacing: 0.1em;
+}
+
+.login-screen .portal-icon {
+  font-size: 32px;
+  margin: 8px 0;
+}
+
+.login-screen .login-title { 
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.login-screen .login-subtitle { 
+  margin: 8px 0 0 0; 
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.login-screen .login-form { 
+  gap: 24px !important; 
+}
+
+.login-screen .form-group {
+  position: relative;
+}
+
+.login-screen .input-container { 
+  grid-template-columns: 1fr !important; 
+  padding: 0 !important; 
+  gap: 0 !important; 
+  border: none !important; 
+  background: transparent !important; 
+  position: relative;
+}
+
 .login-screen .input-container .input-icon,
-.login-screen .input-line { display: none !important; }
+.login-screen .input-line { 
+  display: none !important; 
+}
+
 .login-screen .input-container input {
   width: 100%;
-  padding: 12px 14px !important;
-  border: 1px solid var(--color-border) !important;
-  border-radius: var(--radius-md) !important;
-  background: var(--color-surface) !important;
-  color: var(--color-text) !important;
+  padding: 16px 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  font-size: 16px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
+
+.login-screen .input-container input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 400;
+}
+
 .login-screen .input-container input:focus {
-  border-color: var(--color-focus) !important;
-  box-shadow:
-    0 0 0 var(--focus-outline) var(--color-surface),
-    0 0 0 calc(var(--focus-outline) + var(--focus-ring)) rgba(14,165,233,0.35) !important;
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-2px);
 }
-.login-screen .login-btn { font-weight: 700; letter-spacing: 0.02em; }
+
+.login-screen .input-container input:hover {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.login-screen .login-btn { 
+  width: 100% !important;
+  padding: 16px 24px !important;
+  background: linear-gradient(135deg, #FFB200, #FFD700) !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 16px !important;
+  font-size: 16px;
+  font-weight: 700 !important; 
+  letter-spacing: 0.02em !important;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 8px 32px rgba(255, 178, 0, 0.3),
+    0 0 0 1px rgba(255, 178, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-screen .login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.login-screen .login-btn:hover::before {
+  left: 100%;
+}
+
+.login-screen .login-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 12px 40px rgba(255, 178, 0, 0.4),
+    0 0 0 2px rgba(255, 178, 0, 0.2);
+}
+
+.login-screen .login-btn:active {
+  transform: translateY(-1px);
+}
+
+.login-screen .login-btn i {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.login-screen .error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.login-screen .error-message i {
+  color: #ef4444;
+  font-size: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .login-screen .login-container {
+    padding: 32px 24px !important;
+    margin: 16px;
+  }
+  
+  .login-screen .brand-title {
+    font-size: 24px;
+  }
+  
+  .login-screen .login-title {
+    font-size: 18px;
+  }
+  
+  .login-screen .input-container input {
+    padding: 14px 18px !important;
+    font-size: 16px;
+  }
+  
+  .login-screen .login-btn {
+    padding: 14px 20px !important;
+    font-size: 16px;
+  }
+}
 
 /* ========================================================================== */
 /* Portal Light Theme Normalization (ensure visibility on light theme)        */

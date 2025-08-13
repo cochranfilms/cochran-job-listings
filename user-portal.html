@@ -5891,6 +5891,14 @@
             overflow: hidden;
         }
 
+        /* Ensure readability in key dashboard cards */
+        .card.profile-card,
+        .card.project-card,
+        .card.payment-card {
+            background: rgba(0,0,0,0.45);
+            border-color: rgba(255,255,255,0.12);
+        }
+
         .card::before {
             content: '';
             position: absolute;
@@ -9554,16 +9562,6 @@
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
-        <div class="login-background">
-            <div class="floating-elements">
-                <div class="floating-icon" style="--delay: 0s">🎬</div>
-                <div class="floating-icon" style="--delay: 2s">📹</div>
-                <div class="floating-icon" style="--delay: 4s">🎥</div>
-                <div class="floating-icon" style="--delay: 6s">✨</div>
-                <div class="floating-icon" style="--delay: 8s">🌟</div>
-            </div>
-        </div>
-        
         <div class="login-container">
             <div class="login-brand">
                 <div class="logo-container">
@@ -9589,16 +9587,12 @@
                 <form id="loginForm" class="login-form" method="post" onsubmit="handleLogin(event); return false;">
                     <div class="form-group">
                         <div class="input-container">
-                            <i class="fas fa-envelope input-icon"></i>
                             <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="email" inputmode="email">
-                            <div class="input-line"></div>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="input-container">
-                            <i class="fas fa-lock input-icon"></i>
                             <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
-                            <div class="input-line"></div>
                         </div>
                     </div>
                     <button type="submit" class="login-btn">

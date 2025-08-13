@@ -3,6 +3,35 @@
 ## Overview
 This document outlines the cleanup procedures and systems used in the Cochran Films Landing project, including the revolutionary AI-powered Premiere Pro automation system.
 
+## 🎨 User Portal Login Redesign Cleanup
+
+### New Addition: Modern Apple Glass Login Design Cleanup
+The user portal login redesign includes cleanup procedures to maintain the new glass-morphism design and remove old animated elements.
+
+#### Removed Elements
+- **Floating Elements**: Removed animated 3D floating icons (🎬📹🎥✨🌟)
+- **Old Background**: Replaced with modern gradient background
+- **Input Icons**: Removed old input field icons and lines
+- **3D Animations**: Replaced with subtle glass effects and shadows
+
+#### Design Cleanup
+- **CSS Variables**: Updated to use modern design tokens
+- **Glass Effects**: Implemented backdrop-filter blur effects
+- **Responsive Design**: Added mobile-first responsive breakpoints
+- **Accessibility**: Improved focus states and contrast
+
+#### Cleanup Commands
+```bash
+# Clean up old login styles
+npm run cleanup:login-styles
+
+# Remove old floating elements
+npm run cleanup:floating-elements
+
+# Update design system
+npm run cleanup:design-system
+```
+
 ## 🎬 AI Video Editor Cleanup
 
 ### New Addition: Automated Premiere Pro Editing System Cleanup
@@ -327,3 +356,8 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
 - Dashboard metrics now intentionally exclude users in the `_archived` bucket and any underscore-prefixed keys in `users`.
 - When cleaning datasets, ensure archived users remain under `users._archived` to keep counts accurate.
 - If restoring a user, move their record from `users._archived` back to the root and remove any leading-underscore keys.
+
+## UI Consistency: Card Contrast (2025-08-10)
+
+- To prevent readability regressions, the user portal now enforces a dark background on the `profile-card`, `project-card`, and `payment-card` containers.
+- If adding new dashboard cards that display white text, apply the same pattern or reuse these classes to maintain contrast.

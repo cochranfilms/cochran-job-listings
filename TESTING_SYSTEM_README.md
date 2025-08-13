@@ -44,6 +44,22 @@ node test-admin-deletion-simple.js
 - Checks GitHub synchronization
 - Validates Firebase account deletion
 
+### 4. User Portal Login Redesign Test
+**Purpose**: Testing the new modern Apple glass login design
+**Features**:
+- Verify glass-morphism effects render correctly
+- Test responsive design on mobile devices
+- Validate form functionality and error handling
+- Check backdrop-filter compatibility across browsers
+- Test hover and focus states for interactive elements
+
+**Testing Steps**:
+1. Open user-portal.html in various browsers
+2. Test login form validation
+3. Verify glass effects and shadows
+4. Test responsive breakpoints
+5. Check accessibility features
+
 ## Test Configuration
 
 ### Admin Dashboard Access
@@ -313,3 +329,8 @@ await page.evaluate(() => {
    - `Total Creators` equals the number of active (non-archived) users.
    - `Signed Contracts` reflects signed contracts among active users only.
    - `Pending Reviews` excludes archived users.
+
+## User Portal UI Fix (2025-08-10)
+
+- Forced a dark translucent background on `profile-card`, `project-card`, and `payment-card` in `user-portal.html` so profile details are always legible regardless of any inherited light background.
+- Validate by logging in and confirming the Profile card shows user details with sufficient contrast.
