@@ -1424,7 +1424,7 @@
                         <span>📧 ${user.profile?.email || 'Email not specified'}</span>
                         <span>🎭 ${user.profile?.role || 'Role not set'}</span>
                         <span>📍 ${user.profile?.location || 'Location not specified'}</span>
-                        <span>💰 ${user.profile?.rate || 'Rate not specified'}</span>
+                        <span>💰 ${user.jobs?.[user.primaryJob]?.rate || 'Rate not specified'}</span>
                     </div>
                     <div class="item-description">
                         ${user.application?.jobTitle ? `<div><strong>Applied For:</strong> ${user.application.jobTitle}</div>` : ''}
@@ -1638,7 +1638,7 @@
             document.getElementById('contractUrl').value = user.contract?.contractUrl || 'contract.html';
             document.getElementById('freelancerRole').value = user.profile?.role || '';
             document.getElementById('freelancerLocation').value = user.profile?.location || 'Atlanta Area';
-            document.getElementById('freelancerRate').value = user.profile?.rate || '';
+                            document.getElementById('freelancerRate').value = user.jobs?.[user.primaryJob]?.rate || '';
             const pt = document.getElementById('freelancerProjectType');
             if (pt) pt.value = user.profile?.projectType || '';
             document.getElementById('approvedDate').value = user.profile?.approvedDate || '';
@@ -2696,6 +2696,16 @@
         // Send job acceptance email
         async function sendJobAcceptanceEmail(userName, userData) {
             try {
+                // Debug: Log the user data structure to understand what's available
+                console.log('🔍 Debug: User data for email:', {
+                    userName,
+                    userData,
+                    primaryJob: userData?.primaryJob,
+                    jobs: userData?.jobs,
+                    jobRate: userData?.jobs?.[userData?.primaryJob]?.rate,
+                    applicationJobTitle: userData?.application?.jobTitle
+                });
+
                 // Prepare email parameters (no contract ID until user actually signs)
                 const projectStart = (userData?.jobs && userData?.primaryJob && (userData.jobs[userData.primaryJob]?.projectStart || userData.jobs[userData.primaryJob]?.date))
                     || userData?.profile?.projectDate
@@ -2707,9 +2717,41 @@
                     || userData?.application?.job
                     || userData?.profile?.role
                     || 'Contractor';
-                const rate = (userData?.primaryJob && userData?.jobs?.[userData.primaryJob]?.rate)
-                    || userData?.profile?.rate
-                    || 'Rate to be determined';
+                // Get rate ONLY from the job they're assigned to (no more personal rates)
+                let rate = 'Rate to be determined';
+                
+                if (userData?.primaryJob && userData?.jobs?.[userData.primaryJob]?.rate) {
+                    rate = userData.jobs[userData.primaryJob].rate;
+                    console.log('✅ Rate from assigned job:', rate);
+                } else if (userData?.jobs && Object.keys(userData.jobs).length > 0) {
+                    // Fallback: get rate from any available job
+                    const firstJob = Object.values(userData.jobs)[0];
+                    if (firstJob?.rate) {
+                        rate = firstJob.rate;
+                        console.log('✅ Rate from available job:', rate);
+                    }
+                }
+                
+                console.log('🎯 Final rate for email:', rate);
+
+                // Debug: Log the extracted values
+                console.log('🔍 Debug: Extracted email values:', {
+                    projectStart,
+                    jobTitle,
+                    rate,
+                    primaryJobRate: userData?.jobs?.[userData?.primaryJob]?.rate
+                });
+
+                // Additional debugging for job data structure
+                if (userData?.primaryJob && userData?.jobs) {
+                    console.log('🔍 Debug: Job lookup details:', {
+                        primaryJob: userData.primaryJob,
+                        availableJobKeys: Object.keys(userData.jobs),
+                        jobData: userData.jobs[userData.primaryJob],
+                        directRateAccess: userData.jobs[userData.primaryJob]?.rate,
+                        hasMatchingJob: userData.primaryJob in userData.jobs
+                    });
+                }
 
                 const emailParams = {
                     to_email: userData.profile.email,
@@ -2785,15 +2827,12 @@
                 }
                 userData.application = { ...(userData.application || {}), status: 'approved', updatedAt: new Date().toISOString() };
                 
-                // Normalize role/rate defaults for email params
+                // Normalize role defaults for email params (no more personal rates)
                 if (!userData.profile.role) {
                     const inferredRole = userData.application?.jobTitle || userData.application?.role || 'Contractor';
                     userData.profile.role = inferredRole;
                 }
-                if (!userData.profile.rate) {
-                    const inferredRate = (userData.primaryJob && userData.jobs?.[userData.primaryJob]?.rate) || '$200';
-                    userData.profile.rate = inferredRate;
-                }
+                // Rate is now ONLY determined by the job they're assigned to
 
                 // Send job acceptance email
                 sendJobAcceptanceEmail(userName, userData);
@@ -2821,7 +2860,7 @@
                                     title: jobPublic.title || resolvedJobTitle,
                                     date: jobPublic.date || userData.application?.eventDate || '',
                                     location: jobPublic.location || userData.profile?.location || '',
-                                    rate: jobPublic.pay || jobPublic.rate || userData.profile?.rate || '',
+                                    rate: jobPublic.pay || jobPublic.rate || '',
                                     description: jobPublic.description || userData.application?.description || '',
                                     type: jobPublic.type || '',
                                     status: 'upcoming',                // user-side status
@@ -3963,7 +4002,7 @@
                 role: userData.profile?.role || 'Contractor',
                 location: userData.profile?.location || 'Atlanta Area',
                 projectStart: userData.profile?.projectStart || 'TBD',
-                rate: userData.profile?.rate || 'Not specified',
+                rate: userData.jobs?.[userData.primaryJob]?.rate || 'Not specified',
                 effectiveDate: userData.profile?.approvedDate || new Date().toISOString().split('T')[0],
                 signatureDate: userContract.contractSignedDate || new Date().toISOString().split('T')[0],
                 signature: userContract.contractStatus === 'signed' ? 'Digital Signature' : 'Not Signed'

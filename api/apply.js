@@ -37,7 +37,6 @@ module.exports = async (req, res) => {
         email,
         location: location || baseProfile.location || '',
         role: baseProfile.role || '',
-        rate: baseProfile.rate || '',
         projectType: baseProfile.projectType || ''
       },
       contract: existing?.contract || { contractStatus: 'pending' },
