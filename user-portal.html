@@ -6620,10 +6620,11 @@
             /* Beautiful dark gradient background */
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 70%, #16213e 100%) !important;
             
-            /* CRITICAL: Proper breathing room around the entire login box */
-            padding: 120px 20px !important;
+            /* CRITICAL: MAJOR SPACING FIX - Add substantial top and bottom margins */
+            padding: 0 !important;
+            margin: 0 !important;
             
-            /* Perfect centering */
+            /* Perfect centering with proper spacing */
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -6651,8 +6652,8 @@
             /* Beautiful shadow effects */
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 178, 0, 0.1) !important;
             
-            /* Center the container */
-            margin: 0 auto !important;
+            /* CRITICAL: MAJOR SPACING FIX - Add substantial top and bottom margins */
+            margin: 80px auto !important;
             
             /* Prevent any external interference */
             position: relative !important;
@@ -6672,6 +6673,21 @@
         #loginScreen .login-subtitle {
             color: #E8E8E8 !important;
             background: rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        /* CRITICAL: ADDITIONAL SPACING ENFORCEMENT */
+        #loginScreen {
+            /* Force minimum spacing from viewport edges */
+            min-height: calc(100vh - 160px) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        #loginScreen .login-container {
+            /* Additional spacing enforcement */
+            margin-top: 80px !important;
+            margin-bottom: 80px !important;
         }
         
         /* BULLETPROOF INPUT FIELD STYLES - PERFECT READABILITY */
