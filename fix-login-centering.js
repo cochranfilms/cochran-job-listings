@@ -1,11 +1,22 @@
 // Keeps the user-portal login panel centered even if other CSS/scripts try to move it
 (function(){
-	function enforce() {
-		var screen = document.getElementById('loginScreen');
-		if (!screen) return;
-		screen.style.setProperty('display','flex','important');
-		screen.style.setProperty('justify-content','center','important');
-		screen.style.setProperty('align-items','center','important');
+    var intervalId;
+    function isVisible(el){
+        if (!el) return false;
+        var cs = window.getComputedStyle(el);
+        return cs && cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+    }
+    function enforce() {
+        var screen = document.getElementById('loginScreen');
+        if (!screen) return;
+        // If login screen is hidden (e.g., user authenticated), stop enforcing so we don't bring it back
+        if (!isVisible(screen)) {
+            if (intervalId) { clearInterval(intervalId); intervalId = null; }
+            return;
+        }
+        screen.style.setProperty('display','flex','important');
+        screen.style.setProperty('justify-content','center','important');
+        screen.style.setProperty('align-items','center','important');
 		var container = screen.querySelector('.login-container');
 		if (container) {
 			container.style.setProperty('margin','0 auto','important');
@@ -24,10 +35,9 @@
 			});
 		}
 	}
-	var intervalId;
 	function start() {
 		enforce();
-		if (!intervalId) intervalId = setInterval(enforce, 150);
+        if (!intervalId) intervalId = setInterval(enforce, 150);
 		var screen = document.getElementById('loginScreen');
 		if (screen) {
 			new MutationObserver(enforce).observe(screen,{attributes:true,childList:true,subtree:true});
