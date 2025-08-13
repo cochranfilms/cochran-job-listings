@@ -32,6 +32,44 @@ npm run cleanup:floating-elements
 npm run cleanup:design-system
 ```
 
+## 🔔 Enhanced Notification System Cleanup
+
+### New Addition: Real-time Notification System Cleanup
+The enhanced notification system includes cleanup procedures to maintain system performance and notification data integrity.
+
+#### Notification Data Cleanup
+- **Old Notifications**: Archive notifications older than 30 days
+- **Read Notifications**: Clean up read notifications after 7 days
+- **Duplicate Alerts**: Remove duplicate notification entries
+- **Orphaned Data**: Clean up notifications for deleted users
+- **Cache Cleanup**: Clear notification cache and temporary data
+
+#### JSON Monitoring Cleanup
+- **File Change Logs**: Archive file change detection logs
+- **Monitoring Cache**: Clear monitoring system cache data
+- **Update History**: Maintain update history for audit purposes
+- **Performance Data**: Clean up monitoring performance metrics
+
+#### Cleanup Commands
+```bash
+# Clean up notification system
+npm run cleanup:notifications
+
+# Clean monitoring cache
+npm run cleanup:monitoring
+
+# Archive old notifications
+npm run cleanup:notification-archive
+
+# Full notification cleanup
+npm run cleanup:notification-system
+```
+
+#### Automated Cleanup Schedule
+- **Daily**: Clean notifications older than 7 days
+- **Weekly**: Archive notifications older than 30 days
+- **Monthly**: Deep clean of monitoring cache and logs
+
 ## 🎬 AI Video Editor Cleanup
 
 ### New Addition: Automated Premiere Pro Editing System Cleanup

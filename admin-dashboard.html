@@ -1026,7 +1026,7 @@
                 jobDiv.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                         <h4 style="margin: 0;">${job.title || 'Untitled Job'}</h4>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 0.5rem; flex-wrap;">
                             <span class="job-status" style="background: ${statusColors[job.status] || '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
                                 ${job.status || 'Active'}
                             </span>
@@ -1406,7 +1406,7 @@
                 userDiv.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                         <h4 style="margin: 0;">${name}</h4>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 0.5rem; flex-wrap;">
                             <span style="background: ${user.application?.status === 'pending' ? '#f59e0b' : (user.contract?.contractStatus === 'signed' ? '#22c55e' : '#6b7280')}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
                                 ${user.application?.status === 'pending' ? '🕒 Pending' : (user.contract?.contractStatus === 'signed' ? '✅ Contract Signed' : '—')}
                             </span>
@@ -2145,7 +2145,7 @@
 
         // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
         
-        // Visible notification toast
+        // Enhanced notification system with real-time updates
         function showNotification(message, type = 'info', duration = 4000) {
             const colors = {
                 success: '#22c55e',
@@ -2192,16 +2192,42 @@
         }
         
         function getNotificationIcon(type) {
-            return '🔇'; // Silent icon
+            const iconMap = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            return iconMap[type] || 'ℹ️';
         }
         
         function getNotificationColors(type) {
-            return { background: 'transparent', border: 'transparent' };
+            const colors = {
+                success: { background: '#22c55e', border: '#16a34a' },
+                error: { background: '#ef4444', border: '#dc2626' },
+                warning: { background: '#f59e0b', border: '#d97706' },
+                info: { background: '#3b82f6', border: '#2563eb' }
+            };
+            return colors[type] || colors.info;
         }
         
-        // Replace all console.log() calls with silent notifications
-        function showAlert(message, type = 'info') {
-            console.log(`🔇 Suppressed alert: ${message} (${type})`);
+        // Enhanced notification system for JSON updates
+        function showJSONUpdateNotification(fileName, action, details = '') {
+            const message = `📄 ${fileName} has been ${action}. ${details}`;
+            showNotification(message, 'success');
+            
+            // Add to notification system
+            addNotification(
+                'Data Updated',
+                message,
+                'success',
+                {
+                    fileName: fileName,
+                    action: action,
+                    details: details,
+                    priority: 'high'
+                }
+            );
         }
 
         // ==================== SOPHISTICATED NOTIFICATION SYSTEM ====================
@@ -2215,8 +2241,54 @@
             console.log('🔔 Initializing sophisticated notification system...');
             await loadNotifications();
             startNotificationPolling();
+            startJSONFileMonitoring();
             updateNotificationBadge();
             updateNotificationList();
+        }
+        
+        // Monitor JSON files for changes
+        function startJSONFileMonitoring() {
+            console.log('📄 Starting JSON file monitoring...');
+            
+            // Monitor jobs-data.json
+            monitorJSONFile('jobs-data.json', 'jobs-data', (data) => {
+                showJSONUpdateNotification('jobs-data.json', 'updated', `Found ${data.jobs?.length || 0} jobs`);
+            });
+            
+            // Monitor users.json
+            monitorJSONFile('users.json', 'users-data', (data) => {
+                showJSONUpdateNotification('users.json', 'updated', `Found ${Object.keys(data.users || {}).length} users`);
+            });
+        }
+        
+        // Monitor a specific JSON file for changes
+        function monitorJSONFile(fileName, cacheKey, callback) {
+            let lastData = null;
+            
+            const checkForUpdates = async () => {
+                try {
+                    const response = await fetch(`/api/${fileName.replace('.json', '')}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const dataString = JSON.stringify(data);
+                        
+                        if (lastData !== null && lastData !== dataString) {
+                            console.log(`📄 ${fileName} has been updated`);
+                            callback(data);
+                        }
+                        
+                        lastData = dataString;
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ Could not monitor ${fileName}:`, error);
+                }
+            };
+            
+            // Check immediately
+            checkForUpdates();
+            
+            // Check every 30 seconds
+            setInterval(checkForUpdates, 30000);
         }
         
         // Load notifications from centralized storage

@@ -60,6 +60,30 @@ node test-admin-deletion-simple.js
 4. Test responsive breakpoints
 5. Check accessibility features
 
+### 5. Enhanced Notification System Test
+**Purpose**: Testing real-time notifications for JSON file updates
+**Features**:
+- Real-time monitoring of jobs-data.json and users.json changes
+- Cross-portal notification synchronization
+- Toast notification system with success/error styling
+- Notification badge updates
+- JSON file change detection (30-second intervals)
+
+**Testing Steps**:
+1. Open admin-dashboard.html and user-portal.html in separate tabs
+2. Make changes to jobs-data.json or users.json via admin dashboard
+3. Verify both portals show notification: "📄 [filename] has been updated. Found X items"
+4. Check notification badge updates in both portals
+5. Verify notification dropdown shows the update details
+6. Test notification persistence and clearing
+
+**Expected Behavior**:
+- Notifications appear immediately when JSON files are updated
+- Both portals show synchronized notification data
+- Notification badges display unread count
+- Toast notifications appear with success styling
+- JSON monitoring runs every 30 seconds automatically
+
 ## Test Configuration
 
 ### Admin Dashboard Access
