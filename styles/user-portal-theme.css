@@ -1475,7 +1475,7 @@ html, body { overflow-x: hidden; }
   #loginScreen {
     position: fixed !important;
     inset: 0 !important;
-    display: grid !important;
+    display: grid;
     place-items: center !important;
     padding: 24px !important;
   }
