@@ -5841,6 +5841,18 @@
             overflow-x: hidden;
         }
 
+        /* Ensure dark theme is applied consistently */
+        #userPortal,
+        #userPortal * {
+            background: transparent !important;
+            color: inherit !important;
+        }
+
+        #userPortal {
+            background: var(--gradient-dark) !important;
+            color: white !important;
+        }
+
         /* ==================== LAYOUT COMPONENTS ==================== */
         .app-container {
             display: grid;
@@ -6768,21 +6780,98 @@
         }
 
         .label {
-            color: rgba(255,255,255,0.7);
+            color: rgba(255,255,255,0.7) !important;
             font-weight: 500;
             font-size: 0.95rem;
             letter-spacing: 0.02em;
         }
 
         .value {
-            color: white;
+            color: white !important;
             font-weight: 600;
             font-size: 1rem;
             letter-spacing: 0.01em;
         }
 
         .value.highlight {
-            color: var(--primary);
+            color: var(--primary) !important;
+        }
+
+        /* Ensure profile information text is always visible */
+        .profile-info .info-item .label,
+        .profile-info .info-item .value {
+            color: rgba(255,255,255,0.7) !important;
+        }
+
+        .profile-info .info-item .value {
+            color: white !important;
+        }
+
+        .profile-info .info-item .value.highlight {
+            color: var(--primary) !important;
+        }
+
+        /* Force dark theme for profile information */
+        .profile-card .profile-info,
+        .profile-card .info-item,
+        .profile-card .label,
+        .profile-card .value {
+            background: transparent !important;
+            color: inherit !important;
+        }
+
+        /* Override any conflicting white backgrounds */
+        .profile-card {
+            background: rgba(0,0,0,0.45) !important;
+            color: white !important;
+        }
+
+        .profile-card * {
+            color: inherit !important;
+        }
+
+        .profile-card .label {
+            color: rgba(255,255,255,0.7) !important;
+        }
+
+        .profile-card .value {
+            color: white !important;
+        }
+
+        .profile-card .value.highlight {
+            color: var(--primary) !important;
+        }
+
+        /* Additional contrast improvements */
+        .profile-info .info-item {
+            background: rgba(255,255,255,0.02) !important;
+            border-radius: 8px !important;
+            padding: 0.75rem 1rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .profile-info .info-item:hover {
+            background: rgba(255,255,255,0.05) !important;
+            transform: translateX(4px) !important;
+        }
+
+        /* Ensure text is always readable */
+        .profile-info .label {
+            color: rgba(255,255,255,0.8) !important;
+            font-weight: 600 !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+        }
+
+        .profile-info .value {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+        }
+
+        .profile-info .value.highlight {
+            color: #FFB200 !important;
+            font-weight: 800 !important;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.7) !important;
         }
 
         .project-progress {
