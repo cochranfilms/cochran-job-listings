@@ -74,15 +74,16 @@
       "profile": {
         "email": "codylcochran87@gmail.com",
         "location": "Atlanta Area",
-        "role": "",
-        "rate": "",
-        "projectType": ""
+        "role": "Test Job Title",
+        "rate": "$200",
+        "projectType": "",
+        "approvedDate": "2025-08-13"
       },
       "contract": {
         "contractStatus": "pending"
       },
       "application": {
-        "status": "pending",
+        "status": "approved",
         "submittedAt": "2025-08-13T05:26:50.724Z",
         "jobTitle": "Test Job Title",
         "eventDate": "2025-10-12",
@@ -90,10 +91,26 @@
         "description": "Test Job Description",
         "phone": "4704202169",
         "portfolio": "https://pitch.cochranfilms.com",
-        "source": "apply-html"
+        "source": "apply-html",
+        "updatedAt": "2025-08-13T05:28:29.134Z"
       },
-      "jobs": {},
-      "primaryJob": null
+      "jobs": {
+        "Test Job Title": {
+          "title": "Test Job Title",
+          "date": "2025-10-12",
+          "location": "Atlanta Area",
+          "rate": "$400",
+          "description": "Test Job Description",
+          "type": "Event Coverage",
+          "status": "upcoming",
+          "listingStatus": "Active",
+          "jobRef": {
+            "source": "jobs-data",
+            "index": 2
+          }
+        }
+      },
+      "primaryJob": "Test Job Title"
     }
   },
   "statusOptions": {
