@@ -485,21 +485,19 @@
             return colors[type] || colors.info;
         }
         
-        // Enhanced notification system for JSON updates
-        function showJSONUpdateNotification(fileName, action, details = '') {
-            const message = `📄 ${fileName} has been ${action}. ${details}`;
-            showNotification(message, 'success');
+        // User-specific notification system for user actions
+        function showUserNotification(title, message, type = 'info', data = {}) {
+            showNotification(message, type);
             
             // Add to notification system
             addNotification(
-                'Data Updated',
+                title,
                 message,
-                'success',
+                type,
                 {
-                    fileName: fileName,
-                    action: action,
-                    details: details,
-                    priority: 'high'
+                    ...data,
+                    priority: 'normal',
+                    userSpecific: true
                 }
             );
         }
@@ -512,57 +510,19 @@
         
         // Initialize notification system
         async function initializeNotificationSystem() {
-            console.log('🔔 Initializing sophisticated notification system...');
+            console.log('🔔 Initializing user-specific notification system...');
             await loadNotifications();
             startNotificationPolling();
-            startJSONFileMonitoring();
+            startUserNotificationSystem();
             updateNotificationBadge();
             updateNotificationList();
         }
         
-        // Monitor JSON files for changes
-        function startJSONFileMonitoring() {
-            console.log('📄 Starting JSON file monitoring...');
-            
-            // Monitor jobs-data.json
-            monitorJSONFile('jobs-data.json', 'jobs-data', (data) => {
-                showJSONUpdateNotification('jobs-data.json', 'updated', `Found ${data.jobs?.length || 0} jobs`);
-            });
-            
-            // Monitor users.json
-            monitorJSONFile('users.json', 'users-data', (data) => {
-                showJSONUpdateNotification('users.json', 'updated', `Found ${Object.keys(data.users || {}).length} users`);
-            });
-        }
-        
-        // Monitor a specific JSON file for changes
-        function monitorJSONFile(fileName, cacheKey, callback) {
-            let lastData = null;
-            
-            const checkForUpdates = async () => {
-                try {
-                    const response = await fetch(`/api/${fileName.replace('.json', '')}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        const dataString = JSON.stringify(data);
-                        
-                        if (lastData !== null && lastData !== dataString) {
-                            console.log(`📄 ${fileName} has been updated`);
-                            callback(data);
-                        }
-                        
-                        lastData = dataString;
-                    }
-                } catch (error) {
-                    console.warn(`⚠️ Could not monitor ${fileName}:`, error);
-                }
-            };
-            
-            // Check immediately
-            checkForUpdates();
-            
-            // Check every 30 seconds
-            setInterval(checkForUpdates, 30000);
+        // User-specific notification system (no JSON file monitoring)
+        function startUserNotificationSystem() {
+            console.log('🔔 Starting user-specific notification system...');
+            // Users only get notifications for their own actions and status changes
+            // No automatic JSON file monitoring for users
         }
         
         // Load notifications from centralized storage
@@ -697,16 +657,17 @@
                         );
                         
                         if (!existingNotification) {
-                            await addNotification(
+                            showUserNotification(
                                 'Contract Signed',
-                                `Your contract ${contract.contractId} has been signed and is ready for download.`,
-                                'contract',
+                                `📄 Your contract ${contract.contractId} has been signed and is ready for download!`,
+                                'success',
                                 {
                                     notificationKey: notificationKey,
                                     actionRequired: false,
-                    priority: 'high'
-                }
-            );
+                                    contractId: contract.contractId,
+                                    priority: 'high'
+                                }
+                            );
                         }
                         
                         // Mark this notification as shown
@@ -734,18 +695,19 @@
                                 n.data.notificationKey === notificationKey
                             );
                             
-                            if (!existingNotification) {
-                                await addNotification(
-                                    'Job Completed',
-                                    `Your job "${job.title || job.role}" has been marked as completed.`,
-                                    'job',
-                                    {
-                                        notificationKey: notificationKey,
-                                        actionRequired: false,
-                                        priority: 'normal'
-                                    }
-                                );
-                            }
+                                                    if (!existingNotification) {
+                            showUserNotification(
+                                'Job Completed',
+                                `🎉 Your job "${job.title || job.role}" has been marked as completed!`,
+                                'success',
+                                {
+                                    notificationKey: notificationKey,
+                                    actionRequired: false,
+                                    jobId: jobId,
+                                    jobTitle: job.title || job.role
+                                }
+                            );
+                        }
                             
                             // Mark this notification as shown
                             sessionStorage.setItem(notificationKey, 'true');
@@ -5821,8 +5783,13 @@
             // Update user's payment method locally
             currentUser.paymentMethod = method;
             
-            // Show success notification
-            showNotification(`✅ Payment method set to ${method.charAt(0).toUpperCase() + method.slice(1)}`, 'success');
+            // Show user-specific notification
+            showUserNotification(
+                'Payment Method Updated',
+                `✅ Payment method set to ${method.charAt(0).toUpperCase() + method.slice(1)}`,
+                'success',
+                { action: 'payment_method_update', method: method }
+            );
             
             // Close modal
             closePaymentModal();
@@ -5830,10 +5797,20 @@
             // Save to backend (GitHub)
             updateUserPaymentMethod(currentUser.email, method).then(() => {
                 console.log('✅ Payment method saved to backend successfully');
-                showNotification('✅ Payment method saved to server', 'success');
+                showUserNotification(
+                    'Payment Method Saved',
+                    '✅ Payment method saved to server successfully',
+                    'success',
+                    { action: 'payment_method_saved', method: method }
+                );
             }).catch((error) => {
                 console.error('❌ Error saving payment method to backend:', error);
-                showNotification('⚠️ Payment method saved locally but server update failed', 'warning');
+                showUserNotification(
+                    'Payment Method Warning',
+                    '⚠️ Payment method saved locally but server update failed',
+                    'warning',
+                    { action: 'payment_method_warning', method: method }
+                );
             });
             
             // Refresh the payment display
@@ -5971,7 +5948,7 @@
             left: 0;
             width: 100%;
             height: 100vh;
-            background: var(--gradient-dark);
+            background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -5980,9 +5957,9 @@
         }
         
         .login-container {
-            background: rgba(26, 26, 46, 0.95);
+            background: rgba(0, 0, 0, 0.9);
             backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 178, 0, 0.2);
+            border: 2px solid rgba(255, 178, 0, 0.3);
             border-radius: var(--radius-xl);
             padding: var(--space-2xl);
             max-width: 480px;
@@ -5991,6 +5968,7 @@
             box-shadow: var(--shadow-xl), var(--shadow-glow);
             position: relative;
             overflow: hidden;
+            margin: 0 auto;
         }
         
         .login-container::before {
@@ -6060,15 +6038,17 @@
             color: var(--primary);
             margin: 0;
             letter-spacing: 0.2em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
         .brand-subtitle {
             font-family: var(--font-display);
             font-size: 1.2rem;
             font-weight: 400;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.9);
             margin: 0;
             letter-spacing: 0.1em;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
         
         .portal-icon {
@@ -6089,27 +6069,31 @@
             color: var(--primary);
             margin-bottom: var(--space-sm);
             letter-spacing: 0.1em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
         .login-subtitle {
-            color: rgba(255,255,255,0.7);
+            color: rgba(255,255,255,0.9);
             font-size: 1.1rem;
             margin-bottom: var(--space-xl);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
         
         .login-form-container {
             position: relative;
             z-index: 1;
+            width: 100%;
         }
         
         .form-group {
             margin-bottom: var(--space-lg);
+            width: 100%;
         }
         
         .input-container {
             position: relative;
-            background: rgba(255,255,255,0.05);
-            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
             border-radius: var(--radius-lg);
             transition: var(--transition-normal);
             overflow: hidden;
@@ -6117,8 +6101,8 @@
         
         .input-container:focus-within {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(255,178,0,0.1);
-            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 4px rgba(255,178,0,0.2);
+            background: rgba(255,255,255,0.15);
         }
         
         .input-container input {
@@ -6129,21 +6113,23 @@
             color: #ffffff;
             font-size: 1rem;
             outline: none;
+            font-weight: 500;
         }
         
         .input-container input::placeholder {
-            color: rgba(255,255,255,0.5);
+            color: rgba(255,255,255,0.7);
+            font-weight: 400;
         }
         
         .login-btn {
             width: 100%;
             padding: var(--space-md) var(--space-lg);
             background: var(--gradient-primary);
-            border: none;
+            border: 2px solid rgba(255,178,0,0.5);
             border-radius: var(--radius-lg);
             color: #000;
             font-size: 1.1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: var(--transition-normal);
             display: flex;
@@ -6152,6 +6138,7 @@
             gap: var(--space-sm);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 12px rgba(255,178,0,0.3);
         }
         
         .login-btn::before {
@@ -6175,8 +6162,8 @@
         }
         
         .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid rgba(239, 68, 68, 0.5);
             border-radius: var(--radius-md);
             padding: var(--space-md);
             margin-bottom: var(--space-lg);
@@ -6185,6 +6172,8 @@
             align-items: center;
             gap: var(--space-sm);
             font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
         }
         
         /* ==================== PREMIUM USER PORTAL ==================== */

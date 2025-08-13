@@ -834,10 +834,20 @@
                         
                         if (result.success) {
                             createdCount++;
-                            showNotification(`✅ Created Firebase account for ${email}`, 'success');
+                            showAdminNotification(
+                                'Firebase Account Created',
+                                `✅ Created Firebase account for ${email}`,
+                                'success',
+                                { action: 'firebase_account_created', email: email }
+                            );
                         } else {
                             errorCount++;
-                            showNotification(`❌ Failed to create account for ${email}: ${result.error}`, 'error');
+                            showAdminNotification(
+                                'Firebase Account Creation Failed',
+                                `❌ Failed to create account for ${email}: ${result.error}`,
+                                'error',
+                                { action: 'firebase_account_failed', email: email, error: result.error }
+                            );
                         }
                         
                         // Small delay to avoid rate limiting
@@ -845,11 +855,21 @@
                     }
                 }
                 
-                showNotification(`🎉 Firebase account creation complete! Created: ${createdCount}, Errors: ${errorCount}`, 'success');
+                showAdminNotification(
+                    'Firebase Account Creation Complete',
+                    `🎉 Firebase account creation complete! Created: ${createdCount}, Errors: ${errorCount}`,
+                    'success',
+                    { action: 'firebase_accounts_complete', created: createdCount, errors: errorCount }
+                );
                 
             } catch (error) {
                 console.error('❌ Error creating Firebase accounts:', error);
-                showNotification('❌ Error creating Firebase accounts. Please try again.', 'error');
+                showAdminNotification(
+                    'Firebase Account Creation Error',
+                    '❌ Error creating Firebase accounts. Please try again.',
+                    'error',
+                    { action: 'firebase_accounts_error', error: error.message }
+                );
             }
                 }
         
@@ -1989,10 +2009,20 @@
                 let msg = `🗑️ Deleted ${name} permanently.`;
                 if (firebaseMessage) msg += ` ${firebaseMessage}`;
                 if (pdfMessage) msg += ` ${pdfMessage}`;
-                showNotification(msg, 'success');
+                showAdminNotification(
+                    'User Deleted',
+                    msg,
+                    'success',
+                    { action: 'user_deleted', userName: name, firebaseMessage, pdfMessage }
+                );
             } catch (error) {
                 console.error('❌ Error deleting user:', error);
-                showNotification(`Failed to delete user: ${error.message}`, 'error');
+                showAdminNotification(
+                    'User Deletion Failed',
+                    `Failed to delete user: ${error.message}`,
+                    'error',
+                    { action: 'user_deletion_failed', userName: name, error: error.message }
+                );
             }
         }
 
@@ -2211,21 +2241,19 @@
             return colors[type] || colors.info;
         }
         
-        // Enhanced notification system for JSON updates
-        function showJSONUpdateNotification(fileName, action, details = '') {
-            const message = `📄 ${fileName} has been ${action}. ${details}`;
-            showNotification(message, 'success');
+        // Admin-specific notification system for admin actions
+        function showAdminNotification(title, message, type = 'info', data = {}) {
+            showNotification(message, type);
             
             // Add to notification system
             addNotification(
-                'Data Updated',
+                title,
                 message,
-                'success',
+                type,
                 {
-                    fileName: fileName,
-                    action: action,
-                    details: details,
-                    priority: 'high'
+                    ...data,
+                    priority: 'normal',
+                    adminSpecific: true
                 }
             );
         }
@@ -2238,57 +2266,19 @@
         
         // Initialize notification system
         async function initializeNotificationSystem() {
-            console.log('🔔 Initializing sophisticated notification system...');
+            console.log('🔔 Initializing admin-specific notification system...');
             await loadNotifications();
             startNotificationPolling();
-            startJSONFileMonitoring();
+            startAdminNotificationSystem();
             updateNotificationBadge();
             updateNotificationList();
         }
         
-        // Monitor JSON files for changes
-        function startJSONFileMonitoring() {
-            console.log('📄 Starting JSON file monitoring...');
-            
-            // Monitor jobs-data.json
-            monitorJSONFile('jobs-data.json', 'jobs-data', (data) => {
-                showJSONUpdateNotification('jobs-data.json', 'updated', `Found ${data.jobs?.length || 0} jobs`);
-            });
-            
-            // Monitor users.json
-            monitorJSONFile('users.json', 'users-data', (data) => {
-                showJSONUpdateNotification('users.json', 'updated', `Found ${Object.keys(data.users || {}).length} users`);
-            });
-        }
-        
-        // Monitor a specific JSON file for changes
-        function monitorJSONFile(fileName, cacheKey, callback) {
-            let lastData = null;
-            
-            const checkForUpdates = async () => {
-                try {
-                    const response = await fetch(`/api/${fileName.replace('.json', '')}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        const dataString = JSON.stringify(data);
-                        
-                        if (lastData !== null && lastData !== dataString) {
-                            console.log(`📄 ${fileName} has been updated`);
-                            callback(data);
-                        }
-                        
-                        lastData = dataString;
-                    }
-                } catch (error) {
-                    console.warn(`⚠️ Could not monitor ${fileName}:`, error);
-                }
-            };
-            
-            // Check immediately
-            checkForUpdates();
-            
-            // Check every 30 seconds
-            setInterval(checkForUpdates, 30000);
+        // Admin-specific notification system for admin actions
+        function startAdminNotificationSystem() {
+            console.log('🔔 Starting admin-specific notification system...');
+            // Admins get notifications for admin actions like user management, job assignments, etc.
+            // No automatic JSON file monitoring for admins
         }
         
         // Load notifications from centralized storage
