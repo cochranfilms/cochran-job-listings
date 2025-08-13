@@ -5948,22 +5948,23 @@
             left: 0;
             width: 100%;
             height: 100vh;
-            background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 70%, #16213e 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 10000;
             backdrop-filter: blur(20px);
+            padding: 60px 20px;
         }
         
         .login-container {
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(40px);
-            border: 2px solid rgba(255, 178, 0, 0.3);
+            border: 2px solid rgba(255, 178, 0, 0.4);
             border-radius: var(--radius-xl);
-            padding: var(--space-2xl);
-            max-width: 480px;
-            width: 90%;
+            padding: 60px 40px;
+            max-width: 520px;
+            width: 100%;
             text-align: center;
             box-shadow: var(--shadow-xl), var(--shadow-glow);
             position: relative;
@@ -5999,44 +6000,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: var(--space-md);
             margin-bottom: var(--space-lg);
         }
         
-        .logo-circle {
-            width: 80px;
-            height: 80px;
-            background: var(--gradient-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--shadow-glow);
-            animation: pulse 2s infinite;
+        .real-logo {
+            width: 120px;
+            height: auto;
+            max-height: 80px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
         }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
-        .logo-text {
-            font-family: var(--font-display);
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #000;
-        }
-        
-        .brand-text {
-            text-align: left;
-        }
-        
-        .brand-title {
-            font-family: var(--font-display);
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin: 0;
             letter-spacing: 0.2em;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
@@ -6066,17 +6039,21 @@
             font-family: var(--font-display);
             font-size: 2.5rem;
             font-weight: 700;
-            color: var(--primary);
+            color: #FFB200;
             margin-bottom: var(--space-sm);
             letter-spacing: 0.1em;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
         
         .login-subtitle {
-            color: rgba(255,255,255,0.9);
+            color: #E8E8E8;
             font-size: 1.1rem;
             margin-bottom: var(--space-xl);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: inline-block;
         }
         
         .login-form-container {
@@ -6092,17 +6069,18 @@
         
         .input-container {
             position: relative;
-            background: rgba(255,255,255,0.1);
-            border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
             border-radius: var(--radius-lg);
             transition: var(--transition-normal);
             overflow: hidden;
+            margin-bottom: var(--space-md);
         }
         
         .input-container:focus-within {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(255,178,0,0.2);
-            background: rgba(255,255,255,0.15);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 4px rgba(255,178,0,0.3);
+            background: rgba(255,255,255,0.2);
         }
         
         .input-container input {
@@ -6117,15 +6095,15 @@
         }
         
         .input-container input::placeholder {
-            color: rgba(255,255,255,0.7);
+            color: rgba(255,255,255,0.8);
             font-weight: 400;
         }
         
         .login-btn {
             width: 100%;
             padding: var(--space-md) var(--space-lg);
-            background: var(--gradient-primary);
-            border: 2px solid rgba(255,178,0,0.5);
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            border: 2px solid rgba(255,178,0,0.6);
             border-radius: var(--radius-lg);
             color: #000;
             font-size: 1.1rem;
@@ -6138,7 +6116,8 @@
             gap: var(--space-sm);
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(255,178,0,0.3);
+            box-shadow: 0 4px 12px rgba(255,178,0,0.4);
+            margin-top: var(--space-lg);
         }
         
         .login-btn::before {
@@ -6586,9 +6565,23 @@
         }
         
         @media (max-width: 768px) {
+            .login-screen {
+                padding: 40px 20px;
+            }
+            
             .login-container {
-                padding: var(--space-xl);
-                margin: var(--space-md);
+                padding: 40px 30px;
+                margin: 20px;
+                max-width: 100%;
+            }
+            
+            .real-logo {
+                width: 100px;
+                max-height: 60px;
+            }
+            
+            .login-title {
+                font-size: 2rem;
             }
             
             .dashboard-header h1 {
@@ -6597,6 +6590,31 @@
             
             .card {
                 padding: var(--space-lg);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-screen {
+                padding: 30px 15px;
+            }
+            
+            .login-container {
+                padding: 30px 20px;
+                margin: 15px;
+            }
+            
+            .real-logo {
+                width: 80px;
+                max-height: 50px;
+            }
+            
+            .login-title {
+                font-size: 1.8rem;
+            }
+            
+            .login-subtitle {
+                font-size: 1rem;
+                padding: 6px 12px;
             }
         }
         
@@ -10606,8 +10624,6 @@
     </style>
     <!-- New premium theme stylesheet (loaded last to override older visuals) -->
     <link rel="stylesheet" href="styles/user-portal-theme.css">
-    <!-- Guard script to enforce centered login -->
-    <script defer src="fix-login-centering.js"></script>
 </head>
 <body>
     <!-- Premium Login Screen -->
@@ -10615,13 +10631,7 @@
         <div class="login-container">
             <div class="login-brand">
                 <div class="logo-container">
-                    <div class="logo-circle">
-                        <span class="logo-text">C</span>
-                    </div>
-                    <div class="brand-text">
-                        <h1 class="brand-title">OCHRAN</h1>
-                        <h2 class="brand-subtitle">FILMS</h2>
-                    </div>
+                    <img src="https://static.wixstatic.com/media/aeef42_af70013becbb4aa2b08179f9eba48dbc~mv2.png" alt="Cochran Films" class="real-logo">
                 </div>
                 <div class="portal-icon">👤</div>
                 <h1 class="login-title">CREATOR PORTAL</h1>
@@ -10659,7 +10669,7 @@
         <!-- Sophisticated Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <img src="https://static.wixstatic.com/media/aeef42_570164eee75f4394a4fc1cf9c62ceae0~mv2.png" alt="Cochran Films">
+                <img src="https://static.wixstatic.com/media/aeef42_af70013becbb4aa2b08179f9eba48dbc~mv2.png" alt="Cochran Films">
                 <span>Cochran Films</span>
             </div>
             
