@@ -1809,9 +1809,15 @@
                 currentUser = updatedUser;
                 console.log('✅ Updated current user data:', {
                     name: currentUser.name,
+                    email: currentUser.email,
                     paymentMethod: currentUser.paymentMethod,
-                    paymentStatus: currentUser.paymentStatus
+                    paymentStatus: currentUser.paymentStatus,
+                    jobs: currentUser.jobs,
+                    primaryJob: currentUser.primaryJob
                 });
+            } else {
+                console.warn('⚠️ Could not find updated user data for:', currentUser.email);
+                console.log('📋 Available users:', users.map(u => ({ name: u.name, email: u.email })));
             }
 
             // Check for automatic project status updates
@@ -1896,9 +1902,23 @@
                         console.warn('⚠️ Invalid approved date after fixTimezone:', fixedApprovedDate);
                     }
                 } catch (error) {
-                    console.warn('⚠️ Error formatting approved date:', error);
+                        console.warn('⚠️ Error formatting approved date:', error);
                 }
             }
+            
+            // Get the selected job for role, location, and rate information
+            const selectedJob = getSelectedJob();
+            
+            // Debug the selected job data
+            console.log('🔍 Selected job data:', selectedJob);
+            
+            // Get role, location, and rate with fallbacks to profile data
+            // Note: jobs may have 'title' instead of 'role', and we need to handle both
+            const role = selectedJob?.role || selectedJob?.title || 'Creator';
+            const location = selectedJob?.location || 'N/A';
+            const rate = selectedJob?.rate || 'N/A';
+            
+            console.log('📊 Profile display values:', { role, location, rate });
             
             container.innerHTML = `
                 <div class="profile-info">
@@ -1916,15 +1936,15 @@
                     </div>
                     <div class="info-item">
                         <span class="label">Role</span>
-                        <span class="value">${currentUser.profile?.role || getSelectedJob()?.role || 'Creator'}</span>
+                        <span class="value">${role}</span>
                     </div>
                     <div class="info-item">
                         <span class="label">Location</span>
-                        <span class="value">${currentUser.profile?.location || getSelectedJob()?.location || 'N/A'}</span>
+                        <span class="value">${location}</span>
                     </div>
                     <div class="info-item">
                         <span class="label">Rate</span>
-                        <span class="value highlight">${getSelectedJob()?.rate || currentUser.profile?.rate || 'N/A'}</span>
+                        <span class="value highlight">${rate}</span>
                     </div>
                 </div>
             `;
@@ -2012,8 +2032,30 @@
             const jobs = Object.values(currentUser.jobs);
             if (jobs.length === 0) return null;
             
+            console.log('🔍 getSelectedJob debug:', {
+                currentUser: currentUser.name,
+                jobs: currentUser.jobs,
+                primaryJob: currentUser.primaryJob,
+                jobCount: jobs.length
+            });
+            
             // Return the primary job or the first job
-            return jobs.find(job => job.id === currentUser.primaryJob) || jobs[0];
+            // Note: jobs may not have an 'id' field, so we need to check by key or use the first job
+            let selectedJob = null;
+            
+            if (currentUser.primaryJob && currentUser.jobs[currentUser.primaryJob]) {
+                // If primaryJob exists as a key in the jobs object, use that
+                selectedJob = currentUser.jobs[currentUser.primaryJob];
+                console.log('🎯 Found job by primaryJob key:', currentUser.primaryJob);
+            } else {
+                // Fallback to first job
+                selectedJob = jobs[0];
+                console.log('🎯 Using first job as fallback');
+            }
+            
+            console.log('🎯 Selected job result:', selectedJob);
+            
+            return selectedJob;
         }
 
         // Helper function to get project progress
