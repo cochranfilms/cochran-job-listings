@@ -5941,37 +5941,189 @@
             min-height: 100vh;
         }
 
-        /* ==================== PREMIUM LOGIN SCREEN ==================== */
+        /* ==================== QUANTUM NEURAL LOGIN SCREEN 2025 ==================== */
         .login-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100vh;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 70%, #16213e 100%);
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #1a1a2e 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 10000;
-            backdrop-filter: blur(20px);
-            padding: 120px 20px;
+            overflow: hidden;
+            min-height: 100vh;
         }
-        
+
+        /* Neural Network Background */
+        .neural-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .neural-node {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+            border-radius: 50%;
+            animation: neural-pulse 4s ease-in-out infinite;
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        .neural-node:nth-child(1) { top: 15%; left: 10%; animation-delay: 0s; }
+        .neural-node:nth-child(2) { top: 25%; left: 85%; animation-delay: 0.5s; }
+        .neural-node:nth-child(3) { top: 45%; left: 20%; animation-delay: 1s; }
+        .neural-node:nth-child(4) { top: 65%; left: 80%; animation-delay: 1.5s; }
+        .neural-node:nth-child(5) { top: 85%; left: 15%; animation-delay: 2s; }
+        .neural-node:nth-child(6) { top: 35%; left: 90%; animation-delay: 2.5s; }
+        .neural-node:nth-child(7) { top: 75%; left: 25%; animation-delay: 3s; }
+        .neural-node:nth-child(8) { top: 55%; left: 75%; animation-delay: 3.5s; }
+        .neural-node:nth-child(9) { top: 95%; left: 60%; animation-delay: 4s; }
+        .neural-node:nth-child(10) { top: 5%; left: 50%; animation-delay: 4.5s; }
+
+        @keyframes neural-pulse {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.6;
+                filter: hue-rotate(0deg);
+            }
+            50% { 
+                transform: scale(1.5);
+                opacity: 1;
+                filter: hue-rotate(180deg);
+            }
+        }
+
+        /* Holographic Particles */
+        .holographic-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ffff;
+            border-radius: 50%;
+            animation: particle-float 8s linear infinite;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        .particle:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
+        .particle:nth-child(2) { top: 20%; left: 90%; animation-delay: 1s; }
+        .particle:nth-child(3) { top: 40%; left: 15%; animation-delay: 2s; }
+        .particle:nth-child(4) { top: 60%; left: 85%; animation-delay: 3s; }
+        .particle:nth-child(5) { top: 80%; left: 10%; animation-delay: 4s; }
+        .particle:nth-child(6) { top: 30%; left: 95%; animation-delay: 5s; }
+        .particle:nth-child(7) { top: 70%; left: 20%; animation-delay: 6s; }
+        .particle:nth-child(8) { top: 90%; left: 70%; animation-delay: 7s; }
+
+        @keyframes particle-float {
+            0% { 
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { 
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* Quantum Portal */
+        .quantum-portal {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .portal-rings {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .ring {
+            position: absolute;
+            border: 2px solid transparent;
+            border-radius: 50%;
+            animation: portal-rotate 20s linear infinite;
+        }
+
+        .ring-1 {
+            width: 400px;
+            height: 400px;
+            top: -100px;
+            left: -100px;
+            border-color: rgba(0, 255, 255, 0.3);
+            animation-duration: 20s;
+        }
+
+        .ring-2 {
+            width: 500px;
+            height: 500px;
+            top: -150px;
+            left: -150px;
+            border-color: rgba(255, 0, 255, 0.2);
+            animation-duration: 30s;
+            animation-direction: reverse;
+        }
+
+        .ring-3 {
+            width: 600px;
+            height: 600px;
+            top: -200px;
+            left: -200px;
+            border-color: rgba(255, 255, 0, 0.1);
+            animation-duration: 40s;
+        }
+
+        @keyframes portal-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Main Login Container */
         .login-container {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(40px);
-            border: 2px solid rgba(255, 178, 0, 0.4);
-            border-radius: 20px;
-            padding: 50px 40px;
-            max-width: 520px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(50px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 30px;
+            padding: 60px 50px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 178, 0, 0.1);
             position: relative;
             overflow: hidden;
-            margin: 0 auto;
+            box-shadow: 
+                0 0 100px rgba(0, 255, 255, 0.2),
+                0 0 200px rgba(255, 0, 255, 0.1),
+                inset 0 0 100px rgba(0, 0, 0, 0.5);
         }
-        
+
         .login-container::before {
             content: '';
             position: absolute;
@@ -5979,63 +6131,259 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,178,0,0.1), transparent);
-            transform: rotate(45deg);
-            animation: shimmer 3s infinite;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 255, 255, 0.1), transparent, rgba(255, 0, 255, 0.1), transparent);
+            animation: container-rotate 10s linear infinite;
             pointer-events: none;
         }
-        
-        @keyframes shimmer {
-            0% { transform: rotate(45deg) translateX(-100%); }
-            100% { transform: rotate(45deg) translateX(100%); }
+
+        @keyframes container-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        
-        .login-brand {
+
+        /* Holographic Logo */
+        .holographic-logo {
             margin-bottom: 40px;
             position: relative;
             z-index: 1;
         }
-        
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
+
+        .logo-hologram {
+            position: relative;
+            display: inline-block;
         }
-        
+
         .real-logo {
             width: 120px;
             height: auto;
             max-height: 80px;
             object-fit: contain;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.8));
+            animation: logo-glow 3s ease-in-out infinite;
         }
-        
-        .portal-icon {
-            font-size: 3rem;
-            margin: 16px 0;
-            animation: float 3s ease-in-out infinite;
+
+        .logo-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: glow-pulse 2s ease-in-out infinite;
         }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+
+        .logo-scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            animation: scan-line 2s ease-in-out infinite;
         }
-        
-        .login-title {
-            font-family: 'Cinzel', serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #FFB200;
-            margin-bottom: 12px;
-            letter-spacing: 0.1em;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+
+        @keyframes logo-glow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.8)); }
+            50% { filter: drop-shadow(0 0 40px rgba(0, 255, 255, 1)); }
         }
-        
-        .login-subtitle {
-            color: #E8E8E8;
-            font-size: 1.1rem;
+
+        @keyframes glow-pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        @keyframes scan-line {
+            0% { transform: translateY(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(100px); opacity: 0; }
+        }
+
+        .logo-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .logo-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #00ffff;
+            border-radius: 50%;
+            animation: logo-particle-float 4s ease-in-out infinite;
+        }
+
+        .logo-particle:nth-child(1) { top: 20%; left: 20%; animation-delay: 0s; }
+        .logo-particle:nth-child(2) { top: 80%; left: 80%; animation-delay: 1s; }
+        .logo-particle:nth-child(3) { top: 50%; left: 50%; animation-delay: 2s; }
+
+        @keyframes logo-particle-float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.5; }
+            50% { transform: translateY(-10px) translateX(10px); opacity: 1; }
+        }
+
+        /* Portal Identity */
+        .portal-identity {
             margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .identity-icon {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+        }
+
+        .icon-core {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background: #00ffff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: core-pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .icon-rings {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .icon-ring {
+            position: absolute;
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: icon-ring-rotate 4s linear infinite;
+        }
+
+        .icon-ring:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            height: 80%;
+            animation-duration: 4s;
+        }
+
+        .icon-ring:nth-child(2) {
+            top: 20%;
+            left: 20%;
+            width: 60%;
+            height: 60%;
+            animation-duration: 6s;
+            animation-direction: reverse;
+        }
+
+        .icon-ring:nth-child(3) {
+            top: 30%;
+            left: 30%;
+            width: 40%;
+            height: 40%;
+            animation-duration: 8s;
+        }
+
+        @keyframes core-pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes icon-ring-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .login-title {
+            position: relative;
+            font-family: 'Cinzel', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #00ffff;
+            margin-bottom: 15px;
+            letter-spacing: 0.15em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+
+        .title-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .title-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.3), transparent);
+            animation: title-glow-sweep 3s ease-in-out infinite;
+        }
+
+        .title-scan {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            animation: title-scan 4s ease-in-out infinite;
+        }
+
+        @keyframes title-glow-sweep {
+            0% { transform: translateX(-100%); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+
+        @keyframes title-scan {
+            0% { transform: translateY(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(100px); opacity: 0; }
+        }
+
+        .login-subtitle {
+            position: relative;
+            color: #E8E8E8;
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px 20px;
+            border-radius: 15px;
+            display: inline-block;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .subtitle-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle-pulse {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 15px;
+            animation: subtitle-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes subtitle-pulse {
+            0%, 100% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.05); }
+        }
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
             background: rgba(0, 0, 0, 0.3);
             padding: 8px 16px;
@@ -6049,98 +6397,510 @@
             width: 100%;
         }
         
-        .form-group {
-            margin-bottom: 24px;
+        /* Quantum Form Container */
+        .quantum-form-container {
+            position: relative;
+            z-index: 1;
             width: 100%;
         }
-        
-        .input-container {
+
+        .form-group {
+            margin-bottom: 32px;
+            width: 100%;
+        }
+
+        .quantum-input-container {
             position: relative;
-            background: rgba(255,255,255,0.15);
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 16px;
-            transition: all 0.3s ease;
-            overflow: hidden;
             margin-bottom: 16px;
         }
-        
-        .input-container:focus-within {
-            border-color: #FFB200;
-            box-shadow: 0 0 0 4px rgba(255,178,0,0.3);
-            background: rgba(255,255,255,0.2);
+
+        .input-field {
+            position: relative;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            overflow: hidden;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        .input-container input {
+
+        .input-field:focus-within {
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 
+                0 0 30px rgba(0, 255, 255, 0.3),
+                0 0 60px rgba(0, 255, 255, 0.1);
+        }
+
+        .input-border {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 16px 20px;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .border-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            transition: all 0.3s ease;
+        }
+
+        .border-top {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            transform: scaleX(0);
+            transform-origin: left;
+        }
+
+        .border-right {
+            top: 0;
+            right: 0;
+            width: 2px;
+            height: 100%;
+            transform: scaleY(0);
+            transform-origin: top;
+        }
+
+        .border-bottom {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            transform: scaleX(0);
+            transform-origin: right;
+        }
+
+        .border-left {
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            transform: scaleY(0);
+            transform-origin: bottom;
+        }
+
+        .input-field:focus-within .border-top,
+        .input-field:focus-within .border-right,
+        .input-field:focus-within .border-bottom,
+        .input-field:focus-within .border-left {
+            transform: scale(1);
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 20px 25px;
             background: transparent;
             border: none;
             color: #ffffff;
-            font-size: 1rem;
+            font-size: 1.1rem;
             outline: none;
             font-weight: 500;
+            height: 70px;
+            min-height: 70px;
+            line-height: 1.2;
+            text-indent: 0;
+            caret-color: #00ffff;
+            z-index: 1;
+            position: relative;
         }
-        
-        .input-container input::placeholder {
-            color: rgba(255,255,255,0.8);
+
+        .input-field input::placeholder {
+            color: rgba(0, 255, 255, 0.6);
             font-weight: 400;
-        }
-        
-        .login-btn {
-            width: 100%;
-            padding: 16px 20px;
-            background: linear-gradient(135deg, #FFB200, #FFD700);
-            border: 2px solid rgba(255,178,0,0.6);
-            border-radius: 16px;
-            color: #000;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
+            opacity: 1;
+            text-indent: 0;
             transition: all 0.3s ease;
+        }
+
+        .input-field:focus-within input::placeholder {
+            color: rgba(0, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .input-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .input-field:focus-within .input-glow {
+            opacity: 1;
+        }
+
+        .input-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .input-particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ffff;
+            border-radius: 50%;
+            animation: input-particle-float 3s ease-in-out infinite;
+        }
+
+        .input-particle:nth-child(1) { top: 20%; left: 20%; animation-delay: 0s; }
+        .input-particle:nth-child(2) { top: 80%; left: 80%; animation-delay: 1.5s; }
+
+        @keyframes input-particle-float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+            50% { transform: translateY(-5px) translateX(5px); opacity: 1; }
+        }
+
+        /* Quantum Login Button */
+        .quantum-login-btn {
+            width: 100%;
+            height: 70px;
+            position: relative;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            margin-top: 32px;
+            overflow: visible;
+        }
+
+        .btn-core {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #00ffff, #0080ff, #8000ff);
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            position: relative;
+            gap: 15px;
+            color: #000;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(255,178,0,0.4);
-            margin-top: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 0 30px rgba(0, 255, 255, 0.4),
+                0 0 60px rgba(0, 255, 255, 0.2);
         }
-        
-        .login-btn::before {
-            content: '';
+
+        .btn-core:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 0 50px rgba(0, 255, 255, 0.6),
+                0 0 100px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn-glow {
             position: absolute;
             top: 0;
-            left: -100%;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: var(--transition-slow);
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+            opacity: 0;
+            transition: all 0.3s ease;
         }
-        
-        .login-btn:hover::before {
-            left: 100%;
+
+        .btn-core:hover .btn-glow {
+            opacity: 1;
         }
-        
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg), var(--shadow-glow);
+
+        .btn-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
         }
-        
+
+        .btn-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #ffffff;
+            border-radius: 50%;
+            animation: btn-particle-float 2s ease-in-out infinite;
+        }
+
+        .btn-particle:nth-child(1) { top: 30%; left: 20%; animation-delay: 0s; }
+        .btn-particle:nth-child(2) { top: 70%; left: 80%; animation-delay: 0.5s; }
+        .btn-particle:nth-child(3) { top: 50%; left: 50%; animation-delay: 1s; }
+
+        @keyframes btn-particle-float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.5; }
+            50% { transform: translateY(-8px) translateX(8px); opacity: 1; }
+        }
+
+        .btn-border {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            width: calc(100% + 4px);
+            height: calc(100% + 4px);
+            pointer-events: none;
+        }
+
+        .btn-border-line {
+            position: absolute;
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+            background-size: 300% 100%;
+            animation: border-flow 3s linear infinite;
+        }
+
+        .btn-border-line:nth-child(1) {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+        }
+
+        .btn-border-line:nth-child(2) {
+            top: 0;
+            right: 0;
+            width: 2px;
+            height: 100%;
+        }
+
+        .btn-border-line:nth-child(3) {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+        }
+
+        .btn-border-line:nth-child(4) {
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+        }
+
+        @keyframes border-flow {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 300% 0%; }
+        }
+
+        /* Enhanced Error Message */
         .error-message {
-            background: rgba(239, 68, 68, 0.2);
-            border: 2px solid rgba(239, 68, 68, 0.5);
-            border-radius: var(--radius-md);
-            padding: var(--space-md);
-            margin-bottom: var(--space-lg);
-            color: #fca5a5;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 15px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            color: #ff6b6b;
             display: flex;
             align-items: center;
-            gap: var(--space-sm);
-            font-size: 0.9rem;
+            gap: 12px;
+            font-size: 0.95rem;
             font-weight: 500;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
         }
+
+        .error-icon {
+            color: #ff6b6b;
+            font-size: 1.1rem;
+            animation: error-pulse 2s ease-in-out infinite;
+        }
+
+        .error-pulse {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%);
+            animation: error-pulse-animation 2s ease-in-out infinite;
+        }
+
+        @keyframes error-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        @keyframes error-pulse-animation {
+            0%, 100% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.05); }
+        }
+
+        /* Ambient Light Effects */
+        .ambient-lights {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .light-source {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            animation: ambient-pulse 6s ease-in-out infinite;
+        }
+
+        .light-1 {
+            top: 20%;
+            left: 15%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+            animation-delay: 0s;
+        }
+
+        .light-2 {
+            top: 70%;
+            right: 20%;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255, 0, 255, 0.08) 0%, transparent 70%);
+            animation-delay: 2s;
+        }
+
+        .light-3 {
+            bottom: 30%;
+            left: 60%;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(255, 255, 0, 0.06) 0%, transparent 70%);
+            animation-delay: 4s;
+        }
+
+        @keyframes ambient-pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        /* Data Streams */
+        .data-streams {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .data-stream {
+            position: absolute;
+            background: linear-gradient(180deg, transparent, rgba(0, 255, 255, 0.3), transparent);
+            animation: data-flow 8s linear infinite;
+        }
+
+        .stream-1 {
+            top: 0;
+            left: 25%;
+            width: 1px;
+            height: 100vh;
+            animation-delay: 0s;
+        }
+
+        .stream-2 {
+            top: 0;
+            left: 75%;
+            width: 1px;
+            height: 100vh;
+            animation-delay: 3s;
+        }
+
+        .stream-3 {
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100vh;
+            animation-delay: 6s;
+        }
+
+        @keyframes data-flow {
+            0% { 
+                transform: translateY(-100vh);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { 
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .quantum-portal {
+                max-width: 90%;
+                padding: 0 20px;
+            }
+
+            .login-container {
+                padding: 40px 30px;
+            }
+
+            .login-title {
+                font-size: 2.2rem;
+            }
+
+            .portal-rings .ring-1 {
+                width: 300px;
+                height: 300px;
+                top: -50px;
+                left: -50px;
+            }
+
+            .portal-rings .ring-2 {
+                width: 400px;
+                height: 400px;
+                top: -100px;
+                left: -100px;
+            }
+
+            .portal-rings .ring-3 {
+                width: 500px;
+                height: 500px;
+                top: -150px;
+                left: -150px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quantum-portal {
+                max-width: 95%;
+                padding: 0 15px;
+            }
+
+            .login-container {
+                padding: 30px 20px;
+            }
+
+            .login-title {
+                font-size: 1.8rem;
+            }
+
+            .real-logo {
+                width: 100px;
+            }
+        }
+        
+
         
         /* ==================== PREMIUM USER PORTAL ==================== */
         .app-container {
@@ -6698,9 +7458,12 @@
             border-radius: 16px !important;
             margin-bottom: 24px !important;
             
-            /* Ensure proper layout */
+            /* Ensure proper layout and spacing */
             position: relative !important;
             overflow: hidden !important;
+            min-height: 60px !important;
+            display: flex !important;
+            align-items: center !important;
         }
         
         #loginScreen .input-container:focus-within {
@@ -6714,18 +7477,25 @@
         #loginScreen .input-container input {
             /* Perfect text visibility */
             color: #FFFFFF !important;
-            background: transparent !important;
+            background: rgba(0, 0, 0, 0.8) !important;
             padding: 20px 24px !important;
             font-size: 16px !important;
             font-weight: 500 !important;
             
-            /* Ensure full width */
+            /* Ensure full width and height */
             width: 100% !important;
+            height: 60px !important;
+            min-height: 60px !important;
             border: none !important;
             outline: none !important;
             
             /* Smooth transitions */
             transition: all 0.3s ease !important;
+            
+            /* Ensure input is visible and interactive */
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         
         #loginScreen .input-container input::placeholder {
@@ -6737,6 +7507,41 @@
         #loginScreen .input-container:hover {
             background: rgba(0, 0, 0, 0.8) !important;
             border-color: rgba(255, 255, 255, 0.4) !important;
+        }
+        
+        /* Additional input field fixes */
+        #loginScreen .input-container input:focus {
+            background: rgba(0, 0, 0, 0.9) !important;
+            border: 2px solid #FFB200 !important;
+            box-shadow: 0 0 0 4px rgba(255, 178, 0, 0.3) !important;
+        }
+        
+        /* Ensure input fields are not hidden or collapsed */
+        #loginScreen .form-group {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Fix any potential CSS conflicts */
+        #loginScreen input[type="email"],
+        #loginScreen input[type="password"] {
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            box-sizing: border-box !important;
+            /* Force input field visibility */
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            /* Ensure proper dimensions */
+            height: 60px !important;
+            min-height: 60px !important;
+            line-height: 1.2 !important;
+            /* Prevent text from being hidden */
+            text-indent: 0 !important;
+            /* Ensure cursor is visible */
+            caret-color: #FFB200 !important;
         }
         
         /* Fix login button */
@@ -7595,7 +8400,7 @@
                 transform: translateZ(100px) rotateX(5deg) translateY(-8px); 
                 box-shadow: 
                     0 25px 70px rgba(0, 0, 0, 0.5),
-                    0 0 0 1px rgba(255, 255, 255, 0.15),
+                    0 0 0 2px rgba(255, 255, 255, 0.15),
                     inset 0 1px 0 rgba(255, 255, 255, 0.3);
             }
         }
@@ -10761,39 +11566,161 @@
 <body>
     <!-- Premium Login Screen -->
     <div id="loginScreen" class="login-screen">
-        <div class="login-container">
-            <div class="login-brand">
-                <div class="logo-container">
-                    <img src="https://static.wixstatic.com/media/aeef42_af70013becbb4aa2b08179f9eba48dbc~mv2.png" alt="Cochran Films" class="real-logo">
-                </div>
-                <div class="portal-icon">👤</div>
-                <h1 class="login-title">CREATOR PORTAL</h1>
-                <p class="login-subtitle">Access your contracts and project information</p>
+        <!-- Neural Network Background -->
+        <div class="neural-background">
+            <div class="neural-node" data-speed="0.5"></div>
+            <div class="neural-node" data-speed="0.8"></div>
+            <div class="neural-node" data-speed="1.2"></div>
+            <div class="neural-node" data-speed="0.6"></div>
+            <div class="neural-node" data-speed="1.0"></div>
+            <div class="neural-node" data-speed="0.7"></div>
+            <div class="neural-node" data-speed="0.9"></div>
+            <div class="neural-node" data-speed="1.1"></div>
+            <div class="neural-node" data-speed="0.4"></div>
+            <div class="neural-node" data-speed="0.8"></div>
+        </div>
+        
+        <!-- Holographic Particles -->
+        <div class="holographic-particles">
+            <div class="particle" data-speed="0.3"></div>
+            <div class="particle" data-speed="0.6"></div>
+            <div class="particle" data-speed="0.9"></div>
+            <div class="particle" data-speed="0.4"></div>
+            <div class="particle" data-speed="0.7"></div>
+            <div class="particle" data-speed="1.0"></div>
+            <div class="particle" data-speed="0.5"></div>
+            <div class="particle" data-speed="0.8"></div>
+        </div>
+        
+        <!-- Quantum Portal Container -->
+        <div class="quantum-portal">
+            <div class="portal-rings">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
             </div>
             
-            <div class="login-form-container">
-                <div id="loginError" class="error-message" style="display: none;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Invalid email or password. Please try again.</span>
+            <!-- Main Login Container -->
+            <div class="login-container">
+                <!-- Holographic Logo -->
+                <div class="holographic-logo">
+                    <div class="logo-hologram">
+                        <img src="https://static.wixstatic.com/media/aeef42_af70013becbb4aa2b08179f9eba48dbc~mv2.png" alt="Cochran Films" class="real-logo">
+                        <div class="logo-glow"></div>
+                        <div class="logo-scan-line"></div>
+                    </div>
+                    <div class="logo-particles">
+                        <div class="logo-particle"></div>
+                        <div class="logo-particle"></div>
+                        <div class="logo-particle"></div>
+                    </div>
                 </div>
                 
-                <form id="loginForm" class="login-form" method="post" onsubmit="handleLogin(event); return false;">
-                    <div class="form-group">
-                        <div class="input-container">
-                            <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="email" inputmode="email">
+                <!-- Portal Identity -->
+                <div class="portal-identity">
+                    <div class="identity-icon">
+                        <div class="icon-core"></div>
+                        <div class="icon-rings">
+                            <div class="icon-ring"></div>
+                            <div class="icon-ring"></div>
+                            <div class="icon-ring"></div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="input-container">
-                            <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                    <h1 class="login-title">
+                        <span class="title-text">CREATOR PORTAL</span>
+                        <span class="title-glow"></span>
+                        <span class="title-scan"></span>
+                    </h1>
+                    <p class="login-subtitle">
+                        <span class="subtitle-text">Access your contracts and project information</span>
+                        <span class="subtitle-pulse"></span>
+                    </p>
+                </div>
+                
+                <!-- Quantum Form Container -->
+                <div class="quantum-form-container">
+                    <div id="loginError" class="error-message" style="display: none;">
+                        <div class="error-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
                         </div>
+                        <span>Invalid email or password. Please try again.</span>
+                        <div class="error-pulse"></div>
                     </div>
-                    <button type="submit" class="login-btn">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span>Sign In</span>
-                    </button>
-                </form>
+                    
+                    <form id="loginForm" class="login-form" method="post" onsubmit="handleLogin(event); return false;">
+                        <div class="form-group">
+                            <div class="quantum-input-container">
+                                <div class="input-field">
+                                    <div class="input-border">
+                                        <div class="border-line border-top"></div>
+                                        <div class="border-line border-right"></div>
+                                        <div class="border-line border-bottom"></div>
+                                        <div class="border-line border-left"></div>
+                                    </div>
+                                    <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="email" inputmode="email">
+                                    <div class="input-glow"></div>
+                                    <div class="input-particles">
+                                        <div class="input-particle"></div>
+                                        <div class="input-particle"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="quantum-input-container">
+                                <div class="input-field">
+                                    <div class="input-border">
+                                        <div class="border-line border-top"></div>
+                                        <div class="border-line border-right"></div>
+                                        <div class="border-line border-bottom"></div>
+                                        <div class="border-line border-left"></div>
+                                    </div>
+                                    <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                                    <div class="input-glow"></div>
+                                    <div class="input-particles">
+                                        <div class="input-particle"></div>
+                                        <div class="input-particle"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="quantum-login-btn">
+                            <div class="btn-core">
+                                <div class="btn-glow"></div>
+                                <div class="btn-particles">
+                                    <div class="btn-particle"></div>
+                                    <div class="btn-particle"></div>
+                                    <div class="btn-particle"></div>
+                                </div>
+                                <i class="fas fa-sign-in-alt"></i>
+                                <span>Sign In</span>
+                            </div>
+                            <div class="btn-border">
+                                <div class="btn-border-line"></div>
+                                <div class="btn-border-line"></div>
+                                <div class="btn-border-line"></div>
+                                <div class="btn-border-line"></div>
+                            </div>
+                        </button>
+                    </form>
+                </div>
             </div>
+        </div>
+        
+        <!-- Ambient Light Effects -->
+        <div class="ambient-lights">
+            <div class="light-source light-1"></div>
+            <div class="light-source light-2"></div>
+            <div class="light-source light-3"></div>
+        </div>
+        
+        <!-- Data Streams -->
+        <div class="data-streams">
+            <div class="data-stream stream-1"></div>
+            <div class="data-stream stream-2"></div>
+            <div class="data-stream stream-3"></div>
         </div>
     </div>
 
@@ -10942,6 +11869,132 @@
             </div>
         </div>
     </div>
+
+    <!-- Quantum Neural Network JavaScript -->
+    <script>
+        // Neural Network Connection Lines
+        function createNeuralConnections() {
+            const canvas = document.createElement('canvas');
+            canvas.id = 'neuralCanvas';
+            canvas.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 2;
+            `;
+            document.querySelector('.neural-background').appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const nodes = document.querySelectorAll('.neural-node');
+            const nodePositions = [];
+            
+            nodes.forEach(node => {
+                const rect = node.getBoundingClientRect();
+                nodePositions.push({
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2,
+                    speed: parseFloat(node.dataset.speed)
+                });
+            });
+            
+            function animateConnections() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw connections between nearby nodes
+                for (let i = 0; i < nodePositions.length; i++) {
+                    for (let j = i + 1; j < nodePositions.length; j++) {
+                        const dx = nodePositions[i].x - nodePositions[j].x;
+                        const dy = nodePositions[i].y - nodePositions[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 200) {
+                            const opacity = Math.max(0, 1 - distance / 200);
+                            ctx.strokeStyle = `rgba(0, 255, 255, ${opacity * 0.3})`;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(nodePositions[i].x, nodePositions[i].y);
+                            ctx.lineTo(nodePositions[j].x, nodePositions[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                
+                requestAnimationFrame(animateConnections);
+            }
+            
+            animateConnections();
+        }
+        
+        // Interactive Particle System
+        function initParticleSystem() {
+            const particles = document.querySelectorAll('.particle');
+            
+            particles.forEach(particle => {
+                particle.addEventListener('mouseenter', () => {
+                    particle.style.transform = 'scale(2)';
+                    particle.style.boxShadow = '0 0 20px #00ffff';
+                });
+                
+                particle.addEventListener('mouseleave', () => {
+                    particle.style.transform = 'scale(1)';
+                    particle.style.boxShadow = '0 0 10px #00ffff';
+                });
+            });
+        }
+        
+        // Quantum Portal Interactions
+        function initQuantumPortal() {
+            const portal = document.querySelector('.quantum-portal');
+            const rings = document.querySelectorAll('.ring');
+            
+            portal.addEventListener('mousemove', (e) => {
+                const rect = portal.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                rings.forEach((ring, index) => {
+                    const speed = (index + 1) * 0.5;
+                    ring.style.transform = `rotate(${x * speed}deg)`;
+                });
+            });
+            
+            // Add hover effects to input fields
+            const inputFields = document.querySelectorAll('.input-field');
+            inputFields.forEach(field => {
+                field.addEventListener('mouseenter', () => {
+                    field.style.transform = 'scale(1.02)';
+                });
+                
+                field.addEventListener('mouseleave', () => {
+                    field.style.transform = 'scale(1)';
+                });
+            });
+        }
+        
+        // Initialize all effects when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                createNeuralConnections();
+                initParticleSystem();
+                initQuantumPortal();
+            }, 100);
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('neuralCanvas');
+            if (canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+        });
+    </script>
 
 </body>
 </html> 
