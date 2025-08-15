@@ -135,6 +135,31 @@ app.get('/api/jobs-data', async (req, res) => {
     }
 });
 
+// Uploaded contracts API endpoint
+app.get('/api/uploaded-contracts', async (req, res) => {
+    try {
+        const contractsPath = path.join(__dirname, 'uploaded-contracts.json');
+        
+        if (fs.existsSync(contractsPath)) {
+            const contractsData = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
+            res.status(200).json(contractsData);
+        } else {
+            // Return empty contracts data if file doesn't exist
+            res.status(200).json({
+                contracts: [],
+                lastUpdated: new Date().toISOString(),
+                totalContracts: 0
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error in uploaded contracts API:', error);
+        res.status(500).json({ 
+            error: 'Internal server error',
+            message: error.message 
+        });
+    }
+});
+
 
 
 app.get('/api/dropdown-options', async (req, res) => {
@@ -175,6 +200,34 @@ app.get('/api/github/info', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error in GitHub info API:', error);
+        res.status(500).json({ 
+            error: 'Internal server error',
+            message: error.message 
+        });
+    }
+});
+
+// GitHub file GET endpoint for retrieving file info
+app.get('/api/github/file/:filename', async (req, res) => {
+    try {
+        const { filename } = req.params;
+        
+        // For local testing, return mock file info
+        console.log(`📄 Local GitHub file info request: ${filename}`);
+        
+        res.status(200).json({
+            sha: 'mock-sha-for-local-testing',
+            content: {
+                sha: 'mock-content-sha',
+                path: filename,
+                size: 1024,
+                encoding: 'base64'
+            },
+            message: 'Local development mode - mock file info'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error in GitHub file GET API:', error);
         res.status(500).json({ 
             error: 'Internal server error',
             message: error.message 

@@ -32,6 +32,18 @@
     <script src="bank-details-modal.js"></script>
     
     <script>
+        // Environment detection and API configuration
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isProduction = window.location.hostname === 'collaborate.cochranfilms.com';
+        const API_BASE = isLocalhost ? 'http://localhost:8000' : '';
+        
+        console.log('🔧 Environment detected:', {
+            hostname: window.location.hostname,
+            isLocalhost: isLocalhost,
+            isProduction: isProduction,
+            apiBase: API_BASE
+        });
+
         let currentUser = null;
         let users = [];
         let uploadedContracts = [];
@@ -99,7 +111,7 @@
         // Load performance reviews from centralized users.json
         async function loadPerformanceReviews() {
             try {
-                const response = await fetch('users.json');
+                const response = await fetch(`${API_BASE}/api/users`);
                 
                 if (response.ok) {
                     const usersData = await response.json();
@@ -183,7 +195,7 @@
                 
                 // First, try to load directly from users API
                 try {
-                    const response = await fetch('/api/users');
+                    const response = await fetch(`${API_BASE}/api/users`);
                     if (response.ok) {
                         const jsonData = await response.json();
                         if (jsonData.users) {
@@ -351,7 +363,7 @@
         async function loadUploadedContracts() {
             try {
                 console.log('🔄 Loading uploaded contracts data...');
-                const response = await fetch('uploaded-contracts.json');
+                const response = await fetch(`${API_BASE}/api/uploaded-contracts`);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -371,7 +383,7 @@
         async function loadJobsData() {
             try {
                 console.log('🔄 Loading jobs data...');
-                const response = await fetch('jobs-data.json');
+                const response = await fetch(`${API_BASE}/api/jobs-data`);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -528,7 +540,7 @@
         // Load notifications from centralized storage
         async function loadNotifications() {
             try {
-                const response = await fetch('/api/notifications');
+                const response = await fetch(`${API_BASE}/api/notifications`);
                 if (response.ok) {
                     const data = await response.json();
                     notifications = data.notifications || [];
@@ -547,7 +559,7 @@
         // Save notifications to centralized storage
         async function saveNotifications() {
             try {
-                const response = await fetch('/api/notifications', {
+                const response = await fetch(`${API_BASE}/api/notifications`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -956,7 +968,7 @@
                 
                 // First, try to load directly from users API
                 try {
-                    const response = await fetch('/api/users');
+                    const response = await fetch(`${API_BASE}/api/users`);
                     if (response.ok) {
                         const jsonData = await response.json();
                         if (jsonData.users) {
@@ -1230,7 +1242,7 @@
         async function loadUploadedContracts() {
             try {
                 console.log('🔄 Loading contracts from centralized users.json...');
-                const response = await fetch('users.json');
+                const response = await fetch(`${API_BASE}/api/users`);
                 if (response.ok) {
                     const usersData = await response.json();
                     uploadedContracts = [];
@@ -1276,7 +1288,7 @@
         // Load jobs data from JSON file
         async function loadJobsData() {
             try {
-                const response = await fetch('jobs-data.json');
+                const response = await fetch(`${API_BASE}/api/jobs-data`);
                 if (response.ok) {
                     const jsonData = await response.json();
                     jobsData = jsonData.jobs || [];
@@ -1730,7 +1742,7 @@
                 // Try to get cached users data first
                 if (users.length === 0) {
                     // Quick API call without heavy processing
-                    const response = await fetch('/api/users');
+                    const response = await fetch(`${API_BASE}/api/users`);
                     if (response.ok) {
                         const jsonData = await response.json();
                         if (jsonData.users) {
@@ -3099,13 +3111,13 @@
                 let usersData = null;
                 
                 try {
-                    const response = await fetch('/api/users');
+                    const response = await fetch(`${API_BASE}/api/users`);
                     if (response.ok) {
                         usersData = await response.json();
                         console.log('✅ Users data loaded from API:', usersData);
                     } else {
                         console.warn('⚠️ API failed, trying direct JSON file...');
-                        const fallbackResponse = await fetch('/users.json');
+                        const fallbackResponse = await fetch('users.json');
                         if (fallbackResponse.ok) {
                             usersData = await fallbackResponse.json();
                             console.log('✅ Users data loaded from JSON file:', usersData);
@@ -4294,7 +4306,7 @@
                     console.log(`🔄 Attempt ${retryCount + 1} of ${maxRetries} to update payment method`);
                     
                     // Get current users data
-                    const response = await fetch('/api/users');
+                    const response = await fetch(`${API_BASE}/api/users`);
                     if (!response.ok) {
                         throw new Error('Failed to load users data');
                     }
@@ -4324,7 +4336,7 @@
                     
                     // Get fresh SHA for users.json (important for conflict resolution)
                     console.log('📄 Getting fresh SHA for users.json...');
-                    const shaResponse = await fetch('/api/github/file/users.json');
+                    const shaResponse = await fetch(`${API_BASE}/api/github/file/users.json`);
                     let sha = null;
                     if (shaResponse.ok) {
                         const shaData = await shaResponse.json();
@@ -4338,7 +4350,7 @@
                     console.log('🔄 Updating users.json with payment method:', paymentMethod);
                     console.log('📝 Data being sent:', JSON.stringify(usersData, null, 2).substring(0, 200) + '...');
                     
-                    const updateResponse = await fetch('/api/github/file/users.json', {
+                    const updateResponse = await fetch(`${API_BASE}/api/github/file/users.json`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
@@ -5405,7 +5417,7 @@
 
             function checkForNewUserNotifications() {
                 // Quick check for new notifications without full reload
-                fetch('/api/notifications')
+                fetch(`${API_BASE}/api/notifications`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.notifications && currentUser) {

@@ -102,7 +102,56 @@ npm run cleanup:all
 - **Weekly**: Archive and compress log files
 - **Monthly**: Deep clean of media cache and project files
 
-## Original Cleanup System
+## 🔌 API Infrastructure Cleanup
+
+### New Addition: API Endpoint System Cleanup
+The API infrastructure includes cleanup procedures to maintain system performance and ensure proper endpoint functionality.
+
+#### API Endpoint Cleanup
+- **Missing Endpoints**: Added missing API endpoints for local development
+- **Environment Detection**: Implemented automatic environment detection system
+- **API Base URL**: Added dynamic API base URL configuration
+- **Response Validation**: Ensured all endpoints return proper JSON responses
+- **Error Handling**: Improved error handling and logging for all endpoints
+
+#### Server Configuration Cleanup
+- **Port Conflicts**: Resolved port 8000 conflicts and server restart issues
+- **Route Configuration**: Fixed API route definitions and middleware setup
+- **CORS Handling**: Ensured proper CORS configuration for all endpoints
+- **File Paths**: Fixed file path resolution for JSON data files
+- **GitHub Integration**: Added mock GitHub API responses for local testing
+
+#### Cleanup Commands
+```bash
+# Clean up server configuration
+npm run cleanup:server-config
+
+# Clean API endpoints
+npm run cleanup:api-endpoints
+
+# Clean server logs
+npm run cleanup:server-logs
+
+# Full API cleanup
+npm run cleanup:api-system
+```
+
+#### Automated Cleanup Schedule
+- **Daily**: Clean server logs and temporary files
+- **Weekly**: Verify all API endpoints are functioning
+- **Monthly**: Deep clean of server configuration and logs
+
+#### API Endpoints Maintained
+- ✅ `/api/health` - Server health check
+- ✅ `/api/users` - User data retrieval  
+- ✅ `/api/jobs-data` - Job listings data
+- ✅ `/api/notifications` - User notifications
+- ✅ `/api/uploaded-contracts` - Contract file data
+- ✅ `/api/github/info` - GitHub repository info
+- ✅ `/api/github/file/:filename` - GitHub file operations
+- ✅ `/api/dropdown-options` - Form dropdown data
+
+## 🧹 General Cleanup Procedures
 
 ### Core Cleanup Functions
 

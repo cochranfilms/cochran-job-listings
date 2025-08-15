@@ -84,6 +84,58 @@ node test-admin-deletion-simple.js
 - Toast notifications appear with success styling
 - JSON monitoring runs every 30 seconds automatically
 
+### 6. API Endpoint Testing
+**Purpose**: Comprehensive testing of all API endpoints for local development and production compatibility
+**Features**:
+- Tests all API endpoints for proper response codes
+- Validates JSON response format
+- Checks local development server functionality
+- Verifies production environment fallbacks
+- Tests environment detection system
+
+**API Endpoints Tested**:
+- `/api/health` - Server health check
+- `/api/users` - User data retrieval
+- `/api/jobs-data` - Job listings data
+- `/api/notifications` - User notifications
+- `/api/uploaded-contracts` - Contract file data
+- `/api/github/info` - GitHub repository info
+- `/api/github/file/:filename` - GitHub file operations
+- `/api/dropdown-options` - Form dropdown data
+
+**Testing Steps**:
+1. Start local development server: `node server.js`
+2. Verify server is running on port 8000
+3. Test each API endpoint individually
+4. Check response status codes and JSON format
+5. Verify environment detection in user portal
+6. Test local vs production API base URL handling
+
+**Expected Behavior**:
+- All endpoints return 200 status codes
+- JSON responses are properly formatted
+- Local development uses `http://localhost:8000` as API base
+- Production environment uses relative paths
+- Environment detection works automatically
+
+**Manual Testing Commands**:
+```bash
+# Start server
+node server.js
+
+# Test health endpoint
+curl http://localhost:8000/api/health
+
+# Test users endpoint
+curl http://localhost:8000/api/users
+
+# Test notifications endpoint
+curl http://localhost:8000/api/notifications
+
+# Test uploaded contracts endpoint
+curl http://localhost:8000/api/uploaded-contracts
+```
+
 ## Test Configuration
 
 ### Admin Dashboard Access
