@@ -117,6 +117,30 @@
       "primaryJob": "Test Job Title",
       "paymentMethod": "zelle",
       "paymentStatus": "configured"
+    },
+    "Cody Cochran": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "location": "Atlanta Area",
+        "role": "",
+        "projectType": ""
+      },
+      "contract": {
+        "contractStatus": "pending"
+      },
+      "application": {
+        "status": "pending",
+        "submittedAt": "2025-08-15T11:32:39.749Z",
+        "jobTitle": "Test Job Title",
+        "eventDate": "2025-10-12",
+        "pay": "$400",
+        "description": "Test Job Description",
+        "phone": "4704202169",
+        "portfolio": "https://www.cochranfilms.com",
+        "source": "apply-html"
+      },
+      "jobs": {},
+      "primaryJob": null
     }
   },
   "statusOptions": {
@@ -133,15 +157,10 @@
       "overdue"
     ]
   },
-  "lastUpdated": "2025-08-13",
-  "totalUsers": 2,
+  "lastUpdated": "2025-08-15",
+  "totalUsers": 3,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-13"
-  },
-  "_metadata": {
-    "dataSource": "github",
-    "fetchedAt": "2025-08-13T06:03:01.784Z",
-    "totalUsers": 2
   }
 }
