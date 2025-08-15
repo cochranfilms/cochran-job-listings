@@ -1016,7 +1016,7 @@
         // Load existing jobs
         async function loadJobs() {
             try {
-                const response = await fetch('/api/jobs-data');
+                const response = await fetch(`${API_BASE}/api/jobs-data`);
                 if (response.ok) {
                     const data = await response.json();
                     window.jobs = data.jobs || [];
@@ -1394,7 +1394,7 @@
         // Load existing users
         async function loadUsers() {
             try {
-                const response = await fetch('users.json');
+                const response = await fetch(`${API_BASE}/api/users`);
                 if (response.ok) {
                     const data = await response.json();
                     window.users = data.users || {};
@@ -1984,8 +1984,8 @@
                         const body = fileName ? { filename: fileName } : { contractId: contract.contractId };
                         
                         console.log('🗑️ Cleaning up PDF file...');
-                        const deletePdfResponse = await fetch('/api/delete-pdf', {
-                            method,
+                        const deletePdfResponse = await fetch(`${API_BASE}/api/delete-pdf`, {
+                            method: 'DELETE',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(body)
                         });
@@ -2029,7 +2029,7 @@
 
                 // 4. Persist to server using the more reliable update-users API
                 console.log('🔄 Persisting changes to server...');
-                const updateResponse = await fetch('/api/update-users', {
+                const updateResponse = await fetch(`${API_BASE}/api/update-users`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -2208,7 +2208,7 @@
             try {
                 console.log(`🗑️ Attempting to delete Firebase account: ${email}`);
                 
-                const response = await fetch('/api/firebase', {
+                const response = await fetch(`${API_BASE}/api/firebase`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -2232,6 +2232,15 @@
             }
         }
 
+        // ==================== ENVIRONMENT DETECTION ====================
+        
+        // Auto-detect environment and set API base URL
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_BASE = isLocal ? '' : 'https://your-project.vercel.app'; // Update this with your actual Vercel URL
+        
+        console.log(`🌍 Environment detected: ${isLocal ? 'Local Development' : 'Live Site'}`);
+        console.log(`🔗 API Base URL: ${API_BASE || 'Local (localhost:8000)'}`);
+        
         // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
         
         // Enhanced notification system with real-time updates
@@ -2343,7 +2352,7 @@
         // Load notifications from centralized storage
         async function loadNotifications() {
             try {
-                const response = await fetch('/api/notifications');
+                const response = await fetch(`${API_BASE}/api/notifications`);
                 if (response.ok) {
                     const data = await response.json();
                     notifications = data.notifications || [];
@@ -2362,7 +2371,7 @@
         // Save notifications to centralized storage
         async function saveNotifications() {
             try {
-                const response = await fetch('/api/notifications', {
+                const response = await fetch(`${API_BASE}/api/notifications`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -3117,7 +3126,7 @@
             try {
                 console.log('🔄 Loading dropdown options...');
                 
-                const response = await fetch('/api/dropdown-options');
+                const response = await fetch(`${API_BASE}/api/dropdown-options`);
                 
                 if (response.ok) {
                     window.dropdownOptions = await response.json();
@@ -4009,20 +4018,20 @@
         async function downloadUserContract(userName) {
             console.log('🔍 downloadUserContract function called with:', userName);
             
-            // Force refresh users data from centralized source
-            try {
-                console.log('🔄 Refreshing users data from centralized source...');
-                const response = await fetch('users.json');
-                if (response.ok) {
-                    const freshData = await response.json();
-                    window.users = freshData.users;
-                    console.log('✅ Users data refreshed from centralized source');
-                } else {
-                    console.warn('⚠️ Could not refresh users data');
-                }
-            } catch (error) {
-                console.warn('⚠️ Error refreshing users data:', error);
+                    // Force refresh users data from centralized source
+        try {
+            console.log('🔄 Refreshing users data from centralized source...');
+            const response = await fetch(`${API_BASE}/api/users`);
+            if (response.ok) {
+                const freshData = await response.json();
+                window.users = freshData.users;
+                console.log('✅ Users data refreshed from centralized source');
+            } else {
+                console.warn('⚠️ Could not refresh users data');
             }
+        } catch (error) {
+            console.warn('⚠️ Error refreshing users data:', error);
+        }
             
             const userData = window.users[userName];
             if (!userData) {
@@ -4433,15 +4442,15 @@
             }
             
             try {
-                const usersResponse = await fetch('users.json');
+                const usersResponse = await fetch(`${API_BASE}/api/users`);
                 if (usersResponse.ok) {
                     const usersData = await usersResponse.json();
-                    console.log(`✅ users.json - Working (${Object.keys(usersData.users || {}).length} users)`);
+                    console.log(`✅ users API - Working (${Object.keys(usersData.users || {}).length} users)`);
                 } else {
-                    console.log(`❌ users.json - Status: ${usersResponse.status}`);
+                    console.log(`❌ users API - Status: ${usersResponse.status}`);
                 }
             } catch (error) {
-                console.log('❌ users.json - Error:', error.message);
+                console.log('❌ users API - Error:', error.message);
             }
             
             // Test 4: Check functions

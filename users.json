@@ -1,147 +1,6 @@
 {
   "users": {
-    "_archived": {
-      "Cody Cochran": {
-        "profile": {
-          "email": "codylcochran87@gmail.com",
-          "location": "Atlanta Area",
-          "role": "",
-          "rate": "",
-          "projectType": ""
-        },
-        "contract": {
-          "contractStatus": "pending"
-        },
-        "application": {
-          "status": "denied",
-          "submittedAt": "2025-08-09T04:22:05.874Z",
-          "jobTitle": "Test Job Title",
-          "eventDate": "2025-10-12",
-          "pay": "$400",
-          "description": "Test Job Description",
-          "phone": "4704202169",
-          "portfolio": "https://www.cochranfilms.com",
-          "source": "apply-html",
-          "updatedAt": "2025-08-09T04:45:09.258Z"
-        },
-        "jobs": {},
-        "primaryJob": null
-      },
-      "Donkey Butt": {
-        "profile": {
-          "email": "dedejackson727@gmail.com",
-          "location": "Atlanta Area",
-          "role": "",
-          "rate": "",
-          "projectType": "",
-          "approvedDate": "2025-08-09"
-        },
-        "contract": {
-          "contractStatus": "pending"
-        },
-        "application": {
-          "status": "denied",
-          "submittedAt": "2025-08-09T04:49:29.689Z",
-          "jobTitle": "Test Job Title",
-          "eventDate": "2025-10-12",
-          "pay": "$400",
-          "description": "Test Job Description",
-          "phone": "4704202169",
-          "portfolio": "https://www.cochranfilms.com",
-          "source": "apply-html",
-          "updatedAt": "2025-08-09T17:04:34.645Z"
-        },
-        "jobs": {
-          "Test Job Title": {
-            "title": "Test Job Title",
-            "date": "2025-10-12",
-            "location": "Atlanta Area",
-            "rate": "$400",
-            "description": "Test Job Description",
-            "type": "Event Coverage",
-            "status": "upcoming",
-            "listingStatus": "Active",
-            "jobRef": {
-              "source": "jobs-data",
-              "index": 2
-            }
-          }
-        },
-        "primaryJob": "Test Job Title"
-      }
-    },
-    "Billy Bob": {
-      "profile": {
-        "email": "codylcochran87@gmail.com",
-        "location": "Atlanta Area",
-        "role": "Test Job Title",
-        "rate": "$200",
-        "projectType": "",
-        "approvedDate": "2025-08-13"
-      },
-      "contract": {
-        "contractStatus": "uploaded",
-        "contractSignedDate": "8/13/2025, 1:37:18 AM",
-        "contractUploadedDate": "2025-08-13T05:37:27.509Z",
-        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Billy%20Bob.pdf",
-        "contractId": "CF-1755063438483-HQ7F4"
-      },
-      "application": {
-        "status": "approved",
-        "submittedAt": "2025-08-13T05:26:50.724Z",
-        "jobTitle": "Test Job Title",
-        "eventDate": "2025-10-12",
-        "pay": "$400",
-        "description": "Test Job Description",
-        "phone": "4704202169",
-        "portfolio": "https://pitch.cochranfilms.com",
-        "source": "apply-html",
-        "updatedAt": "2025-08-13T05:28:29.134Z"
-      },
-      "jobs": {
-        "Test Job Title": {
-          "title": "Test Job Title",
-          "date": "2025-10-12",
-          "location": "Atlanta Area",
-          "rate": "$400",
-          "description": "Test Job Description",
-          "type": "Event Coverage",
-          "status": "upcoming",
-          "listingStatus": "Active",
-          "jobRef": {
-            "source": "jobs-data",
-            "index": 2
-          }
-        }
-      },
-      "primaryJob": "Test Job Title",
-      "paymentMethod": "zelle",
-      "paymentStatus": "configured"
-    },
-    "Cody Cochran": {
-      "profile": {
-        "email": "codylcochran87@gmail.com",
-        "location": "Atlanta Area",
-        "role": "",
-        "projectType": ""
-      },
-      "contract": {
-        "contractStatus": "pending"
-      },
-      "application": {
-        "status": "pending",
-        "submittedAt": "2025-08-15T11:32:39.749Z",
-        "jobTitle": "Test Job Title",
-        "eventDate": "2025-10-12",
-        "pay": "$400",
-        "description": "Test Job Description",
-        "phone": "4704202169",
-        "portfolio": "https://www.cochranfilms.com",
-        "source": "apply-html"
-      },
-      "jobs": {},
-      "primaryJob": null
-    }
+    "test": "data"
   },
   "statusOptions": {
     "projectStatus": [
@@ -158,9 +17,9 @@
     ]
   },
   "lastUpdated": "2025-08-15",
-  "totalUsers": 3,
+  "totalUsers": 1,
   "system": {
     "totalReviews": 0,
-    "lastUpdated": "2025-08-13"
+    "lastUpdated": "2025-08-15"
   }
 }
