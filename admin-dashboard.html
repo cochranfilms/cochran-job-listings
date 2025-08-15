@@ -1957,72 +1957,131 @@
             }
         }
 
-        // Delete user (hard delete from active or archive)
-        async function deleteUser(name, isArchived = false) {
-            if (!confirm(`Are you sure you want to permanently delete ${name}? This cannot be undone.`)) return;
+        // Delete user (unified - handles active or archived)
+        async function deleteUser(userName, isArchived = false) {
+            if (!confirm(`Are you sure you want to permanently delete ${userName}? This cannot be undone.`)) return false;
+            
             try {
-                const userData = isArchived ? (window.users._archived?.[name]) : window.users[name];
-                const userEmail = userData?.profile?.email;
-                let firebaseMessage = '';
-                let pdfMessage = '';
+                // Show loading state
+                showNotification('Deleting user...', 'info');
+                
+                // Determine if user is archived
+                const isArchivedUser = isArchived || !!(window.users && window.users._archived && window.users._archived[userName]);
+                const userData = isArchivedUser ? window.users._archived[userName] : window.users[userName];
+                
+                if (!userData) {
+                    throw new Error(`User ${userName} not found`);
+                }
 
-                // Clean up PDF if any
-                if (userData?.contract?.contractId || userData?.contract?.fileName) {
-                    try {
-                        const fileName = userData.contract.fileName;
+                console.log(`🗑️ Deleting user: ${userName} (archived: ${isArchivedUser})`);
+
+                // 1. Attempt PDF cleanup
+                try {
+                    const contract = userData.contract || {};
+                    if (contract.fileName || contract.contractId) {
+                        const fileName = contract.fileName;
                         const method = fileName ? 'DELETE' : 'POST';
-                        const body = fileName ? { filename: fileName } : { contractId: userData.contract.contractId };
+                        const body = fileName ? { filename: fileName } : { contractId: contract.contractId };
+                        
+                        console.log('🗑️ Cleaning up PDF file...');
                         const deletePdfResponse = await fetch('/api/delete-pdf', {
                             method,
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(body)
                         });
+                        
                         if (deletePdfResponse.ok) {
-                            pdfMessage = 'Contract PDF deleted.';
+                            console.log('✅ PDF file cleaned up successfully');
+                        } else {
+                            console.warn('⚠️ PDF cleanup failed:', deletePdfResponse.status);
                         }
-                    } catch(_) {}
+                    }
+                } catch (pdfError) {
+                    console.warn('⚠️ PDF cleanup error:', pdfError.message);
                 }
 
-                // Remove Firebase account if present
-                if (userEmail) {
-                    try {
-                        const firebaseResult = await deleteFirebaseAccount(userEmail);
+                // 2. Attempt Firebase deletion
+                try {
+                    const email = userData.profile?.email;
+                    if (email) {
+                        console.log('🗑️ Deleting Firebase account...');
+                        const firebaseResult = await deleteFirebaseAccount(email);
                         if (firebaseResult.success) {
-                            firebaseMessage = 'Firebase account removed.';
+                            console.log('✅ Firebase account deleted successfully');
+                        } else {
+                            console.warn('⚠️ Firebase deletion failed:', firebaseResult.error);
                         }
-                    } catch(_) {}
+                    }
+                } catch (firebaseError) {
+                    console.warn('⚠️ Firebase deletion error:', firebaseError.message);
                 }
 
-                // Remove from in-memory object
-                if (isArchived) {
-                    if (window.users._archived) delete window.users._archived[name];
+                // 3. Remove from in-memory object
+                if (isArchivedUser) {
+                    if (window.users._archived) {
+                        delete window.users._archived[userName];
+                        console.log(`🗑️ Removed ${userName} from archived users`);
+                    }
                 } else {
-                    delete window.users[name];
+                    delete window.users[userName];
+                    console.log(`🗑️ Removed ${userName} from active users`);
                 }
 
-                // Persist to GitHub and refresh
-                await updateUsersOnGitHub('hard-delete', name);
-                displayUsers();
-                displayArchivedUsers();
-                updateStats();
+                // 4. Persist to server using the more reliable update-users API
+                console.log('🔄 Persisting changes to server...');
+                const updateResponse = await fetch('/api/update-users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        users: window.users,
+                        action: 'hard-delete',
+                        userName: userName
+                    })
+                });
 
-                let msg = `🗑️ Deleted ${name} permanently.`;
-                if (firebaseMessage) msg += ` ${firebaseMessage}`;
-                if (pdfMessage) msg += ` ${pdfMessage}`;
-                showAdminNotification(
-                    'User Deleted',
-                    msg,
-                    'success',
-                    { action: 'user_deleted', userName: name, firebaseMessage, pdfMessage }
-                );
+                if (updateResponse.ok) {
+                    const result = await updateResponse.json();
+                    console.log('✅ Changes persisted to server successfully:', result);
+                    
+                    // 5. Refresh display and stats
+                    displayUsers();
+                    if (typeof displayArchivedUsers === 'function') {
+                        displayArchivedUsers();
+                    }
+                    updateStats();
+
+                    showNotification(`🗑️ Deleted ${userName} permanently and saved to server`, 'success');
+                    
+                    // Show detailed success message
+                    showAdminNotification(
+                        'User Deleted Successfully',
+                        `✅ ${userName} has been permanently deleted and changes saved to server`,
+                        'success',
+                        { action: 'user_deleted', userName: userName }
+                    );
+                    
+                    return true;
+                } else {
+                    const errorData = await updateResponse.json().catch(() => ({}));
+                    throw new Error(`Server update failed: ${errorData.error || updateResponse.statusText}`);
+                }
+
             } catch (error) {
                 console.error('❌ Error deleting user:', error);
+                
+                // Show error notification
+                showNotification(`Failed to delete user: ${error.message}`, 'error');
+                
                 showAdminNotification(
                     'User Deletion Failed',
-                    `Failed to delete user: ${error.message}`,
+                    `❌ Failed to delete ${userName}: ${error.message}`,
                     'error',
-                    { action: 'user_deletion_failed', userName: name, error: error.message }
+                    { action: 'user_deletion_failed', userName: userName, error: error.message }
                 );
+                
+                return false;
             }
         }
 
@@ -3628,59 +3687,7 @@
             });
         }
 
-        // Delete user (unified - handles active or archived)
-        async function deleteUser(userName) {
-            if (!confirm(`Are you sure you want to permanently delete ${userName}? This cannot be undone.`)) return false;
-            try {
-                // Determine if user is archived
-                const isArchived = !!(window.users && window.users._archived && window.users._archived[userName]);
-                const userData = isArchived ? window.users._archived[userName] : window.users[userName];
-                if (!userData) throw new Error(`User ${userName} not found`);
-
-                showNotification('Deleting user...', 'info');
-
-                // Attempt PDF cleanup
-                try {
-                    const contract = userData.contract || {};
-                    if (contract.fileName || contract.contractId) {
-                        const fileName = contract.fileName;
-                        const method = fileName ? 'DELETE' : 'POST';
-                        const body = fileName ? { filename: fileName } : { contractId: contract.contractId };
-                        await fetch('/api/delete-pdf', {
-                            method,
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(body)
-                        });
-                    }
-                } catch(_) {}
-
-                // Attempt Firebase deletion
-                try {
-                    const email = userData.profile?.email;
-                    if (email) await deleteFirebaseAccount(email);
-                } catch(_) {}
-
-                // Remove from data
-                if (isArchived) {
-                    delete window.users._archived[userName];
-                } else {
-                    delete window.users[userName];
-                }
-
-                // Persist and refresh
-                await updateUsersOnGitHub('hard-delete', userName);
-                displayUsers();
-                if (typeof displayArchivedUsers === 'function') displayArchivedUsers();
-                updateStats();
-
-                showNotification(`🗑️ Deleted ${userName} permanently.`, 'success');
-                return true;
-            } catch (error) {
-                console.error('❌ Error deleting user:', error);
-                showNotification(`Failed to delete user: ${error.message}`, 'error');
-                return false;
-            }
-        }
+        // This duplicate deleteUser function has been removed - using the unified version above
 
         // Show bank details with encryption
         function showBankDetails(userName) {
