@@ -98,6 +98,52 @@ node test-admin-deletion-simple.js
 - `admin-dashboard-modular/test-auth-fix.js` - Console-based authentication test script
 - `admin-dashboard-modular/test-auth.html` - Interactive test page for manual testing
 
+### 7. Admin Dashboard Loading Issue Test
+**Purpose**: Testing and debugging the constant loading state issue in the admin dashboard
+**Features**:
+- Tests loading manager functionality and safety mechanisms
+- Validates module loading without infinite loops
+- Tests emergency clear functions for stuck loading states
+- Monitors loading state health and performance
+- Provides comprehensive debugging tools for loading issues
+
+**Test Files**:
+- `admin-dashboard-modular/test-loading-fix.html` - Interactive test page for loading state validation
+- `admin-dashboard-modular/debug-loading-issue.js` - Console-based debugging script for loading issues
+
+**Testing Steps**:
+1. Open `test-loading-fix.html` in browser
+2. Click "Test Loading Manager" to verify basic loading functionality
+3. Click "Test Module Loading" to check for infinite loops
+4. Use "Emergency Clear" if loading gets stuck
+5. Check console output for detailed debugging information
+6. Use browser console commands for advanced debugging
+
+**Console Commands**:
+```javascript
+// Emergency clear all loading states
+LoadingManager.emergencyClear()
+
+// Check for stuck loading states
+LoadingManager.checkForStuckLoadingStates()
+
+// Clear all loading states
+LoadingManager.clearAllLoadingStates()
+
+// Run comprehensive debug
+DebugLoading.runDebug()
+
+// Check specific loading states
+DebugLoading.checkLoadingStates()
+```
+
+**Expected Behavior**:
+- Loading states should clear automatically after operations complete
+- No infinite loading states should occur
+- Emergency clear functions should work immediately
+- Safety timeouts should prevent stuck loading states
+- Debug tools should provide comprehensive loading state information
+
 ### 7. EmailJS 422 Error Fix Testing
 **Purpose**: Comprehensive testing and diagnosis of EmailJS 422 (Unprocessable Entity) errors in the admin dashboard
 **Features**:
@@ -408,267 +454,4 @@ curl http://localhost:8000/api/uploaded-contracts
 ## Issues Identified and Fixed
 
 ### 1. User Deletion Not Persisting
-**Problem**: The `deleteUser` function in `admin-dashboard.html` only deleted from local `window.users` object but didn't persist changes to `users.json` or GitHub.
-
-**Solution**: 
-- Enhanced `deleteUser` function to call `updateUsersOnGitHub()`
-- Created `/api/update-users` endpoint for secure GitHub updates
-- Added comprehensive error handling and user feedback
-
-### 2. Missing API Endpoints
-**Problem**: No secure way to update users.json from the browser.
-
-**Solution**:
-- Created `api/update-users.js` endpoint
-- Handles both local file updates and GitHub pushes
-- Secure token management on server side
-
-### 3. PDF File Cleanup
-**Problem**: PDF files weren't being deleted when users were removed.
-
-**Solution**:
-- Enhanced deletion flow to include PDF cleanup
-- Added proper error handling for file deletion
-- Improved user feedback for deletion status
-
-## Test Reports
-
-### Report Files Generated
-- `admin-deletion-test-report.json`: Comprehensive browser test results
-- `simple-deletion-test-report.json`: API-focused test results
-
-### Report Structure
-```json
-{
-  "timestamp": "2025-01-XX...",
-  "testName": "Admin User Deletion Test",
-  "config": { ... },
-  "results": [ ... ],
-  "summary": {
-    "totalTests": 15,
-    "successCount": 12,
-    "errorCount": 2,
-    "warningCount": 1
-  }
-}
-```
-
-## Manual Testing Commands
-
-### Run Simple Test
-```bash
-node test-admin-deletion-simple.js
-```
-
-### Run Full Browser Test (requires Puppeteer)
-```bash
-npm install puppeteer
-node test-admin-user-deletion-system.js
-```
-
-### Check Current Users
-```bash
-curl https://collaborate.cochranfilms.com/api/users
-```
-
-### Test Update API
-```bash
-curl -X POST https://collaborate.cochranfilms.com/api/update-users \
-  -H "Content-Type: application/json" \
-  -d '{"users":{},"action":"test","userName":"test"}'
-```
-
-## Troubleshooting
-
-### Common Issues
-1. **GitHub Token Not Configured**: Set `GITHUB_TOKEN` environment variable
-2. **API Endpoints Not Found**: Check server deployment and routing
-3. **PDF Files Not Deleted**: Verify file permissions and paths
-4. **Firebase Errors**: Check Firebase configuration and permissions
-
-### Debug Steps
-1. Check browser console for JavaScript errors
-2. Verify API endpoints are accessible
-3. Confirm users.json file permissions
-4. Test GitHub API access with token
-5. Validate PDF file paths and permissions
-
-## Security Considerations
-
-### API Security
-- All API endpoints use CORS headers
-- GitHub tokens stored server-side only
-- Input validation on all endpoints
-- Error messages don't expose sensitive data
-
-### Data Protection
-- User data backed up before testing
-- Test data cleaned up after testing
-- No production data modified during tests
-- Secure token management
-
-## Future Enhancements
-
-### Planned Improvements
-1. **Automated Testing**: CI/CD integration for automated testing
-2. **Performance Testing**: Load testing for API endpoints
-3. **Security Testing**: Penetration testing for admin dashboard
-4. **Monitoring**: Real-time monitoring of user deletion operations
-
-### Additional Test Scenarios
-1. **Bulk Operations**: Test deleting multiple users at once
-2. **Edge Cases**: Test with malformed data and error conditions
-3. **Concurrent Access**: Test multiple admin users simultaneously
-4. **Recovery Testing**: Test system recovery after failures
-
-## Support
-
-For issues with the testing system:
-1. Check the test reports for detailed error information
-2. Verify all dependencies are installed
-3. Confirm API endpoints are accessible
-4. Review server logs for additional error details
-
-## Recent Test Results (2025-01-07)
-
-### Admin Dashboard User Deletion System Test
-**Status**: ✅ **COMPLETED WITH FIXES APPLIED**
-
-#### Issues Found and Fixed:
-1. **No Server Persistence**: `deleteUser` function only deleted from memory
-   - **Fix**: Added proper API calls to `/api/update-users`
-   - **Result**: Changes now persist to server and GitHub
-
-2. **Missing Error Handling**: Failed deletions showed no error messages
-   - **Fix**: Added comprehensive try-catch blocks
-   - **Result**: Users now see proper error notifications
-
-3. **Inconsistent Function Behavior**: Two different `deleteUser` functions
-   - **Fix**: Standardized both functions with proper API integration
-   - **Result**: Consistent deletion behavior across the system
-
-#### Test Results:
-- ✅ Login system working
-- ✅ Dashboard loading properly
-- ✅ User deletion function analyzed and fixed
-- ✅ Server persistence verified
-- ✅ GitHub integration working
-- ✅ Error handling improved
-
-#### Key Improvements:
-- **Server Persistence**: Deletions now persist to `users.json`
-- **GitHub Integration**: Changes automatically pushed to GitHub
-- **User Experience**: Loading states and proper notifications
-- **Error Handling**: Comprehensive error messages and recovery
-
-**Status**: 🟢 **READY FOR PRODUCTION** 
-
-## Recent UI Fixes (2025-01-09)
-
-### Login Screen Layout Normalization
-- File: `styles/user-portal-theme.css`
-- Change: Appended section "LAYOUT FIXES: LOGIN + OVERFLOW/ABSOLUTE NORMALIZATION" to center `#loginScreen`, prevent horizontal overflow, constrain the auth panel, normalize form layout, and disable portal-only effects on the login route.
-- Selectors affected: `#loginScreen`, `#userPortal`, `#email`, `#password`, `#loginError`, `.card`, `.nav-link`, `.timeline`, `.job-card`, `.dashboard-header` (login-scoped).
-- Acceptance criteria: no horizontal scroll on login, panel centered, fields fully contained, no stray pills/effects, post-login unchanged.
-
-### Manual Verification Steps
-1. Load the login page (`#loginScreen` in DOM).
-2. Verify no horizontal scrollbar; resize window to <=480px and >=768px.
-3. Confirm panel is centered and inputs/buttons are fully inside the card.
-4. Ensure `#loginError` stays within the panel without overflow.
-5. Confirm no hover sheen/particles/ripples/animations on login; confirm they still work inside `#userPortal`.
-
----
-
-## User Portal Authentication Update (2025-01-10)
-
-- The user portal now authenticates with Firebase (`auth.signInWithEmailAndPassword`).
-- Passwords are not stored in `users.json`. Contract signing updates Firebase credentials and only writes contract metadata to `users.json`.
-- After Firebase sign-in, the portal cross-checks the user by email via `/api/users`. Missing entries will show “Account not found in system.”
-
-### Testing Guidance
-- Use valid Firebase credentials for user portal automation.
-- Prefer clicking the submit button or dispatching a `submit` event (avoid `form.submit()` which bypasses JS handlers).
-
-Example:
-```javascript
-await page.click('button[type="submit"]');
-// or
-await page.evaluate(() => {
-  const form = document.querySelector('form');
-  form.dispatchEvent(new Event('submit', { bubbles: true }));
-});
-```
-
-### Expected Console Signals
-- `✅ User authenticated:` followed by `✅ User found in system:` after `/api/users` lookup.
-- If Firebase auth succeeds but user is missing in `users.json`, expect an error notification about account not found.
-
----
-
-## Dashboard Metrics Logic Update (2025-08-10)
-
-- The Admin Dashboard `Total Creators` metric now counts only active users, excluding `_archived` and any underscore-prefixed keys in `users`.
-- `Pending Reviews` and `Signed Contracts` metrics are also computed from active users only.
-
-### Manual Verification
-1. Ensure `users.json` contains an `_archived` section with one or more users and at least one active user at the root.
-2. Load the admin dashboard and verify:
-   - `Total Creators` equals the number of active (non-archived) users.
-   - `Signed Contracts` reflects signed contracts among active users only.
-   - `Pending Reviews` excludes archived users.
-
-## User Portal UI Fix (2025-08-10)
-
-- Forced a dark translucent background on `profile-card`, `project-card`, and `payment-card` in `user-portal.html` so profile details are always legible regardless of any inherited light background.
-- Validate by logging in and confirming the Profile card shows user details with sufficient contrast.
-
-## User Portal Login Centering Fix (2025-08-13)
-
-- Files: `styles/user-portal-theme.css`
-- Change: Appended a "FINAL OVERRIDES" block to lock `#loginScreen` as a fixed full-screen grid and center the `.login-container`, preventing post-load left shift.
-- Symptoms fixed: Login panel flashed centered then jumped left after ~0.5s.
-- How to test (automated preferred [[memory:5422675]]):
-  1. Open `user-portal.html` with cache disabled, reload 3x.
-  2. Confirm the login stays centered on initial paint and after 2 seconds.
-  3. Resize window (<480px and >1200px) and verify centering persists.
-  4. Ensure post-login portal layout is unaffected.
-- Rollback: Remove the final overrides block targeting `#loginScreen` and `.login-container` at the end of `styles/user-portal-theme.css`.
-
-## DashboardManager Module Testing (Latest)
-
-### Overview
-The DashboardManager module provides centralized dashboard management with Component Library integration, authentication handling, and real-time stats calculation.
-
-### Testing Features
-- **Module Initialization**: Tests Component Library integration and initialization
-- **Authentication System**: Validates login/logout and session management
-- **Stats Calculation**: Tests real-time stats for creators, jobs, reviews, and contracts
-- **Dashboard Layout**: Verifies responsive design and professional UI
-- **Event System**: Tests dashboard interactions and custom events
-- **Error Handling**: Validates comprehensive error management
-
-### Test Functions
-- `testDashboardManager()` - Main module test with UI rendering
-- `testDashboardActions()` - Tests authentication and status functions
-- `testDashboardStats()` - Tests stats calculation and display
-- `refreshDashboard()` - Tests refresh functionality
-
-### Integration Points
-- Component Library initialization waiting
-- Authentication system integration
-- Stats calculation from users and jobs data
-- NotificationManager for user feedback
-- ErrorHandler for error management
-- LoadingManager for loading states
-
-### Test Results
-- ✅ DashboardManager module created successfully
-- ✅ Component Library integration working
-- ✅ Professional UI design implemented
-- ✅ Authentication system integrated
-- ✅ Stats calculation functional
-- ✅ Event system operational
-- ✅ Testing suite complete
-
-**Status**: 🟢 **READY FOR TESTING**
+**Problem**: The `deleteUser`

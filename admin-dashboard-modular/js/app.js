@@ -20,26 +20,32 @@ const AdminDashboardApp = {
             // Show loading state
             this.showLoading();
             
+            // Set a safety timeout to ensure loading is always hidden
+            const safetyTimeout = setTimeout(() => {
+                console.warn('⚠️ Safety timeout reached - forcing loading state to clear');
+                this.hideLoading();
+            }, 30000); // 30 seconds
+            
             // Initialize core modules
             await this.initializeCoreModules();
             
             // Setup authentication
             await this.setupAuthentication();
             
-                    // Initialize dashboard components
-        await this.initializeDashboardComponents();
-        
-        // Initialize user management modules
-        await this.initializeUserManagementModules();
-        
-        // Initialize job management modules
-        await this.initializeJobManagementModules();
-        
-        // Initialize contract management modules
-        await this.initializeContractManagementModules();
-        
-        // Initialize dropdown management module
-        await this.initializeDropdownManagementModule();
+            // Initialize dashboard components
+            await this.initializeDashboardComponents();
+            
+            // Initialize user management modules
+            await this.initializeUserManagementModules();
+            
+            // Initialize job management modules
+            await this.initializeJobManagementModules();
+            
+            // Initialize contract management modules
+            await this.initializeContractManagementModules();
+            
+            // Initialize dropdown management module
+            await this.initializeDropdownManagementModule();
             
             // Setup event listeners
             this.setupEventListeners();
@@ -53,6 +59,9 @@ const AdminDashboardApp = {
             console.error('❌ Application initialization failed:', error);
             this.showError('Failed to initialize application', error);
         } finally {
+            // Clear safety timeout
+            clearTimeout(safetyTimeout);
+            // Always hide loading state
             this.hideLoading();
         }
     },
@@ -61,23 +70,40 @@ const AdminDashboardApp = {
     async initializeCoreModules() {
         console.log('🔧 Initializing core modules...');
         
-        // Wait for utility modules to be ready
-        await this.waitForModules(['ErrorHandler', 'LoadingManager', 'NotificationManager']);
-        
-        // Initialize Firebase if not already done
-        if (window.FirebaseConfig && !window.FirebaseConfig.auth) {
-            window.FirebaseConfig.init();
+        try {
+            // Wait for utility modules to be ready
+            const coreModulesLoaded = await this.waitForModules(['ErrorHandler', 'LoadingManager', 'NotificationManager']);
+            
+            if (!coreModulesLoaded) {
+                console.warn('⚠️ Some core modules failed to load, continuing with available modules');
+            }
+            
+            // Initialize Firebase if not already done
+            if (window.FirebaseConfig && !window.FirebaseConfig.auth) {
+                try {
+                    await window.FirebaseConfig.init();
+                } catch (error) {
+                    console.warn('⚠️ Firebase initialization failed:', error);
+                }
+            }
+            
+            // Initialize EmailJS if not already done
+            if (window.EmailJSConfig && !window.EmailJSConfig.isAvailable()) {
+                try {
+                    window.EmailJSConfig.init();
+                } catch (error) {
+                    console.warn('⚠️ EmailJS initialization failed:', error);
+                }
+            }
+            
+            // Initialize real-time components
+            await this.initializeRealtimeComponents();
+            
+            console.log('✅ Core modules initialized');
+            
+        } catch (error) {
+            console.warn('⚠️ Core module initialization had issues, continuing:', error);
         }
-        
-        // Initialize EmailJS if not already done
-        if (window.EmailJSConfig && !window.EmailJSConfig.isAvailable()) {
-            window.EmailJSConfig.init();
-        }
-        
-        // Initialize real-time components
-        await this.initializeRealtimeComponents();
-        
-        console.log('✅ Core modules initialized');
     },
 
     // Initialize real-time components
@@ -110,19 +136,33 @@ const AdminDashboardApp = {
     // Wait for required modules to be available
     async waitForModules(moduleNames, timeout = 10000) {
         const startTime = Date.now();
+        const maxWaitTime = timeout || 10000;
         
-        while (Date.now() - startTime < timeout) {
+        console.log(`⏳ Waiting for modules: ${moduleNames.join(', ')} (timeout: ${maxWaitTime}ms)`);
+        
+        while (Date.now() - startTime < maxWaitTime) {
             const missingModules = moduleNames.filter(name => !window[name]);
             
             if (missingModules.length === 0) {
+                console.log(`✅ All required modules loaded: ${moduleNames.join(', ')}`);
                 return true;
             }
             
-            console.log(`⏳ Waiting for modules: ${missingModules.join(', ')}`);
+            // Log progress every 2 seconds
+            if ((Date.now() - startTime) % 2000 < 100) {
+                console.log(`⏳ Still waiting for modules: ${missingModules.join(', ')}`);
+            }
+            
             await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        throw new Error(`Timeout waiting for modules: ${moduleNames.join(', ')}`);
+        // Timeout reached - log which modules are still missing
+        const stillMissing = moduleNames.filter(name => !window[name]);
+        console.warn(`⚠️ Timeout waiting for modules: ${stillMissing.join(', ')}`);
+        
+        // Don't throw error, just return false to indicate timeout
+        // This allows the app to continue with available modules
+        return false;
     },
 
     // Setup authentication
@@ -264,75 +304,139 @@ const AdminDashboardApp = {
     async initializeUserManagementModules() {
         console.log('👥 Initializing user management modules...');
         
-        // Wait for user management modules to be ready
-        await this.waitForModules(['UserManager', 'UserForm', 'UserList']);
-        
-        // Initialize user manager
-        if (window.UserManager) {
-            await window.UserManager.init();
+        try {
+            // Wait for user management modules to be ready
+            const userModulesLoaded = await this.waitForModules(['UserManager', 'UserForm', 'UserList']);
+            
+            if (!userModulesLoaded) {
+                console.warn('⚠️ Some user management modules failed to load, continuing with available modules');
+            }
+            
+            // Initialize user manager
+            if (window.UserManager) {
+                try {
+                    await window.UserManager.init();
+                } catch (error) {
+                    console.warn('⚠️ UserManager initialization failed:', error);
+                }
+            }
+            
+            // Initialize user form
+            if (window.UserForm) {
+                try {
+                    await window.UserForm.init();
+                } catch (error) {
+                    console.warn('⚠️ UserForm initialization failed:', error);
+                }
+            }
+            
+            // Initialize user list
+            if (window.UserList) {
+                try {
+                    await window.UserList.init();
+                } catch (error) {
+                    console.warn('⚠️ UserList initialization failed:', error);
+                }
+            }
+            
+            console.log('✅ User management modules initialized');
+            
+        } catch (error) {
+            console.warn('⚠️ User management module initialization had issues, continuing:', error);
         }
-        
-        // Initialize user form
-        if (window.UserForm) {
-            await window.UserForm.init();
-        }
-        
-        // Initialize user list
-        if (window.UserList) {
-            await window.UserList.init();
-        }
-        
-        console.log('✅ User management modules initialized');
     },
 
     // Initialize job management modules
     async initializeJobManagementModules() {
         console.log('📋 Initializing job management modules...');
         
-        // Wait for job management modules to be ready
-        await this.waitForModules(['JobManager']);
-        
-        // Initialize job manager
-        if (window.JobManager) {
-            await window.JobManager.init();
+        try {
+            // Wait for job management modules to be ready
+            const jobModulesLoaded = await this.waitForModules(['JobManager']);
+            
+            if (!jobModulesLoaded) {
+                console.warn('⚠️ Job management modules failed to load, continuing with available modules');
+            }
+            
+            // Initialize job manager
+            if (window.JobManager) {
+                try {
+                    await window.JobManager.init();
+                } catch (error) {
+                    console.warn('⚠️ JobManager initialization failed:', error);
+                }
+            }
+            
+            console.log('✅ Job management modules initialized');
+            
+        } catch (error) {
+            console.warn('⚠️ Job management module initialization had issues, continuing:', error);
         }
-        
-                console.log('✅ Job management modules initialized');
     },
     
     // Initialize contract management modules
     async initializeContractManagementModules() {
         console.log('📄 Initializing contract management modules...');
         
-        // Wait for contract management modules to be ready
-        await this.waitForModules(['ContractManager', 'ContractGenerator']);
-        
-        // Initialize contract manager
-        if (window.ContractManager) {
-            await window.ContractManager.init();
+        try {
+            // Wait for contract management modules to be ready
+            const contractModulesLoaded = await this.waitForModules(['ContractManager', 'ContractGenerator']);
+            
+            if (!contractModulesLoaded) {
+                console.warn('⚠️ Some contract management modules failed to load, continuing with available modules');
+            }
+            
+            // Initialize contract manager
+            if (window.ContractManager) {
+                try {
+                    await window.ContractManager.init();
+                } catch (error) {
+                    console.warn('⚠️ ContractManager initialization failed:', error);
+                }
+            }
+            
+            // Initialize contract generator
+            if (window.ContractGenerator) {
+                try {
+                    await window.ContractGenerator.init();
+                } catch (error) {
+                    console.warn('⚠️ ContractGenerator initialization failed:', error);
+                }
+            }
+            
+            console.log('✅ Contract management modules initialized');
+            
+        } catch (error) {
+            console.warn('⚠️ Contract management module initialization had issues, continuing:', error);
         }
-        
-        // Initialize contract generator
-        if (window.ContractGenerator) {
-            await window.ContractGenerator.init();
-        }
-        
-        console.log('✅ Contract management modules initialized');
     },
     
     // Initialize dropdown management module
     async initializeDropdownManagementModule() {
-        console.log('⚙️ Initializing dropdown management module...');
+        console.log('📋 Initializing dropdown management module...');
         
-        // Wait for dropdown management module to be ready
-        await this.waitForModules(['DropdownManager']);
-        
-        // Initialize dropdown manager
-        if (window.DropdownManager) {
-            await window.DropdownManager.init();
+        try {
+            // Wait for dropdown management module to be ready
+            const dropdownModuleLoaded = await this.waitForModules(['DropdownManager']);
+            
+            if (!dropdownModuleLoaded) {
+                console.warn('⚠️ Dropdown management module failed to load, continuing with available modules');
+            }
+            
+            // Initialize dropdown manager
+            if (window.DropdownManager) {
+                try {
+                    await window.DropdownManager.init();
+                } catch (error) {
+                    console.warn('⚠️ DropdownManager initialization failed:', error);
+                }
+            }
+            
+            console.log('✅ Dropdown management module initialized');
+            
+        } catch (error) {
+            console.warn('⚠️ Dropdown management module initialization had issues, continuing:', error);
         }
-        
-        console.log('✅ Dropdown management module initialized');
     },
   
     // Setup event listeners

@@ -13,6 +13,7 @@ const LoadingManager = {
     // Global loading methods (always available)
     showGlobalLoading() {
         this.globalLoading = true;
+        this.globalLoadingStartTime = Date.now();
         const indicator = document.getElementById('loadingIndicator');
         if (indicator) {
             indicator.style.display = 'flex';
@@ -33,6 +34,10 @@ const LoadingManager = {
     init() {
         try {
             this.setupGlobalLoading();
+            
+            // Add safety mechanism to prevent stuck loading states
+            this.setupSafetyMechanism();
+            
             console.log('✅ Loading Manager initialized');
         } catch (error) {
             console.error('❌ Loading Manager initialization failed:', error);
@@ -271,9 +276,11 @@ const LoadingManager = {
 
     // Clear all loading states
     clearAllLoading() {
-        this.loadingStates.clear();
-        this.hideGlobalLoading();
-        console.log('🧹 All loading states cleared');
+        try {
+            this.clearAllLoadingStates();
+        } catch (error) {
+            console.warn('⚠️ clearAllLoading failed:', error);
+        }
     },
     
     // Convenience methods for backward compatibility
@@ -302,6 +309,79 @@ const LoadingManager = {
     
     hideLoading() {
         this.hide();
+    },
+
+    // Setup safety mechanism to prevent stuck loading states
+    setupSafetyMechanism() {
+        // Check for stuck loading states every 10 seconds
+        setInterval(() => {
+            this.checkForStuckLoadingStates();
+        }, 10000);
+        
+        // Global safety timeout - force clear all loading after 60 seconds
+        setTimeout(() => {
+            console.warn('⚠️ Global loading safety timeout - clearing all loading states');
+            this.clearAllLoadingStates();
+        }, 60000);
+    },
+
+    // Check for stuck loading states and clear them
+    checkForStuckLoadingStates() {
+        const now = Date.now();
+        const stuckThreshold = 30000; // 30 seconds
+        
+        this.loadingStates.forEach((state, operationId) => {
+            if (state.active && (now - state.startTime) > stuckThreshold) {
+                console.warn(`⚠️ Clearing stuck loading state: ${operationId} (${now - state.startTime}ms)`);
+                this.hideLoading(operationId);
+            }
+        });
+        
+        // Check global loading state
+        if (this.globalLoading) {
+            const globalLoadingElement = document.getElementById('loadingIndicator');
+            if (globalLoadingElement && globalLoadingElement.style.display === 'flex') {
+                // Check if it's been showing for too long
+                if (!this.globalLoadingStartTime) {
+                    this.globalLoadingStartTime = now;
+                } else if ((now - this.globalLoadingStartTime) > stuckThreshold) {
+                    console.warn('⚠️ Global loading stuck - forcing clear');
+                    this.hideGlobalLoading();
+                }
+            }
+        }
+    },
+
+    // Clear all loading states
+    clearAllLoadingStates() {
+        this.loadingStates.forEach((state, operationId) => {
+            this.hideLoading(operationId);
+        });
+        
+        this.hideGlobalLoading();
+        console.log('✅ All loading states cleared');
+    },
+
+    // Emergency clear function for debugging
+    emergencyClear() {
+        console.warn('🚨 Emergency loading clear triggered');
+        this.clearAllLoadingStates();
+        
+        // Force hide loading indicator
+        const indicator = document.getElementById('loadingIndicator');
+        if (indicator) {
+            indicator.style.display = 'none';
+        }
+        
+        // Reset body overflow
+        document.body.style.overflow = '';
+        
+        // Reset all state
+        this.globalLoading = false;
+        this.globalLoadingStartTime = null;
+        this.loadingStates.clear();
+        
+        console.log('✅ Emergency loading clear completed');
     }
 };
 
