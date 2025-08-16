@@ -1105,77 +1105,12 @@
         });
     </script>
 
-    <!-- Firebase Configuration and Authentication Setup -->
+    <!-- Fallback Authentication Password -->
     <script>
-        // Firebase Configuration (secure)
-        const firebaseConfig = {
-            apiKey: 'AIzaSyCkL31Phi7FxYCeB5zgHeYTb2iY2sTJJdw',
-            authDomain: 'cochran-films.firebaseapp.com',
-            projectId: 'cochran-films',
-            storageBucket: 'cochran-films.appspot.com',
-            messagingSenderId: '566448458094',
-            appId: '1:566448458094:web:default'
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-
-        // Admin role management
-        const ADMIN_EMAILS = [
-            'info@cochranfilms.com',
-            'admin@cochranfilms.com',
-            'cody@cochranfilms.com'
-        ];
-
-        // Check if user has admin privileges
-        function isAdminUser(email) {
-            return ADMIN_EMAILS.includes(email.toLowerCase());
-        }
-
-        // Firebase Configuration Wrapper for Modular System
-        window.FirebaseConfig = {
-            auth: auth,
-            isAdminUser: isAdminUser,
-            
-            // Wait for Firebase to be initialized
-            async waitForInit() {
-                return new Promise((resolve) => {
-                    if (auth) {
-                        resolve();
-                    } else {
-                        // Wait for auth to be available
-                        const checkAuth = setInterval(() => {
-                            if (auth) {
-                                clearInterval(checkAuth);
-                                resolve();
-                            }
-                        }, 100);
-                    }
-                });
-            },
-
-            // Get current user
-            getCurrentUser() {
-                return auth.currentUser;
-            },
-
-            // Sign out
-            async signOut() {
-                if (auth.currentUser) {
-                    await auth.signOut();
-                }
-            }
-        };
-
         // Fallback Authentication Password (for development/testing)
-        window.ADMIN_PASSWORD = 'admin123'; // Change this in production
-
-        // Trigger Firebase ready event
-        document.dispatchEvent(new CustomEvent('firebase:ready'));
-        document.dispatchEvent(new CustomEvent('firebase:initialized'));
-
-        console.log('✅ Firebase configuration loaded and initialized');
+        window.ADMIN_PASSWORD = 'Cochranfilms2@'; // Production password
+        
+        console.log('✅ Fallback authentication password configured');
     </script>
 
     <!-- Authentication Fix Test Script -->

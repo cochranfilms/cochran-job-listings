@@ -23,7 +23,8 @@ const FirebaseConfig = {
     // Admin users (emails that have admin access)
     adminUsers: [
         'cody@cochranfilms.com',
-        'info@cochranfilms.com'
+        'info@cochranfilms.com',
+        'admin@cochranfilms.com'
         // Add more admin emails as needed
     ],
 
@@ -158,6 +159,9 @@ const FirebaseConfig = {
 
 // Make FirebaseConfig available globally
 window.FirebaseConfig = FirebaseConfig;
+
+// Add fallback authentication password
+window.ADMIN_PASSWORD = 'Cochranfilms2@';
 
 // Try to initialize immediately if Firebase is already available
 if (typeof firebase !== 'undefined') {
