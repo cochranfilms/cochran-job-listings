@@ -197,6 +197,57 @@ DebugLoading.checkLoadingStates()
 **Testing Steps**:
 1. Open `test-job-status-toggle.html` in a browser
 2. Verify jobs load from `/api/jobs-data`
+
+### 8. Firestore Database Integration Test
+**Purpose**: Testing the Firestore database integration and data management system
+**Features**:
+- Tests Firebase configuration and initialization
+- Tests Firestore connectivity and data operations
+- Tests data migration from existing JSON data
+- Tests real-time listeners and data synchronization
+- Tests fallback systems when Firestore unavailable
+
+**Test Files**:
+- `test-firestore-setup.html` - Comprehensive Firestore integration test page
+- `firebase-config.js` - Firebase configuration and initialization
+- `firestore-data-manager.js` - Firestore data management and operations
+
+**Testing Steps**:
+1. Open `test-firestore-setup.html` in browser
+2. Click "Test Firebase Config" to verify Firebase initialization
+3. Click "Test Firestore Data Manager" to check Firestore connectivity
+4. Click "Test Data Migration" to migrate existing data to Firestore
+5. Click "Test Real-time Listeners" to verify real-time updates
+6. Check console output for detailed logs and error information
+
+**Expected Behavior**:
+- Firebase initializes successfully with proper configuration
+- Firestore connects and allows data operations
+- Data migration works without data loss
+- Real-time listeners provide immediate updates
+- Fallback to JSON APIs works when Firestore unavailable
+- All operations provide clear success/error feedback
+
+**Console Commands**:
+```javascript
+// Test Firebase configuration
+testFirebaseConfig()
+
+// Test Firestore data manager
+testFirestoreDataManager()
+
+// Test data migration
+testDataMigration()
+
+// Test real-time listeners
+testRealtimeListeners()
+
+// Check Firestore availability
+window.FirestoreDataManager.isAvailable()
+
+// Manually migrate data
+window.FirestoreDataManager.migrateDataToFirestore()
+```
 3. Click toggle buttons to change job status
 4. Verify API calls to `/api/update-job-status` succeed
 5. Check that jobs-data.json is updated

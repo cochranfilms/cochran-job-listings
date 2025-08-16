@@ -28,6 +28,11 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Configuration and Data Manager -->
+    <script src="firebase-config.js"></script>
+    <script src="firestore-data-manager.js"></script>
     
     <!-- Secure Bank Storage -->
     <script src="secure-bank-storage.js"></script>
@@ -615,6 +620,7 @@
                                 <button class="btn btn-secondary" onclick="downloadUsersJSON()" id="downloadUsersBtn" style="display: none;">📥 Download Users</button>
                                 <button class="btn btn-secondary" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📥 Download Contracts</button>
                                 <button class="btn" onclick="forceRefreshUsers()" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">🔄 Force Refresh Users</button>
+                                <button class="btn" onclick="migrateToFirestore()" style="background: linear-gradient(135deg, #10b981, #059669);">🔥 Migrate to Firestore</button>
                             </div>
                             <div id="contractGenerationStatus"></div>
                         </div>
@@ -818,19 +824,26 @@
                 console.warn('⚠️ EmailJS library not loaded');
             }
         });
-        // Firebase Configuration (secure)
-        const firebaseConfig = {
-            apiKey: 'AIzaSyCkL31Phi7FxYCeB5zgHeYTb2iY2sTJJdw',
-            authDomain: 'cochran-films.firebaseapp.com',
-            projectId: 'cochran-films',
-            storageBucket: 'cochran-films.appspot.com',
-            messagingSenderId: '566448458094',
-            appId: '1:566448458094:web:default'
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+        // Firebase Configuration (secure) - Now handled by firebase-config.js
+        // Firebase is automatically initialized by firebase-config.js
+        
+        // Get Firebase instances from the config
+        let auth = null;
+        let firestore = null;
+        
+        // Initialize Firebase when config is ready
+        async function initializeFirebase() {
+            try {
+                if (window.FirebaseConfig) {
+                    await window.FirebaseConfig.init();
+                    auth = window.FirebaseConfig.auth;
+                    firestore = window.FirebaseConfig.getFirestore();
+                    console.log('✅ Firebase initialized in admin dashboard');
+                }
+            } catch (error) {
+                console.error('❌ Firebase initialization failed:', error);
+            }
+        }
 
         // Admin role management
         const ADMIN_EMAILS = [
@@ -1114,24 +1127,51 @@
             showLoginScreen();
         }
 
-        // Load data
+        // Load data with Firestore integration
         async function loadData() {
             console.log('🔄 Main dashboard loadData called');
             console.log('🔍 Starting to load all data...');
             
-            console.log('🔄 Loading jobs...');
+            try {
+                // Initialize Firebase if not already done
+                if (!auth || !firestore) {
+                    await initializeFirebase();
+                }
+                
+                // Try to load from Firestore first
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    console.log('🔥 Loading data from Firestore...');
+                    await window.FirestoreDataManager.syncFromFirestore();
+                    console.log('✅ Data loaded from Firestore');
+                } else {
+                    console.log('📁 Firestore not available, loading from JSON APIs...');
+                    await loadDataFromJSON();
+                }
+                
+                console.log('🔄 Updating stats...');
+                updateStats();
+                
+                console.log('✅ Main dashboard loadData complete');
+                
+            } catch (error) {
+                console.error('❌ Error loading data:', error);
+                // Fallback to JSON loading
+                console.log('🔄 Falling back to JSON loading...');
+                await loadDataFromJSON();
+                updateStats();
+            }
+        }
+        
+        // Load data from JSON APIs (fallback)
+        async function loadDataFromJSON() {
+            console.log('🔄 Loading jobs from JSON API...');
             await loadJobs();
             
-            console.log('🔄 Loading users...');
+            console.log('🔄 Loading users from JSON API...');
             await loadUsers();
             
-            console.log('🔄 Loading dropdown options...');
+            console.log('🔄 Loading dropdown options from JSON API...');
             await loadDropdownOptions();
-            
-            console.log('🔄 Updating stats...');
-            updateStats();
-            
-            console.log('✅ Main dashboard loadData complete');
         }
 
         // Update stats
@@ -2506,10 +2546,10 @@
             URL.revokeObjectURL(url);
         }
 
-        // Update users.json on GitHub
+        // Update users with Firestore integration
         async function updateUsersOnGitHub(action = 'update', userName = '') {
             try {
-                console.log('🔄 Updating users.json on GitHub...');
+                console.log('🔄 Updating users data...');
                 
                 // Count performance reviews in users
                 let totalReviews = 0;
@@ -2532,6 +2572,29 @@
                         lastUpdated: new Date().toISOString().split('T')[0]
                     }
                 };
+                
+                // Try to save to Firestore first
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    try {
+                        console.log('🔥 Saving users to Firestore...');
+                        await window.FirestoreDataManager.setUser('users', usersData);
+                        console.log('✅ Users saved to Firestore');
+                        
+                        // Also save individual user documents
+                        for (const [userId, userData] of Object.entries(window.users || {})) {
+                            if (userId !== '_archived') {
+                                await window.FirestoreDataManager.setUser(userId, userData);
+                            }
+                        }
+                        console.log('✅ Individual users saved to Firestore');
+                        
+                    } catch (firestoreError) {
+                        console.warn('⚠️ Firestore save failed, falling back to GitHub:', firestoreError);
+                    }
+                }
+                
+                // Fallback to GitHub (existing functionality)
+                console.log('🔄 Updating users.json on GitHub...');
                 
                 // First, get the current file SHA
                 const getResponse = await fetch('/api/github/file/users.json');
@@ -2578,7 +2641,7 @@
                 }
                 
             } catch (error) {
-                console.error('❌ Error updating users.json on GitHub:', error);
+                console.error('❌ Error updating users data:', error);
                 showNotification('❌ Error updating users data', 'error');
                 return false;
             }
@@ -3104,6 +3167,44 @@
             } catch (error) {
                 console.error('❌ Error force refreshing users:', error);
                 showNotification('❌ Error force refreshing users', 'error');
+            }
+        }
+        
+        // Migrate data to Firestore
+        async function migrateToFirestore() {
+            try {
+                if (!confirm('This will migrate all your existing data to Firestore. Continue?')) {
+                    return;
+                }
+                
+                showNotification('🔄 Starting Firestore migration...', 'info');
+                
+                // Initialize Firebase if not already done
+                if (!auth || !firestore) {
+                    await initializeFirebase();
+                }
+                
+                // Check if Firestore is available
+                if (!window.FirestoreDataManager || !window.FirestoreDataManager.isAvailable()) {
+                    throw new Error('Firestore not available. Please check your Firebase configuration.');
+                }
+                
+                // Perform migration
+                await window.FirestoreDataManager.migrateDataToFirestore();
+                
+                showNotification('🎉 Data migration to Firestore complete!', 'success');
+                
+                // Refresh data from Firestore
+                await window.FirestoreDataManager.syncFromFirestore();
+                displayUsers();
+                displayJobs();
+                updateStats();
+                
+                showNotification('✅ Data refreshed from Firestore', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error during Firestore migration:', error);
+                showNotification(`❌ Migration failed: ${error.message}`, 'error');
             }
         }
         
@@ -4996,6 +5097,13 @@
             window.ADMIN_PASSWORD = 'Cochranfilms2@';
             console.log('✅ Main dashboard ADMIN_PASSWORD set:', window.ADMIN_PASSWORD);
             
+            // Initialize Firebase
+            initializeFirebase().then(() => {
+                console.log('✅ Firebase initialized in admin dashboard');
+            }).catch(error => {
+                console.error('❌ Firebase initialization failed:', error);
+            });
+            
             checkAuth();
             
             // Initialize admin bank viewer
@@ -5006,18 +5114,18 @@
                 console.log('⚠️ Admin Bank Viewer not available, using fallback');
             }
             
-                    // Load the modular system but don't let it override authentication OR user display
-        // Add flags to prevent modular system from overriding main dashboard functionality
-        window.MAIN_DASHBOARD_AUTH_OVERRIDE = false;
-        window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
-        window.MAIN_DASHBOARD_JOB_DISPLAY_OVERRIDE = false;
-        
-        // Load modular system but keep it completely separate from main dashboard
-        // This prevents any interference with the main dashboard functionality
-        setTimeout(() => {
-            loadModularSystem();
-        }, 1000); // Delay to ensure main dashboard is fully loaded first
+            // Load the modular system but don't let it override authentication OR user display
+            // Add flags to prevent modular system from overriding main dashboard functionality
+            window.MAIN_DASHBOARD_AUTH_OVERRIDE = false;
+            window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
+            window.MAIN_DASHBOARD_JOB_DISPLAY_OVERRIDE = false;
             
+            // Load modular system but keep it completely separate from main dashboard
+            // This prevents any interference with the main dashboard functionality
+            setTimeout(() => {
+                loadModularSystem();
+            }, 1000); // Delay to ensure main dashboard is fully loaded first
+                
             // Auto-run tests after a short delay
             setTimeout(() => {
                 console.log('🧪 Auto-running dashboard tests...');
