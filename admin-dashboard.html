@@ -742,9 +742,9 @@
         const EMAILJS_CONFIG = {
             publicKey: 'p4pF3OWvh-DXtae4c',
             serviceId: 'service_t11yvru',
-            // Use the working template that exists in your EmailJS account
-            jobAcceptanceTemplateId: 'template_aluwel1', // Changed from 'template_job_acceptance' to working template
-            jobClosedTemplateId: 'template_aluwel1' // Use same working template for now
+            // Use the correct template IDs now that domain restrictions are resolved
+            jobAcceptanceTemplateId: 'template_job_acceptance', // Correct template for job acceptance
+            jobClosedTemplateId: 'template_jobs_closed' // Correct template for job denial
         };
 
         // Initialize EmailJS
@@ -2885,14 +2885,9 @@
                     });
                 }
 
-                // Map our data to the working template_aluwel1 format
+                // Map our data to the template_job_acceptance format
                 const emailParams = {
-                    // template_aluwel1 expects these specific variable names
-                    name: userName || 'User',
-                    email: userData.profile.email || 'user@example.com',
-                    phone: 'Not provided',
-                    notes: `Job Acceptance - Role: ${userData.profile.role || jobTitle || 'Contractor'}, Location: ${userData.profile.location || 'Atlanta Area'}, Rate: ${rate}, Project Start: ${projectStart}, Job: ${jobTitle}`,
-                    // Add our custom fields for the job acceptance context
+                    // template_job_acceptance expects these specific variable names
                     freelancer_name: userName || 'User',
                     role: userData.profile.role || jobTitle || 'Contractor',
                     location: userData.profile.location || 'Atlanta Area',
@@ -3069,18 +3064,18 @@
                 const jobTitle = userData?.application?.jobTitle || job?.title || 'a Cochran Films role';
                 const projectStart = job?.date || userData?.profile?.projectDate || 'TBD';
 
-                // Send EmailJS template for jobs closed (using working template_aluwel1)
+                // Send EmailJS template for jobs closed (using template_jobs_closed)
                 if (typeof emailjs !== 'undefined') {
                     const params = {
-                        // Map to template_aluwel1 variables
-                        name: userName,
-                        email: userData.profile.email,
-                        phone: 'Not provided',
-                        notes: `Job Application Denied - Job: ${jobTitle}, Project Start: ${projectStart}. We appreciate your interest in working with Cochran Films.`,
-                        // Additional context for denial
+                        // Map to template_jobs_closed variables
+                        to_email: userData.profile.email,
                         freelancer_name: userName,
                         job: jobTitle,
-                        project_start: projectStart
+                        project_start: projectStart,
+                        // Helpful extras commonly used by EmailJS
+                        to_name: userName,
+                        reply_to: 'info@cochranfilms.com',
+                        from_name: 'Cochran Films Admin'
                     };
                     try {
                         console.log('📧 Sending denial email via EmailJS:', {

@@ -15,8 +15,8 @@ if (typeof emailjs !== 'undefined') {
 const EMAILJS_CONFIG = {
     publicKey: 'p4pF3OWvh-DXtae4c',
     serviceId: 'service_t11yvru',
-    jobAcceptanceTemplateId: 'template_aluwel1',
-    jobClosedTemplateId: 'template_aluwel1'
+    jobAcceptanceTemplateId: 'template_job_acceptance',
+    jobClosedTemplateId: 'template_jobs_closed'
 };
 
 console.log('📋 EmailJS Configuration:', EMAILJS_CONFIG);
@@ -35,10 +35,13 @@ async function testEmailJS() {
         console.log('🔄 Testing EmailJS send...');
         
         const testParams = {
-            name: 'Test User',
-            email: 'test@example.com',
-            phone: 'Test Phone',
-            notes: 'This is a test email from EmailJS configuration test script'
+            freelancer_name: 'Test User',
+            role: 'Test Role',
+            location: 'Test Location',
+            rate: 'Test Rate',
+            project_start: 'Test Date',
+            job: 'Test Job',
+            contract_id: 'Test Contract ID'
         };
         
         console.log('📧 Test parameters:', testParams);
