@@ -71,7 +71,8 @@ const ContractManager = {
             const response = await fetch('/api/contracts');
             if (response.ok) {
                 const data = await response.json();
-                this.state.contracts = data.contracts || [];
+                // Handle both data structures for backward compatibility
+                this.state.contracts = data.uploadedContracts || data.contracts || [];
                 console.log(`✅ Loaded ${this.state.contracts.length} contracts`);
             } else {
                 throw new Error(`Failed to load contracts: ${response.status}`);
