@@ -37,19 +37,42 @@ const FirebaseConfig = {
         this.initPromise = new Promise(async (resolve, reject) => {
             try {
                 console.log('🔥 Initializing Firebase for Admin Dashboard...');
+                console.log('🔍 Checking Firebase SDK availability...');
                 
                 // Check if Firebase is available
                 if (typeof firebase === 'undefined') {
+                    console.error('❌ Firebase SDK is undefined');
                     throw new Error('Firebase SDK not loaded');
                 }
 
+                console.log('✅ Firebase SDK found:', typeof firebase);
+                console.log('🔍 Firebase SDK properties:', Object.keys(firebase));
+                
+                // Check if firebase.initializeApp exists
+                if (typeof firebase.initializeApp !== 'function') {
+                    console.error('❌ firebase.initializeApp is not a function');
+                    throw new Error('Firebase initializeApp method not available');
+                }
+
+                console.log('✅ firebase.initializeApp method found');
+                
                 // Initialize Firebase app
+                console.log('🔧 Creating Firebase app...');
                 this.app = firebase.initializeApp(this.config);
+                console.log('✅ Firebase app created:', this.app);
                 
                 // Initialize Firebase Auth
+                console.log('🔧 Initializing Firebase Auth...');
+                if (typeof firebase.auth !== 'function') {
+                    console.error('❌ firebase.auth is not a function');
+                    throw new Error('Firebase auth method not available');
+                }
+                
                 this.auth = firebase.auth();
+                console.log('✅ Firebase Auth initialized:', this.auth);
                 
                 // Set persistence to LOCAL for better user experience
+                console.log('🔧 Setting Firebase persistence...');
                 await this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 console.log('✅ Firebase persistence set to LOCAL');
 
@@ -63,6 +86,12 @@ const FirebaseConfig = {
                 
             } catch (error) {
                 console.error('❌ Firebase initialization failed:', error);
+                console.error('❌ Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    firebaseType: typeof firebase,
+                    firebaseKeys: firebase ? Object.keys(firebase) : 'firebase is null'
+                });
                 this.isInitialized = false;
                 reject(error);
             }
@@ -73,14 +102,25 @@ const FirebaseConfig = {
 
     // Wait for Firebase to be initialized
     async waitForInit() {
+        console.log('⏳ waitForInit called, checking initialization status...');
+        console.log('🔍 Current state:', {
+            isInitialized: this.isInitialized,
+            hasInitPromise: !!this.initPromise,
+            hasApp: !!this.app,
+            hasAuth: !!this.auth
+        });
+        
         if (this.isInitialized) {
+            console.log('✅ Firebase already initialized, returning immediately');
             return true;
         }
         
         if (this.initPromise) {
+            console.log('⏳ Firebase initialization in progress, waiting for promise...');
             return this.initPromise;
         }
         
+        console.log('🚀 Starting Firebase initialization...');
         // If not started, start initialization
         return this.init();
     },
