@@ -1862,7 +1862,7 @@
                     email: userData.profile?.email,
                     role: userData.profile?.role,
                     location: userData.profile?.location,
-                    projectStart: userData.profile?.projectStart,
+                    projectStart: userData.application?.eventDate || userData.jobs?.[userData.primaryJob]?.date || 'TBD',
                     rate: userData.jobs?.[userData.primaryJob]?.rate || userData.profile?.rate,
                     approvedDate: userData.profile?.approvedDate,
                     contractStatus: userData.contract?.contractStatus,
@@ -1975,7 +1975,7 @@
             const effectiveDate = data.profile?.approvedDate || new Date().toISOString().split('T')[0];
             const role = data.profile?.role || 'Contractor';
             const location = data.profile?.location || 'Atlanta Area';
-            const projectStart = data.profile?.projectStart || 'TBD';
+            const projectStart = data.application?.eventDate || data.jobs?.[data.primaryJob]?.date || 'TBD';
             // Get job-specific rate from primary job
             const primaryJob = data.jobs?.[data.primaryJob];
             const rate = primaryJob?.rate || data.profile?.rate || '$150/day';
@@ -2160,7 +2160,7 @@
                                 <a href="https://collaborate.cochranfilms.com/user-portal.html" class="contract-link" style="margin: 0;">
                                     <i class="fas fa-external-link-alt"></i> Open Creator Portal
                                 </a>
-                                <button onclick="downloadContractPDF({contractId: userData.contract?.contractId, freelancerName: userData.profile?.name, freelancerEmail: userData.profile?.email, role: userData.profile?.role, location: userData.profile?.location, projectStart: userData.profile?.projectStart, rate: userData.jobs?.[userData.primaryJob]?.rate || userData.profile?.rate, effectiveDate: userData.profile?.approvedDate, signatureDate: userData.contract?.contractSignedDate, signature: userData.profile?.name})" class="contract-link" style="margin: 0;">
+                                <button onclick="downloadContractPDF({contractId: userData.contract?.contractId, freelancerName: userData.profile?.name, freelancerEmail: userData.profile?.email, role: userData.profile?.role, location: userData.profile?.location, projectStart: userData.application?.eventDate || userData.jobs?.[userData.primaryJob]?.date || 'TBD', rate: userData.jobs?.[userData.primaryJob]?.rate || userData.profile?.rate, effectiveDate: userData.profile?.approvedDate, signatureDate: userData.contract?.contractSignedDate, signature: userData.profile?.name})" class="contract-link" style="margin: 0;">
                                     <i class="fas fa-download"></i> Download Contract PDF
                                 </button>
                             </div>
@@ -2494,7 +2494,7 @@
                     freelancerEmail: signatureData.freelancerEmail,
                     role: currentFreelancerData.role || 'Contractor',
                     location: currentFreelancerData.location || 'Atlanta Area',
-                    projectStart: currentFreelancerData.projectStart || 'TBD',
+                    projectStart: currentFreelancerData.application?.eventDate || currentFreelancerData.jobs?.[currentFreelancerData.primaryJob]?.date || 'TBD',
                     rate: currentFreelancerData.rate || 'Not specified',
                     effectiveDate: currentFreelancerData.approvedDate || new Date().toISOString().split('T')[0],
                     signatureDate: signatureData.date,
@@ -2506,7 +2506,7 @@
                     // JOB-SPECIFIC CONTRACT LINKING
                     jobId: currentFreelancerData.primaryJob || 'legacy-job',
                     jobRole: currentFreelancerData.role || 'Contractor',
-                    jobDescription: currentFreelancerData.projectStart ? `Project starting ${currentFreelancerData.projectStart}` : 'Contractor position',
+                    jobDescription: currentFreelancerData.application?.eventDate ? `Project starting ${currentFreelancerData.application.eventDate}` : 'Contractor position',
                     deviceInfo: {
                         userAgent: navigator.userAgent.substring(0, 200),
                         timestamp: new Date().toISOString(),

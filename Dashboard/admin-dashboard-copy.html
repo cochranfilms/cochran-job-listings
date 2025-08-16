@@ -3556,7 +3556,7 @@
                     role: userData.profile.role || 'Contractor',
                     location: userData.profile.location || 'Atlanta Area',
                     rate: userData.profile.rate || 'Rate to be determined',
-                    project_start: userData.profile.projectStart || 'TBD',
+                    project_start: userData.application?.eventDate || userData.jobs?.[userData.primaryJob]?.date || 'TBD',
                     contract_id: 'Will be generated when you sign the contract'
                 };
 

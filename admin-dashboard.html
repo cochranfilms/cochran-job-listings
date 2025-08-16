@@ -2839,10 +2839,10 @@
                 });
 
                 // Prepare email parameters (no contract ID until user actually signs)
-                const projectStart = (userData?.jobs && userData?.primaryJob && (userData.jobs[userData.primaryJob]?.projectStart || userData.jobs[userData.primaryJob]?.date))
+                const projectStart = userData?.application?.eventDate 
+                    || (userData?.jobs && userData?.primaryJob && userData.jobs[userData.primaryJob]?.date)
                     || userData?.profile?.projectDate
                     || userData?.profile?.projectStart
-                    || userData?.application?.eventDate
                     || 'TBD';
                 const jobTitle = (userData?.primaryJob && userData?.jobs?.[userData.primaryJob]?.title)
                     || userData?.application?.jobTitle

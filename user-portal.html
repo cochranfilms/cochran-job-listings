@@ -214,7 +214,7 @@
                                         id: 'legacy-job',
                                         role: user.profile?.role,
                                         location: user.profile?.location,
-                                        projectStart: user.profile?.projectStart,
+                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
                                         rate: user.profile?.rate,
                                         status: 'upcoming',
                                         projectType: 'Legacy Job',
@@ -275,7 +275,7 @@
                                         id: 'legacy-job',
                                         role: user.profile?.role,
                                         location: user.profile?.location,
-                                        projectStart: user.profile?.projectStart,
+                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
                                         rate: user.profile?.rate,
                                         status: 'upcoming',
                                         projectType: 'Legacy Job',
@@ -987,7 +987,7 @@
                                         id: 'legacy-job',
                                         role: user.profile?.role,
                                         location: user.profile?.location,
-                                        projectStart: user.profile?.projectStart,
+                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
                                         rate: user.profile?.rate,
                                         status: 'upcoming',
                                         projectType: 'Legacy Job',
@@ -1048,7 +1048,7 @@
                                         id: 'legacy-job',
                                         role: user.profile?.role,
                                         location: user.profile?.location,
-                                        projectStart: user.profile?.projectStart,
+                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
                                         rate: user.profile?.rate,
                                         status: 'upcoming',
                                         projectType: 'Legacy Job',
@@ -1771,7 +1771,7 @@
                                                 id: 'legacy-job',
                                                 role: user.profile?.role,
                                                 location: user.profile?.location,
-                                                projectStart: user.profile?.projectStart,
+                                                projectStart: user.application?.eventDate || user.profile?.projectStart,
                                                 rate: user.profile?.rate,
                                                 status: 'upcoming',
                                                 projectType: 'Legacy Job',
@@ -5079,6 +5079,96 @@
         function showSection(sectionName) {
             switchPortalTab(sectionName);
         }
+
+        // View contract details
+        function viewContractDetails() {
+            console.log('👁️ View details button clicked');
+            console.log('👤 Current user:', currentUser);
+            console.log('📋 Uploaded contracts:', uploadedContracts);
+            
+            // Check if user has uploaded contract
+            const userContract = uploadedContracts.find(contract => 
+                contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
+            );
+            
+            console.log('📄 Found user contract:', userContract);
+            
+            if (!userContract) {
+                // If no uploaded contract, check if contract is signed but not uploaded
+                if (currentUser.contractStatus === 'signed') {
+                    alert('✅ Your contract has been signed and is being processed by admin. You will be able to view details once it\'s uploaded.');
+                } else {
+                    alert('❌ No contract found for your account. Please sign your contract first.');
+                }
+                return;
+            }
+            
+            const details = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 COCHRAN FILMS - CONTRACT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 BASIC INFO:
+Contract ID: ${userContract.contractId}
+Freelancer: ${userContract.freelancerEmail}
+Email: ${userContract.freelancerEmail}
+Role: ${userContract.role}
+Rate: ${userContract.rate}
+Location: ${userContract.location}
+Contract Date: ${userContract.contractDate || 'Not specified'}
+
+📁 FILE INFO:
+File Name: ${userContract.fileName}
+File Size: ${(userContract.fileSize / 1024).toFixed(1)} KB
+Upload Date: ${new Date(userContract.uploadDate).toLocaleString()}
+Status: ${userContract.status}
+
+${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            `.trim();
+            
+            alert(details);
+        }
+
+        // Download user contract
+        function downloadUserContract(jobId = null) {
+            console.log('📥 Download contract button clicked');
+            console.log('👤 Current user:', currentUser);
+            console.log('📋 Uploaded contracts:', uploadedContracts);
+            
+            // Check if user has uploaded contract
+            const userContract = uploadedContracts.find(contract => 
+                contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
+            );
+            
+            console.log('📄 Found user contract:', userContract);
+            
+            if (!userContract) {
+                // If no uploaded contract, check if contract is signed but not uploaded
+                if (currentUser.contractStatus === 'signed') {
+                    alert('✅ Your contract has been signed and is being processed by admin. You will be able to download it once it\'s uploaded.');
+                } else {
+                    alert('❌ No contract found for your account. Please sign your contract first.');
+                }
+                return;
+            }
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.href = userContract.fileUrl;
+            link.download = userContract.fileName || 'contract.pdf';
+            link.target = '_blank';
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('✅ Contract download initiated:', userContract.fileName);
+        }
+
+        // Make functions globally accessible
+        window.downloadUserContract = downloadUserContract;
+        window.viewContractDetails = viewContractDetails;
 
     </script>
 
