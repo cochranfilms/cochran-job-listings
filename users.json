@@ -9,7 +9,11 @@
         "approvedDate": "2025-08-16"
       },
       "contract": {
-        "contractStatus": "pending"
+        "contractStatus": "uploaded",
+        "contractSignedDate": "8/16/2025, 12:05:00 AM",
+        "contractUploadedDate": "2025-08-16T04:05:09.463Z",
+        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Cody%20Cochran.pdf",
+        "contractId": "CF-1755317100725-688DN"
       },
       "application": {
         "status": "approved",
@@ -61,5 +65,10 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-16"
+  },
+  "_metadata": {
+    "dataSource": "github",
+    "fetchedAt": "2025-08-16T04:05:09.432Z",
+    "totalUsers": 1
   }
 }
