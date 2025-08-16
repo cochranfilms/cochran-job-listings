@@ -98,6 +98,73 @@ node test-admin-deletion-simple.js
 - `admin-dashboard-modular/test-auth-fix.js` - Console-based authentication test script
 - `admin-dashboard-modular/test-auth.html` - Interactive test page for manual testing
 
+### 7. EmailJS 422 Error Fix Testing
+**Purpose**: Comprehensive testing and diagnosis of EmailJS 422 (Unprocessable Entity) errors in the admin dashboard
+**Features**:
+- Tests EmailJS library loading and initialization
+- Validates EmailJS configuration and service status
+- Tests template variable matching and validation
+- Provides fallback template mechanism for failed emails
+- Comprehensive error handling and user feedback
+- Domain restriction checking and troubleshooting
+
+**Test Files**:
+- `test-emailjs-fix.js` - Comprehensive EmailJS test script with console-based diagnostics
+- `test-emailjs-fix.html` - Interactive test page with visual diagnostics and troubleshooting
+- `EMAILJS_422_FIX_SUMMARY.md` - Complete documentation of fixes and troubleshooting steps
+
+**Testing Steps**:
+1. **Admin Dashboard Test Button**: Click "📧 Test EmailJS" button in admin dashboard
+2. **Test Page**: Open `test-emailjs-fix.html` and run comprehensive diagnostics
+3. **Console Testing**: Use `testEmailJS()` function in admin dashboard console
+4. **Parameter Validation**: Check that all required template variables are present
+5. **Fallback Testing**: Verify alternative template works when main template fails
+
+**Expected Behavior**:
+- EmailJS library loads and initializes correctly
+- Template variables match exactly with EmailJS requirements
+- Automatic fallback to alternative templates on 422 errors
+- Comprehensive error reporting with troubleshooting guidance
+- Parameter validation prevents missing or empty values
+- Better user feedback and error categorization
+
+**Troubleshooting**:
+- 422 errors indicate template variable mismatches or configuration issues
+- Check EmailJS dashboard for template status and service configuration
+- Verify domain restrictions include `collaborate.cochranfilms.com`
+- Ensure all required template variables are provided with valid values
+
+### 7. Job Status Toggle Testing
+**Purpose**: Testing the new job status toggle functionality in the admin dashboard
+**Features**:
+- Tests job status changes between Active and Inactive
+- Validates API endpoint `/api/update-job-status`
+- Tests real-time UI updates after status changes
+- Verifies data persistence to jobs-data.json
+- Tests error handling and validation
+- Validates notification system integration
+
+**Test Files**:
+- `test-job-status-toggle.html` - Interactive test page for manual testing
+- Admin dashboard job list with toggle buttons
+
+**Testing Steps**:
+1. Open `test-job-status-toggle.html` in a browser
+2. Verify jobs load from `/api/jobs-data`
+3. Click toggle buttons to change job status
+4. Verify API calls to `/api/update-job-status` succeed
+5. Check that jobs-data.json is updated
+6. Verify UI reflects status changes immediately
+7. Test error handling with invalid requests
+
+**Expected Behavior**:
+- Jobs display with current Active/Inactive status
+- Toggle buttons show appropriate text (Activate/Deactivate)
+- Status changes are saved to jobs-data.json
+- UI updates immediately after successful status change
+- Success notifications appear after status updates
+- Error handling for invalid requests or server errors
+
 ### 7. Real-Time Data System Testing
 **Purpose**: Testing the new real-time data synchronization system between JSON and Firebase Firestore
 **Features**:

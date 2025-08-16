@@ -13,6 +13,9 @@
     "api/jobs-data.js": {
       "maxDuration": 30
     },
+    "api/update-job-status.js": {
+      "maxDuration": 30
+    },
     "api/dropdown-options.js": {
       "maxDuration": 30
     },

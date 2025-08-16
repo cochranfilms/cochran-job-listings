@@ -693,6 +693,7 @@
                                 <button class="btn btn-secondary" onclick="showJobStats()">📈 Job Statistics</button>
                                 <button class="btn btn-secondary" onclick="bulkJobActions()">⚡ Bulk Actions</button>
                                 <button class="btn btn-secondary" onclick="debugJobsState()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">🐛 Debug State</button>
+                                <button class="btn btn-secondary" onclick="testEmailJS()" style="background: linear-gradient(135deg, #10b981, #059669);">📧 Test EmailJS</button>
                             </div>
                         </div>
                         
@@ -1384,7 +1385,7 @@
             }
         }
         
-        // Debug function to check current jobs state
+                // Debug function to check current jobs state
         function debugJobsState() {
             console.log('🐛 DEBUG: Current Jobs State');
             console.log('🔍 window.jobs:', window.jobs);
@@ -1412,6 +1413,80 @@
             // Show debug info in notification
             const debugInfo = `Jobs: ${window.jobs ? window.jobs.length : 0}, Type: ${typeof window.jobs}, Array: ${Array.isArray(window.jobs)}`;
             showNotification(`🐛 Debug: ${debugInfo}`, 'info');
+        }
+
+        // Test EmailJS function
+        async function testEmailJS() {
+            console.log('🧪 Testing EmailJS configuration...');
+            
+            if (typeof emailjs === 'undefined') {
+                showNotification('❌ EmailJS library not loaded', 'error');
+                return;
+            }
+            
+            try {
+                // Initialize EmailJS
+                emailjs.init(EMAILJS_CONFIG.publicKey);
+                console.log('✅ EmailJS initialized');
+                
+                // Test parameters
+                const testParams = {
+                    freelancer_name: 'Test User',
+                    role: 'Test Role',
+                    location: 'Test Location',
+                    rate: 'Test Rate',
+                    project_start: 'Test Date',
+                    job: 'Test Job',
+                    contract_id: 'Test Contract ID'
+                };
+                
+                console.log('📧 Testing with parameters:', testParams);
+                
+                // Try main template
+                const response = await emailjs.send(
+                    EMAILJS_CONFIG.serviceId,
+                    EMAILJS_CONFIG.jobAcceptanceTemplateId,
+                    testParams
+                );
+                
+                console.log('✅ Test email sent successfully:', response);
+                showNotification('✅ EmailJS test successful!', 'success');
+                
+            } catch (error) {
+                console.error('❌ EmailJS test failed:', error);
+                
+                let errorMessage = 'Test failed';
+                if (error.status === 422) {
+                    errorMessage = '422 Error - Template variables or configuration issue';
+                } else if (error.status === 403) {
+                    errorMessage = '422 Error - Domain restrictions';
+                } else if (error.status === 400) {
+                    errorMessage = '400 Error - Bad request';
+                } else if (error.status === 401) {
+                    errorMessage = '401 Error - Authentication issue';
+                } else {
+                    errorMessage = `Error ${error.status}: ${error.message}`;
+                }
+                
+                showNotification(`❌ EmailJS test failed: ${errorMessage}`, 'error');
+                
+                // Try alternative template
+                if (error.status === 422) {
+                    console.log('🔄 Trying alternative template...');
+                    try {
+                        const altResponse = await emailjs.send(
+                            EMAILJS_CONFIG.serviceId,
+                            EMAILJS_CONFIG.jobClosedTemplateId,
+                            testParams
+                        );
+                        console.log('✅ Alternative template worked:', altResponse);
+                        showNotification('✅ Alternative template test successful!', 'success');
+                    } catch (altError) {
+                        console.error('❌ Alternative template also failed:', altError);
+                        showNotification('❌ Both templates failed', 'error');
+                    }
+                }
+            }
         }
 
         // Update jobs-data.json on GitHub
@@ -3247,11 +3322,51 @@
                     freelancer_name: userName || 'User',
                     role: userData.profile.role || jobTitle || 'Contractor',
                     location: userData.profile.location || 'Atlanta Area',
-                    rate: rate,
-                    project_start: projectStart,
-                    job: jobTitle,
+                    rate: rate || 'Rate to be determined',
+                    project_start: projectStart || 'TBD',
+                    job: jobTitle || 'Contractor Position',
                     contract_id: 'Will be generated when you sign the contract'
                 };
+
+                // Validate email parameters to prevent 422 errors
+                const requiredParams = ['freelancer_name', 'role', 'location', 'rate', 'project_start', 'job', 'contract_id'];
+                const missingParams = requiredParams.filter(param => !emailParams[param] || emailParams[param].toString().trim() === '');
+                
+                if (missingParams.length > 0) {
+                    console.warn('⚠️ Missing or empty email parameters:', missingParams);
+                    console.warn('📧 Email params before validation:', emailParams);
+                    
+                    // Fill in missing parameters with defaults
+                    missingParams.forEach(param => {
+                        if (!emailParams[param] || emailParams[param].toString().trim() === '') {
+                            switch (param) {
+                                case 'freelancer_name':
+                                    emailParams[param] = 'User';
+                                    break;
+                                case 'role':
+                                    emailParams[param] = 'Contractor';
+                                    break;
+                                case 'location':
+                                    emailParams[param] = 'Atlanta Area';
+                                    break;
+                                case 'rate':
+                                    emailParams[param] = 'Rate to be determined';
+                                    break;
+                                case 'project_start':
+                                    emailParams[param] = 'TBD';
+                                    break;
+                                case 'job':
+                                    emailParams[param] = 'Contractor Position';
+                                    break;
+                                case 'contract_id':
+                                    emailParams[param] = 'Will be generated when you sign the contract';
+                                    break;
+                            }
+                        }
+                    });
+                    
+                    console.log('📧 Email params after validation:', emailParams);
+                }
 
                 console.log('📧 Sending job acceptance email to:', userData.profile.email);
                 console.log('📧 Using template:', EMAILJS_CONFIG.jobAcceptanceTemplateId);
@@ -3286,7 +3401,9 @@
                         
                         // Provide more specific error information
                         let errorMessage = 'Email failed';
-                        if (emailError.status === 403) {
+                        if (emailError.status === 422) {
+                            errorMessage = 'EmailJS unprocessable entity (422) - check template variables match exactly and template is published';
+                        } else if (emailError.status === 403) {
                             errorMessage = 'EmailJS access denied (403) - check domain restrictions and service configuration';
                         } else if (emailError.status === 400) {
                             errorMessage = 'EmailJS bad request (400) - check template variables and service configuration';
@@ -3297,6 +3414,24 @@
                         }
                         
                         showNotification(`⚠️ ${errorMessage}`, 'error');
+                        
+                        // Try alternative template if main template fails
+                        if (emailError.status === 422) {
+                            console.log('🔄 Attempting to send with alternative template...');
+                            try {
+                                const alternativeResponse = await emailjs.send(
+                                    EMAILJS_CONFIG.serviceId,
+                                    EMAILJS_CONFIG.jobClosedTemplateId,
+                                    emailParams
+                                );
+                                console.log('✅ Alternative template worked:', alternativeResponse);
+                                showNotification(`✅ Email sent via alternative template to ${userData.profile.email}`, 'success');
+                                return; // Success with alternative template
+                            } catch (altError) {
+                                console.error('❌ Alternative template also failed:', altError);
+                                showNotification(`⚠️ Both templates failed. Please check EmailJS configuration.`, 'error');
+                            }
+                        }
                         
                         // Log detailed error for debugging
                         console.error('❌ Full EmailJS error object:', emailError);

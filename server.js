@@ -135,6 +135,71 @@ app.get('/api/jobs-data', async (req, res) => {
     }
 });
 
+// Update job status endpoint
+app.post('/api/update-job-status', async (req, res) => {
+    try {
+        const { jobTitle, newStatus } = req.body;
+        
+        if (!jobTitle || !newStatus) {
+            return res.status(400).json({ 
+                error: 'Missing required fields', 
+                required: ['jobTitle', 'newStatus'] 
+            });
+        }
+        
+        if (!['Active', 'Inactive'].includes(newStatus)) {
+            return res.status(400).json({ 
+                error: 'Invalid status', 
+                validStatuses: ['Active', 'Inactive'] 
+            });
+        }
+        
+        const jobsPath = path.join(__dirname, 'jobs-data.json');
+        console.log('📁 Loading jobs file from:', jobsPath);
+        
+        // Read current jobs data
+        const jobsData = JSON.parse(fs.readFileSync(jobsPath, 'utf8'));
+        
+        // Find and update the job
+        const jobIndex = jobsData.jobs.findIndex(job => job.title === jobTitle);
+        
+        if (jobIndex === -1) {
+            return res.status(404).json({ 
+                error: 'Job not found', 
+                jobTitle: jobTitle 
+            });
+        }
+        
+        // Update the job status
+        const oldStatus = jobsData.jobs[jobIndex].status;
+        jobsData.jobs[jobIndex].status = newStatus;
+        jobsData.lastUpdated = new Date().toISOString().split('T')[0];
+        
+        // Write updated data back to file
+        fs.writeFileSync(jobsPath, JSON.stringify(jobsData, null, 2));
+        
+        console.log(`✅ Job status updated: "${jobTitle}" from "${oldStatus}" to "${newStatus}"`);
+        
+        res.json({
+            success: true,
+            message: `Job status updated successfully`,
+            job: {
+                title: jobTitle,
+                oldStatus: oldStatus,
+                newStatus: newStatus
+            },
+            updatedAt: jobsData.lastUpdated
+        });
+        
+    } catch (error) {
+        console.error('❌ Error updating job status:', error);
+        res.status(500).json({ 
+            error: 'Failed to update job status', 
+            details: error.message 
+        });
+    }
+});
+
 // Uploaded contracts API endpoint
 app.get('/api/uploaded-contracts', async (req, res) => {
     try {

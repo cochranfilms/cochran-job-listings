@@ -527,6 +527,23 @@ const JobList = {
     createJobActionButtons(job, index) {
         const actions = [];
         
+        // Status toggle button
+        const toggleText = job.status === 'Active' ? '🔄 Deactivate' : '✅ Activate';
+        const toggleVariant = job.status === 'Active' ? 'warning' : 'success';
+        
+        if (window.Button) {
+            const toggleBtn = window.Button.create({
+                text: toggleText,
+                variant: toggleVariant,
+                size: 'sm',
+                onClick: () => this.toggleJobStatus(job, index)
+            });
+            actions.push(toggleBtn.outerHTML);
+        } else {
+            const toggleClass = job.status === 'Active' ? 'btn-warning' : 'btn-success';
+            actions.push(`<button class="btn btn-small ${toggleClass}" onclick="JobList.toggleJobStatus('${job.title}', ${index})">${toggleText}</button>`);
+        }
+        
         // Edit button
         if (window.Button) {
             const editBtn = window.Button.create({
@@ -866,6 +883,64 @@ const JobList = {
         setInterval(() => {
             this.loadAndDisplayJobs();
         }, 30000);
+    },
+
+    // Toggle job status between Active and Inactive
+    async toggleJobStatus(job, index) {
+        try {
+            console.log(`🔄 Toggling job status: ${job.title} (current: ${job.status})`);
+            
+            if (window.LoadingManager) {
+                window.LoadingManager.showLoading('Updating job status...');
+            }
+            
+            const newStatus = job.status === 'Active' ? 'Inactive' : 'Active';
+            
+            // Call API to update job status
+            const response = await fetch('/api/update-job-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    jobTitle: job.title,
+                    newStatus: newStatus
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update job status');
+            }
+            
+            const result = await response.json();
+            console.log('✅ Job status updated successfully:', result);
+            
+            // Update local state
+            this.state.jobs[index].status = newStatus;
+            
+            // Refresh the display
+            this.filterJobs();
+            this.updateStatsDisplay();
+            
+            // Show success notification
+            this.showSuccess(`Job "${job.title}" status changed to ${newStatus}`);
+            
+            // Trigger event for other components
+            this.triggerEvent('statusToggled', {
+                job: job,
+                newStatus: newStatus,
+                index: index
+            });
+            
+        } catch (error) {
+            console.error('❌ Error toggling job status:', error);
+            this.showError(`Failed to update job status: ${error.message}`);
+        } finally {
+            if (window.LoadingManager) {
+                window.LoadingManager.hideLoading();
+            }
+        }
     },
 
     // Trigger custom event
