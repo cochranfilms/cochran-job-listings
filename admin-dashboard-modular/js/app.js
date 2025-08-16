@@ -161,13 +161,18 @@ const AdminDashboardApp = {
 
     // Check current authentication status
     checkAuthenticationStatus() {
-        const currentUser = window.FirebaseConfig.getCurrentUser();
-        if (currentUser && window.FirebaseConfig.isAdminUser(currentUser.email)) {
-            this.state.isAuthenticated = true;
-            this.state.currentUser = currentUser;
-            this.showDashboard();
-            this.loadDashboardData();
+        if (window.FirebaseConfig && typeof window.FirebaseConfig.getCurrentUser === 'function') {
+            const currentUser = window.FirebaseConfig.getCurrentUser();
+            if (currentUser && window.FirebaseConfig.isAdminUser(currentUser.email)) {
+                this.state.isAuthenticated = true;
+                this.state.currentUser = currentUser;
+                this.showDashboard();
+                this.loadDashboardData();
+            } else {
+                this.showLoginScreen();
+            }
         } else {
+            console.log('⚠️ FirebaseConfig not available, showing login screen');
             this.showLoginScreen();
         }
     },

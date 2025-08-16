@@ -32,17 +32,17 @@ const ErrorHandler = {
         console.error(`❌ Error in ${context}:`, error);
 
         let userMessage = this.defaultMessage;
-        let errorType = 'unknown';
+        let errorType = 'error'; // Default to error type
 
         // Try to extract error code/message
         if (error && error.code) {
-            errorType = error.code;
+            errorType = 'error';
             userMessage = this.errorMessages[error.code] || this.defaultMessage;
         } else if (error && error.message) {
-            errorType = error.message;
+            errorType = 'error';
             userMessage = this.errorMessages[error.message] || error.message;
         } else if (typeof error === 'string') {
-            errorType = error;
+            errorType = 'error';
             userMessage = this.errorMessages[error] || error;
         }
 

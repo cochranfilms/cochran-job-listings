@@ -353,6 +353,23 @@ const NotificationManager = {
             ...data,
             userSpecific: true
         });
+    },
+    
+    // Backward compatibility methods
+    showSuccess(message, options = {}) {
+        return this.success(message, options);
+    },
+    
+    showError(message, options = {}) {
+        return this.error(message, options);
+    },
+    
+    showWarning(message, options = {}) {
+        return this.warning(message, options);
+    },
+    
+    showInfo(message, options = {}) {
+        return this.info(message, options);
     }
 };
 

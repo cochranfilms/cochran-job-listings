@@ -10,6 +10,25 @@ const LoadingManager = {
     // Global loading indicator
     globalLoading: false,
     
+    // Global loading methods (always available)
+    showGlobalLoading() {
+        this.globalLoading = true;
+        const indicator = document.getElementById('loadingIndicator');
+        if (indicator) {
+            indicator.style.display = 'flex';
+        }
+        document.body.style.overflow = 'hidden';
+    },
+
+    hideGlobalLoading() {
+        this.globalLoading = false;
+        const indicator = document.getElementById('loadingIndicator');
+        if (indicator) {
+            indicator.style.display = 'none';
+        }
+        document.body.style.overflow = '';
+    },
+    
     // Initialize loading manager
     init() {
         try {
@@ -28,18 +47,8 @@ const LoadingManager = {
             return;
         }
 
-        // Create global loading methods
-        this.showGlobalLoading = () => {
-            this.globalLoading = true;
-            indicator.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        };
-
-        this.hideGlobalLoading = () => {
-            this.globalLoading = false;
-            indicator.style.display = 'none';
-            document.body.style.overflow = '';
-        };
+        // The global loading methods are already defined above
+        console.log('✅ Global loading methods ready');
     },
 
     // Show loading for specific operation
@@ -269,12 +278,30 @@ const LoadingManager = {
     
     // Convenience methods for backward compatibility
     show(message = 'Loading...') {
-        this.showGlobalLoading();
-        return 'global';
+        try {
+            this.showGlobalLoading();
+            return 'global';
+        } catch (error) {
+            console.warn('⚠️ Loading show failed:', error);
+            return 'global';
+        }
     },
     
     hide() {
-        this.hideGlobalLoading();
+        try {
+            this.hideGlobalLoading();
+        } catch (error) {
+            console.warn('⚠️ Loading hide failed:', error);
+        }
+    },
+    
+    // Backward compatibility methods
+    showLoading(message = 'Loading...') {
+        return this.show(message);
+    },
+    
+    hideLoading() {
+        this.hide();
     }
 };
 
