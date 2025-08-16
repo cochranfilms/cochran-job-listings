@@ -27,7 +27,7 @@ const FirebaseConfig = {
         // Add more admin emails as needed
     ],
 
-    // Initialize Firebase
+    // Initialize Firebase using the same pattern as the working user portal
     async init() {
         // If already initialized, return the existing promise
         if (this.initPromise) {
@@ -56,12 +56,12 @@ const FirebaseConfig = {
 
                 console.log('✅ firebase.initializeApp method found');
                 
-                // Initialize Firebase app
+                // Initialize Firebase app using the same pattern as user portal
                 console.log('🔧 Creating Firebase app...');
                 this.app = firebase.initializeApp(this.config);
                 console.log('✅ Firebase app created:', this.app);
                 
-                // Initialize Firebase Auth
+                // Initialize Firebase Auth using the same pattern as user portal
                 console.log('🔧 Initializing Firebase Auth...');
                 if (typeof firebase.auth !== 'function') {
                     console.error('❌ firebase.auth is not a function');
@@ -71,7 +71,7 @@ const FirebaseConfig = {
                 this.auth = firebase.auth();
                 console.log('✅ Firebase Auth initialized:', this.auth);
                 
-                // Set persistence to LOCAL for better user experience
+                // Set persistence to LOCAL using the same pattern as user portal
                 console.log('🔧 Setting Firebase persistence...');
                 await this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 console.log('✅ Firebase persistence set to LOCAL');
@@ -176,5 +176,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Add a fallback initialization method that tries multiple times
+let initAttempts = 0;
+const maxInitAttempts = 5;
+
+function attemptFirebaseInit() {
+    if (initAttempts >= maxInitAttempts) {
+        console.error('❌ Max Firebase initialization attempts reached');
+        return;
+    }
+    
+    if (typeof firebase !== 'undefined' && !FirebaseConfig.isInitialized) {
+        console.log(`🔥 Attempt ${initAttempts + 1}: Trying Firebase initialization...`);
+        FirebaseConfig.init().catch(error => {
+            console.warn(`⚠️ Firebase initialization attempt ${initAttempts + 1} failed:`, error);
+            initAttempts++;
+            // Try again after a short delay
+            setTimeout(attemptFirebaseInit, 1000);
+        });
+    } else if (typeof firebase === 'undefined') {
+        initAttempts++;
+        console.log(`⏳ Firebase SDK not ready yet, attempt ${initAttempts}/${maxInitAttempts}, retrying in 1s...`);
+        setTimeout(attemptFirebaseInit, 1000);
+    }
+}
+
+// Start the fallback initialization process
+setTimeout(attemptFirebaseInit, 500);
 
 console.log('🔥 FirebaseConfig loaded and ready');

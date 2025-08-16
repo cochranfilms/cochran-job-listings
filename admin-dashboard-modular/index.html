@@ -25,6 +25,20 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
+    <!-- Firebase Test Script -->
+    <script>
+        // Test if Firebase SDK loaded properly
+        console.log('🔍 Firebase SDK Test:');
+        console.log('firebase type:', typeof firebase);
+        if (typeof firebase !== 'undefined') {
+            console.log('firebase keys:', Object.keys(firebase));
+            console.log('firebase.initializeApp type:', typeof firebase.initializeApp);
+            console.log('firebase.auth type:', typeof firebase.auth);
+        } else {
+            console.error('❌ Firebase SDK failed to load!');
+        }
+    </script>
+    
     <!-- Secure Bank Storage -->
     <script src="../secure-bank-storage.js"></script>
     <script src="../admin-bank-viewer.js"></script>
