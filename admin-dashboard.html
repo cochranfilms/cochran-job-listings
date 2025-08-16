@@ -839,6 +839,25 @@
                     auth = window.FirebaseConfig.auth;
                     firestore = window.FirebaseConfig.getFirestore();
                     console.log('✅ Firebase initialized in admin dashboard');
+                    
+                    // Check if user is already signed in
+                    const currentUser = auth.currentUser;
+                    if (currentUser) {
+                        console.log('✅ User already signed in:', currentUser.email);
+                        // Check if user has admin privileges
+                        if (isAdminUser(currentUser.email)) {
+                            sessionStorage.setItem('adminDashboardAuthenticated', 'true');
+                            sessionStorage.setItem('adminUser', JSON.stringify({
+                                email: currentUser.email,
+                                uid: currentUser.uid
+                            }));
+                            isAuthenticated = true;
+                            showDashboard();
+                        } else {
+                            console.log('❌ User does not have admin privileges');
+                            await auth.signOut();
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('❌ Firebase initialization failed:', error);
@@ -976,21 +995,19 @@
         // Show login screen
         function showLoginScreen() {
             console.log('🔐 Main dashboard showLoginScreen called');
-            // Ensure main dashboard takes precedence
-            if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
-                console.log('✅ Main dashboard auth override disabled - showing login screen');
-                document.getElementById('loginScreen').style.display = 'flex';
-                document.getElementById('dashboard').style.display = 'none';
-            } else {
-                console.log('⚠️ Main dashboard auth override enabled - not showing login screen');
-            }
+            
+            // Always show login screen when not authenticated
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashboard').style.display = 'none';
+            
+            console.log('✅ Main dashboard login screen displayed');
         }
 
         // Show dashboard
         function showDashboard() {
             console.log('🔐 Main dashboard showDashboard called');
             
-            // Always show the main dashboard, regardless of modular system
+            // Always show the main dashboard when authenticated
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             
@@ -999,29 +1016,29 @@
             loadData();
             updateStats();
             
-                            // Ensure user display is updated
-                setTimeout(() => {
-                    if (window.users && Object.keys(window.users).length > 0) {
-                        console.log('✅ Users loaded, updating display...');
-                        displayUsers();
-                        displayArchivedUsers();
-                    } else {
-                        console.log('⚠️ No users found, attempting to reload...');
-                        loadUsers();
-                    }
-                }, 500);
-                
-                // Ensure jobs are displayed
-                setTimeout(() => {
-                    console.log('🔄 Ensuring jobs are displayed...');
-                    if (window.jobs && window.jobs.length > 0) {
-                        console.log('✅ Jobs already loaded, updating display...');
-                        displayJobs();
-                    } else {
-                        console.log('⚠️ No jobs found, attempting to reload...');
-                        loadJobs();
-                    }
-                }, 1000);
+            // Ensure user display is updated
+            setTimeout(() => {
+                if (window.users && Object.keys(window.users).length > 0) {
+                    console.log('✅ Users loaded, updating display...');
+                    displayUsers();
+                    displayArchivedUsers();
+                } else {
+                    console.log('⚠️ No users found, attempting to reload...');
+                    loadUsers();
+                }
+            }, 500);
+            
+            // Ensure jobs are displayed
+            setTimeout(() => {
+                console.log('🔄 Ensuring jobs are displayed...');
+                if (window.jobs && window.jobs.length > 0) {
+                    console.log('✅ Jobs already loaded, updating display...');
+                    displayJobs();
+                } else {
+                    console.log('⚠️ No jobs found, attempting to reload...');
+                    loadJobs();
+                }
+            }, 1000);
             
             console.log('✅ Main dashboard displayed successfully');
         }
@@ -1040,6 +1057,12 @@
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Signing in...';
             submitBtn.disabled = true;
+            
+            // Show global loading indicator
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'flex';
+            }
             
             try {
                 // Firebase authentication
@@ -1108,6 +1131,11 @@
                 // Reset button state
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
+                
+                // Hide global loading indicator
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
             }
         });
 
@@ -1499,7 +1527,7 @@
                 if (error.status === 422) {
                     errorMessage = '422 Error - Template variables or configuration issue';
                 } else if (error.status === 403) {
-                    errorMessage = '422 Error - Domain restrictions';
+                    errorMessage = '403 Error - Domain restrictions';
                 } else if (error.status === 400) {
                     errorMessage = '400 Error - Bad request';
                 } else if (error.status === 401) {
@@ -5053,17 +5081,25 @@
                     window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
                     window.MAIN_DASHBOARD_JOB_DISPLAY_OVERRIDE = false;
                     
-                    await window.AdminDashboardApp.init();
-                    console.log('✅ Modular system initialized!');
-                    updateModularSystemStatus('success', 'System ready!');
-                    
-                    // Ensure main dashboard still has control
-                    console.log('✅ Main dashboard maintains control over user display');
+                    try {
+                        await window.AdminDashboardApp.init();
+                        console.log('✅ Modular system initialized!');
+                        updateModularSystemStatus('success', 'System ready!');
+                        
+                        // Ensure main dashboard still has control
+                        console.log('✅ Main dashboard maintains control over user display');
+                    } catch (initError) {
+                        console.warn('⚠️ Modular system initialization failed, continuing with main dashboard:', initError);
+                        updateModularSystemStatus('warning', 'Partial initialization');
+                    }
                 }
                 
             } catch (error) {
                 console.error('❌ Error loading modular system:', error);
                 updateModularSystemStatus('error', 'Load failed');
+                
+                // Don't crash the main dashboard if modular system fails
+                console.log('🔄 Continuing with main dashboard functionality only');
             }
         }
         
@@ -5124,7 +5160,7 @@
             // This prevents any interference with the main dashboard functionality
             setTimeout(() => {
                 loadModularSystem();
-            }, 1000); // Delay to ensure main dashboard is fully loaded first
+            }, 2000); // Increased delay to ensure main dashboard is fully loaded first
                 
             // Auto-run tests after a short delay
             setTimeout(() => {

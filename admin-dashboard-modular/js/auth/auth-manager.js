@@ -11,6 +11,9 @@ const AuthManager = {
         isLoading: false
     },
 
+    // Flag to indicate if this manager is handling authentication
+    isHandlingAuth: false,
+
     // Initialize authentication manager
     async init() {
         try {
@@ -40,6 +43,9 @@ const AuthManager = {
                 await window.FirebaseConfig.waitForInit();
                 
                 if (window.FirebaseConfig.auth) {
+                    // Mark that we're handling authentication
+                    this.isHandlingAuth = true;
+                    
                     window.FirebaseConfig.auth.onAuthStateChanged((user) => {
                         this.handleAuthStateChange(user);
                     });
@@ -149,16 +155,24 @@ const AuthManager = {
                 window.NotificationManager.info('Signing in...', { duration: 2000 });
             }
 
+            // Check if main dashboard authentication should be overridden
+            if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
+                console.log('✅ Main dashboard auth override disabled - not interfering');
+                throw new Error('Main dashboard authentication is handling this');
+            }
+
             // Try Firebase authentication first
             if (window.FirebaseConfig && window.FirebaseConfig.auth) {
                 try {
-                    // Wait for Firebase to be initialized
-                    await window.FirebaseConfig.waitForInit();
-                    
-                    const userCredential = await window.FirebaseConfig.auth.signInWithEmailAndPassword(email, password);
-                    
-                    console.log('✅ Firebase sign in successful:', userCredential.user.email);
-                    return { success: true, user: userCredential.user };
+                    // Check if Firebase is initialized
+                    if (window.FirebaseConfig.isInitialized) {
+                        const userCredential = await window.FirebaseConfig.auth.signInWithEmailAndPassword(email, password);
+                        
+                        console.log('✅ Firebase sign in successful:', userCredential.user.email);
+                        return { success: true, user: userCredential.user };
+                    } else {
+                        console.warn('⚠️ Firebase not initialized, trying fallback');
+                    }
                     
                 } catch (firebaseError) {
                     console.warn('⚠️ Firebase authentication failed, trying fallback:', firebaseError);
@@ -171,13 +185,6 @@ const AuthManager = {
             console.log('🔍 window.ADMIN_PASSWORD:', window.ADMIN_PASSWORD);
             console.log('🔍 password entered:', password);
             console.log('🔍 password === window.ADMIN_PASSWORD:', password === window.ADMIN_PASSWORD);
-            console.log('🔍 window.MAIN_DASHBOARD_AUTH_OVERRIDE:', window.MAIN_DASHBOARD_AUTH_OVERRIDE);
-            
-            // Check if main dashboard authentication should be overridden
-            if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
-                console.log('✅ Main dashboard auth override disabled - not interfering');
-                throw new Error('Main dashboard authentication is handling this');
-            }
             
             if (window.ADMIN_PASSWORD && password === window.ADMIN_PASSWORD) {
                 // Check if email is in admin list or use a default admin email
@@ -216,6 +223,8 @@ const AuthManager = {
                 userMessage = 'Network error. Please check your connection.';
             } else if (error.message === 'Invalid credentials') {
                 userMessage = 'Invalid email or password. Please try again.';
+            } else if (error.message === 'Main dashboard authentication is handling this') {
+                userMessage = 'Authentication handled by main dashboard';
             }
             
             if (window.NotificationManager) {

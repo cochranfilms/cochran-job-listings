@@ -12,25 +12,25 @@ const AdminDashboardApp = {
         modules: new Map()
     },
 
+    // Safety timeout reference
+    safetyTimeout: null,
+
     // Initialize the application
     async init() {
+        console.log('🚀 Initializing Admin Dashboard Application...');
+        
         try {
-            console.log('🚀 Initializing Admin Dashboard Application...');
-            
             // Show loading state
-            this.showLoading();
+            this.showLoading('Initializing Admin Dashboard...');
             
-            // Set a safety timeout to ensure loading is always hidden
-            const safetyTimeout = setTimeout(() => {
-                console.warn('⚠️ Safety timeout reached - forcing loading state to clear');
+            // Set safety timeout for initialization
+            this.safetyTimeout = setTimeout(() => {
+                console.warn('⚠️ Application initialization timeout - forcing completion');
                 this.hideLoading();
-            }, 30000); // 30 seconds
+            }, 30000); // 30 second timeout
             
             // Initialize core modules
             await this.initializeCoreModules();
-            
-            // Setup authentication
-            await this.setupAuthentication();
             
             // Initialize dashboard components
             await this.initializeDashboardComponents();
@@ -47,11 +47,11 @@ const AdminDashboardApp = {
             // Initialize dropdown management module
             await this.initializeDropdownManagementModule();
             
-            // Setup event listeners
+            // Set up event listeners
             this.setupEventListeners();
             
-            // Check authentication status
-            this.checkAuthenticationStatus();
+            // Set up authentication
+            this.setupAuthentication();
             
             console.log('✅ Admin Dashboard Application initialized successfully');
             
@@ -60,7 +60,10 @@ const AdminDashboardApp = {
             this.showError('Failed to initialize application', error);
         } finally {
             // Clear safety timeout
-            clearTimeout(safetyTimeout);
+            if (this.safetyTimeout) {
+                clearTimeout(this.safetyTimeout);
+                this.safetyTimeout = null;
+            }
             // Always hide loading state
             this.hideLoading();
         }
@@ -168,21 +171,22 @@ const AdminDashboardApp = {
     // Setup authentication
     async setupAuthentication() {
         console.log('🔐 Setting up authentication...');
-        
-        // Check if Firebase is available
-        console.log('🔍 Checking Firebase availability...');
         console.log('🔍 window.FirebaseConfig:', window.FirebaseConfig);
         console.log('🔍 window.ADMIN_PASSWORD:', window.ADMIN_PASSWORD);
         
         if (window.FirebaseConfig && window.FirebaseConfig.auth) {
             console.log('🔥 Firebase authentication available - using Firebase');
             
-            // Setup auth state observer
-            window.FirebaseConfig.auth.onAuthStateChanged((user) => {
-                this.handleAuthStateChange(user);
-            });
-            
-            console.log('✅ Firebase authentication setup complete');
+            // Check if auth-manager is already handling auth state
+            if (window.AuthManager && window.AuthManager.isHandlingAuth) {
+                console.log('✅ AuthManager already handling authentication, skipping duplicate setup');
+            } else {
+                // Setup auth state observer only if not already handled
+                window.FirebaseConfig.auth.onAuthStateChanged((user) => {
+                    this.handleAuthStateChange(user);
+                });
+                console.log('✅ Firebase authentication setup complete');
+            }
         } else {
             console.log('⚠️ Firebase not available - using fallback authentication');
             
@@ -621,11 +625,12 @@ const AdminDashboardApp = {
     },
 
     // Show loading state
-    showLoading() {
+    showLoading(message = 'Loading...') {
         this.state.isLoading = true;
         const loadingIndicator = document.getElementById('loadingIndicator');
         if (loadingIndicator) {
             loadingIndicator.style.display = 'flex';
+            loadingIndicator.textContent = message; // Update message
         }
     },
 
