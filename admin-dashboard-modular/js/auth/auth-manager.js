@@ -35,26 +35,35 @@ const AuthManager = {
     // Setup Firebase auth state observer
     async setupAuthStateObserver() {
         try {
-            if (!window.FirebaseConfig) {
-                console.warn('⚠️ Firebase configuration not available, waiting for initialization...');
-                return;
+            if (window.FirebaseConfig && window.FirebaseConfig.auth) {
+                // Wait for Firebase to be initialized
+                await window.FirebaseConfig.waitForInit();
+                
+                if (window.FirebaseConfig.auth) {
+                    window.FirebaseConfig.auth.onAuthStateChanged((user) => {
+                        this.handleAuthStateChange(user);
+                    });
+                    
+                    console.log('✅ Firebase auth state observer setup complete');
+                    return;
+                }
             }
 
-            // Wait for Firebase to be initialized
-            await window.FirebaseConfig.waitForInit();
-            
-            if (!window.FirebaseConfig.auth) {
-                console.warn('⚠️ Firebase auth not available after initialization');
-                return;
+            // If Firebase is not available, check for stored fallback authentication
+            console.log('⚠️ Firebase not available, checking fallback authentication...');
+            if (this.checkStoredAuth()) {
+                console.log('✅ Using stored fallback authentication');
+                this.onSuccessfulAuth(this.state.currentUser);
             }
-
-            window.FirebaseConfig.auth.onAuthStateChanged((user) => {
-                this.handleAuthStateChange(user);
-            });
             
-            console.log('✅ Firebase auth state observer setup complete');
         } catch (error) {
             console.error('❌ Failed to setup Firebase auth state observer:', error);
+            
+            // Try fallback authentication as last resort
+            if (this.checkStoredAuth()) {
+                console.log('✅ Using fallback authentication after Firebase error');
+                this.onSuccessfulAuth(this.state.currentUser);
+            }
         }
     },
 
@@ -133,18 +142,6 @@ const AuthManager = {
     // Sign in with email and password
     async signIn(email, password) {
         try {
-            // Wait for Firebase to be initialized
-            if (!window.FirebaseConfig) {
-                throw new Error('Firebase configuration not available');
-            }
-
-            // Ensure Firebase is initialized before proceeding
-            await window.FirebaseConfig.waitForInit();
-            
-            if (!window.FirebaseConfig.auth) {
-                throw new Error('Firebase authentication not available');
-            }
-
             this.state.isLoading = true;
             
             // Show loading notification
@@ -152,10 +149,42 @@ const AuthManager = {
                 window.NotificationManager.info('Signing in...', { duration: 2000 });
             }
 
-            const userCredential = await window.FirebaseConfig.auth.signInWithEmailAndPassword(email, password);
-            
-            console.log('✅ Sign in successful:', userCredential.user.email);
-            return { success: true, user: userCredential.user };
+            // Try Firebase authentication first
+            if (window.FirebaseConfig && window.FirebaseConfig.auth) {
+                try {
+                    // Wait for Firebase to be initialized
+                    await window.FirebaseConfig.waitForInit();
+                    
+                    const userCredential = await window.FirebaseConfig.auth.signInWithEmailAndPassword(email, password);
+                    
+                    console.log('✅ Firebase sign in successful:', userCredential.user.email);
+                    return { success: true, user: userCredential.user };
+                    
+                } catch (firebaseError) {
+                    console.warn('⚠️ Firebase authentication failed, trying fallback:', firebaseError);
+                    // Continue to fallback authentication
+                }
+            }
+
+            // Fallback authentication using ADMIN_PASSWORD
+            if (window.ADMIN_PASSWORD && password === window.ADMIN_PASSWORD) {
+                // Check if email is in admin list or use a default admin email
+                const adminEmail = email || 'admin@cochranfilms.com';
+                
+                // Create a mock user object for fallback auth
+                const fallbackUser = {
+                    email: adminEmail,
+                    isAdmin: true,
+                    uid: 'fallback-admin-' + Date.now(),
+                    displayName: 'Admin User'
+                };
+                
+                console.log('✅ Fallback authentication successful:', adminEmail);
+                return { success: true, user: fallbackUser };
+            }
+
+            // If neither Firebase nor fallback worked
+            throw new Error('Invalid credentials');
             
         } catch (error) {
             console.error('❌ Sign in failed:', error);
@@ -173,6 +202,8 @@ const AuthManager = {
                 userMessage = 'Too many failed attempts. Please try again later.';
             } else if (error.code === 'auth/network-request-failed') {
                 userMessage = 'Network error. Please check your connection.';
+            } else if (error.message === 'Invalid credentials') {
+                userMessage = 'Invalid email or password. Please try again.';
             }
             
             if (window.NotificationManager) {
@@ -222,7 +253,14 @@ const AuthManager = {
             return false;
         }
         
-        return window.FirebaseConfig.isAdminUser(this.state.currentUser.email);
+        // Check Firebase admin list if available
+        if (window.FirebaseConfig && window.FirebaseConfig.isAdminUser) {
+            return window.FirebaseConfig.isAdminUser(this.state.currentUser.email);
+        }
+        
+        // Fallback: check if user has isAdmin flag or is using fallback auth
+        return this.state.currentUser.isAdmin === true || 
+               this.state.currentUser.uid?.startsWith('fallback-admin-');
     },
 
     // Show login screen

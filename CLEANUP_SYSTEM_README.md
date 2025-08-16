@@ -121,6 +121,56 @@ npm run cleanup:refactored-modules
 - **Style Updates**: Ensure CSS class structure remains clean
 - **Code Reviews**: Regular cleanup of any new inline styles or legacy patterns
 
+## 🔐 Modular Admin Dashboard Authentication System Cleanup
+
+### New Addition: Dual Authentication System Cleanup
+The modular admin dashboard authentication system includes cleanup procedures to maintain both Firebase and fallback authentication systems.
+
+#### Authentication Data Cleanup
+- **Firebase Sessions**: Clean up expired Firebase authentication sessions
+- **Fallback Sessions**: Remove old fallback authentication data
+- **Admin User Cache**: Clear cached admin user information
+- **Session Storage**: Clean up session storage data older than 24 hours
+- **Authentication Logs**: Archive authentication attempt logs
+
+#### System Integration Cleanup
+- **Firebase Events**: Clean up Firebase initialization event listeners
+- **Module Dependencies**: Remove unused authentication module dependencies
+- **Test Files**: Archive old authentication test files
+- **Configuration Cache**: Clear Firebase configuration cache
+- **Error Logs**: Clean up authentication error logs
+
+#### Security Cleanup
+- **Password Reset**: Rotate fallback admin password regularly
+- **Admin List**: Update admin email list and remove old entries
+- **Access Logs**: Archive access logs for security auditing
+- **Session Validation**: Clean up invalid session data
+- **Privilege Cache**: Clear cached privilege information
+
+#### Cleanup Commands
+```bash
+# Clean up authentication system
+npm run cleanup:auth-system
+
+# Clean Firebase sessions
+npm run cleanup:firebase-sessions
+
+# Clean fallback auth data
+npm run cleanup:fallback-auth
+
+# Clean authentication logs
+npm run cleanup:auth-logs
+
+# Full authentication cleanup
+npm run cleanup:auth-full
+```
+
+#### Automated Cleanup Schedule
+- **Hourly**: Clean expired sessions and invalid data
+- **Daily**: Clean authentication logs and cache
+- **Weekly**: Rotate fallback passwords and update admin lists
+- **Monthly**: Deep clean of authentication system data
+
 ### New Addition: DashboardManager Module Creation Cleanup
 The DashboardManager module creation includes cleanup procedures to maintain the new centralized dashboard architecture and ensure proper integration with other modules.
 

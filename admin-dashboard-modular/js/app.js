@@ -124,10 +124,10 @@ const AdminDashboardApp = {
         // Check if admin password is configured
         if (window.ADMIN_PASSWORD) {
             console.log('✅ Admin password configured - using password-based auth');
-            this.state.isAuthenticated = true;
-            this.state.currentUser = { email: 'admin@cochranfilms.com', isAdmin: true };
-            this.showDashboard();
-            this.loadDashboardData();
+            // Don't auto-authenticate, just show login screen with fallback option
+            this.state.isAuthenticated = false;
+            this.state.currentUser = null;
+            this.showLoginScreen();
         } else {
             console.log('⚠️ No authentication configured - showing login screen');
             this.showLoginScreen();
@@ -172,8 +172,14 @@ const AdminDashboardApp = {
                 this.showLoginScreen();
             }
         } else {
-            console.log('⚠️ FirebaseConfig not available, showing login screen');
-            this.showLoginScreen();
+            console.log('⚠️ FirebaseConfig not available, checking fallback auth...');
+            // Check if we have stored fallback authentication
+            if (this.state.isAuthenticated && this.state.currentUser) {
+                this.showDashboard();
+                this.loadDashboardData();
+            } else {
+                this.showLoginScreen();
+            }
         }
     },
 
