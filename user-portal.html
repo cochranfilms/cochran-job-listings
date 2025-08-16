@@ -88,11 +88,12 @@
                 if (user) {
                     console.log('✅ User authenticated:', user.email);
                     // User is signed in, check if they exist in our system
-                    // Only check if user is properly authenticated and not just a temporary state
-                    if (user.email && user.emailVerified !== false) {
+                    // Check if user has email and is properly authenticated
+                    if (user.email) {
+                        console.log('✅ User has valid email, proceeding to check system...');
                         checkUserInSystem(user.email);
                     } else {
-                        console.log('⚠️ User not fully authenticated, waiting for proper auth...');
+                        console.log('⚠️ User missing email, waiting for proper auth...');
                         showLoginScreen();
                     }
                 } else {
