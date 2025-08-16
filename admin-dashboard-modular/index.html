@@ -153,6 +153,15 @@
             border: 2px solid rgba(255, 255, 255, 0.2);
         }
         
+        /* Notification Container */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+        }
+        
         .test-controls .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 178, 0, 0.4);
@@ -653,6 +662,9 @@
             <button onclick="location.reload()" class="btn btn-primary">Reload Page</button>
         </div>
     </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer" class="notification-container"></div>
 
     <!-- Core JavaScript - Only load what exists -->
     <script src="js/config/firebase-config.js"></script>

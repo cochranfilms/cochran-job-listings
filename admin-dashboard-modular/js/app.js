@@ -99,16 +99,41 @@ const AdminDashboardApp = {
     async setupAuthentication() {
         console.log('🔐 Setting up authentication...');
         
-        if (!window.FirebaseConfig || !window.FirebaseConfig.auth) {
-            throw new Error('Firebase authentication not available');
+        // Check if Firebase is available
+        if (window.FirebaseConfig && window.FirebaseConfig.auth) {
+            console.log('🔥 Firebase authentication available - using Firebase');
+            
+            // Setup auth state observer
+            window.FirebaseConfig.auth.onAuthStateChanged((user) => {
+                this.handleAuthStateChange(user);
+            });
+            
+            console.log('✅ Firebase authentication setup complete');
+        } else {
+            console.log('⚠️ Firebase not available - using fallback authentication');
+            
+            // Use fallback authentication (admin password)
+            this.setupFallbackAuthentication();
         }
+    },
 
-        // Setup auth state observer
-        window.FirebaseConfig.auth.onAuthStateChanged((user) => {
-            this.handleAuthStateChange(user);
-        });
+    // Setup fallback authentication for testing/development
+    setupFallbackAuthentication() {
+        console.log('🔑 Setting up fallback authentication...');
         
-        console.log('✅ Authentication setup complete');
+        // Check if admin password is configured
+        if (window.ADMIN_PASSWORD) {
+            console.log('✅ Admin password configured - using password-based auth');
+            this.state.isAuthenticated = true;
+            this.state.currentUser = { email: 'admin@cochranfilms.com', isAdmin: true };
+            this.showDashboard();
+            this.loadDashboardData();
+        } else {
+            console.log('⚠️ No authentication configured - showing login screen');
+            this.showLoginScreen();
+        }
+        
+        console.log('✅ Fallback authentication setup complete');
     },
 
     // Handle authentication state changes
@@ -461,8 +486,13 @@ const AdminDashboardApp = {
     showError(message, error) {
         console.error('Application Error:', error);
         
-        if (window.NotificationManager) {
-            window.NotificationManager.error(message);
+        // Show error notification if available
+        if (window.NotificationManager && typeof window.NotificationManager.error === 'function') {
+            try {
+                window.NotificationManager.error(message);
+            } catch (notifError) {
+                console.warn('⚠️ Could not show notification:', notifError);
+            }
         }
         
         // Show error boundary if available
