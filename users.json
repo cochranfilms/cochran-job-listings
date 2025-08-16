@@ -4,14 +4,15 @@
       "profile": {
         "email": "codylcochran@icloud.com",
         "location": "Atlanta Area",
-        "role": "",
-        "projectType": ""
+        "role": "Video Production",
+        "projectType": "",
+        "approvedDate": "2025-08-16"
       },
       "contract": {
         "contractStatus": "pending"
       },
       "application": {
-        "status": "pending",
+        "status": "approved",
         "submittedAt": "2025-08-16T09:41:51.252Z",
         "jobTitle": "Video Production",
         "eventDate": "2025-10-10",
@@ -19,10 +20,26 @@
         "description": "This event will be for testing purposes only. If you are looking to work with Cochran Films, we are excited and look forward to meeting all of you.",
         "phone": "4704202169",
         "portfolio": "https://pitch.cochranfilms.com",
-        "source": "apply-html"
+        "source": "apply-html",
+        "updatedAt": "2025-08-16T09:42:50.620Z"
       },
-      "jobs": {},
-      "primaryJob": null
+      "jobs": {
+        "Video Production": {
+          "title": "Video Production",
+          "date": "2025-10-10",
+          "location": "Atlanta Area",
+          "rate": "$600",
+          "description": "This event will be for testing purposes only. If you are looking to work with Cochran Films, we are excited and look forward to meeting all of you.",
+          "type": "Videography",
+          "status": "upcoming",
+          "listingStatus": "Active",
+          "jobRef": {
+            "source": "jobs-data",
+            "index": 2
+          }
+        }
+      },
+      "primaryJob": "Video Production"
     }
   },
   "statusOptions": {
