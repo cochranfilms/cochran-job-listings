@@ -33,6 +33,10 @@
     <script src="secure-bank-storage.js"></script>
     <script src="admin-bank-viewer.js"></script>
     
+    <!-- Modular System CSS -->
+    <link rel="stylesheet" href="admin-dashboard-modular/css/main.css">
+    <link rel="stylesheet" href="admin-dashboard-modular/css/components.css">
+    
     <style>
         :root {
             --primary: #FFB200;
@@ -453,6 +457,13 @@
             <a href="#" class="logout-btn" onclick="logout()">🚪 Logout</a>
             <h1>⚙️ Admin Dashboard</h1>
             <p>Cochran Films - Central Management System</p>
+            <!-- Modular System Status -->
+            <div id="modularSystemStatus" style="margin-top: 1rem; padding: 0.5rem; background: rgba(255,178,0,0.1); border-radius: 8px; border: 1px solid rgba(255,178,0,0.3);">
+                <span style="color: #FFB200; font-weight: 600;">
+                    <i class="fas fa-cube"></i> Modular System: 
+                    <span id="modularStatusText">Loading...</span>
+                </span>
+            </div>
             <!-- Notifications Bell -->
             <div id="notificationBell" style="position:absolute; top:1rem; left:1rem; cursor:pointer;">
                 <span style="position:relative; display:inline-block; padding:8px 10px; border:1px solid rgba(255,178,0,0.3); border-radius:8px; background:rgba(0,0,0,0.3);">
@@ -4404,6 +4415,93 @@
             });
         }
 
+        // ==================== MODULAR SYSTEM INTEGRATION ====================
+        
+        // Load all modular system scripts
+        async function loadModularSystem() {
+            console.log('🚀 Loading Modular Admin Dashboard System...');
+            updateModularSystemStatus('loading', 'Loading modules...');
+            
+            try {
+                // Load core modules
+                await loadScript('admin-dashboard-modular/js/utils/error-handler.js');
+                await loadScript('admin-dashboard-modular/js/utils/loading-manager.js');
+                await loadScript('admin-dashboard-modular/js/utils/notification-manager.js');
+                
+                // Load authentication
+                await loadScript('admin-dashboard-modular/js/auth/auth-manager.js');
+                await loadScript('admin-dashboard-modular/js/auth/login-component.js');
+                
+                // Load dashboard
+                await loadScript('admin-dashboard-modular/js/dashboard/dashboard-manager.js');
+                
+                // Load user management
+                await loadScript('admin-dashboard-modular/js/users/user-manager.js');
+                await loadScript('admin-dashboard-modular/js/users/user-form.js');
+                await loadScript('admin-dashboard-modular/js/users/user-list.js');
+                
+                // Load job management
+                await loadScript('admin-dashboard-modular/js/jobs/job-manager.js');
+                await loadScript('admin-dashboard-modular/js/jobs/job-form.js');
+                await loadScript('admin-dashboard-modular/js/jobs/job-list.js');
+                
+                // Load contract management
+                await loadScript('admin-dashboard-modular/js/contracts/contract-manager.js');
+                await loadScript('admin-dashboard-modular/js/contracts/contract-generator.js');
+                
+                // Load dropdown management
+                await loadScript('admin-dashboard-modular/js/dropdowns/dropdown-manager.js');
+                
+                // Load component library
+                await loadScript('admin-dashboard-modular/js/components/ui/Button.js');
+                await loadScript('admin-dashboard-modular/js/components/ui/Form.js');
+                await loadScript('admin-dashboard-modular/js/components/ui/Modal.js');
+                await loadScript('admin-dashboard-modular/js/components/ui/Notification.js');
+                await loadScript('admin-dashboard-modular/js/components/index.js');
+                
+                // Load main app
+                await loadScript('admin-dashboard-modular/js/app.js');
+                
+                console.log('✅ Modular system loaded successfully!');
+                updateModularSystemStatus('success', 'All modules loaded!');
+                
+                // Initialize the modular system
+                if (window.AdminDashboardApp) {
+                    await window.AdminDashboardApp.init();
+                    console.log('✅ Modular system initialized!');
+                    updateModularSystemStatus('success', 'System ready!');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading modular system:', error);
+                updateModularSystemStatus('error', 'Load failed');
+            }
+        }
+        
+        // Helper function to load scripts
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        // ==================== END MODULAR SYSTEM INTEGRATION ====================
+        
+        // Update modular system status
+        function updateModularSystemStatus(status, message) {
+            const statusElement = document.getElementById('modularStatusText');
+            if (statusElement) {
+                statusElement.textContent = message;
+                statusElement.style.color = status === 'success' ? '#22c55e' : 
+                                          status === 'error' ? '#ef4444' : 
+                                          status === 'loading' ? '#f59e0b' : '#FFB200';
+            }
+        }
+        
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
@@ -4415,6 +4513,9 @@
             } else {
                 console.log('⚠️ Admin Bank Viewer not available, using fallback');
             }
+            
+            // Load the modular system
+            loadModularSystem();
             
             // Auto-run tests after a short delay
             setTimeout(() => {
