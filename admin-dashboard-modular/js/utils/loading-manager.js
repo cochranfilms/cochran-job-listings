@@ -46,6 +46,12 @@ const LoadingManager = {
 
     // Setup global loading indicator
     setupGlobalLoading() {
+        // Check if main dashboard loading indicator should be overridden
+        if (window.MAIN_DASHBOARD_LOADING_OVERRIDE === false) {
+            console.log('✅ Main dashboard loading override disabled - not interfering');
+            return;
+        }
+        
         const indicator = document.getElementById('loadingIndicator');
         if (!indicator) {
             console.warn('⚠️ Loading indicator element not found');

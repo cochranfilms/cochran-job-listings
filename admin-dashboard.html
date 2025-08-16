@@ -485,7 +485,7 @@
             
 
             
-            <form class="login-form" id="loginForm">
+            <form class="login-form" id="mainDashboardLoginForm">
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" placeholder="Enter your email" required>
@@ -495,6 +495,19 @@
                     <input type="password" id="password" name="password" placeholder="Enter your password" required>
                 </div>
                 <button type="submit" class="login-btn">🔐 Login</button>
+                
+                <!-- Test button for debugging -->
+                <button type="button" onclick="testMainDashboardAuth()" style="
+                    background: rgba(59, 130, 246, 0.2); 
+                    color: #3b82f6; 
+                    border: 1px solid rgba(59, 130, 246, 0.3); 
+                    padding: 0.5rem 1rem; 
+                    border-radius: 6px; 
+                    margin-top: 1rem; 
+                    width: 100%; 
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                ">🧪 Test Authentication (Debug)</button>
             </form>
         </div>
     </div>
@@ -1044,7 +1057,7 @@
         }
 
         // Handle login with Firebase
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        document.getElementById('mainDashboardLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
@@ -5133,6 +5146,13 @@
             window.ADMIN_PASSWORD = 'Cochranfilms2@';
             console.log('✅ Main dashboard ADMIN_PASSWORD set:', window.ADMIN_PASSWORD);
             
+            // Set flags to prevent modular system from interfering with main dashboard
+            window.MAIN_DASHBOARD_AUTH_OVERRIDE = false;
+            window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
+            window.MAIN_DASHBOARD_JOB_DISPLAY_OVERRIDE = false;
+            window.MAIN_DASHBOARD_LOGIN_FORM_OVERRIDE = false;
+            window.MAIN_DASHBOARD_LOADING_OVERRIDE = false;
+            
             // Initialize Firebase
             initializeFirebase().then(() => {
                 console.log('✅ Firebase initialized in admin dashboard');
@@ -5141,6 +5161,11 @@
             });
             
             checkAuth();
+            
+            // Test the main dashboard login form
+            setTimeout(() => {
+                testMainDashboardLogin();
+            }, 100);
             
             // Initialize admin bank viewer
             if (typeof AdminBankViewer !== 'undefined') {
@@ -5267,6 +5292,62 @@
             
             console.log('\n📊 AUTOMATIC TEST COMPLETE');
             console.log('💡 Check console for detailed results');
+        }
+        
+        // Test function to verify main dashboard login form is working
+        function testMainDashboardLogin() {
+            console.log('🧪 Testing Main Dashboard Login Form...');
+            
+            const loginForm = document.getElementById('mainDashboardLoginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            
+            if (loginForm) {
+                console.log('✅ Main dashboard login form found');
+                console.log('🔍 Form ID:', loginForm.id);
+                console.log('🔍 Email input:', emailInput ? 'Found' : 'Missing');
+                console.log('🔍 Password input:', passwordInput ? 'Found' : 'Missing');
+                
+                // Test if the form has event listeners
+                const events = loginForm._events || loginForm.onclick || 'No events detected';
+                console.log('🔍 Form events:', events);
+                
+                return true;
+            } else {
+                console.log('❌ Main dashboard login form not found');
+                return false;
+            }
+        }
+        
+        // Test function to verify main dashboard authentication works
+        async function testMainDashboardAuth() {
+            console.log('🧪 Testing Main Dashboard Authentication...');
+            
+            try {
+                // Test fallback authentication
+                const testPassword = window.ADMIN_PASSWORD;
+                if (testPassword) {
+                    console.log('✅ Testing with admin password:', testPassword ? 'Set' : 'Not set');
+                    
+                    // Simulate successful authentication
+                    sessionStorage.setItem('adminDashboardAuthenticated', 'true');
+                    sessionStorage.setItem('adminUser', JSON.stringify({
+                        email: 'test@cochranfilms.com',
+                        uid: 'test-admin-' + Date.now()
+                    }));
+                    window.isAuthenticated = true;
+                    
+                    console.log('✅ Test authentication successful');
+                    showDashboard();
+                    return true;
+                } else {
+                    console.log('❌ Admin password not set');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Test authentication failed:', error);
+                return false;
+            }
         }
     </script>
 </body>

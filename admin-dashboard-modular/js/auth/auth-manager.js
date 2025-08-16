@@ -160,6 +160,12 @@ const AuthManager = {
                 console.log('✅ Main dashboard auth override disabled - not interfering');
                 throw new Error('Main dashboard authentication is handling this');
             }
+            
+            // Check if main dashboard login form should be overridden
+            if (window.MAIN_DASHBOARD_LOGIN_FORM_OVERRIDE === false) {
+                console.log('✅ Main dashboard login form override disabled - not interfering');
+                throw new Error('Main dashboard login form is handling this');
+            }
 
             // Try Firebase authentication first
             if (window.FirebaseConfig && window.FirebaseConfig.auth) {
