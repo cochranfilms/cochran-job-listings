@@ -133,10 +133,12 @@ const AdminDashboardApp = {
             // Don't auto-authenticate, just show login screen with fallback option
             this.state.isAuthenticated = false;
             this.state.currentUser = null;
-            this.showLoginScreen();
+            // Don't call showLoginScreen() here - let the main dashboard handle authentication
+            console.log('✅ Fallback auth configured but not overriding main dashboard');
         } else {
             console.log('⚠️ No authentication configured - showing login screen');
-            this.showLoginScreen();
+            // Don't call showLoginScreen() here - let the main dashboard handle authentication
+            console.log('✅ No auth configured but not overriding main dashboard');
         }
         
         console.log('✅ Fallback authentication setup complete');
@@ -161,7 +163,8 @@ const AdminDashboardApp = {
             console.log('❌ User signed out');
             this.state.isAuthenticated = false;
             this.state.currentUser = null;
-            this.showLoginScreen();
+            // Don't call showLoginScreen() here - let the main dashboard handle authentication
+            console.log('✅ User signed out but not overriding main dashboard');
         }
     },
 
@@ -175,7 +178,8 @@ const AdminDashboardApp = {
                 this.showDashboard();
                 this.loadDashboardData();
             } else {
-                this.showLoginScreen();
+                // Don't call showLoginScreen() here - let the main dashboard handle authentication
+                console.log('✅ Firebase user not authenticated but not overriding main dashboard');
             }
         } else {
             console.log('⚠️ FirebaseConfig not available, checking fallback auth...');
@@ -184,7 +188,8 @@ const AdminDashboardApp = {
                 this.showDashboard();
                 this.loadDashboardData();
             } else {
-                this.showLoginScreen();
+                // Don't call showLoginScreen() here - let the main dashboard handle authentication
+                console.log('✅ Fallback auth not authenticated but not overriding main dashboard');
             }
         }
     },

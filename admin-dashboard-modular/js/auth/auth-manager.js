@@ -171,6 +171,13 @@ const AuthManager = {
             console.log('🔍 window.ADMIN_PASSWORD:', window.ADMIN_PASSWORD);
             console.log('🔍 password entered:', password);
             console.log('🔍 password === window.ADMIN_PASSWORD:', password === window.ADMIN_PASSWORD);
+            console.log('🔍 window.MAIN_DASHBOARD_AUTH_OVERRIDE:', window.MAIN_DASHBOARD_AUTH_OVERRIDE);
+            
+            // Check if main dashboard authentication should be overridden
+            if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
+                console.log('✅ Main dashboard auth override disabled - not interfering');
+                throw new Error('Main dashboard authentication is handling this');
+            }
             
             if (window.ADMIN_PASSWORD && password === window.ADMIN_PASSWORD) {
                 // Check if email is in admin list or use a default admin email

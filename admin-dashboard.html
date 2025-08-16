@@ -898,27 +898,47 @@
 
         // Check if already authenticated
         function checkAuth() {
+            console.log('🔐 Main dashboard checkAuth called');
+            console.log('🔍 Session storage value:', sessionStorage.getItem('adminDashboardAuthenticated'));
+            console.log('🔍 Current isAuthenticated state:', isAuthenticated);
+            
             const session = sessionStorage.getItem('adminDashboardAuthenticated');
             if (session === 'true') {
                 isAuthenticated = true;
                 showDashboard();
+                console.log('✅ Main dashboard authentication restored from session');
             } else {
                 showLoginScreen();
+                console.log('✅ Main dashboard showing login screen');
             }
         }
 
         // Show login screen
         function showLoginScreen() {
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('dashboard').style.display = 'none';
+            console.log('🔐 Main dashboard showLoginScreen called');
+            // Ensure main dashboard takes precedence
+            if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
+                console.log('✅ Main dashboard auth override disabled - showing login screen');
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('dashboard').style.display = 'none';
+            } else {
+                console.log('⚠️ Main dashboard auth override enabled - not showing login screen');
+            }
         }
 
         // Show dashboard
         function showDashboard() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            loadData();
-            updateStats();
+            console.log('🔐 Main dashboard showDashboard called');
+            // Ensure main dashboard takes precedence
+            if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
+                console.log('✅ Main dashboard auth override disabled - showing dashboard');
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadData();
+                updateStats();
+            } else {
+                console.log('⚠️ Main dashboard auth override enabled - not showing dashboard');
+            }
         }
 
         // Handle login with Firebase
@@ -927,6 +947,8 @@
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            
+            console.log('🔐 Main dashboard login attempt:', { email, password: password ? '***' : 'empty' });
             
             // Show loading state
             const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -948,14 +970,35 @@
                     isAuthenticated = true;
                     showDashboard();
                     document.getElementById('password').value = '';
+                    console.log('✅ Main dashboard Firebase authentication successful');
                 } else {
                     // For non-admin users, show access denied
                     showNotification('Access denied. Admin privileges required.', 'error');
                     document.getElementById('password').value = '';
+                    console.log('❌ Main dashboard access denied for non-admin user');
                 }
                 
             } catch (error) {
-                console.error('Login error:', error);
+                console.error('❌ Main dashboard Firebase login error:', error);
+                
+                // Try fallback authentication with ADMIN_PASSWORD
+                console.log('🔄 Trying fallback authentication...');
+                console.log('🔍 window.ADMIN_PASSWORD:', window.ADMIN_PASSWORD);
+                console.log('🔍 password === window.ADMIN_PASSWORD:', password === window.ADMIN_PASSWORD);
+                
+                if (window.ADMIN_PASSWORD && password === window.ADMIN_PASSWORD) {
+                    console.log('✅ Fallback authentication successful');
+                    sessionStorage.setItem('adminDashboardAuthenticated', 'true');
+                    sessionStorage.setItem('adminUser', JSON.stringify({
+                        email: email || 'admin@cochranfilms.com',
+                        uid: 'fallback-admin-' + Date.now()
+                    }));
+                    isAuthenticated = true;
+                    showDashboard();
+                    document.getElementById('password').value = '';
+                    showNotification('✅ Login successful (fallback auth)', 'success');
+                    return;
+                }
                 
                 // Handle specific Firebase errors
                 let errorMessage = 'Login failed. Please try again.';
@@ -4504,6 +4547,10 @@
         
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Set ADMIN_PASSWORD for the main dashboard authentication
+            window.ADMIN_PASSWORD = 'Cochranfilms2@';
+            console.log('✅ Main dashboard ADMIN_PASSWORD set:', window.ADMIN_PASSWORD);
+            
             checkAuth();
             
             // Initialize admin bank viewer
@@ -4514,8 +4561,10 @@
                 console.log('⚠️ Admin Bank Viewer not available, using fallback');
             }
             
-            // Load the modular system
-            loadModularSystem();
+                    // Load the modular system but don't let it override authentication
+        // Add a flag to prevent authentication override
+        window.MAIN_DASHBOARD_AUTH_OVERRIDE = false;
+        loadModularSystem();
             
             // Auto-run tests after a short delay
             setTimeout(() => {

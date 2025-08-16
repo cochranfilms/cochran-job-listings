@@ -4,8 +4,10 @@
  */
 
 console.log('🔥 Firebase config file starting to load...');
-console.log('🔍 Current window.FirebaseConfig:', window.FirebaseConfig);
-console.log('🔍 Current window.ADMIN_PASSWORD:', window.ADMIN_PASSWORD);
+
+// Set ADMIN_PASSWORD immediately to avoid timing issues
+window.ADMIN_PASSWORD = 'Cochranfilms2@';
+console.log('✅ window.ADMIN_PASSWORD set immediately:', window.ADMIN_PASSWORD);
 
 const FirebaseConfig = {
     // Firebase configuration
@@ -166,10 +168,11 @@ console.log('🔧 Setting window.FirebaseConfig...');
 window.FirebaseConfig = FirebaseConfig;
 console.log('✅ window.FirebaseConfig set:', window.FirebaseConfig);
 
-// Add fallback authentication password
-console.log('🔧 Setting window.ADMIN_PASSWORD...');
-window.ADMIN_PASSWORD = 'Cochranfilms2@';
-console.log('✅ window.ADMIN_PASSWORD set:', window.ADMIN_PASSWORD);
+// Ensure ADMIN_PASSWORD is still set (redundant but safe)
+if (!window.ADMIN_PASSWORD) {
+    window.ADMIN_PASSWORD = 'Cochranfilms2@';
+    console.log('✅ window.ADMIN_PASSWORD re-set:', window.ADMIN_PASSWORD);
+}
 
 // Try to initialize immediately if Firebase is already available
 if (typeof firebase !== 'undefined') {
@@ -220,3 +223,8 @@ setTimeout(attemptFirebaseInit, 500);
 console.log('🔥 FirebaseConfig loaded and ready');
 console.log('🔍 Final check - window.FirebaseConfig:', window.FirebaseConfig);
 console.log('🔍 Final check - window.ADMIN_PASSWORD:', window.ADMIN_PASSWORD);
+
+// Export for module systems
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FirebaseConfig;
+}
