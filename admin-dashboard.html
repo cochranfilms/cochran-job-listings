@@ -425,9 +425,52 @@
                 padding: 2rem;
             }
         }
+        
+        /* Loading Indicator Styles */
+        .loading-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 178, 0, 0.3);
+            border-top: 4px solid #FFB200;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        .loading-text {
+            color: #FFB200;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <!-- Global Loading Indicator -->
+    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading...</div>
+    </div>
+    
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
         <div class="login-container">
@@ -571,6 +614,7 @@
                                 <button class="btn btn-secondary" onclick="exportUsersData()">📊 Export Users</button>
                                 <button class="btn btn-secondary" onclick="downloadUsersJSON()" id="downloadUsersBtn" style="display: none;">📥 Download Users</button>
                                 <button class="btn btn-secondary" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📥 Download Contracts</button>
+                                <button class="btn" onclick="forceRefreshUsers()" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">🔄 Force Refresh Users</button>
                             </div>
                             <div id="contractGenerationStatus"></div>
                         </div>
@@ -934,8 +978,23 @@
                 console.log('✅ Main dashboard auth override disabled - showing dashboard');
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
+                
+                // Force load data using main dashboard functions
+                console.log('🔄 Forcing main dashboard data load...');
                 loadData();
                 updateStats();
+                
+                // Ensure user display is updated
+                setTimeout(() => {
+                    if (window.users && Object.keys(window.users).length > 0) {
+                        console.log('✅ Users loaded, updating display...');
+                        displayUsers();
+                        displayArchivedUsers();
+                    } else {
+                        console.log('⚠️ No users found, attempting to reload...');
+                        loadUsers();
+                    }
+                }, 500);
             } else {
                 console.log('⚠️ Main dashboard auth override enabled - not showing dashboard');
             }
@@ -1466,6 +1525,12 @@
 
         // Load existing users
         async function loadUsers() {
+            // Prevent modular system from overriding this function
+            if (window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE === true) {
+                console.log('⚠️ Modular system trying to override user loading - blocked');
+                return;
+            }
+            
             console.log('🔄 Main dashboard loadUsers called');
             console.log('🔍 API_BASE:', API_BASE);
             console.log('🔍 Fetching from:', `${API_BASE}/api/users`);
@@ -1498,6 +1563,12 @@
 
         // Display active users (exclude archived/meta keys)
         function displayUsers() {
+            // Prevent modular system from overriding this function
+            if (window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE === true) {
+                console.log('⚠️ Modular system trying to override user display - blocked');
+                return;
+            }
+            
             console.log('🔄 Main dashboard displayUsers called');
             console.log('🔍 window.users:', window.users);
             console.log('🔍 User count:', Object.keys(window.users || {}).length);
@@ -2768,6 +2839,37 @@
             } catch (error) {
                 console.error('❌ Error refreshing data:', error);
                 showNotification('❌ Error refreshing data', 'error');
+            }
+        }
+        
+        // Force refresh users function - bypasses all modular system interference
+        async function forceRefreshUsers() {
+            try {
+                console.log('🔄 Force refreshing users data...');
+                
+                // Clear any modular system interference
+                window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
+                
+                // Force reload users from API
+                const response = await fetch(`${API_BASE}/api/users`);
+                if (response.ok) {
+                    const data = await response.json();
+                    window.users = data.users || {};
+                    console.log('✅ Force loaded users:', Object.keys(window.users).length);
+                    
+                    // Force update display
+                    displayUsers();
+                    displayArchivedUsers();
+                    updateStats();
+                    
+                    showNotification(`✅ Force refreshed users: ${Object.keys(window.users).length} found`, 'success');
+                } else {
+                    throw new Error(`API returned ${response.status}`);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error force refreshing users:', error);
+                showNotification('❌ Error force refreshing users', 'error');
             }
         }
         
@@ -4549,11 +4651,19 @@
                 console.log('✅ Modular system loaded successfully!');
                 updateModularSystemStatus('success', 'All modules loaded!');
                 
-                // Initialize the modular system
+                // Initialize the modular system but keep it separate
                 if (window.AdminDashboardApp) {
+                    // Set flags to prevent modular system from overriding main dashboard
+                    window.MAIN_DASHBOARD_AUTH_OVERRIDE = false;
+                    window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
+                    window.MAIN_DASHBOARD_JOB_DISPLAY_OVERRIDE = false;
+                    
                     await window.AdminDashboardApp.init();
                     console.log('✅ Modular system initialized!');
                     updateModularSystemStatus('success', 'System ready!');
+                    
+                    // Ensure main dashboard still has control
+                    console.log('✅ Main dashboard maintains control over user display');
                 }
                 
             } catch (error) {
@@ -4602,9 +4712,13 @@
                 console.log('⚠️ Admin Bank Viewer not available, using fallback');
             }
             
-                    // Load the modular system but don't let it override authentication
-        // Add a flag to prevent authentication override
+                    // Load the modular system but don't let it override authentication OR user display
+        // Add flags to prevent modular system from overriding main dashboard functionality
         window.MAIN_DASHBOARD_AUTH_OVERRIDE = false;
+        window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
+        window.MAIN_DASHBOARD_JOB_DISPLAY_OVERRIDE = false;
+        
+        // Load modular system but keep it separate from main dashboard
         loadModularSystem();
             
             // Auto-run tests after a short delay
