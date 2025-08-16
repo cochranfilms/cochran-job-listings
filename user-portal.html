@@ -2136,24 +2136,11 @@
             console.log('🔍 getSelectedJob debug:', {
                 currentUser: currentUser.name,
                 jobs: currentUser.jobs,
-                primaryJob: currentUser.primaryJob,
                 jobCount: jobs.length
             });
             
-            // Return the primary job or the first job
-            // Note: jobs may not have an 'id' field, so we need to check by key or use the first job
-            let selectedJob = null;
-            
-            if (currentUser.primaryJob && currentUser.jobs[currentUser.primaryJob]) {
-                // If primaryJob exists as a key in the jobs object, use that
-                selectedJob = currentUser.jobs[currentUser.primaryJob];
-                console.log('🎯 Found job by primaryJob key:', currentUser.primaryJob);
-            } else {
-                // Fallback to first job
-                selectedJob = jobs[0];
-                console.log('🎯 Using first job as fallback');
-            }
-            
+            // Simply return the first available job for a cleaner, simpler approach
+            const selectedJob = jobs[0];
             console.log('🎯 Selected job result:', selectedJob);
             
             return selectedJob;
@@ -3017,7 +3004,7 @@
             }
 
             // Get contract status from uploaded-contracts.json (job-specific if available)
-            const currentJobId = getSelectedJob() ? getSelectedJob().id : currentUser.primaryJob;
+            const currentJobId = getSelectedJob() ? getSelectedJob().id : Object.keys(currentUser.jobs || {})[0];
             const userContract = getUserContractStatus(currentUser.email, currentJobId);
             const contractStatus = userContract ? 'uploaded' : currentUser.contractStatus || 'pending';
             
@@ -3513,28 +3500,27 @@
 
             // Display the selected job's information
             const jobInfo = {
-                role: selectedJob.title || selectedJob.role || 'Assistant Position',
-                location: selectedJob.location || 'New York, NY',
-                projectStart: selectedJob.projectStart || selectedJob.date || '2026-10-10T20:00',
-                rate: selectedJob.rate || '$75',
+                role: selectedJob.title || selectedJob.role || 'Current Position',
+                location: selectedJob.location || 'Location TBD',
+                projectStart: selectedJob.projectStart || selectedJob.date || 'Start Date TBD',
+                rate: selectedJob.rate || 'Rate TBD',
                 status: jobProjectStatus.projectStatus || getJobStatus(selectedJob.projectStart),
                 paymentStatus: jobProjectStatus.paymentStatus || 'pending',
-                projectType: selectedJob.projectType || 'Assistant',
-                description: selectedJob.description || 'Professional Assistant position. Details to be provided.'
+                projectType: selectedJob.projectType || 'Project',
+                description: selectedJob.description || 'Project details to be provided.'
             };
 
             // Add job selector if user has multiple jobs
             const userJobsArray = Object.values(currentUser.jobs || {});
             const jobSelectorHTML = userJobsArray.length > 1 ? `
                 <div class="job-selector-header">
-                    <h3>Select Job to View Timeline:</h3>
+                    <h3>Your Jobs:</h3>
                     <div class="job-tabs">
                         ${userJobsArray.map((job, index) => `
                             <button class="job-tab ${index === selectedJobIndex ? 'active' : ''}" 
                                     onclick="selectJob(${index}, '${job.id}')">
                                 <i class="fas fa-${getJobIcon(job.projectType)}"></i>
-                                ${job.role}
-                                ${job.id === currentUser.primaryJob ? '<span class="primary-dot"></span>' : ''}
+                                ${job.title || job.role}
                             </button>
                         `).join('')}
                     </div>
@@ -4887,7 +4873,7 @@
             console.log('🎯 Requested job ID:', jobId);
             
             // Get job-specific contract
-            const currentJobId = getSelectedJob() ? getSelectedJob().id : currentUser.primaryJob;
+            const currentJobId = getSelectedJob() ? getSelectedJob().id : Object.keys(currentUser.jobs || {})[0];
             const userContract = getUserContractStatus(currentUser.email, currentJobId);
             
             console.log('📄 Found user contract:', userContract);
@@ -5066,7 +5052,7 @@
             console.log('📋 Uploaded contracts:', uploadedContracts);
             
             // Get job-specific contract (same logic as download function)
-            const currentJobId = getSelectedJob() ? getSelectedJob().id : currentUser.primaryJob;
+            const currentJobId = getSelectedJob() ? getSelectedJob().id : Object.keys(currentUser.jobs || {})[0];
             const userContract = getUserContractStatus(currentUser.email, currentJobId);
             
             console.log('📄 Found user contract:', userContract);
@@ -5538,7 +5524,7 @@
                 console.log('✅ Found flattened contract data on currentUser:', userContract);
                 
                 // Get job data for the specific job
-                const jobData = currentUser.jobs && currentUser.jobs[jobId || currentUser.primaryJob];
+                const jobData = currentUser.jobs && currentUser.jobs[jobId || Object.keys(currentUser.jobs || {})[0]];
                 
                 // Return contract data in the expected format
                 return {
@@ -5551,7 +5537,7 @@
                     role: jobData?.title || jobData?.role || currentUser.profile?.role,
                     rate: jobData?.pay || jobData?.rate || currentUser.profile?.rate,
                     location: jobData?.location || currentUser.profile?.location,
-                    jobId: jobId || currentUser.primaryJob || 'legacy-job',
+                    jobId: jobId || Object.keys(currentUser.jobs || {})[0] || 'legacy-job',
                     jobRole: jobData?.title || jobData?.role || currentUser.profile?.role,
                     jobDescription: jobData?.description || currentUser.profile?.description
                 };
