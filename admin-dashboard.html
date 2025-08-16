@@ -692,6 +692,7 @@
                                 <button class="btn btn-secondary" onclick="downloadJobJSON()" id="downloadJobBtn" style="display: none;">📥 Download Jobs</button>
                                 <button class="btn btn-secondary" onclick="showJobStats()">📈 Job Statistics</button>
                                 <button class="btn btn-secondary" onclick="bulkJobActions()">⚡ Bulk Actions</button>
+                                <button class="btn btn-secondary" onclick="debugJobsState()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">🐛 Debug State</button>
                             </div>
                         </div>
                         
@@ -707,6 +708,7 @@
                                         <option value="Cancelled">Cancelled</option>
                                     </select>
                                     <button class="btn btn-small" onclick="refreshJobs()">🔄 Refresh</button>
+                                <button class="btn btn-small" onclick="forceRefreshJobs()" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">🔄 Force Refresh</button>
                                 </div>
                             </div>
                             <div class="item-list" id="jobsList">
@@ -973,18 +975,17 @@
         // Show dashboard
         function showDashboard() {
             console.log('🔐 Main dashboard showDashboard called');
-            // Ensure main dashboard takes precedence
-            if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
-                console.log('✅ Main dashboard auth override disabled - showing dashboard');
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                
-                // Force load data using main dashboard functions
-                console.log('🔄 Forcing main dashboard data load...');
-                loadData();
-                updateStats();
-                
-                // Ensure user display is updated
+            
+            // Always show the main dashboard, regardless of modular system
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            // Force load data using main dashboard functions
+            console.log('🔄 Forcing main dashboard data load...');
+            loadData();
+            updateStats();
+            
+                            // Ensure user display is updated
                 setTimeout(() => {
                     if (window.users && Object.keys(window.users).length > 0) {
                         console.log('✅ Users loaded, updating display...');
@@ -995,9 +996,20 @@
                         loadUsers();
                     }
                 }, 500);
-            } else {
-                console.log('⚠️ Main dashboard auth override enabled - not showing dashboard');
-            }
+                
+                // Ensure jobs are displayed
+                setTimeout(() => {
+                    console.log('🔄 Ensuring jobs are displayed...');
+                    if (window.jobs && window.jobs.length > 0) {
+                        console.log('✅ Jobs already loaded, updating display...');
+                        displayJobs();
+                    } else {
+                        console.log('⚠️ No jobs found, attempting to reload...');
+                        loadJobs();
+                    }
+                }, 1000);
+            
+            console.log('✅ Main dashboard displayed successfully');
         }
 
         // Handle login with Firebase
@@ -1148,21 +1160,45 @@
         // Load existing jobs
         async function loadJobs() {
             try {
+                console.log('🔄 loadJobs called');
                 const response = await fetch(`${API_BASE}/api/jobs-data`);
                 if (response.ok) {
                     const data = await response.json();
                     window.jobs = data.jobs || [];
+                    console.log(`✅ Loaded ${window.jobs.length} jobs from API`);
+                } else {
+                    console.warn('⚠️ Jobs API response not ok:', response.status);
+                    window.jobs = [];
                 }
             } catch (error) {
-                console.log('No existing jobs file found, starting fresh');
+                console.error('❌ Error loading jobs:', error);
                 window.jobs = [];
             }
+            
+            console.log('🔄 Calling displayJobs after loading...');
             displayJobs();
+            console.log('✅ loadJobs complete');
         }
 
         // Display jobs
         function displayJobs() {
+            console.log('🔄 displayJobs called');
+            console.log('🔍 window.jobs:', window.jobs);
+            console.log('🔍 Jobs count:', window.jobs ? window.jobs.length : 'undefined');
+            
             const jobsList = document.getElementById('jobsList');
+            if (!jobsList) {
+                console.error('❌ jobsList element not found');
+                return;
+            }
+            
+            if (!window.jobs || !Array.isArray(window.jobs) || window.jobs.length === 0) {
+                console.log('⚠️ No jobs to display');
+                jobsList.innerHTML = '<div class="item-card"><p style="text-align: center; color: rgba(255,255,255,0.7);">No jobs available</p></div>';
+                return;
+            }
+            
+            console.log(`✅ Displaying ${window.jobs.length} jobs`);
             jobsList.innerHTML = '';
 
             window.jobs.forEach((job, index) => {
@@ -1170,7 +1206,8 @@
                     'Active': '#22c55e',
                     'Pending': '#f59e0b',
                     'Completed': '#3b82f6',
-                    'Cancelled': '#ef4444'
+                    'Cancelled': '#ef4444',
+                    'Inactive': '#6b7280'
                 };
                 
                 const jobDiv = document.createElement('div');
@@ -1206,6 +1243,8 @@
                 `;
                 jobsList.appendChild(jobDiv);
             });
+            
+            console.log('✅ Jobs display complete');
         }
 
         // Add/Edit job
@@ -1316,6 +1355,63 @@
         function refreshJobs() {
             displayJobs();
             showNotification('Jobs list refreshed', 'success');
+        }
+        
+        // Force refresh jobs with API reload
+        async function forceRefreshJobs() {
+            try {
+                console.log('🔄 Force refreshing jobs...');
+                showNotification('🔄 Force refreshing jobs...', 'info');
+                
+                // Clear any cached data
+                if (window.jobs) {
+                    console.log('🗑️ Clearing cached jobs data');
+                    window.jobs = [];
+                }
+                
+                // Force reload from API
+                await loadJobs();
+                
+                // Force display update
+                displayJobs();
+                updateStats();
+                
+                showNotification(`✅ Force refreshed jobs: ${window.jobs ? window.jobs.length : 0} found`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Error force refreshing jobs:', error);
+                showNotification('❌ Error force refreshing jobs', 'error');
+            }
+        }
+        
+        // Debug function to check current jobs state
+        function debugJobsState() {
+            console.log('🐛 DEBUG: Current Jobs State');
+            console.log('🔍 window.jobs:', window.jobs);
+            console.log('🔍 window.jobs type:', typeof window.jobs);
+            console.log('🔍 window.jobs length:', window.jobs ? window.jobs.length : 'undefined');
+            console.log('🔍 window.jobs isArray:', Array.isArray(window.jobs));
+            
+            if (window.jobs && Array.isArray(window.jobs)) {
+                console.log('🔍 Jobs details:');
+                window.jobs.forEach((job, index) => {
+                    console.log(`  Job ${index}:`, job);
+                });
+            }
+            
+            // Check DOM elements
+            const jobsList = document.getElementById('jobsList');
+            console.log('🔍 jobsList element:', jobsList);
+            console.log('🔍 jobsList innerHTML length:', jobsList ? jobsList.innerHTML.length : 'undefined');
+            
+            // Check stats
+            const activeJobsElement = document.getElementById('activeJobs');
+            console.log('🔍 activeJobs element:', activeJobsElement);
+            console.log('🔍 activeJobs textContent:', activeJobsElement ? activeJobsElement.textContent : 'undefined');
+            
+            // Show debug info in notification
+            const debugInfo = `Jobs: ${window.jobs ? window.jobs.length : 0}, Type: ${typeof window.jobs}, Array: ${Array.isArray(window.jobs)}`;
+            showNotification(`🐛 Debug: ${debugInfo}`, 'info');
         }
 
         // Update jobs-data.json on GitHub
@@ -4781,8 +4877,11 @@
         window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
         window.MAIN_DASHBOARD_JOB_DISPLAY_OVERRIDE = false;
         
-        // Load modular system but keep it separate from main dashboard
-        loadModularSystem();
+        // Load modular system but keep it completely separate from main dashboard
+        // This prevents any interference with the main dashboard functionality
+        setTimeout(() => {
+            loadModularSystem();
+        }, 1000); // Delay to ensure main dashboard is fully loaded first
             
             // Auto-run tests after a short delay
             setTimeout(() => {
