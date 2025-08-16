@@ -43,7 +43,9 @@
           }
         }
       },
-      "primaryJob": "Video Production"
+      "primaryJob": "Video Production",
+      "paymentMethod": "bank",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
@@ -68,7 +70,7 @@
   },
   "_metadata": {
     "dataSource": "github",
-    "fetchedAt": "2025-08-16T04:05:09.432Z",
+    "fetchedAt": "2025-08-16T04:18:32.194Z",
     "totalUsers": 1
   }
 }
