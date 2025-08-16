@@ -11,3 +11,4 @@ node_modules
 
 # EmailJS templates (organizational only; not served)
 emailjs-templates/
+.vercel

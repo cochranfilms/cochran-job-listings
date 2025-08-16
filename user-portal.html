@@ -88,12 +88,11 @@
                 if (user) {
                     console.log('✅ User authenticated:', user.email);
                     // User is signed in, check if they exist in our system
-                    // Check if user has email and is properly authenticated
-                    if (user.email) {
-                        console.log('✅ User has valid email, proceeding to check system...');
+                    // Only check if user is properly authenticated and not just a temporary state
+                    if (user.email && user.emailVerified !== false) {
                         checkUserInSystem(user.email);
                     } else {
-                        console.log('⚠️ User missing email, waiting for proper auth...');
+                        console.log('⚠️ User not fully authenticated, waiting for proper auth...');
                         showLoginScreen();
                     }
                 } else {
@@ -949,7 +948,17 @@
 
 
 
-
+        // Load freelancer data from JSON file
+        async function loadUsersData() {
+            try {
+                console.log('🔄 Loading users data...');
+                
+                // Check if we have cached data and it's recent (less than 2 minutes old for payment data)
+                const cachedData = sessionStorage.getItem('cachedUsersData');
+                const cacheTimestamp = sessionStorage.getItem('cachedUsersDataTimestamp');
+                const now = Date.now();
+                const cacheAge = now - (parseInt(cacheTimestamp) || 0);
+                const cacheValid = cacheAge < 30 * 1000; // 30 seconds for immediate updates
                 
                 if (cachedData && cacheValid) {
                     console.log('✅ Using cached users data (age:', Math.round(cacheAge / 1000), 'seconds)');
@@ -1162,6 +1171,14 @@
                 console.log('✅ Users data loaded from localStorage/fallback:', users.length, 'users');
                 console.log('🔍 Available users:', users.map(u => ({ name: u.name, email: u.email, jobCount: Object.keys(u.jobs || {}).length })));
                 
+                // Also merge with uploaded contracts for fallback data
+                await mergeUsersDataWithUploadedContracts();
+            } catch (error) {
+                console.error('❌ Error loading users data:', error);
+                users = [];
+            }
+        }
+
         // Merge users data with uploaded contracts to get the most up-to-date contract information
         async function mergeUsersDataWithUploadedContracts() {
             try {
@@ -6379,8 +6396,6 @@
             0%, 100% { opacity: 0.1; transform: scale(1); }
             50% { opacity: 0.3; transform: scale(1.05); }
         }
-
-        .subtitle-text {
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
             background: rgba(0, 0, 0, 0.3);
             padding: 8px 16px;
