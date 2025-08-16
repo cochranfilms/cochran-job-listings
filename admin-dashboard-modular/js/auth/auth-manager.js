@@ -12,12 +12,12 @@ const AuthManager = {
     },
 
     // Initialize authentication manager
-    init() {
+    async init() {
         try {
             console.log('🔐 Initializing Authentication Manager...');
             
-            // Setup authentication state observer
-            this.setupAuthStateObserver();
+            // Setup authentication state observer (async)
+            await this.setupAuthStateObserver();
             
             // Setup event listeners
             this.setupEventListeners();
@@ -33,15 +33,29 @@ const AuthManager = {
     },
 
     // Setup Firebase auth state observer
-    setupAuthStateObserver() {
-        if (!window.FirebaseConfig || !window.FirebaseConfig.auth) {
-            console.warn('⚠️ Firebase not available, waiting for initialization...');
-            return;
-        }
+    async setupAuthStateObserver() {
+        try {
+            if (!window.FirebaseConfig) {
+                console.warn('⚠️ Firebase configuration not available, waiting for initialization...');
+                return;
+            }
 
-        window.FirebaseConfig.auth.onAuthStateChanged((user) => {
-            this.handleAuthStateChange(user);
-        });
+            // Wait for Firebase to be initialized
+            await window.FirebaseConfig.waitForInit();
+            
+            if (!window.FirebaseConfig.auth) {
+                console.warn('⚠️ Firebase auth not available after initialization');
+                return;
+            }
+
+            window.FirebaseConfig.auth.onAuthStateChanged((user) => {
+                this.handleAuthStateChange(user);
+            });
+            
+            console.log('✅ Firebase auth state observer setup complete');
+        } catch (error) {
+            console.error('❌ Failed to setup Firebase auth state observer:', error);
+        }
     },
 
     // Handle authentication state changes
@@ -119,7 +133,15 @@ const AuthManager = {
     // Sign in with email and password
     async signIn(email, password) {
         try {
-            if (!window.FirebaseConfig || !window.FirebaseConfig.auth) {
+            // Wait for Firebase to be initialized
+            if (!window.FirebaseConfig) {
+                throw new Error('Firebase configuration not available');
+            }
+
+            // Ensure Firebase is initialized before proceeding
+            await window.FirebaseConfig.waitForInit();
+            
+            if (!window.FirebaseConfig.auth) {
                 throw new Error('Firebase authentication not available');
             }
 
@@ -276,3 +298,19 @@ const AuthManager = {
 
 // Export for global access
 window.AuthManager = AuthManager;
+
+// Auto-initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    AuthManager.init().catch(error => {
+        console.error('❌ AuthManager auto-initialization failed:', error);
+    });
+});
+
+// Also listen for Firebase initialization event
+document.addEventListener('firebase:initialized', () => {
+    if (AuthManager.state.isAuthenticated === false) {
+        AuthManager.setupAuthStateObserver().catch(error => {
+            console.error('❌ Failed to setup auth state observer after Firebase init:', error);
+        });
+    }
+});

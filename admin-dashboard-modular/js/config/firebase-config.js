@@ -17,46 +17,72 @@ const FirebaseConfig = {
     // Firebase instances
     app: null,
     auth: null,
+    isInitialized: false,
+    initPromise: null,
 
     // Admin users (emails that have admin access)
     adminUsers: [
         'cody@cochranfilms.com',
-        'info@cochranfilms.com',
+        'info@cochranfilms.com'
         // Add more admin emails as needed
     ],
 
     // Initialize Firebase
-    init() {
-        try {
-            console.log('🔥 Initializing Firebase for Admin Dashboard...');
-            
-            // Check if Firebase is available
-            if (typeof firebase === 'undefined') {
-                throw new Error('Firebase SDK not loaded');
-            }
-
-            // Initialize Firebase app
-            this.app = firebase.initializeApp(this.config);
-            
-            // Initialize Firebase Auth
-            this.auth = firebase.auth();
-            
-            // Set persistence to LOCAL for better user experience
-            this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                .then(() => {
-                    console.log('✅ Firebase persistence set to LOCAL');
-                })
-                .catch((error) => {
-                    console.warn('⚠️ Could not set Firebase persistence:', error);
-                });
-
-            console.log('✅ Firebase initialized successfully');
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Firebase initialization failed:', error);
-            return false;
+    async init() {
+        // If already initialized, return the existing promise
+        if (this.initPromise) {
+            return this.initPromise;
         }
+
+        this.initPromise = new Promise(async (resolve, reject) => {
+            try {
+                console.log('🔥 Initializing Firebase for Admin Dashboard...');
+                
+                // Check if Firebase is available
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK not loaded');
+                }
+
+                // Initialize Firebase app
+                this.app = firebase.initializeApp(this.config);
+                
+                // Initialize Firebase Auth
+                this.auth = firebase.auth();
+                
+                // Set persistence to LOCAL for better user experience
+                await this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+                console.log('✅ Firebase persistence set to LOCAL');
+
+                this.isInitialized = true;
+                console.log('✅ Firebase initialized successfully');
+                
+                // Trigger a custom event to notify other components
+                window.dispatchEvent(new CustomEvent('firebase:initialized'));
+                
+                resolve(true);
+                
+            } catch (error) {
+                console.error('❌ Firebase initialization failed:', error);
+                this.isInitialized = false;
+                reject(error);
+            }
+        });
+
+        return this.initPromise;
+    },
+
+    // Wait for Firebase to be initialized
+    async waitForInit() {
+        if (this.isInitialized) {
+            return true;
+        }
+        
+        if (this.initPromise) {
+            return this.initPromise;
+        }
+        
+        // If not started, start initialization
+        return this.init();
     },
 
     // Check if user has admin privileges
@@ -86,16 +112,29 @@ const FirebaseConfig = {
 
     // Check if Firebase is available
     isAvailable() {
-        return this.app !== null && this.auth !== null;
+        return this.isInitialized && this.app !== null && this.auth !== null;
     }
 };
 
 // Make FirebaseConfig available globally
 window.FirebaseConfig = FirebaseConfig;
 
-// Auto-initialize when DOM is ready
+// Try to initialize immediately if Firebase is already available
+if (typeof firebase !== 'undefined') {
+    console.log('🔥 Firebase SDK already available, initializing immediately...');
+    FirebaseConfig.init().catch(error => {
+        console.warn('⚠️ Immediate Firebase initialization failed, will retry on DOM ready:', error);
+    });
+}
+
+// Also initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    FirebaseConfig.init();
+    if (!FirebaseConfig.isInitialized) {
+        console.log('🔥 DOM ready, initializing Firebase...');
+        FirebaseConfig.init().catch(error => {
+            console.error('❌ Firebase initialization failed on DOM ready:', error);
+        });
+    }
 });
 
 console.log('🔥 FirebaseConfig loaded and ready');
