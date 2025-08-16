@@ -43,7 +43,9 @@
           }
         }
       },
-      "primaryJob": "Video Production"
+      "primaryJob": "Video Production",
+      "paymentMethod": "zelle",
+      "paymentStatus": "configured"
     }
   },
   "statusOptions": {
@@ -68,7 +70,7 @@
   },
   "_metadata": {
     "dataSource": "github",
-    "fetchedAt": "2025-08-16T10:08:08.152Z",
+    "fetchedAt": "2025-08-16T10:09:52.744Z",
     "totalUsers": 1
   }
 }
