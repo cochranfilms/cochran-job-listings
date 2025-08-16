@@ -255,8 +255,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-16",
       "signedDate": "2025-08-16"
+    },
+    {
+      "contractId": "CF-1755338879395-T4I98",
+      "freelancerName": "Bill Anderson",
+      "freelancerEmail": "codylcochran@icloud.com",
+      "role": "Video Production",
+      "rate": "$600",
+      "location": "Atlanta Area",
+      "fileName": "Bill Anderson.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-16T10:08:12.024Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Bill Anderson.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-16",
+      "signedDate": "2025-08-16"
     }
   ],
-  "lastUpdated": "2025-08-16T04:05:13.400Z",
-  "totalContracts": 16
+  "lastUpdated": "2025-08-16T10:08:12.024Z",
+  "totalContracts": 17
 }
