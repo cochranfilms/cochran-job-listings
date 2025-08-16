@@ -40,7 +40,7 @@
     { "source": "/user-portal", "destination": "/user-portal.html" },
     { "source": "/contract", "destination": "/contract.html" },
     { "source": "/admin", "destination": "/admin-dashboard.html" },
-    { "backend", "destination": "/backend.html" },
+    { "source": "/backend", "destination": "/backend.html" },
     { "source": "/read-me", "destination": "/Read-Me.html" },
     { "source": "/Read-Me", "destination": "/Read-Me.html" },
     { "source": "/read-me.html", "destination": "/Read-Me.html" },
