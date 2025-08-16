@@ -2894,7 +2894,6 @@
                 }
 
                 const emailParams = {
-                    to_email: userData.profile.email,
                     freelancer_name: userName || 'User',
                     role: userData.profile.role || jobTitle || 'Contractor',
                     location: userData.profile.location || 'Atlanta Area',
@@ -2912,10 +2911,7 @@
                         const response = await emailjs.send(
                             EMAILJS_CONFIG.serviceId,
                             EMAILJS_CONFIG.jobAcceptanceTemplateId,
-                            {
-                                ...emailParams,
-                                download_link: `/api/contracts?filename=${encodeURIComponent((userName||'').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim())}.pdf`
-                            }
+                            emailParams
                         );
                         
                         console.log('✅ Job acceptance email sent successfully:', response);
