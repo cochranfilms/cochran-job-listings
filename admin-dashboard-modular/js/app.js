@@ -100,6 +100,10 @@ const AdminDashboardApp = {
         console.log('🔐 Setting up authentication...');
         
         // Check if Firebase is available
+        console.log('🔍 Checking Firebase availability...');
+        console.log('🔍 window.FirebaseConfig:', window.FirebaseConfig);
+        console.log('🔍 window.ADMIN_PASSWORD:', window.ADMIN_PASSWORD);
+        
         if (window.FirebaseConfig && window.FirebaseConfig.auth) {
             console.log('🔥 Firebase authentication available - using Firebase');
             
@@ -120,6 +124,8 @@ const AdminDashboardApp = {
     // Setup fallback authentication for testing/development
     setupFallbackAuthentication() {
         console.log('🔑 Setting up fallback authentication...');
+        console.log('🔍 window.ADMIN_PASSWORD value:', window.ADMIN_PASSWORD);
+        console.log('🔍 window.ADMIN_PASSWORD type:', typeof window.ADMIN_PASSWORD);
         
         // Check if admin password is configured
         if (window.ADMIN_PASSWORD) {

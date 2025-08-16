@@ -167,6 +167,11 @@ const AuthManager = {
             }
 
             // Fallback authentication using ADMIN_PASSWORD
+            console.log('🔍 Attempting fallback authentication...');
+            console.log('🔍 window.ADMIN_PASSWORD:', window.ADMIN_PASSWORD);
+            console.log('🔍 password entered:', password);
+            console.log('🔍 password === window.ADMIN_PASSWORD:', password === window.ADMIN_PASSWORD);
+            
             if (window.ADMIN_PASSWORD && password === window.ADMIN_PASSWORD) {
                 // Check if email is in admin list or use a default admin email
                 const adminEmail = email || 'admin@cochranfilms.com';
