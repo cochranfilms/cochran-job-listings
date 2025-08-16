@@ -9,11 +9,9 @@ const FirestoreDataManager = {
     
     // Collections
     collections: {
-        users: 'users',
-        jobs: 'jobs',
-        dropdownOptions: 'dropdown-options',
-        contracts: 'contracts',
-        notifications: 'notifications'
+        users: 'users'
+        // Note: All data (jobs, contracts, etc.) is stored directly in user documents
+        // No separate collections for jobs, contracts, etc.
     },
 
     // Initialize the data manager
@@ -31,6 +29,9 @@ const FirestoreDataManager = {
             // Get Firestore instance
             this.db = window.FirebaseConfig.getFirestore();
             console.log('✅ Firestore Data Manager initialized');
+            
+            // Initialize collections if empty
+            await this.initializeCollectionsIfEmpty();
             
             // Set up real-time listeners
             this.setupRealtimeListeners();
@@ -56,22 +57,24 @@ const FirestoreDataManager = {
                 });
             
             // Listen for jobs changes
-            this.db.collection(this.collections.jobs)
-                .onSnapshot((snapshot) => {
-                    console.log('📋 Jobs collection updated:', snapshot.docChanges().length, 'changes');
-                    this.handleJobsUpdate(snapshot);
-                }, (error) => {
-                    console.error('❌ Jobs listener error:', error);
-                });
+            // This listener is no longer needed as jobs are in users
+            // this.db.collection(this.collections.jobs)
+            //     .onSnapshot((snapshot) => {
+            //         console.log('📋 Jobs collection updated:', snapshot.docChanges().length, 'changes');
+            //         this.handleJobsUpdate(snapshot);
+            //     }, (error) => {
+            //         console.error('❌ Jobs listener error:', error);
+            //     });
             
             // Listen for dropdown options changes
-            this.db.collection(this.collections.dropdownOptions)
-                .onSnapshot((snapshot) => {
-                    console.log('📋 Dropdown options updated:', snapshot.docChanges().length, 'changes');
-                    this.handleDropdownOptionsUpdate(snapshot);
-                }, (error) => {
-                    console.error('❌ Dropdown options listener error:', error);
-                });
+            // This listener is no longer needed as dropdown options are in users
+            // this.db.collection(this.collections.dropdownOptions)
+            //     .onSnapshot((snapshot) => {
+            //         console.log('📋 Dropdown options updated:', snapshot.docChanges().length, 'changes');
+            //         this.handleDropdownOptionsUpdate(snapshot);
+            //     }, (error) => {
+            //         console.error('❌ Dropdown options listener error:', error);
+            //     });
             
             console.log('✅ Real-time listeners set up successfully');
             
@@ -98,6 +101,7 @@ const FirestoreDataManager = {
     },
 
     // Handle jobs collection updates
+    // This function is no longer needed as jobs are in users
     handleJobsUpdate(snapshot) {
         const changes = snapshot.docChanges();
         changes.forEach((change) => {
@@ -115,6 +119,7 @@ const FirestoreDataManager = {
     },
 
     // Handle dropdown options updates
+    // This function is no longer needed as dropdown options are in users
     handleDropdownOptionsUpdate(snapshot) {
         const changes = snapshot.docChanges();
         changes.forEach((change) => {
@@ -147,14 +152,25 @@ const FirestoreDataManager = {
 
     // ==================== USERS OPERATIONS ====================
 
-    // Get all users
+    // Get all users with proper structure mapping
     async getUsers() {
         try {
             const snapshot = await this.db.collection(this.collections.users).get();
             const users = {};
             snapshot.forEach(doc => {
-                users[doc.id] = doc.data();
+                // Map Firestore document to your expected structure
+                const userData = doc.data();
+                users[doc.id] = {
+                    profile: userData.profile || {},
+                    contract: userData.contract || {},
+                    application: userData.application || {},
+                    jobs: userData.jobs || {},
+                    primaryJob: userData.primaryJob || '',
+                    paymentMethod: userData.paymentMethod || '',
+                    paymentStatus: userData.paymentStatus || ''
+                };
             });
+            console.log('✅ Retrieved users from Firestore:', Object.keys(users).length);
             return users;
         } catch (error) {
             console.error('❌ Error getting users:', error);
@@ -162,12 +178,22 @@ const FirestoreDataManager = {
         }
     },
 
-    // Get user by ID
+    // Get user by ID with proper structure
     async getUser(userId) {
         try {
             const doc = await this.db.collection(this.collections.users).doc(userId).get();
             if (doc.exists) {
-                return { id: doc.id, ...doc.data() };
+                const userData = doc.data();
+                return {
+                    id: doc.id,
+                    profile: userData.profile || {},
+                    contract: userData.contract || {},
+                    application: userData.application || {},
+                    jobs: userData.jobs || {},
+                    primaryJob: userData.primaryJob || '',
+                    paymentMethod: userData.paymentMethod || '',
+                    paymentStatus: userData.paymentStatus || ''
+                };
             }
             return null;
         } catch (error) {
@@ -176,10 +202,22 @@ const FirestoreDataManager = {
         }
     },
 
-    // Create or update user
+    // Create or update user with proper structure validation
     async setUser(userId, userData) {
         try {
-            await this.db.collection(this.collections.users).doc(userId).set(userData, { merge: true });
+            // Ensure the user data has the proper structure
+            const structuredUserData = {
+                profile: userData.profile || {},
+                contract: userData.contract || {},
+                application: userData.application || {},
+                jobs: userData.jobs || {},
+                primaryJob: userData.primaryJob || '',
+                paymentMethod: userData.paymentMethod || '',
+                paymentStatus: userData.paymentStatus || '',
+                lastUpdated: new Date().toISOString()
+            };
+            
+            await this.db.collection(this.collections.users).doc(userId).set(structuredUserData, { merge: true });
             console.log('✅ User saved to Firestore:', userId);
             return true;
         } catch (error) {
@@ -205,10 +243,15 @@ const FirestoreDataManager = {
     // Get all jobs
     async getJobs() {
         try {
-            const snapshot = await this.db.collection(this.collections.jobs).get();
+            const snapshot = await this.db.collection(this.collections.users).get(); // Changed to users collection
             const jobs = [];
             snapshot.forEach(doc => {
-                jobs.push({ id: doc.id, ...doc.data() });
+                const userData = doc.data();
+                if (userData.jobs) {
+                    for (const jobId in userData.jobs) {
+                        jobs.push({ id: jobId, ...userData.jobs[jobId] });
+                    }
+                }
             });
             return jobs;
         } catch (error) {
@@ -220,9 +263,10 @@ const FirestoreDataManager = {
     // Get job by ID
     async getJob(jobId) {
         try {
-            const doc = await this.db.collection(this.collections.jobs).doc(jobId).get();
+            const doc = await this.db.collection(this.collections.users).doc(jobId).get(); // Changed to users collection
             if (doc.exists) {
-                return { id: doc.id, ...doc.data() };
+                const userData = doc.data();
+                return userData.jobs ? userData.jobs[jobId] : null;
             }
             return null;
         } catch (error) {
@@ -234,7 +278,8 @@ const FirestoreDataManager = {
     // Create or update job
     async setJob(jobId, jobData) {
         try {
-            await this.db.collection(this.collections.jobs).doc(jobId).set(jobData, { merge: true });
+            const userRef = this.db.collection(this.collections.users).doc(jobId); // Changed to users collection
+            await userRef.set({ [`jobs.${jobId}`]: jobData }, { merge: true });
             console.log('✅ Job saved to Firestore:', jobId);
             return true;
         } catch (error) {
@@ -246,7 +291,8 @@ const FirestoreDataManager = {
     // Delete job
     async deleteJob(jobId) {
         try {
-            await this.db.collection(this.collections.jobs).doc(jobId).delete();
+            const userRef = this.db.collection(this.collections.users).doc(jobId); // Changed to users collection
+            await userRef.update({ [`jobs.${jobId}`]: null }); // Set to null to remove
             console.log('✅ Job deleted from Firestore:', jobId);
             return true;
         } catch (error) {
@@ -260,10 +306,15 @@ const FirestoreDataManager = {
     // Get all dropdown options
     async getDropdownOptions() {
         try {
-            const snapshot = await this.db.collection(this.collections.dropdownOptions).get();
+            const snapshot = await this.db.collection(this.collections.users).get(); // Changed to users collection
             const options = {};
             snapshot.forEach(doc => {
-                options[doc.id] = doc.data();
+                const userData = doc.data();
+                if (userData.dropdownOptions) {
+                    for (const category in userData.dropdownOptions) {
+                        options[category] = userData.dropdownOptions[category];
+                    }
+                }
             });
             return options;
         } catch (error) {
@@ -275,9 +326,10 @@ const FirestoreDataManager = {
     // Get specific dropdown option category
     async getDropdownOptionCategory(category) {
         try {
-            const doc = await this.db.collection(this.collections.dropdownOptions).doc(category).get();
+            const doc = await this.db.collection(this.collections.users).doc(category).get(); // Changed to users collection
             if (doc.exists) {
-                return doc.data();
+                const userData = doc.data();
+                return userData.dropdownOptions ? userData.dropdownOptions[category] : null;
             }
             return null;
         } catch (error) {
@@ -289,7 +341,8 @@ const FirestoreDataManager = {
     // Set dropdown option category
     async setDropdownOptionCategory(category, options) {
         try {
-            await this.db.collection(this.collections.dropdownOptions).doc(category).set(options);
+            const userRef = this.db.collection(this.collections.users).doc(category); // Changed to users collection
+            await userRef.set({ [`dropdownOptions.${category}`]: options }, { merge: true });
             console.log('✅ Dropdown options saved to Firestore:', category);
             return true;
         } catch (error) {
@@ -309,7 +362,9 @@ const FirestoreDataManager = {
             if (window.users && Object.keys(window.users).length > 0) {
                 console.log('👥 Migrating users to Firestore...');
                 for (const [userId, userData] of Object.entries(window.users)) {
-                    await this.setUser(userId, userData);
+                    if (userId !== '_archived' && !userId.startsWith('_')) {
+                        await this.setUser(userId, userData);
+                    }
                 }
                 console.log('✅ Users migration complete');
             }
@@ -338,6 +393,49 @@ const FirestoreDataManager = {
             
         } catch (error) {
             console.error('❌ Error during data migration:', error);
+            throw error;
+        }
+    },
+
+    // Sync specific user data to Firestore
+    async syncUserToFirestore(userId, userData) {
+        try {
+            console.log(`🔄 Syncing user ${userId} to Firestore...`);
+            await this.setUser(userId, userData);
+            console.log(`✅ User ${userId} synced to Firestore`);
+            return true;
+        } catch (error) {
+            console.error(`❌ Error syncing user ${userId} to Firestore:`, error);
+            throw error;
+        }
+    },
+
+    // Sync all current data to Firestore
+    async syncAllDataToFirestore() {
+        try {
+            console.log('🔄 Syncing all current data to Firestore...');
+            
+            // Sync users
+            if (window.users) {
+                for (const [userId, userData] of Object.entries(window.users)) {
+                    if (userId !== '_archived' && !userId.startsWith('_')) {
+                        await this.syncUserToFirestore(userId, userData);
+                    }
+                }
+            }
+            
+            // Sync jobs
+            if (window.jobs) {
+                for (const job of window.jobs) {
+                    const jobId = `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    await this.setJob(jobId, job);
+                }
+            }
+            
+            console.log('✅ All data synced to Firestore');
+            return true;
+        } catch (error) {
+            console.error('❌ Error syncing all data to Firestore:', error);
             throw error;
         }
     },
@@ -382,6 +480,102 @@ const FirestoreDataManager = {
     // Check if Firestore is available
     isAvailable() {
         return this.db !== null;
+    },
+
+    // Check if collection has data
+    async hasData(collectionName) {
+        try {
+            if (!this.db) return false;
+            const snapshot = await this.db.collection(collectionName).limit(1).get();
+            return !snapshot.empty;
+        } catch (error) {
+            console.error(`❌ Error checking ${collectionName} data:`, error);
+            return false;
+        }
+    },
+
+    // Get data with automatic fallback
+    async getDataWithFallback(collectionName, fallbackFunction) {
+        try {
+            // Try Firestore first
+            if (this.isAvailable() && await this.hasData(collectionName)) {
+                console.log(`🔥 Getting ${collectionName} from Firestore...`);
+                switch (collectionName) {
+                    case 'users':
+                        return await this.getUsers();
+                    case 'jobs':
+                        // Jobs are extracted from users collection
+                        const users = await this.getUsers();
+                        const jobs = [];
+                        Object.values(users).forEach(user => {
+                            if (user.jobs) {
+                                Object.values(user.jobs).forEach(job => {
+                                    jobs.push(job);
+                                });
+                            }
+                        });
+                        return jobs;
+                    case 'dropdownOptions':
+                        // Dropdown options are extracted from users collection
+                        const allUsers = await this.getUsers();
+                        const options = {};
+                        Object.values(allUsers).forEach(user => {
+                            if (user.dropdownOptions) {
+                                Object.assign(options, user.dropdownOptions);
+                            }
+                        });
+                        return options;
+                    default:
+                        throw new Error(`Unknown collection: ${collectionName}`);
+                }
+            } else {
+                // Fallback to JSON API
+                console.log(`📁 Firestore ${collectionName} empty, using JSON API fallback...`);
+                if (typeof fallbackFunction === 'function') {
+                    return await fallbackFunction();
+                }
+                return null;
+            }
+        } catch (error) {
+            console.error(`❌ Error getting ${collectionName} data:`, error);
+            // Fallback to JSON API on error
+            console.log(`📁 Falling back to JSON API for ${collectionName}...`);
+            if (typeof fallbackFunction === 'function') {
+                return await fallbackFunction();
+            }
+            return null;
+        }
+    },
+
+    // Initialize collections with default data if empty
+    async initializeCollectionsIfEmpty() {
+        try {
+            console.log('🔄 Checking if collections need initialization...');
+            
+            // Check users collection
+            if (!(await this.hasData('users'))) {
+                console.log('👥 Users collection empty, initializing...');
+                // You can add default user data here if needed
+            }
+            
+            // Check jobs collection
+            // This check is no longer needed as jobs are in users
+            // if (!(await this.hasData('jobs'))) {
+            //     console.log('📋 Jobs collection empty, initializing...');
+            //     // You can add default job data here if needed
+            // }
+            
+            // Check dropdown options collection
+            // This check is no longer needed as dropdown options are in users
+            // if (!(await this.hasData('dropdownOptions'))) {
+            //     console.log('📋 Dropdown options collection empty, initializing...');
+            //     // You can add default dropdown options here if needed
+            // }
+            
+            console.log('✅ Collections initialization check complete');
+        } catch (error) {
+            console.error('❌ Error initializing collections:', error);
+        }
     },
 
     // Get collection reference

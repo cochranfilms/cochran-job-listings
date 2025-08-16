@@ -132,6 +132,31 @@ const FirebaseConfig = {
         return this.auth.currentUser;
     },
 
+    // Wait for Firebase to be initialized
+    async waitForInit() {
+        console.log('⏳ waitForInit called, checking initialization status...');
+        console.log('🔍 Current state:', {
+            isInitialized: this.isInitialized,
+            hasInitPromise: !!this.initPromise,
+            hasApp: !!this.app,
+            hasAuth: !!this.auth
+        });
+        
+        if (this.isInitialized) {
+            console.log('✅ Firebase already initialized, returning immediately');
+            return true;
+        }
+        
+        if (this.initPromise) {
+            console.log('⏳ Firebase initialization in progress, waiting for promise...');
+            return this.initPromise;
+        }
+        
+        console.log('🚀 Starting Firebase initialization...');
+        // If not started, start initialization
+        return this.init();
+    },
+
     // Check if user has admin privileges
     isAdminUser(email) {
         if (!email) return false;

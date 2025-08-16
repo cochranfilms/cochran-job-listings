@@ -33,6 +33,8 @@
     <!-- Firebase Configuration and Data Manager -->
     <script src="firebase-config.js"></script>
     <script src="firestore-data-manager.js"></script>
+    <script src="firestore-integration.js"></script>
+    <script src="migrate-to-firestore.js"></script>
     
     <!-- Secure Bank Storage -->
     <script src="secure-bank-storage.js"></script>
@@ -649,6 +651,8 @@
                                 <button class="btn btn-secondary" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📥 Download Contracts</button>
                                 <button class="btn" onclick="forceRefreshUsers()" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">🔄 Force Refresh Users</button>
                                 <button class="btn" onclick="migrateToFirestore()" style="background: linear-gradient(135deg, #10b981, #059669);">🔥 Migrate to Firestore</button>
+                                <button class="btn" onclick="runFullMigration()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">🚀 Full Migration</button>
+                                <button class="btn" onclick="verifyMigration()" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">🔍 Verify Migration</button>
                             </div>
                             <div id="contractGenerationStatus"></div>
                         </div>
@@ -1196,18 +1200,43 @@
                     await initializeFirebase();
                 }
                 
-                // Try to load from Firestore first
+                // Try to load from Firestore first with fallback
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                    console.log('🔥 Loading data from Firestore...');
-                    await window.FirestoreDataManager.syncFromFirestore();
-                    console.log('✅ Data loaded from Firestore');
+                    console.log('🔥 Loading data from Firestore with fallback...');
                     
-                    // Wait a moment for data to be fully synced
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Load users with fallback
+                    window.users = await window.FirestoreDataManager.getDataWithFallback('users', async () => {
+                        console.log('📁 Falling back to users JSON API...');
+                        const response = await fetch(`${API_BASE}/api/users`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            return data.users || {};
+                        }
+                        return {};
+                    });
                     
-                    // Force reload from JSON APIs to ensure data is in window.users and window.jobs
-                    console.log('🔄 Ensuring data is available in window objects...');
-                    await loadDataFromJSON();
+                    // Load jobs with fallback (extracted from users)
+                    window.jobs = await window.FirestoreDataManager.getDataWithFallback('jobs', async () => {
+                        console.log('📁 Falling back to jobs JSON API...');
+                        const response = await fetch(`${API_BASE}/api/jobs-data`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            return data.jobs || [];
+                        }
+                        return [];
+                    });
+                    
+                    // Load dropdown options with fallback (extracted from users)
+                    window.dropdownOptions = await window.FirestoreDataManager.getDataWithFallback('dropdownOptions', async () => {
+                        console.log('📁 Falling back to dropdown options JSON API...');
+                        const response = await fetch(`${API_BASE}/api/dropdown-options`);
+                        if (response.ok) {
+                            return await response.json();
+                        }
+                        return {};
+                    });
+                    
+                    console.log('✅ Data loaded from Firestore with fallbacks');
                 } else {
                     console.log('📁 Firestore not available, loading from JSON APIs...');
                     await loadDataFromJSON();
@@ -2676,13 +2705,11 @@
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     try {
                         console.log('🔥 Saving users to Firestore...');
-                        await window.FirestoreDataManager.setUser('users', usersData);
-                        console.log('✅ Users saved to Firestore');
                         
-                        // Also save individual user documents
+                        // Save individual user documents to Firestore
                         for (const [userId, userData] of Object.entries(window.users || {})) {
                             if (userId !== '_archived') {
-                                await window.FirestoreDataManager.setUser(userId, userData);
+                                await window.FirestoreDataManager.syncUserToFirestore(userId, userData);
                             }
                         }
                         console.log('✅ Individual users saved to Firestore');
@@ -3304,6 +3331,52 @@
             } catch (error) {
                 console.error('❌ Error during Firestore migration:', error);
                 showNotification(`❌ Migration failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Run full migration using the migration script
+        async function runFullMigration() {
+            try {
+                if (!confirm('This will run a complete migration of all data to Firestore. Continue?')) {
+                    return;
+                }
+                
+                showNotification('🚀 Starting full migration...', 'info');
+                
+                if (window.FirestoreMigration) {
+                    const results = await window.FirestoreMigration.runFullMigration();
+                    showNotification(`🎉 Full migration complete! Users: ${results.users.migratedCount}, Jobs: ${results.jobs.migratedCount}, Options: ${results.dropdownOptions.migratedCount}`, 'success');
+                } else {
+                    showNotification('❌ Migration script not available', 'error');
+                }
+                
+            } catch (error) {
+                console.error('❌ Full migration failed:', error);
+                showNotification(`❌ Full migration failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Verify migration
+        async function verifyMigration() {
+            try {
+                showNotification('🔍 Verifying migration...', 'info');
+                
+                if (window.FirestoreMigration) {
+                    const verification = await window.FirestoreMigration.verifyMigration();
+                    const allPassed = Object.values(verification).every(v => v === true);
+                    
+                    if (allPassed) {
+                        showNotification('✅ All data verified in Firestore!', 'success');
+                    } else {
+                        showNotification('⚠️ Some data verification failed. Check console for details.', 'warning');
+                    }
+                } else {
+                    showNotification('❌ Migration script not available', 'error');
+                }
+                
+            } catch (error) {
+                console.error('❌ Migration verification failed:', error);
+                showNotification(`❌ Verification failed: ${error.message}`, 'error');
             }
         }
         
