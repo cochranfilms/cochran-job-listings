@@ -1,8 +1,8 @@
 {
   "users": {
-    "Erica Cochran": {
+    "Cody Cochran": {
       "profile": {
-        "email": "dedejackson727@gmail.com",
+        "email": "codylcochran@icloud.com",
         "location": "Atlanta Area",
         "role": "Video Production",
         "projectType": "",
@@ -13,15 +13,15 @@
       },
       "application": {
         "status": "approved",
-        "submittedAt": "2025-08-16T03:26:27.125Z",
+        "submittedAt": "2025-08-16T03:49:56.272Z",
         "jobTitle": "Video Production",
         "eventDate": "2025-10-10",
         "pay": "$600",
         "description": "This event will be for testing purposes only. If you are looking to work with Cochran Films, we are excited and look forward to meeting all of you.",
         "phone": "4704202169",
-        "portfolio": "https://www.cochranfilms.com",
+        "portfolio": "https://pitch.cochranfilms.com",
         "source": "apply-html",
-        "updatedAt": "2025-08-16T03:28:08.605Z"
+        "updatedAt": "2025-08-16T03:51:06.412Z"
       },
       "jobs": {
         "Video Production": {
