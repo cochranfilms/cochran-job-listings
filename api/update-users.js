@@ -1,5 +1,48 @@
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+
+// Helper function to make HTTPS requests
+function makeHttpsRequest(url, options, data = null) {
+    return new Promise((resolve, reject) => {
+        const req = https.request(url, options, (res) => {
+            let responseData = '';
+            
+            res.on('data', (chunk) => {
+                responseData += chunk;
+            });
+            
+            res.on('end', () => {
+                try {
+                    const parsedData = JSON.parse(responseData);
+                    resolve({
+                        status: res.statusCode,
+                        ok: res.statusCode >= 200 && res.statusCode < 300,
+                        json: () => Promise.resolve(parsedData),
+                        text: () => Promise.resolve(responseData)
+                    });
+                } catch (e) {
+                    resolve({
+                        status: res.statusCode,
+                        ok: res.statusCode >= 200 && res.statusCode < 300,
+                        json: () => Promise.resolve({}),
+                        text: () => Promise.resolve(responseData)
+                    });
+                }
+            });
+        });
+        
+        req.on('error', (error) => {
+            reject(error);
+        });
+        
+        if (data) {
+            req.write(data);
+        }
+        
+        req.end();
+    });
+}
 
 module.exports = async (req, res) => {
     try {
@@ -65,14 +108,17 @@ module.exports = async (req, res) => {
                 console.log('🔄 Attempting to update GitHub...');
                 
                 // Get current file SHA from GitHub
-                const getResponse = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/users.json?ref=${GITHUB_CONFIG.branch}`, {
+                const getUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/users.json?ref=${GITHUB_CONFIG.branch}`;
+                const getOptions = {
                     method: 'GET',
                     headers: {
                         'Authorization': `token ${GITHUB_CONFIG.token}`,
                         'Accept': 'application/vnd.github.v3+json',
                         'User-Agent': 'Cochran-Films-Users-API'
                     }
-                });
+                };
+                
+                const getResponse = await makeHttpsRequest(getUrl, getOptions);
                 
                 let sha = null;
                 if (getResponse.ok) {
@@ -82,21 +128,25 @@ module.exports = async (req, res) => {
                 }
                 
                 // Update file on GitHub
-                const updateResponse = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/users.json`, {
+                const updateUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/users.json`;
+                const updateOptions = {
                     method: 'PUT',
                     headers: {
                         'Authorization': `token ${GITHUB_CONFIG.token}`,
                         'Accept': 'application/vnd.github.v3+json',
                         'Content-Type': 'application/json',
                         'User-Agent': 'Cochran-Films-Users-API'
-                    },
-                    body: JSON.stringify({
-                        message: `Update users.json - ${action || 'update'} ${userName || ''} - ${new Date().toISOString()}`,
-                        content: Buffer.from(JSON.stringify(usersData, null, 2)).toString('base64'),
-                        sha: sha,
-                        branch: GITHUB_CONFIG.branch
-                    })
+                    }
+                };
+                
+                const updateData = JSON.stringify({
+                    message: `Update users.json - ${action || 'update'} ${userName || ''} - ${new Date().toISOString()}`,
+                    content: Buffer.from(JSON.stringify(usersData, null, 2)).toString('base64'),
+                    sha: sha,
+                    branch: GITHUB_CONFIG.branch
                 });
+                
+                const updateResponse = await makeHttpsRequest(updateUrl, updateOptions, updateData);
                 
                 if (updateResponse.ok) {
                     const result = await updateResponse.json();
