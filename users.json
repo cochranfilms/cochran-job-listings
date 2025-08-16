@@ -1,5 +1,51 @@
 {
-  "users": {},
+  "users": {
+    "Cody Cochran": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "location": "Atlanta Area",
+        "role": "Test Job Title",
+        "projectType": "",
+        "approvedDate": "2025-08-16"
+      },
+      "contract": {
+        "contractStatus": "uploaded",
+        "contractSignedDate": "8/15/2025, 9:40:49 PM",
+        "contractUploadedDate": "2025-08-16T01:40:58.526Z",
+        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Cody%20Cochran.pdf",
+        "contractId": "CF-1755308449430-LWJND"
+      },
+      "application": {
+        "status": "approved",
+        "submittedAt": "2025-08-16T01:26:29.693Z",
+        "jobTitle": "Test Job Title",
+        "eventDate": "2025-10-12",
+        "pay": "$400",
+        "description": "Test Job Description",
+        "phone": "4704202169",
+        "portfolio": "https://www.cochranfilms.com",
+        "source": "apply-html",
+        "updatedAt": "2025-08-16T01:28:05.246Z"
+      },
+      "jobs": {
+        "Test Job Title": {
+          "title": "Test Job Title",
+          "date": "2025-10-12",
+          "location": "Atlanta Area",
+          "rate": "$400",
+          "description": "Test Job Description",
+          "type": "Event Coverage",
+          "status": "upcoming",
+          "listingStatus": "Active",
+          "jobRef": {
+            "source": "jobs-data",
+            "index": 2
+          }
+        }
+      },
+      "primaryJob": "Test Job Title"
+    }
+  },
   "statusOptions": {
     "projectStatus": [
       "upcoming",
@@ -14,10 +60,15 @@
       "overdue"
     ]
   },
-  "lastUpdated": "2025-08-15",
-  "totalUsers": 0,
+  "lastUpdated": "2025-08-16",
+  "totalUsers": 1,
   "system": {
     "totalReviews": 0,
-    "lastUpdated": "2025-08-15"
+    "lastUpdated": "2025-08-16"
+  },
+  "_metadata": {
+    "dataSource": "github",
+    "fetchedAt": "2025-08-16T01:40:58.540Z",
+    "totalUsers": 1
   }
 }

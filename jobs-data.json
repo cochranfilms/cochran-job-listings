@@ -23,9 +23,9 @@
       "pay": "$400",
       "type": "Event Coverage",
       "description": "Test Job Description",
-      "status": "Active"
+      "status": "Inactive"
     }
   ],
-  "lastUpdated": "2025-08-13",
+  "lastUpdated": "2025-08-16",
   "totalJobs": 3
 }
