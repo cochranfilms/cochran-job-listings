@@ -949,17 +949,7 @@
 
 
 
-        // Load freelancer data from JSON file
-        async function loadUsersData() {
-            try {
-                console.log('🔄 Loading users data...');
-                
-                // Check if we have cached data and it's recent (less than 2 minutes old for payment data)
-                const cachedData = sessionStorage.getItem('cachedUsersData');
-                const cacheTimestamp = sessionStorage.getItem('cachedUsersDataTimestamp');
-                const now = Date.now();
-                const cacheAge = now - (parseInt(cacheTimestamp) || 0);
-                const cacheValid = cacheAge < 30 * 1000; // 30 seconds for immediate updates
+
                 
                 if (cachedData && cacheValid) {
                     console.log('✅ Using cached users data (age:', Math.round(cacheAge / 1000), 'seconds)');
@@ -1172,14 +1162,6 @@
                 console.log('✅ Users data loaded from localStorage/fallback:', users.length, 'users');
                 console.log('🔍 Available users:', users.map(u => ({ name: u.name, email: u.email, jobCount: Object.keys(u.jobs || {}).length })));
                 
-                // Also merge with uploaded contracts for fallback data
-                await mergeUsersDataWithUploadedContracts();
-            } catch (error) {
-                console.error('❌ Error loading users data:', error);
-                users = [];
-            }
-        }
-
         // Merge users data with uploaded contracts to get the most up-to-date contract information
         async function mergeUsersDataWithUploadedContracts() {
             try {
