@@ -742,9 +742,9 @@
         const EMAILJS_CONFIG = {
             publicKey: 'p4pF3OWvh-DXtae4c',
             serviceId: 'service_t11yvru',
-            // Template IDs must exist in your EmailJS account
-            jobAcceptanceTemplateId: 'template_job_acceptance',
-            jobClosedTemplateId: 'template_jobs_closed'
+            // Use the working template that exists in your EmailJS account
+            jobAcceptanceTemplateId: 'template_aluwel1', // Changed from 'template_job_acceptance' to working template
+            jobClosedTemplateId: 'template_aluwel1' // Use same working template for now
         };
 
         // Initialize EmailJS
@@ -2885,7 +2885,14 @@
                     });
                 }
 
+                // Map our data to the working template_aluwel1 format
                 const emailParams = {
+                    // template_aluwel1 expects these specific variable names
+                    name: userName || 'User',
+                    email: userData.profile.email || 'user@example.com',
+                    phone: 'Not provided',
+                    notes: `Job Acceptance - Role: ${userData.profile.role || jobTitle || 'Contractor'}, Location: ${userData.profile.location || 'Atlanta Area'}, Rate: ${rate}, Project Start: ${projectStart}, Job: ${jobTitle}`,
+                    // Add our custom fields for the job acceptance context
                     freelancer_name: userName || 'User',
                     role: userData.profile.role || jobTitle || 'Contractor',
                     location: userData.profile.location || 'Atlanta Area',
@@ -2896,10 +2903,14 @@
                 };
 
                 console.log('📧 Sending job acceptance email to:', userData.profile.email);
+                console.log('📧 Using template:', EMAILJS_CONFIG.jobAcceptanceTemplateId);
+                console.log('📧 Email parameters:', emailParams);
 
                 // Send email using EmailJS
                 if (typeof emailjs !== 'undefined') {
                     try {
+                        console.log('🔄 Attempting to send email via EmailJS...');
+                        
                         const response = await emailjs.send(
                             EMAILJS_CONFIG.serviceId,
                             EMAILJS_CONFIG.jobAcceptanceTemplateId,
@@ -2915,12 +2926,33 @@
                         }, 1000);
                         
                     } catch (emailError) {
-                        console.error('❌ EmailJS error:', emailError);
-                        showNotification(`⚠️ Email failed: ${emailError.message}`, 'error');
+                        console.error('❌ EmailJS error details:', {
+                            message: emailError.message,
+                            status: emailError.status,
+                            response: emailError.response,
+                            stack: emailError.stack
+                        });
+                        
+                        // Provide more specific error information
+                        let errorMessage = 'Email failed';
+                        if (emailError.status === 403) {
+                            errorMessage = 'EmailJS access denied (403) - check domain restrictions and service configuration';
+                        } else if (emailError.status === 400) {
+                            errorMessage = 'EmailJS bad request (400) - check template variables and service configuration';
+                        } else if (emailError.status === 401) {
+                            errorMessage = 'EmailJS unauthorized (401) - check service authentication';
+                        } else {
+                            errorMessage = `EmailJS error: ${emailError.message}`;
+                        }
+                        
+                        showNotification(`⚠️ ${errorMessage}`, 'error');
+                        
+                        // Log detailed error for debugging
+                        console.error('❌ Full EmailJS error object:', emailError);
                     }
                     
                 } else {
-                    console.warn('⚠️ EmailJS not available, skipping email send');
+                    console.warn('⚠️ EmailJS library not loaded');
                     showNotification('✅ User saved successfully!\n\n⚠️ EmailJS not configured - please set up EmailJS to send automatic job acceptance emails.', 'warning');
                 }
                 
@@ -3037,24 +3069,24 @@
                 const jobTitle = userData?.application?.jobTitle || job?.title || 'a Cochran Films role';
                 const projectStart = job?.date || userData?.profile?.projectDate || 'TBD';
 
-                // Send EmailJS template for jobs closed (template_jobs_closed)
+                // Send EmailJS template for jobs closed (using working template_aluwel1)
                 if (typeof emailjs !== 'undefined') {
                     const params = {
-                        // Match template variable names used in Jobs-Closed.html
-                        to_email: userData.profile.email,
+                        // Map to template_aluwel1 variables
+                        name: userName,
+                        email: userData.profile.email,
+                        phone: 'Not provided',
+                        notes: `Job Application Denied - Job: ${jobTitle}, Project Start: ${projectStart}. We appreciate your interest in working with Cochran Films.`,
+                        // Additional context for denial
                         freelancer_name: userName,
                         job: jobTitle,
-                        project_start: projectStart,
-                        // Helpful extras commonly used by EmailJS
-                        to_name: userName,
-                        reply_to: 'info@cochranfilms.com',
-                        from_name: 'Cochran Films Admin'
+                        project_start: projectStart
                     };
                     try {
                         console.log('📧 Sending denial email via EmailJS:', {
                             service: EMAILJS_CONFIG.serviceId,
                             template: EMAILJS_CONFIG.jobClosedTemplateId,
-                            to: params.to_email,
+                            to: params.email,
                             job: params.job,
                             project_start: params.project_start
                         });
