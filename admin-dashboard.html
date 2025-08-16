@@ -2034,45 +2034,37 @@
                     console.log(`🗑️ Removed ${userName} from active users`);
                 }
 
-                // 4. Persist to server using the more reliable update-users API
-                console.log('🔄 Persisting changes to server...');
-                const updateResponse = await fetch(`${API_BASE}/api/update-users`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        users: window.users,
-                        action: 'hard-delete',
-                        userName: userName
-                    })
-                });
+                // 4. Persist to GitHub using the working GitHub file update system
+                console.log('🔄 Persisting changes to GitHub...');
+                try {
+                    const ok = await updateUsersOnGitHub('hard-delete', userName);
+                    if (ok) {
+                        console.log('✅ Changes persisted to GitHub successfully');
+                        
+                        // 5. Refresh display and stats
+                        displayUsers();
+                        if (typeof displayArchivedUsers === 'function') {
+                            displayArchivedUsers();
+                        }
+                        updateStats();
 
-                if (updateResponse.ok) {
-                    const result = await updateResponse.json();
-                    console.log('✅ Changes persisted to server successfully:', result);
-                    
-                    // 5. Refresh display and stats
-                    displayUsers();
-                    if (typeof displayArchivedUsers === 'function') {
-                        displayArchivedUsers();
+                        showNotification(`🗑️ Deleted ${userName} permanently and saved to GitHub`, 'success');
+                        
+                        // Show detailed success message
+                        showAdminNotification(
+                            'User Deleted Successfully',
+                            `✅ ${userName} has been permanently deleted and changes saved to GitHub`,
+                            'success',
+                            { action: 'user_deleted', userName: userName }
+                        );
+                        
+                        return true;
+                    } else {
+                        throw new Error('Failed to update users.json on GitHub');
                     }
-                    updateStats();
-
-                    showNotification(`🗑️ Deleted ${userName} permanently and saved to server`, 'success');
-                    
-                    // Show detailed success message
-                    showAdminNotification(
-                        'User Deleted Successfully',
-                        `✅ ${userName} has been permanently deleted and changes saved to server`,
-                        'success',
-                        { action: 'user_deleted', userName: userName }
-                    );
-                    
-                    return true;
-                } else {
-                    const errorData = await updateResponse.json().catch(() => ({}));
-                    throw new Error(`Server update failed: ${errorData.error || updateResponse.statusText}`);
+                } catch (updateError) {
+                    console.error('❌ Error updating GitHub:', updateError);
+                    throw new Error(`GitHub update failed: ${updateError.message}`);
                 }
 
             } catch (error) {
