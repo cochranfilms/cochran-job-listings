@@ -539,3 +539,36 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
 - Change: Added a final override to enforce `#loginScreen { position: fixed; inset: 0; display: grid; place-items: center; }` and constrain `.login-container` width.
 - Purpose: Prevent late-arriving styles/JS from shifting the login panel left.
 - Cleanup guidance: If future layout systems add grids/rows at the root, ensure `#loginScreen` remains isolated and loaded last. Remove any duplicated `.login-screen` rules in inline `<style>` blocks when consolidating.
+
+---
+
+## Contracts API Endpoint Enhancement (2025-01-09)
+
+### API Behavior Cleanup
+- **Dual-Purpose Handling**: Enhanced GET endpoint to handle both contract listing and PDF serving
+- **Error Handling**: Added proper error handling for missing contract data files
+- **Backward Compatibility**: Maintained existing PDF download functionality
+- **Data Validation**: Integrated with uploaded-contracts.json for consistent data structure
+
+### Code Cleanup
+- **Enhanced GET Handler**: Modified to gracefully handle both parameter scenarios
+- **File System Integration**: Seamless integration with existing contract data
+- **Logging Enhancement**: Added comprehensive logging for debugging and monitoring
+- **Response Format**: Standardized response format for contract listings
+
+### Maintenance Procedures
+- **Daily**: Verify API endpoint availability and response times
+- **Weekly**: Check contract data integrity and file consistency  
+- **Monthly**: Review API logs and performance metrics
+
+### Cleanup Commands
+```bash
+# Test contracts API functionality
+curl http://localhost:8000/api/contracts
+
+# Validate PDF serving
+curl "http://localhost:8000/api/contracts?filename=test.pdf"
+
+# Check API health
+curl http://localhost:8000/api/health
+```

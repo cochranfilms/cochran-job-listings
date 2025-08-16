@@ -29,8 +29,24 @@ module.exports = async (req, res) => {
         try {
             const { filename } = req.query;
             
+            // If no filename provided, return list of all contracts
             if (!filename) {
-                return res.status(400).json({ error: 'filename parameter is required' });
+                const fs = require('fs');
+                const path = require('path');
+                const uploadedContractsFile = path.join(__dirname, '..', 'uploaded-contracts.json');
+                
+                // Check if uploaded-contracts.json exists
+                if (!fs.existsSync(uploadedContractsFile)) {
+                    console.log('📄 No uploaded-contracts.json found, returning empty list');
+                    return res.json({ contracts: [] });
+                }
+                
+                // Read and return the contracts data
+                const contractsData = fs.readFileSync(uploadedContractsFile, 'utf8');
+                const contracts = JSON.parse(contractsData);
+                
+                console.log(`✅ Returning ${contracts.uploadedContracts?.length || 0} contracts`);
+                return res.json(contracts);
             }
 
             const fs = require('fs');

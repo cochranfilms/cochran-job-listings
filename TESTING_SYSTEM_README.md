@@ -98,6 +98,32 @@ node test-admin-deletion-simple.js
 - `/api/users` - User data retrieval
 - `/api/jobs-data` - Job listings data
 - `/api/notifications` - User notifications
+- `/api/contracts` - Contract management and PDF serving
+
+### 7. Contracts API Fix Testing
+**Purpose**: Testing the fixed contracts API endpoint that now properly handles both contract listing and PDF serving
+**Features**:
+- Tests contract listing when no filename parameter is provided
+- Tests PDF file serving when filename parameter is provided
+- Validates proper error handling for missing files
+- Ensures backward compatibility with existing PDF download functionality
+
+**API Behavior**:
+- **GET `/api/contracts`** (no parameters): Returns list of all contracts from uploaded-contracts.json
+- **GET `/api/contracts?filename=name.pdf`**: Serves individual PDF file for download
+- **POST `/api/contracts`**: Uploads new contracts to GitHub repository
+
+**Testing Steps**:
+1. Test contract listing: `curl http://localhost:8000/api/contracts`
+2. Test PDF download: `curl "http://localhost:8000/api/contracts?filename=test.pdf"`
+3. Verify admin dashboard loads contracts without 400 errors
+4. Check that contract manager displays all contracts properly
+
+**Expected Results**:
+- Contract listing returns JSON with all contracts (no more 400 errors)
+- PDF downloads work for existing files
+- Admin dashboard loads contracts successfully
+- Contract manager displays contract list without errors
 
 ### 7. Refactored Modules Testing (`test-refactored-modules.html`)
 **Purpose**: Comprehensive testing of all refactored modules using the Component Library architecture
