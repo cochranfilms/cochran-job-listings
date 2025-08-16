@@ -223,8 +223,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-13",
       "signedDate": "2025-08-13"
+    },
+    {
+      "contractId": "CF-1755308449430-LWJND",
+      "freelancerName": "Cody Cochran",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Test Job Title",
+      "rate": "$400",
+      "location": "Atlanta Area",
+      "fileName": "Cody Cochran.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-16T01:41:02.413Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Cody Cochran.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-16",
+      "signedDate": "2025-08-15"
     }
   ],
-  "lastUpdated": "2025-08-13T05:37:31.543Z",
-  "totalContracts": 14
+  "lastUpdated": "2025-08-16T01:41:02.413Z",
+  "totalContracts": 15
 }
