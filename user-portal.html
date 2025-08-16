@@ -85,16 +85,10 @@
         // Setup authentication state observer
         function setupAuthStateObserver() {
             auth.onAuthStateChanged(function(user) {
-                if (user) {
+                if (user && user.email) {
                     console.log('✅ User authenticated:', user.email);
                     // User is signed in, check if they exist in our system
-                    // Only check if user is properly authenticated and not just a temporary state
-                    if (user.email && user.emailVerified !== false) {
-                        checkUserInSystem(user.email);
-                    } else {
-                        console.log('⚠️ User not fully authenticated, waiting for proper auth...');
-                        showLoginScreen();
-                    }
+                    checkUserInSystem(user.email);
                 } else {
                     console.log('❌ User signed out');
                     showLoginScreen();
@@ -1830,7 +1824,9 @@
                 console.log('✅ User found in system:', user.name);
                 currentUser = user;
                 sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
+                console.log('🔍 About to call showUserPortal()');
                 showUserPortal();
+                console.log('🔍 showUserPortal() called');
             } else {
                 // User not found in our system
                 console.warn('⚠️ User not found in system:', email);
@@ -1844,8 +1840,18 @@
 
         // Show user portal
         function showUserPortal() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('userPortal').style.display = 'block';
+            const loginScreen = document.getElementById('loginScreen');
+            const userPortal = document.getElementById('userPortal');
+            
+            if (loginScreen && userPortal) {
+                console.log('🔍 Hiding login screen and showing user portal');
+                loginScreen.style.display = 'none';
+                userPortal.style.display = 'block';
+                console.log('✅ Display properties updated');
+            } else {
+                console.error('❌ Elements not found:', { loginScreen: !!loginScreen, userPortal: !!userPortal });
+            }
+            
             loadUserData();
             
             // Initialize creative features after portal is shown
@@ -1856,8 +1862,18 @@
 
         // Show login screen
         function showLoginScreen() {
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('userPortal').style.display = 'none';
+            const loginScreen = document.getElementById('loginScreen');
+            const userPortal = document.getElementById('userPortal');
+            
+            if (loginScreen && userPortal) {
+                console.log('🔍 Showing login screen and hiding user portal');
+                loginScreen.style.display = 'flex';
+                userPortal.style.display = 'none';
+                console.log('✅ Display properties updated');
+            } else {
+                console.error('❌ Elements not found:', { loginScreen: !!loginScreen, userPortal: !!userPortal });
+            }
+            
             currentUser = null;
             sessionStorage.removeItem('userPortalAuthenticated');
         }
@@ -5205,7 +5221,8 @@
                     showLoginScreen();
                 }
             } else {
-                showLoginScreen();
+                // Don't automatically show login screen - let Firebase auth state observer handle it
+                console.log('🔍 No saved user, waiting for Firebase auth state...');
             }
         }
         
@@ -5972,6 +5989,11 @@
             overflow: hidden;
             min-height: 100vh;
         }
+        
+        /* Ensure JavaScript can control display */
+        #loginScreen.login-screen[style*="display: none"] {
+            display: none !important;
+        }
 
         /* Neural Network Background */
         .neural-background {
@@ -6395,12 +6417,6 @@
         @keyframes subtitle-pulse {
             0%, 100% { opacity: 0.1; transform: scale(1); }
             50% { opacity: 0.3; transform: scale(1.05); }
-        }
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            background: rgba(0, 0, 0, 0.3);
-            padding: 8px 16px;
-            border-radius: 8px;
-            display: inline-block;
         }
         
         .login-form-container {
@@ -6921,6 +6937,15 @@
             background: var(--gradient-dark);
         }
         
+        /* Ensure JavaScript can control display */
+        #userPortal.app-container {
+            display: none;
+        }
+        
+        #userPortal.app-container[style*="display: block"] {
+            display: block !important;
+        }
+        
         /* ==================== SOPHISTICATED SIDEBAR ==================== */
         .sidebar {
             position: fixed;
@@ -7380,102 +7405,102 @@
         /* BULLETPROOF LOGIN SCREEN STYLES - NO EXTERNAL OVERRIDES */
         #loginScreen.login-screen {
             /* Force full viewport coverage with proper breathing room */
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            min-height: 100vh !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            min-height: 100vh;
             
             /* Beautiful dark gradient background */
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 70%, #16213e 100%) !important;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 70%, #16213e 100%);
             
             /* CRITICAL: MAJOR SPACING FIX - Add substantial top and bottom margins */
-            padding: 0 !important;
-            margin: 0 !important;
+            padding: 0;
+            margin: 0;
             
             /* Perfect centering with proper spacing */
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             
             /* Ensure it's above everything */
-            z-index: 999999 !important;
+            z-index: 999999;
             
             /* Prevent any scrolling issues */
-            overflow: hidden !important;
+            overflow: hidden;
         }
         
         #loginScreen .login-container {
             /* Dark, elegant container */
-            background: rgba(0, 0, 0, 0.85) !important;
-            border: 2px solid rgba(255, 178, 0, 0.4) !important;
-            border-radius: 20px !important;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid rgba(255, 178, 0, 0.4);
+            border-radius: 20px;
             
             /* Proper internal spacing */
-            padding: 60px 50px !important;
+            padding: 60px 50px;
             
             /* Perfect width constraints */
-            max-width: 480px !important;
-            width: 90% !important;
+            max-width: 480px;
+            width: 90%;
             
             /* Beautiful shadow effects */
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 178, 0, 0.1) !important;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 178, 0, 0.1);
             
             /* CRITICAL: MAJOR SPACING FIX - Add substantial top and bottom margins */
-            margin: 80px auto !important;
+            margin: 80px auto;
             
             /* Prevent any external interference */
-            position: relative !important;
-            transform: none !important;
+            position: relative;
+            transform: none;
         }
         
         #loginScreen .real-logo {
-            width: 120px !important;
-            height: auto !important;
-            max-height: 80px !important;
+            width: 120px;
+            height: auto;
+            max-height: 80px;
         }
         
         #loginScreen .login-title {
-            color: #FFB200 !important;
+            color: #FFB200;
         }
         
         #loginScreen .login-subtitle {
-            color: #E8E8E8 !important;
-            background: rgba(0, 0, 0, 0.3) !important;
+            color: #E8E8E8;
+            background: rgba(0, 0, 0, 0.3);
         }
         
         /* CRITICAL: ADDITIONAL SPACING ENFORCEMENT */
         #loginScreen {
             /* Force minimum spacing from viewport edges */
-            min-height: calc(100vh - 160px) !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
+            min-height: calc(100vh - 160px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         #loginScreen .login-container {
             /* Additional spacing enforcement */
-            margin-top: 80px !important;
-            margin-bottom: 80px !important;
+            margin-top: 80px;
+            margin-bottom: 80px;
         }
         
         /* BULLETPROOF INPUT FIELD STYLES - PERFECT READABILITY */
         #loginScreen .input-container {
             /* Dark, readable background */
-            background: rgba(0, 0, 0, 0.7) !important;
-            border: 2px solid rgba(255, 255, 255, 0.3) !important;
-            border-radius: 16px !important;
-            margin-bottom: 24px !important;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            margin-bottom: 24px;
             
             /* Ensure proper layout and spacing */
-            position: relative !important;
-            overflow: hidden !important;
-            min-height: 60px !important;
-            display: flex !important;
-            align-items: center !important;
+            position: relative;
+            overflow: hidden;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
         }
         
         #loginScreen .input-container:focus-within {
@@ -8162,20 +8187,7 @@
         }
 
         /* ==================== MODERN LOGIN SCREEN ==================== */
-        .login-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 25%, #16213e 50%, #0f1419 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            overflow: hidden;
-            perspective: 1000px;
-        }
+        /* REMOVED DUPLICATE .login-screen definition to prevent conflicts */
 
         .login-background {
             position: absolute;
