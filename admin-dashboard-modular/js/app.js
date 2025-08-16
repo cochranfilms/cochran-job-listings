@@ -74,7 +74,37 @@ const AdminDashboardApp = {
             window.EmailJSConfig.init();
         }
         
+        // Initialize real-time components
+        await this.initializeRealtimeComponents();
+        
         console.log('✅ Core modules initialized');
+    },
+
+    // Initialize real-time components
+    async initializeRealtimeComponents() {
+        console.log('🔧 Initializing real-time components...');
+        
+        try {
+            // Wait for Firestore configuration
+            await this.waitForModules(['FirestoreConfig'], 5000);
+            
+            // Initialize real-time data manager
+            if (window.RealtimeDataManager) {
+                window.RealtimeDataManager.init();
+                console.log('✅ Real-time data manager initialized');
+            }
+            
+            // Initialize data migration utility
+            if (window.DataMigration) {
+                window.DataMigration.init();
+                console.log('✅ Data migration utility initialized');
+            }
+            
+            console.log('✅ Real-time components initialized');
+            
+        } catch (error) {
+            console.warn('⚠️ Real-time components not available, continuing with JSON fallback:', error);
+        }
     },
 
     // Wait for required modules to be available

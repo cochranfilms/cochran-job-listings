@@ -1523,7 +1523,7 @@
 
 
 
-        // Load existing users
+        // Load existing users with improved caching and persistence
         async function loadUsers() {
             // Prevent modular system from overriding this function
             if (window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE === true) {
@@ -1532,11 +1532,37 @@
             }
             
             console.log('🔄 Main dashboard loadUsers called');
+            
+            // Check if we have cached users data first
+            const cachedUsers = sessionStorage.getItem('cachedUsers');
+            const cacheTimestamp = sessionStorage.getItem('usersCacheTimestamp');
+            const cacheExpiry = 5 * 60 * 1000; // 5 minutes
+            
+            if (cachedUsers && cacheTimestamp && (Date.now() - parseInt(cacheTimestamp)) < cacheExpiry) {
+                console.log('📦 Using cached users data');
+                try {
+                    window.users = JSON.parse(cachedUsers);
+                    console.log('✅ Loaded users from cache:', Object.keys(window.users).length);
+                    displayUsers();
+                    displayArchivedUsers();
+                    return;
+                } catch (error) {
+                    console.warn('⚠️ Cache parse error, fetching fresh data');
+                }
+            }
+            
             console.log('🔍 API_BASE:', API_BASE);
             console.log('🔍 Fetching from:', `${API_BASE}/api/users`);
             
             try {
-                const response = await fetch(`${API_BASE}/api/users`);
+                // Add cache-busting parameter
+                const timestamp = Date.now();
+                const response = await fetch(`${API_BASE}/api/users?t=${timestamp}`, {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 console.log('🔍 Response status:', response.status);
                 console.log('🔍 Response ok:', response.ok);
                 
@@ -1546,13 +1572,32 @@
                     window.users = data.users || {};
                     console.log('🔍 window.users set:', window.users);
                     console.log('🔍 User count:', Object.keys(window.users).length);
+                    
+                    // Cache the data
+                    sessionStorage.setItem('cachedUsers', JSON.stringify(window.users));
+                    sessionStorage.setItem('usersCacheTimestamp', Date.now().toString());
+                    console.log('💾 Users data cached');
+                    
                 } else {
                     console.error('❌ Users API response not ok:', response.status);
+                    // Try to use cached data if available
+                    if (cachedUsers) {
+                        console.log('🔄 Falling back to cached data');
+                        window.users = JSON.parse(cachedUsers);
+                    } else {
+                        window.users = {};
+                    }
                 }
             } catch (error) {
                 console.error('❌ Error loading users:', error);
-                console.log('No existing users file found, starting fresh');
-                window.users = {};
+                // Try to use cached data if available
+                if (cachedUsers) {
+                    console.log('🔄 Falling back to cached data after error');
+                    window.users = JSON.parse(cachedUsers);
+                } else {
+                    console.log('No existing users file found, starting fresh');
+                    window.users = {};
+                }
             }
             
             console.log('🔄 Calling displayUsers...');
@@ -2850,12 +2895,30 @@
                 // Clear any modular system interference
                 window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
                 
-                // Force reload users from API
-                const response = await fetch(`${API_BASE}/api/users`);
+                // Clear cache to force fresh data
+                sessionStorage.removeItem('cachedUsers');
+                sessionStorage.removeItem('usersCacheTimestamp');
+                console.log('🗑️ Cache cleared');
+                
+                // Force reload users from API with cache-busting
+                const timestamp = Date.now();
+                const response = await fetch(`${API_BASE}/api/users?t=${timestamp}&force=true`, {
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+                
                 if (response.ok) {
                     const data = await response.json();
                     window.users = data.users || {};
                     console.log('✅ Force loaded users:', Object.keys(window.users).length);
+                    
+                    // Update cache with fresh data
+                    sessionStorage.setItem('cachedUsers', JSON.stringify(window.users));
+                    sessionStorage.setItem('usersCacheTimestamp', Date.now().toString());
+                    console.log('💾 Fresh data cached');
                     
                     // Force update display
                     displayUsers();
