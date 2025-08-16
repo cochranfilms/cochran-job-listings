@@ -25,6 +25,13 @@ const DashboardManager = {
         try {
             console.log('⚙️ Initializing Dashboard Manager...');
             
+            // Check if main dashboard should handle display states
+            if (window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE === false) {
+                console.log('✅ Main dashboard display override disabled - not controlling display states');
+                this.state.isInitialized = true;
+                return;
+            }
+            
             // Wait for component library to be ready
             if (window.ComponentLibrary && !window.ComponentLibrary.isReady()) {
                 await new Promise(resolve => {

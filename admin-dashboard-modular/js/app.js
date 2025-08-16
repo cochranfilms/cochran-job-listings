@@ -272,14 +272,24 @@ const AdminDashboardApp = {
     async initializeDashboardComponents() {
         console.log('🎯 Initializing dashboard components...');
         
-        // Initialize login component
-        if (window.LoginComponent) {
-            window.LoginComponent.init();
+        // Check if main dashboard should handle authentication and display
+        if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
+            console.log('✅ Main dashboard auth override disabled - skipping login component');
+        } else {
+            // Initialize login component
+            if (window.LoginComponent) {
+                window.LoginComponent.init();
+            }
         }
         
-        // Initialize dashboard manager
-        if (window.DashboardManager) {
-            window.DashboardManager.init();
+        // Check if main dashboard should handle display states
+        if (window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE === false) {
+            console.log('✅ Main dashboard display override disabled - skipping dashboard manager');
+        } else {
+            // Initialize dashboard manager
+            if (window.DashboardManager) {
+                window.DashboardManager.init();
+            }
         }
         
         // Initialize other components as they become available

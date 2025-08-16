@@ -1060,6 +1060,8 @@
         document.getElementById('mainDashboardLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            console.log('🔐 Main dashboard login form submitted!');
+            
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
@@ -5165,6 +5167,18 @@
             // Test the main dashboard login form
             setTimeout(() => {
                 testMainDashboardLogin();
+                
+                // Also verify the event listener is attached
+                const loginForm = document.getElementById('mainDashboardLoginForm');
+                if (loginForm) {
+                    console.log('🔍 Verifying event listener attachment...');
+                    
+                    // Test if the form submission works
+                    const testEvent = new Event('submit', { bubbles: true, cancelable: true });
+                    loginForm.dispatchEvent(testEvent);
+                    
+                    console.log('🔍 Event listener test completed');
+                }
             }, 100);
             
             // Initialize admin bank viewer

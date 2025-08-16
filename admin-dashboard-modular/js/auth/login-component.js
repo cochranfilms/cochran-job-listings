@@ -19,6 +19,13 @@ const LoginComponent = {
         try {
             console.log('🔐 Initializing Login Component...');
             
+            // Check if main dashboard should handle authentication
+            if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
+                console.log('✅ Main dashboard auth override disabled - not rendering login form');
+                this.state.isInitialized = true;
+                return;
+            }
+            
             // Render login form
             this.renderLoginForm();
             
