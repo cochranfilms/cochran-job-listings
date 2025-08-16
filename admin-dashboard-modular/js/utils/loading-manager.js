@@ -12,8 +12,12 @@ const LoadingManager = {
     
     // Initialize loading manager
     init() {
-        this.setupGlobalLoading();
-        console.log('✅ Loading Manager initialized');
+        try {
+            this.setupGlobalLoading();
+            console.log('✅ Loading Manager initialized');
+        } catch (error) {
+            console.error('❌ Loading Manager initialization failed:', error);
+        }
     },
 
     // Setup global loading indicator
@@ -261,13 +265,35 @@ const LoadingManager = {
         this.loadingStates.clear();
         this.hideGlobalLoading();
         console.log('🧹 All loading states cleared');
+    },
+    
+    // Convenience methods for backward compatibility
+    show(message = 'Loading...') {
+        this.showGlobalLoading();
+        return 'global';
+    },
+    
+    hide() {
+        this.hideGlobalLoading();
     }
 };
 
 // Auto-initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    LoadingManager.init();
-});
+function initializeLoadingManager() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            LoadingManager.init();
+        });
+    } else {
+        // DOM is already ready, but wait a bit for other elements
+        setTimeout(() => {
+            LoadingManager.init();
+        }, 100);
+    }
+}
+
+// Start initialization
+initializeLoadingManager();
 
 // Export for use in other modules
 window.LoadingManager = LoadingManager;

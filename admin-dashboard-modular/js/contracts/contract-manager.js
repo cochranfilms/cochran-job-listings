@@ -65,7 +65,7 @@ const ContractManager = {
             this.state.isLoading = true;
             
             if (window.LoadingManager) {
-                window.LoadingManager.showLoading('Loading contracts...');
+                window.LoadingManager.show('Loading contracts...');
             }
 
             const response = await fetch('/api/contracts');
@@ -85,7 +85,7 @@ const ContractManager = {
         } finally {
             this.state.isLoading = false;
             if (window.LoadingManager) {
-                window.LoadingManager.hideLoading();
+                window.LoadingManager.hide();
             }
         }
     },

@@ -40,33 +40,65 @@ const NotificationManager = {
 
     // Initialize notification manager
     init() {
-        this.setupContainer();
-        console.log('✅ Notification Manager initialized');
+        try {
+            const containerSetup = this.setupContainer();
+            if (containerSetup) {
+                console.log('✅ Notification Manager initialized');
+            } else {
+                console.warn('⚠️ Notification Manager initialization incomplete - container setup failed');
+            }
+        } catch (error) {
+            console.error('❌ Notification Manager initialization failed:', error);
+        }
     },
 
     // Setup notification container
     setupContainer() {
-        let container = document.getElementById('toast-container');
+        let container = document.getElementById('notificationContainer');
         if (!container) {
+            // Try to create the container if it doesn't exist
             container = document.createElement('div');
-            container.id = 'toast-container';
+            container.id = 'notificationContainer';
+            container.className = 'notification-container';
             container.style.cssText = `
                 position: fixed;
                 right: 20px;
-                bottom: 20px;
+                top: 20px;
                 display: flex;
-                flex-direction: column-reverse;
+                flex-direction: column;
                 gap: 8px;
                 z-index: 9999;
                 max-width: 400px;
             `;
             document.body.appendChild(container);
+            console.log('✅ Created notification container');
         }
+        
+        if (!container) {
+            console.error('❌ Could not create notification container');
+            return false;
+        }
+        
         this.container = container;
+        return true;
     },
 
     // Show notification
     show(message, type = 'info', duration = null, options = {}) {
+        // Ensure container exists
+        if (!this.container) {
+            const containerSetup = this.setupContainer();
+            if (!containerSetup) {
+                console.error('❌ Notification container setup failed');
+                return null;
+            }
+        }
+        
+        if (!this.container) {
+            console.error('❌ Notification container not found');
+            return null;
+        }
+        
         const notificationId = `notification-${++this.notificationCounter}`;
         const typeConfig = this.types[type] || this.types.info;
         const autoDuration = duration !== null ? duration : typeConfig.duration;
@@ -325,9 +357,21 @@ const NotificationManager = {
 };
 
 // Auto-initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    NotificationManager.init();
-});
+function initializeNotificationManager() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            NotificationManager.init();
+        });
+    } else {
+        // DOM is already ready, but wait a bit for other elements
+        setTimeout(() => {
+            NotificationManager.init();
+        }, 100);
+    }
+}
+
+// Start initialization
+initializeNotificationManager();
 
 // Export for use in other modules
 window.NotificationManager = NotificationManager;

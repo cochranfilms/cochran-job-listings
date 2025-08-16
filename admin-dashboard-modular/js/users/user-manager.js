@@ -21,6 +21,13 @@ const UserManager = {
         try {
             console.log('👥 Initializing User Manager...');
             
+            // Wait for component library to be ready
+            if (window.ComponentLibrary && !window.ComponentLibrary.isReady()) {
+                await new Promise(resolve => {
+                    window.addEventListener('componentLibraryReady', resolve, { once: true });
+                });
+            }
+            
             // Load initial user data
             await this.loadUsers();
             

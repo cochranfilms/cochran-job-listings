@@ -11,6 +11,14 @@ window.ComponentLibrary = {
     // Component registry
     components: new Map(),
     
+    // Ready state
+    _ready: false,
+    
+    // Check if component library is ready
+    isReady() {
+        return this._ready;
+    },
+    
     // Initialize all components
     async init(options = {}) {
         console.log('🚀 Initializing Component Library v' + this.version);
@@ -25,6 +33,9 @@ window.ComponentLibrary = {
             // Apply global styles
             this.applyGlobalStyles();
             
+            // Mark as ready
+            this._ready = true;
+            
             console.log('✅ Component Library initialized successfully');
             return this;
             
@@ -36,39 +47,91 @@ window.ComponentLibrary = {
     
     // Initialize individual components
     async initializeComponents() {
+        // Wait for all required components to be available
+        await this.waitForComponents();
+        
         // Button Component
-        if (window.Button) {
-            this.components.set('Button', window.Button);
-            console.log('✅ Button component loaded');
+        try {
+            if (window.Button) {
+                this.components.set('Button', window.Button);
+                console.log('✅ Button component loaded');
+            } else {
+                console.warn('⚠️ Button component not available');
+            }
+        } catch (error) {
+            console.warn('⚠️ Button component failed to load:', error);
         }
         
         // Form Component
-        if (window.Form) {
-            this.components.set('Form', window.Form);
-            console.log('✅ Form component loaded');
+        try {
+            if (window.Form) {
+                this.components.set('Form', window.Form);
+                console.log('✅ Form component loaded');
+            } else {
+                console.warn('⚠️ Form component not available');
+            }
+        } catch (error) {
+            console.warn('⚠️ Form component failed to load:', error);
         }
         
         // Modal Component
-        if (window.Modal) {
-            this.components.set('Modal', window.Modal);
-            console.log('✅ Modal component loaded');
+        try {
+            if (window.Modal) {
+                this.components.set('Modal', window.Modal);
+                console.log('✅ Modal component loaded');
+            } else {
+                console.warn('⚠️ Modal component not available');
+            }
+        } catch (error) {
+            console.warn('⚠️ Modal component failed to load:', error);
         }
         
         // Notification Component
-        if (window.Notification) {
-            this.components.set('Notification', window.Notification);
-            console.log('✅ Notification component loaded');
+        try {
+            if (window.Notification) {
+                this.components.set('Notification', window.Notification);
+                console.log('✅ Notification component loaded');
+            } else {
+                console.warn('⚠️ Notification component not available');
+            }
+        } catch (error) {
+            console.warn('⚠️ Notification component failed to load:', error);
         }
         
         // Initialize notification system
-        if (window.Notification) {
-            window.Notification.init({
-                position: 'top-right',
-                maxNotifications: 5,
-                autoClose: true,
-                autoCloseDelay: 5000
-            });
+        try {
+            if (window.Notification) {
+                window.Notification.init({
+                    position: 'top-right',
+                    maxNotifications: 5,
+                    autoClose: true,
+                    autoCloseDelay: 5000
+                });
+            }
+        } catch (error) {
+            console.warn('⚠️ Notification system initialization failed:', error);
         }
+    },
+    
+    // Wait for all required components to be available
+    async waitForComponents() {
+        const requiredComponents = ['Button', 'Form', 'Modal', 'Notification'];
+        const maxWaitTime = 5000; // 5 seconds
+        const startTime = Date.now();
+        
+        while (Date.now() - startTime < maxWaitTime) {
+            const missingComponents = requiredComponents.filter(name => !window[name]);
+            
+            if (missingComponents.length === 0) {
+                return true;
+            }
+            
+            console.log(`⏳ Waiting for components: ${missingComponents.join(', ')}`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        console.warn('⚠️ Some components not available after timeout');
+        return false;
     },
     
     // Setup global event system
@@ -470,14 +533,29 @@ window.ComponentLibrary = {
     }
 };
 
-// Auto-initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.ComponentLibrary.init();
-    });
-} else {
-    window.ComponentLibrary.init();
+// Auto-initialize when DOM is ready and all components are loaded
+function initializeComponentLibrary() {
+    // Wait for all components to be loaded
+    const checkComponents = () => {
+        const requiredComponents = ['Button', 'Form', 'Modal', 'Notification'];
+        const allLoaded = requiredComponents.every(name => window[name]);
+        
+        if (allLoaded) {
+            window.ComponentLibrary.init();
+        } else {
+            setTimeout(checkComponents, 100);
+        }
+    };
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkComponents);
+    } else {
+        checkComponents();
+    }
 }
+
+// Start initialization
+initializeComponentLibrary();
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {

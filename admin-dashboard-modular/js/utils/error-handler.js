@@ -105,10 +105,18 @@ const ErrorHandler = {
     showUserError(message, type = 'error') {
         // Use notification system if available
         if (window.NotificationManager) {
-            window.NotificationManager.show(message, type);
+            if (type === 'error') {
+                window.NotificationManager.error(message);
+            } else if (type === 'warning') {
+                window.NotificationManager.warning(message);
+            } else if (type === 'success') {
+                window.NotificationManager.success(message);
+            } else {
+                window.NotificationManager.info(message);
+            }
         } else {
             // Fallback to alert
-            alert(`Error: ${message}`);
+            alert(`${type.charAt(0).toUpperCase() + type.slice(1)}: ${message}`);
         }
     },
 
