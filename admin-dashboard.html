@@ -1044,10 +1044,22 @@
 
         // Load data
         async function loadData() {
+            console.log('🔄 Main dashboard loadData called');
+            console.log('🔍 Starting to load all data...');
+            
+            console.log('🔄 Loading jobs...');
             await loadJobs();
+            
+            console.log('🔄 Loading users...');
             await loadUsers();
+            
+            console.log('🔄 Loading dropdown options...');
             await loadDropdownOptions();
+            
+            console.log('🔄 Updating stats...');
             updateStats();
+            
+            console.log('✅ Main dashboard loadData complete');
         }
 
         // Update stats
@@ -1454,31 +1466,60 @@
 
         // Load existing users
         async function loadUsers() {
+            console.log('🔄 Main dashboard loadUsers called');
+            console.log('🔍 API_BASE:', API_BASE);
+            console.log('🔍 Fetching from:', `${API_BASE}/api/users`);
+            
             try {
                 const response = await fetch(`${API_BASE}/api/users`);
+                console.log('🔍 Response status:', response.status);
+                console.log('🔍 Response ok:', response.ok);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('🔍 Users data received:', data);
                     window.users = data.users || {};
+                    console.log('🔍 window.users set:', window.users);
+                    console.log('🔍 User count:', Object.keys(window.users).length);
+                } else {
+                    console.error('❌ Users API response not ok:', response.status);
                 }
             } catch (error) {
+                console.error('❌ Error loading users:', error);
                 console.log('No existing users file found, starting fresh');
                 window.users = {};
             }
+            
+            console.log('🔄 Calling displayUsers...');
             displayUsers();
+            console.log('🔄 Calling displayArchivedUsers...');
             displayArchivedUsers();
         }
 
         // Display active users (exclude archived/meta keys)
         function displayUsers() {
+            console.log('🔄 Main dashboard displayUsers called');
+            console.log('🔍 window.users:', window.users);
+            console.log('🔍 User count:', Object.keys(window.users || {}).length);
+            
             const usersList = document.getElementById('usersList');
+            console.log('🔍 usersList element:', usersList);
             
             if (usersList) {
                 usersList.innerHTML = '';
+                console.log('✅ usersList cleared');
+            } else {
+                console.error('❌ usersList element not found');
+                return;
             }
 
-            Object.keys(window.users)
-                .filter(name => name !== '_archived' && !name.startsWith('_'))
-                .forEach((name, index) => {
+            const activeUsers = Object.keys(window.users || {})
+                .filter(name => name !== '_archived' && !name.startsWith('_'));
+            
+            console.log('🔍 Active users:', activeUsers);
+            console.log('🔍 Active user count:', activeUsers.length);
+
+            activeUsers.forEach((name, index) => {
                 const user = window.users[name];
                 
                 const userDiv = document.createElement('div');
