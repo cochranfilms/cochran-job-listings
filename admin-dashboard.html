@@ -518,6 +518,21 @@
             <a href="#" class="logout-btn" onclick="logout()">🚪 Logout</a>
             <h1>⚙️ Admin Dashboard</h1>
             <p>Cochran Films - Central Management System</p>
+            
+            <!-- Manual refresh button for troubleshooting -->
+            <button onclick="manualRefreshStats()" style="
+                position: absolute;
+                top: 1rem;
+                left: 1rem;
+                background: rgba(59, 130, 246, 0.2);
+                color: #3b82f6;
+                border: 1px solid rgba(59, 130, 246, 0.3);
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.9rem;
+            ">🔄 Refresh Stats</button>
+            
             <!-- Modular System Status -->
             <div id="modularSystemStatus" style="margin-top: 1rem; padding: 0.5rem; background: rgba(255,178,0,0.1); border-radius: 8px; border: 1px solid rgba(255,178,0,0.3);">
                 <span style="color: #FFB200; font-weight: 600;">
@@ -1186,12 +1201,19 @@
                     console.log('🔥 Loading data from Firestore...');
                     await window.FirestoreDataManager.syncFromFirestore();
                     console.log('✅ Data loaded from Firestore');
+                    
+                    // Wait a moment for data to be fully synced
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Force reload from JSON APIs to ensure data is in window.users and window.jobs
+                    console.log('🔄 Ensuring data is available in window objects...');
+                    await loadDataFromJSON();
                 } else {
                     console.log('📁 Firestore not available, loading from JSON APIs...');
                     await loadDataFromJSON();
                 }
                 
-                console.log('🔄 Updating stats...');
+                console.log('🔄 Updating stats after data load...');
                 updateStats();
                 
                 console.log('✅ Main dashboard loadData complete');
@@ -1219,26 +1241,60 @@
 
         // Update stats
         function updateStats() {
+            console.log('🔄 updateStats called');
+            console.log('🔍 window.users:', window.users);
+            console.log('🔍 window.jobs:', window.jobs);
+            
             // Only count active users (exclude `_archived` and any underscore-prefixed keys)
             const activeUserNames = Object.keys(window.users || {})
                 .filter(name => name !== '_archived' && !name.startsWith('_'));
             const activeUsers = activeUserNames.map(name => window.users[name]);
+            
+            console.log('🔍 Active user names:', activeUserNames);
+            console.log('🔍 Active users count:', activeUserNames.length);
 
             // Total creators = active users only
-            document.getElementById('totalCreators').textContent = activeUserNames.length;
+            const totalCreatorsElement = document.getElementById('totalCreators');
+            if (totalCreatorsElement) {
+                totalCreatorsElement.textContent = activeUserNames.length;
+                console.log('✅ Updated totalCreators:', activeUserNames.length);
+            } else {
+                console.error('❌ totalCreators element not found');
+            }
 
             // Active jobs from jobs dataset
-            document.getElementById('activeJobs').textContent = (window.jobs || []).filter(job => job.status === 'Active').length;
+            const activeJobsCount = (window.jobs || []).filter(job => job.status === 'Active').length;
+            const activeJobsElement = document.getElementById('activeJobs');
+            if (activeJobsElement) {
+                activeJobsElement.textContent = activeJobsCount;
+                console.log('✅ Updated activeJobs:', activeJobsCount);
+            } else {
+                console.error('❌ activeJobs element not found');
+            }
             
             // Count pending reviews (active users who have a signed contract but no review data)
             const pendingReviews = activeUsers.filter(user => {
                 return user?.contract?.contractStatus === 'signed' && !user?.performanceReview;
             }).length;
-            document.getElementById('pendingReviews').textContent = pendingReviews;
+            const pendingReviewsElement = document.getElementById('pendingReviews');
+            if (pendingReviewsElement) {
+                pendingReviewsElement.textContent = pendingReviews;
+                console.log('✅ Updated pendingReviews:', pendingReviews);
+            } else {
+                console.error('❌ pendingReviews element not found');
+            }
 
             // Signed contracts among active users
             const signedContracts = activeUsers.filter(user => user?.contract?.contractStatus === 'signed').length;
-            document.getElementById('totalContracts').textContent = signedContracts;
+            const totalContractsElement = document.getElementById('totalContracts');
+            if (totalContractsElement) {
+                totalContractsElement.textContent = signedContracts;
+                console.log('✅ Updated totalContracts:', signedContracts);
+            } else {
+                console.error('❌ totalContracts element not found');
+            }
+            
+            console.log('✅ updateStats complete');
         }
 
         // Load existing jobs
@@ -5361,6 +5417,26 @@
             } catch (error) {
                 console.error('❌ Test authentication failed:', error);
                 return false;
+            }
+        }
+        
+        // Manual refresh function for troubleshooting stats
+        async function manualRefreshStats() {
+            console.log('🔄 Manual stats refresh requested...');
+            
+            try {
+                // Reload data
+                await loadData();
+                
+                // Force update stats
+                updateStats();
+                
+                // Show success message
+                showNotification('✅ Stats refreshed manually', 'success');
+                
+            } catch (error) {
+                console.error('❌ Manual stats refresh failed:', error);
+                showNotification('❌ Failed to refresh stats', 'error');
             }
         }
     </script>
