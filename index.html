@@ -2105,7 +2105,16 @@
           const titleLooksLikeApplicantName = job.title && (
             job.title.includes('@') || // Contains email
             job.title.match(/^\d{3}-\d{3}-\d{4}$/) || // Looks like phone number
-            job.title.match(/^[A-Za-z]+\s+[A-Za-z]+$/) && !job.title.toLowerCase().includes('photographer') && !job.title.toLowerCase().includes('videographer') && !job.title.toLowerCase().includes('editor') // Looks like a person's name
+            // More specific check for names - look for common first/last name patterns
+            (job.title.match(/^[A-Z][a-z]+\s+[A-Z][a-z]+$/) && 
+             !job.title.toLowerCase().includes('photographer') && 
+             !job.title.toLowerCase().includes('videographer') && 
+             !job.title.toLowerCase().includes('editor') &&
+             !job.title.toLowerCase().includes('production') &&
+             !job.title.toLowerCase().includes('coverage') &&
+             !job.title.toLowerCase().includes('service') &&
+             !job.title.toLowerCase().includes('event') &&
+             !job.title.toLowerCase().includes('project'))
           );
           
           // Debug logging
