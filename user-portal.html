@@ -4828,14 +4828,15 @@
                 }
                 
                 // Create contract data for PDF generation (same format as contract.html)
+                const selectedJob = getSelectedJob();
                 const contractData = {
                     contractId: userContract.contractId || currentUser.name,
                     freelancerName: currentUser.name,
                     freelancerEmail: currentUser.email,
-                    role: getSelectedJob()?.role || currentUser.profile?.role || 'Contractor',
-                    location: currentUser.location || currentUser.profile?.location || 'Atlanta Area',
-                    projectStart: currentUser.projectStart || currentUser.profile?.projectStart || 'TBD',
-                    rate: currentUser.rate || currentUser.profile?.rate || 'Not specified',
+                    role: selectedJob?.role || selectedJob?.title || currentUser.profile?.role || 'Contractor',
+                    location: selectedJob?.location || currentUser.location || currentUser.profile?.location || 'Atlanta Area',
+                    projectStart: selectedJob?.date || selectedJob?.projectStart || currentUser.projectStart || currentUser.profile?.projectStart || 'TBD',
+                    rate: selectedJob?.rate || selectedJob?.pay || currentUser.rate || currentUser.profile?.rate || 'Not specified',
                     effectiveDate: currentUser.approvedDate || new Date().toISOString().split('T')[0],
                     signatureDate: userContract.contractSignedDate ? formatContractSignedDate(userContract.contractSignedDate) : new Date().toISOString().split('T')[0],
                     signature: userContract.contractStatus === 'signed' ? 'Digital Signature' : 'Not Signed'
