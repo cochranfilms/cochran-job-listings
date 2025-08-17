@@ -1,3 +1,23 @@
+Test/Debug Cleanup Policy
+
+- The repository includes historical test and debug artifacts. Use the cleanup utility to keep production HTMLs clean (`admin-dashboard.html`, `user-portal.html`).
+
+Commands
+
+```bash
+# dry-run
+npm run cleanup-tests
+
+# list
+npm run cleanup-tests:list
+
+# apply
+npm run cleanup-tests:apply
+```
+
+After applying cleanup, re-test the main flows:
+- Admin auth/login and stats load in `admin-dashboard.html`
+- User portal auth and data load in `user-portal.html`
 # 🧪 Testing System Documentation
 
 ## Overview

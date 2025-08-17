@@ -1,3 +1,27 @@
+Cleanup Tests Utility
+
+- Run inventory (no changes):
+
+```bash
+npm run cleanup-tests
+```
+
+- List only:
+
+```bash
+npm run cleanup-tests:list
+```
+
+- Apply (quarantines test/debug files and strips references):
+
+```bash
+npm run cleanup-tests:apply
+```
+
+Notes
+- Quarantined files go to `backups/test-quarantine/<timestamp>/`.
+- References removed include `<script src="test-*|debug-*">`, `runDashboardTests(`, `testMainDashboard*(`, and python servers `https_server.py`/`platform-analysis-server.py`.
+- Review quarantined files as needed before deletion.
 # Cleanup System Documentation
 
 ## Overview

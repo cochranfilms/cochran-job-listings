@@ -498,18 +498,7 @@
                 </div>
                 <button type="submit" class="login-btn">🔐 Login</button>
                 
-                <!-- Test button for debugging -->
-                <button type="button" onclick="testMainDashboardAuth()" style="
-                    background: rgba(59, 130, 246, 0.2); 
-                    color: #3b82f6; 
-                    border: 1px solid rgba(59, 130, 246, 0.3); 
-                    padding: 0.5rem 1rem; 
-                    border-radius: 6px; 
-                    margin-top: 1rem; 
-                    width: 100%; 
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                ">🧪 Test Authentication (Debug)</button>
+                
             </form>
         </div>
     </div>
@@ -5293,22 +5282,7 @@
             
             checkAuth();
             
-            // Test the main dashboard login form
-            setTimeout(() => {
-                testMainDashboardLogin();
-                
-                // Also verify the event listener is attached
-                const loginForm = document.getElementById('mainDashboardLoginForm');
-                if (loginForm) {
-                    console.log('🔍 Verifying event listener attachment...');
-                    
-                    // Test if the form submission works
-                    const testEvent = new Event('submit', { bubbles: true, cancelable: true });
-                    loginForm.dispatchEvent(testEvent);
-                    
-                    console.log('🔍 Event listener test completed');
-                }
-            }, 100);
+            
             
             // Initialize admin bank viewer
             if (typeof AdminBankViewer !== 'undefined') {
@@ -5330,11 +5304,7 @@
                 loadModularSystem();
             }, 2000); // Increased delay to ensure main dashboard is fully loaded first
                 
-            // Auto-run tests after a short delay
-            setTimeout(() => {
-                console.log('🧪 Auto-running dashboard tests...');
-                runDashboardTests();
-            }, 2000);
+            
         });
         
         // Test function to run all dashboard tests
