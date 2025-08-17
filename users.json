@@ -76,10 +76,15 @@
         "email": "codylcochran89@gmail.com",
         "location": "Douglasville, GA",
         "role": "",
-        "projectType": ""
+        "projectType": "",
+        "approvedDate": "2025-08-17"
       },
       "contract": {
-        "contractStatus": "pending"
+        "contractStatus": "uploaded",
+        "contractSignedDate": "8/17/2025, 6:01:01 PM",
+        "contractUploadedDate": "2025-08-17T22:01:11.008Z",
+        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Andria%20Stevens.pdf",
+        "contractId": "CF-1755468061709-BKTC7"
       },
       "application": {
         "status": "pending",
@@ -115,5 +120,10 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-16"
+  },
+  "_metadata": {
+    "dataSource": "github",
+    "fetchedAt": "2025-08-17T22:01:11.048Z",
+    "totalUsers": 3
   }
 }
