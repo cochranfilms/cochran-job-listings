@@ -299,8 +299,8 @@ def fs_approve_user_via_admin(page: Page, ctx: TestContext):
     print("🧪 Approving via Firestore (admin-dashboard context)…")
     _navigate(page, f"{ctx.base}/admin-dashboard.html", "admin-dashboard(firestore)")
     # Ensure Firebase SDK is available and sign in
-    result = page.evaluate(
-        "async (email, password) => {\n"
+    login_js = (
+        "async ({email, password}) => {\n"
         "  try {\n"
         "    if (!window.firebase || !firebase.auth) throw new Error('Firebase SDK missing');\n"
         "    try { await firebase.auth().signOut(); } catch(e){}\n"
@@ -308,10 +308,9 @@ def fs_approve_user_via_admin(page: Page, ctx: TestContext):
         "    await new Promise(r=>setTimeout(r,1000));\n"
         "    return { ok: true, user: firebase.auth().currentUser && firebase.auth().currentUser.email };\n"
         "  } catch (e) { return { ok:false, error: String(e) }; }\n"
-        "}",
-        ctx.admin_email,
-        ctx.admin_password,
+        "}"
     )
+    result = page.evaluate(login_js, {"email": ctx.admin_email, "password": ctx.admin_password})
     print("🔎 admin firebase login:", result)
     # Now set user doc via FirestoreDataManager
     payload = {
@@ -323,7 +322,7 @@ def fs_approve_user_via_admin(page: Page, ctx: TestContext):
         "rate": "$250/day",
     }
     js = (
-        "async (u)=>{\n"
+        "async ({u})=>{\n"
         "  try { if (!window.FirestoreDataManager) throw new Error('FSDM missing'); } catch(e){ throw e }\n"
         "  try { await window.FirestoreDataManager.init(); } catch(_){}\n"
         "  const name = u.name;\n"
@@ -340,7 +339,7 @@ def fs_approve_user_via_admin(page: Page, ctx: TestContext):
         "  return { ok:true };\n"
         "}"
     )
-    res2 = page.evaluate(js, payload)
+    res2 = page.evaluate(js, {"u": payload})
     print("🔎 firestore approve result:", res2)
 
 
