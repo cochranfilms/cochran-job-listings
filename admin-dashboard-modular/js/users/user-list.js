@@ -511,6 +511,19 @@ const UserList = {
         } else {
             actions.push('<button class="btn btn-info btn-sm" onclick="UserList.generateUserContract(\'' + user.name + '\')">📄 Contract</button>');
         }
+
+        // Manage jobs button
+        if (window.Button) {
+            const jobsBtn = window.Button.create({
+                text: '🧭 Jobs',
+                variant: 'primary',
+                size: 'sm',
+                onClick: () => this.manageUserJobs(user.name)
+            });
+            actions.push(jobsBtn.outerHTML);
+        } else {
+            actions.push('<button class="btn btn-primary btn-sm" onclick="UserList.manageUserJobs(\'' + user.name + '\')">🧭 Jobs</button>');
+        }
         
         return actions.join('');
     },
@@ -831,6 +844,96 @@ const UserList = {
             detail: data
         });
         window.dispatchEvent(event);
+    },
+
+    // Open a modal to manage a user's job statuses and progress
+    async manageUserJobs(userName) {
+        try {
+            if (!window.UserManager) throw new Error('UserManager not available');
+            const user = window.UserManager.getUser(userName);
+            if (!user) throw new Error('User not found');
+
+            const jobs = user.jobs || {};
+            const jobItems = Object.entries(jobs).map(([jobId, job]) => {
+                const currentStatus = (job.projectStatus || job.status || 'upcoming');
+                const progress = Number(job.progress || 0);
+                return `
+                    <div class="user-job-item" data-job-id="${jobId}" style="padding:0.5rem;border:1px solid rgba(255,255,255,0.1);border-radius:8px;margin-bottom:0.5rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                            <div>
+                                <strong>${job.title || job.role || 'Untitled Job'}</strong>
+                                <div style="font-size:12px;opacity:0.8;">${job.location || ''}</div>
+                            </div>
+                            <div style="display:flex;gap:0.5rem;align-items:center;">
+                                <select class="user-job-status">
+                                    ${['upcoming','in-progress','completed','cancelled','on-hold'].map(s => `<option value="${s}" ${s===currentStatus?'selected':''}>${s.replace('-', ' ')}</option>`).join('')}
+                                </select>
+                                <input class="user-job-progress" type="number" min="0" max="100" step="5" value="${progress}" style="width:70px;" />
+                                <button class="btn btn-small" data-action="save">Save</button>
+                                <button class="btn btn-small btn-secondary" data-action="primary">Set Primary</button>
+                                <button class="btn btn-small btn-danger" data-action="remove">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width:800px;">
+                    <div class="modal-header">
+                        <h3>Manage Jobs — ${userName}</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        ${Object.keys(jobs).length ? jobItems : '<em>No jobs assigned</em>'}
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Wire actions
+            modal.addEventListener('click', async (e) => {
+                const target = e.target;
+                if (!(target instanceof HTMLElement)) return;
+                const action = target.getAttribute('data-action');
+                if (!action) return;
+                const item = target.closest('.user-job-item');
+                if (!item) return;
+                const jobId = item.getAttribute('data-job-id');
+                const statusEl = item.querySelector('.user-job-status');
+                const progressEl = item.querySelector('.user-job-progress');
+                const status = statusEl ? statusEl.value : 'upcoming';
+                const progress = progressEl ? Number(progressEl.value) : 0;
+
+                try {
+                    if (action === 'save') {
+                        await window.UserManager.updateUserJobStatus(userName, jobId, status);
+                        await window.UserManager.updateUserJobProgress(userName, jobId, progress);
+                        this.showSuccess('Job updated');
+                    } else if (action === 'primary') {
+                        await window.UserManager.setPrimaryJob(userName, jobId);
+                        this.showSuccess('Primary job set');
+                    } else if (action === 'remove') {
+                        const ok = window.confirm('Remove this job from the user?');
+                        if (!ok) return;
+                        await window.UserManager.removeJobFromUser(userName, jobId);
+                        item.remove();
+                        this.showSuccess('Job removed');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    this.showError('Failed to update job');
+                }
+            });
+        } catch (error) {
+            console.error('❌ Failed to open job manager:', error);
+            this.showError('Failed to open job manager');
+        }
     }
 };
 

@@ -544,6 +544,23 @@ const JobList = {
             actions.push(`<button class="btn btn-small ${toggleClass}" onclick="JobList.toggleJobStatus('${job.title}', ${index})">${toggleText}</button>`);
         }
         
+        // Progress/status controls for user-facing workflow
+        const controlsHtml = `
+            <div class="job-progress-controls" style="display:flex;gap:0.5rem;align-items:center;margin:0.25rem 0;">
+                <label style="font-size:12px;opacity:0.8;">User Status:</label>
+                <select data-job-index="${index}" class="job-status-select" onchange="JobList.handleUserStatusChange(event, ${index})">
+                    <option value="upcoming">Upcoming</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="on-hold">On Hold</option>
+                </select>
+                <label style="font-size:12px;opacity:0.8;">Progress:</label>
+                <input type="number" min="0" max="100" step="5" value="0" class="job-progress-input" data-job-index="${index}" style="width:70px;" />
+                <button class="btn btn-small" onclick="JobList.applyUserProgress(${index})">Apply</button>
+            </div>`;
+        actions.push(controlsHtml);
+
         // Edit button
         if (window.Button) {
             const editBtn = window.Button.create({
@@ -941,6 +958,67 @@ const JobList = {
                 window.LoadingManager.hideLoading();
             }
         }
+    },
+
+    // Apply progress change to all assigned users for this listing (by title/date heuristic)
+    async applyUserProgress(jobIndex) {
+        try {
+            const job = this.state.jobs[jobIndex];
+            if (!job) return;
+
+            const progressInput = document.querySelector(`.job-progress-input[data-job-index="${jobIndex}"]`);
+            const statusSelect = document.querySelector(`.job-status-select[data-job-index="${jobIndex}"]`);
+            const progress = progressInput ? Number(progressInput.value) : 0;
+            const status = statusSelect ? statusSelect.value : 'upcoming';
+
+            // Load users and fan-out update by jobRef/title match
+            const usersRes = await fetch('/api/users');
+            if (!usersRes.ok) throw new Error('Failed to load users');
+            const usersData = await usersRes.json();
+            const users = usersData.users || {};
+
+            let changes = 0;
+            Object.entries(users).forEach(([userName, user]) => {
+                if (!user || userName.startsWith('_')) return;
+                if (!user.jobs) return;
+                Object.entries(user.jobs).forEach(([jid, uj]) => {
+                    const refMatches = uj?.jobRef?.source === 'jobs-data' && (uj?.jobRef?.index === jobIndex || uj?.jobRef?.key === `${job.title}|${job.date}`);
+                    const titleFuzzy = (uj.title || '').toLowerCase() === (job.title || '').toLowerCase();
+                    if (refMatches || titleFuzzy) {
+                        // Update status/progress
+                        const mapped = status;
+                        uj.progress = Math.max(0, Math.min(100, Number(progress)));
+                        uj.projectStatus = mapped;
+                        uj.status = mapped;
+                        uj.updatedAt = new Date().toISOString();
+                        changes++;
+                    }
+                });
+            });
+
+            if (changes > 0) {
+                // Persist via update-users API
+                const saveRes = await fetch('/api/update-users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ users, action: 'bulk-job-progress', userName: 'multiple' })
+                });
+                if (!saveRes.ok) throw new Error('Failed to save users');
+
+                this.showSuccess(`Applied progress to ${changes} assignment${changes === 1 ? '' : 's'}`);
+                this.triggerEvent('jobList:userProgressApplied', { jobIndex, changes, status, progress });
+            } else {
+                this.showWarning('No assigned users matched this job');
+            }
+        } catch (error) {
+            console.error('❌ Failed to apply user progress:', error);
+            this.showError('Failed to apply user progress');
+        }
+    },
+
+    // Handle status dropdown change (no-op until Apply is clicked)
+    handleUserStatusChange(e, jobIndex) {
+        // Intentionally left empty to allow Apply to persist
     },
 
     // Trigger custom event

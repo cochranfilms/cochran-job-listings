@@ -950,6 +950,185 @@ const UserManager = {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    },
+
+    // ==================== USER JOB MANAGEMENT (Admin) ====================
+    
+    // Update a user's job status (projectStatus + status)
+    async updateUserJobStatus(userName, jobId, newStatus) {
+        try {
+            if (!userName || !jobId || !newStatus) {
+                throw new Error('Missing userName, jobId, or newStatus');
+            }
+            const user = this.state.users[userName];
+            if (!user) throw new Error(`User ${userName} not found`);
+            if (!user.jobs || !user.jobs[jobId]) throw new Error(`Job ${jobId} not found for ${userName}`);
+
+            // Normalize statuses between user portal and admin
+            const normalized = String(newStatus).toLowerCase();
+            const statusMap = {
+                'upcoming': 'upcoming',
+                'in-progress': 'in-progress',
+                'in progress': 'in-progress',
+                'active': 'in-progress',
+                'completed': 'completed',
+                'done': 'completed',
+                'cancelled': 'cancelled',
+                'canceled': 'cancelled',
+                'on-hold': 'on-hold',
+                'on hold': 'on-hold'
+            };
+            const mappedStatus = statusMap[normalized] || 'upcoming';
+
+            user.jobs[jobId].projectStatus = mappedStatus;
+            user.jobs[jobId].status = mappedStatus; // keep fields aligned
+            user.jobs[jobId].updatedAt = new Date().toISOString();
+
+            // Persist
+            await this.updateUsersOnGitHub('job-status', userName);
+
+            // Notify
+            if (window.NotificationManager) {
+                window.NotificationManager.success(
+                    `Updated ${userName}'s job to ${mappedStatus}`,
+                    { title: 'Job Status Updated' }
+                );
+            }
+            this.triggerEvent('user:job-status-updated', { userName, jobId, status: mappedStatus });
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating user job status:', error);
+            if (window.NotificationManager) {
+                window.NotificationManager.error(`Failed to update job status: ${error.message}`, { title: 'Update Failed' });
+            }
+            return false;
+        }
+    },
+
+    // Update a user's job progress (0-100). Auto-adjusts status
+    async updateUserJobProgress(userName, jobId, progress) {
+        try {
+            if (!userName || !jobId || progress === undefined || progress === null) {
+                throw new Error('Missing userName, jobId, or progress');
+            }
+            const pct = Math.max(0, Math.min(100, Number(progress)));
+            const user = this.state.users[userName];
+            if (!user) throw new Error(`User ${userName} not found`);
+            if (!user.jobs || !user.jobs[jobId]) throw new Error(`Job ${jobId} not found for ${userName}`);
+
+            user.jobs[jobId].progress = pct;
+            if (pct === 100) {
+                user.jobs[jobId].projectStatus = 'completed';
+                user.jobs[jobId].status = 'completed';
+            } else if (pct > 0) {
+                user.jobs[jobId].projectStatus = 'in-progress';
+                user.jobs[jobId].status = 'in-progress';
+            } else {
+                user.jobs[jobId].projectStatus = 'upcoming';
+                user.jobs[jobId].status = 'upcoming';
+            }
+            user.jobs[jobId].updatedAt = new Date().toISOString();
+
+            await this.updateUsersOnGitHub('job-progress', userName);
+
+            if (window.NotificationManager) {
+                window.NotificationManager.success(
+                    `Set ${userName}'s job progress to ${pct}%`,
+                    { title: 'Job Progress Updated' }
+                );
+            }
+            this.triggerEvent('user:job-progress-updated', { userName, jobId, progress: pct });
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating user job progress:', error);
+            if (window.NotificationManager) {
+                window.NotificationManager.error(`Failed to update job progress: ${error.message}`, { title: 'Update Failed' });
+            }
+            return false;
+        }
+    },
+
+    // Add a job to a user
+    async addJobToUser(userName, jobData) {
+        try {
+            const user = this.state.users[userName];
+            if (!user) throw new Error(`User ${userName} not found`);
+            if (!user.jobs) user.jobs = {};
+
+            const jobId = jobData?.id || `job-${(jobData?.title || 'role').toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+            user.jobs[jobId] = {
+                id: jobId,
+                title: jobData.title || 'Untitled Job',
+                role: jobData.role || jobData.title || 'Role',
+                location: jobData.location || user.profile?.location || 'Atlanta Area',
+                rate: jobData.rate || user.profile?.rate || '',
+                description: jobData.description || '',
+                date: jobData.date || jobData.projectStart || '',
+                projectStart: jobData.projectStart || jobData.date || '',
+                projectEnd: jobData.projectEnd || '',
+                listingStatus: jobData.listingStatus || 'Active',
+                status: jobData.status || 'upcoming',
+                projectStatus: jobData.projectStatus || 'upcoming',
+                paymentStatus: jobData.paymentStatus || 'pending',
+                progress: jobData.progress || 0,
+                assignedDate: new Date().toISOString().split('T')[0],
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!user.primaryJob) user.primaryJob = jobId;
+
+            await this.updateUsersOnGitHub('add-job', userName);
+            this.triggerEvent('user:job-added', { userName, jobId, job: user.jobs[jobId] });
+            return jobId;
+        } catch (error) {
+            console.error('❌ Error adding job to user:', error);
+            if (window.NotificationManager) {
+                window.NotificationManager.error(`Failed to add job: ${error.message}`, { title: 'Add Job Failed' });
+            }
+            return null;
+        }
+    },
+
+    // Remove a job from a user
+    async removeJobFromUser(userName, jobId) {
+        try {
+            const user = this.state.users[userName];
+            if (!user || !user.jobs || !user.jobs[jobId]) throw new Error('User/job not found');
+
+            const wasPrimary = user.primaryJob === jobId;
+            delete user.jobs[jobId];
+            if (wasPrimary) {
+                user.primaryJob = Object.keys(user.jobs)[0] || null;
+            }
+
+            await this.updateUsersOnGitHub('remove-job', userName);
+            this.triggerEvent('user:job-removed', { userName, jobId });
+            return true;
+        } catch (error) {
+            console.error('❌ Error removing job from user:', error);
+            if (window.NotificationManager) {
+                window.NotificationManager.error(`Failed to remove job: ${error.message}`, { title: 'Remove Job Failed' });
+            }
+            return false;
+        }
+    },
+
+    // Set a user's primary job
+    async setPrimaryJob(userName, jobId) {
+        try {
+            const user = this.state.users[userName];
+            if (!user || !user.jobs || !user.jobs[jobId]) throw new Error('User/job not found');
+            user.primaryJob = jobId;
+            await this.updateUsersOnGitHub('set-primary-job', userName);
+            this.triggerEvent('user:primary-job-set', { userName, jobId });
+            return true;
+        } catch (error) {
+            console.error('❌ Error setting primary job:', error);
+            if (window.NotificationManager) {
+                window.NotificationManager.error(`Failed to set primary job: ${error.message}`, { title: 'Update Failed' });
+            }
+            return false;
+        }
     }
 };
 
