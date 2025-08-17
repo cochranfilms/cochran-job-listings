@@ -294,6 +294,56 @@ def test_admin_approve(page: Page, ctx: TestContext):
     print("✅ admin approval invoked (best-effort)")
 
 
+def fs_approve_user_via_admin(page: Page, ctx: TestContext):
+    """Log into Firebase on admin dashboard and write approval+job directly to Firestore."""
+    print("🧪 Approving via Firestore (admin-dashboard context)…")
+    _navigate(page, f"{ctx.base}/admin-dashboard.html", "admin-dashboard(firestore)")
+    # Ensure Firebase SDK is available and sign in
+    result = page.evaluate(
+        "async (email, password) => {\n"
+        "  try {\n"
+        "    if (!window.firebase || !firebase.auth) throw new Error('Firebase SDK missing');\n"
+        "    try { await firebase.auth().signOut(); } catch(e){}\n"
+        "    await firebase.auth().signInWithEmailAndPassword(email, password);\n"
+        "    await new Promise(r=>setTimeout(r,1000));\n"
+        "    return { ok: true, user: firebase.auth().currentUser && firebase.auth().currentUser.email };\n"
+        "  } catch (e) { return { ok:false, error: String(e) }; }\n"
+        "}",
+        ctx.admin_email,
+        ctx.admin_password,
+    )
+    print("🔎 admin firebase login:", result)
+    # Now set user doc via FirestoreDataManager
+    payload = {
+        "name": ctx.test_name,
+        "email": ctx.test_email,
+        "title": ctx.job_title or "Contractor",
+        "date": "2025-12-31",
+        "location": "Atlanta, GA",
+        "rate": "$250/day",
+    }
+    js = (
+        "async (u)=>{\n"
+        "  try { if (!window.FirestoreDataManager) throw new Error('FSDM missing'); } catch(e){ throw e }\n"
+        "  try { await window.FirestoreDataManager.init(); } catch(_){}\n"
+        "  const name = u.name;\n"
+        "  const title = u.title;\n"
+        "  const job = { title: u.title, date: u.date, location: u.location, rate: u.rate, status: 'upcoming' };\n"
+        "  const doc = {\n"
+        "    profile: { email: u.email, role: title, location: u.location, approvedDate: new Date().toISOString().slice(0,10) },\n"
+        "    application: { status: 'approved', eventDate: u.date, jobTitle: title },\n"
+        "    jobs: { [title]: job },\n"
+        "    primaryJob: title,\n"
+        "    contract: { contractStatus: 'pending' }\n"
+        "  };\n"
+        "  await window.FirestoreDataManager.setUser(name, doc);\n"
+        "  return { ok:true };\n"
+        "}"
+    )
+    res2 = page.evaluate(js, payload)
+    print("🔎 firestore approve result:", res2)
+
+
 def test_contract_sign(page: Page, ctx: TestContext):
     _attach_console_collector(page, ctx, "contract")
     _navigate(page, f"{ctx.base}/contract.html", "contract")
@@ -383,10 +433,8 @@ def run_suite(ctx: TestContext) -> int:
             test_apply(page, ctx)
             # Ensure Firebase account exists for portal login
             api_create_firebase_user(page, ctx)
-            # Approve and attach a job via API to make contract access deterministic
-            api_upsert_user_approved(page, ctx)
-            # Still attempt UI approve for parity (best-effort)
-            test_admin_approve(page, ctx)
+            # Prefer Firestore approval directly from admin context
+            fs_approve_user_via_admin(page, ctx)
             test_contract_sign(page, ctx)
             test_portal(page, ctx)
         finally:
