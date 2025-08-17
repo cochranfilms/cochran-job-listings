@@ -5,6 +5,7 @@
   - Updates the user's `contract` metadata in Firestore (`contractStatus`, `contractSignedDate`, optional `fileUrl` if uploaded), then updates users.json via the existing GitHub API as a backup.
   - Mirrors the signed contract into the `contracts` collection with `FirestoreDataManager.setContract(id, data)`.
   - Existing EmailJS flows are unchanged, but now assume Firestore holds the canonical user/job state.
+  - Deletion flow: From `admin-dashboard.html` you can now delete a contract directly. This removes the Firestore `contracts/<id>` doc, clears the user's `contract` field, and calls `/api/delete-pdf` to remove the PDF (local/GitHub best-effort).
 
 Smoke tests:
 - Apply Flow: Open `/apply.html`, submit a new application, verify a new doc appears in Firestore `users` with `application.status=pending`, and the user appears in `admin-dashboard.html` pending list. Approve from admin; verify EmailJS fired and Firestore user updated to `application.status=approved` with `profile.approvedDate`.
@@ -29,6 +30,7 @@ npm run cleanup-tests:apply
 After applying cleanup, re-test the main flows:
 - Admin auth/login and stats load in `admin-dashboard.html`
 - User portal auth and data load in `user-portal.html`
+ - Contract deletion from Contracts list removes Firestore doc and attempts PDF cleanup
  - Sign-out race hardening in `user-portal.html` (2025-08-17): `loadUserData()` snapshots `currentUser.email` and re-validates after async awaits to prevent null dereference when the user signs out during refresh.
 # 🧪 Testing System Documentation
 

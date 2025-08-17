@@ -490,6 +490,16 @@ const FirestoreDataManager = {
             return list;
         } catch (e) { throw e; }
     },
+    async deleteContract(contractId) {
+        try {
+            await this.db.collection(this.collections.contracts).doc(contractId).delete();
+            console.log('✅ Contract deleted from Firestore:', contractId);
+            return true;
+        } catch (e) {
+            console.error('❌ Error deleting contract from Firestore:', e);
+            throw e;
+        }
+    },
 
     async runAutoMigrationIfNeeded() {
         try {

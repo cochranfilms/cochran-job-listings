@@ -1476,6 +1476,61 @@
                     const url = `${API_BASE}/api/contracts?filename=${encodeURIComponent(filename)}`;
                     window.open(url, '_blank');
                 };
+                const makeDelete = async () => {
+                    if (!confirm(`Permanently delete contract for ${name}? This removes Firestore doc and tries to remove the PDF.`)) return;
+                    try {
+                        // 1) Delete from Firestore contracts collection
+                        if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                            const contractId = id;
+                            try { await window.FirestoreDataManager.deleteContract(contractId); } catch(_){}
+                        }
+
+                        // 2) Remove contract reference from associated user (best-effort)
+                        try {
+                            // Find a matching user by email or name
+                            const users = window.users || {};
+                            let matchedKey = null;
+                            for (const [k, u] of Object.entries(users)) {
+                                const uEmail = (u.profile && u.profile.email) ? String(u.profile.email).toLowerCase() : '';
+                                const cEmail = String(email || '').toLowerCase();
+                                if (cEmail && uEmail && uEmail === cEmail) { matchedKey = k; break; }
+                                if (!matchedKey && k === name) { matchedKey = k; }
+                            }
+                            if (matchedKey) {
+                                const userCopy = { ...(users[matchedKey] || {}) };
+                                userCopy.contract = {
+                                    contractId: null,
+                                    fileName: null,
+                                    contractStatus: 'pending',
+                                    contractSignedDate: null,
+                                    uploadDate: null,
+                                    githubUrl: null
+                                };
+                                try { await window.FirestoreDataManager.setUser(matchedKey, userCopy); } catch(_){}
+                                window.users[matchedKey] = userCopy;
+                            }
+                        } catch(_){}
+
+                        // 3) Attempt to delete local/GitHub PDF via API
+                        try {
+                            const filename = c.fileName || `${(name || 'Contract').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`;
+                            await fetch(`${API_BASE}/api/delete-pdf`, {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ fileName: filename, contractId: id })
+                            });
+                        } catch(_){}
+
+                        // Reload contracts and users UI
+                        try { await loadContracts(); } catch(_){}
+                        try { await loadUsers(); } catch(_){}
+                        updateStats();
+                        showNotification('✅ Contract deleted', 'success');
+                    } catch (err) {
+                        console.error('Contract delete failed:', err);
+                        showNotification('❌ Failed to delete contract', 'error');
+                    }
+                };
 
                 card.innerHTML = `
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
@@ -1487,14 +1542,17 @@
                         <span>🆔 ${id}</span>
                         <span>🗓️ ${created}</span>
                     </div>
-                    <div class="item-actions">
+                    <div class="item-actions" style="display:flex;gap:.5rem;flex-wrap:wrap;">
                         <button class="btn btn-small" id="dl-${id}">⬇️ Download</button>
+                        <button class="btn btn-small btn-danger" id="del-${id}">🗑️ Delete</button>
                     </div>
                 `;
 
                 list.appendChild(card);
                 const btn = card.querySelector(`#dl-${CSS.escape(id)}`);
                 if (btn) btn.onclick = makeDownload;
+                const delBtn = card.querySelector(`#del-${CSS.escape(id)}`);
+                if (delBtn) delBtn.onclick = makeDelete;
             });
         }
 
@@ -2754,26 +2812,24 @@
 
                 console.log(`🗑️ Deleting user: ${userName} (archived: ${isArchivedUser})`);
 
-                // 1. Attempt PDF cleanup
+                // 1. Attempt PDF + contract cleanup
                 try {
                     const contract = userData.contract || {};
+                    // 1a) Firestore contracts collection
+                    if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                        const contractId = contract.contractId || userName;
+                        try { await window.FirestoreDataManager.deleteContract(contractId); } catch(_){}
+                    }
+                    // 1b) Delete physical/archived PDF via API
                     if (contract.fileName || contract.contractId) {
-                        const fileName = contract.fileName;
-                        const method = fileName ? 'DELETE' : 'POST';
-                        const body = fileName ? { filename: fileName } : { contractId: contract.contractId };
-                        
-                        console.log('🗑️ Cleaning up PDF file...');
+                        const fileName = contract.fileName || `${userName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`;
+                        console.log('🗑️ Cleaning up contract PDF...');
                         const deletePdfResponse = await fetch(`${API_BASE}/api/delete-pdf`, {
                             method: 'DELETE',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(body)
+                            body: JSON.stringify({ fileName, contractId: contract.contractId || userName })
                         });
-                        
-                        if (deletePdfResponse.ok) {
-                            console.log('✅ PDF file cleaned up successfully');
-                        } else {
-                            console.warn('⚠️ PDF cleanup failed:', deletePdfResponse.status);
-                        }
+                        if (deletePdfResponse.ok) { console.log('✅ PDF cleanup complete'); } else { console.warn('⚠️ PDF cleanup failed:', deletePdfResponse.status); }
                     }
                 } catch (pdfError) {
                     console.warn('⚠️ PDF cleanup error:', pdfError.message);
