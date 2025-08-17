@@ -1622,9 +1622,28 @@
         async function deleteJob(index) {
             if (confirm('Are you sure you want to delete this job?')) {
                 const removed = window.jobs[index];
+
+                // Attempt Firestore delete by document id (single source of truth)
+                try {
+                    if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                        const jobId = removed && (removed.id || removed.contractId || removed._id);
+                        if (jobId) {
+                            await window.FirestoreDataManager.deleteJobListing(jobId);
+                            console.log('✅ Deleted job from Firestore:', jobId);
+                        } else {
+                            console.warn('⚠️ No job id available for Firestore delete; skipping direct delete');
+                        }
+                    }
+                } catch (err) {
+                    console.warn('⚠️ Firestore delete failed:', err?.message || err);
+                }
+
+                // Update local UI immediately; realtime listener will refresh from Firestore
                 window.jobs.splice(index, 1);
                 displayJobs();
                 updateStats();
+
+                // Optional archival sync
                 try { await updateJobsOnGitHub('delete', removed?.title || 'job'); } catch {}
             }
         }
