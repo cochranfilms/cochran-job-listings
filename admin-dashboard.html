@@ -1204,16 +1204,9 @@
                         return {};
                     });
                     
-                    // Load jobs with fallback (extracted from users)
-                    window.jobs = await window.FirestoreDataManager.getDataWithFallback('jobs', async () => {
-                        console.log('📁 Falling back to jobs JSON API...');
-                        const response = await fetch(`${API_BASE}/api/jobs-data`);
-                        if (response.ok) {
-                            const data = await response.json();
-                            return data.jobs || [];
-                        }
-                        return [];
-                    });
+                    // Load jobs directly from Firestore (no JSON fallback)
+                    console.log('🔥 Loading jobs from Firestore...');
+                    window.jobs = await window.FirestoreDataManager.getJobListings();
                     
                     // Load dropdown options with fallback (extracted from users)
                     window.dropdownOptions = await window.FirestoreDataManager.getDataWithFallback('dropdownOptions', async () => {
@@ -1318,18 +1311,16 @@
         // Load existing jobs
         async function loadJobs() {
             try {
-                console.log('🔄 loadJobs called');
-                const response = await fetch(`${API_BASE}/api/jobs-data`);
-                if (response.ok) {
-                    const data = await response.json();
-                    window.jobs = data.jobs || [];
-                    console.log(`✅ Loaded ${window.jobs.length} jobs from API`);
+                console.log('🔄 loadJobs called (Firestore)');
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    window.jobs = await window.FirestoreDataManager.getJobListings();
+                    console.log(`✅ Loaded ${window.jobs.length} jobs from Firestore`);
                 } else {
-                    console.warn('⚠️ Jobs API response not ok:', response.status);
+                    console.warn('⚠️ Firestore not available; jobs set to empty');
                     window.jobs = [];
                 }
             } catch (error) {
-                console.error('❌ Error loading jobs:', error);
+                console.error('❌ Error loading jobs from Firestore:', error);
                 window.jobs = [];
             }
             
