@@ -1060,6 +1060,18 @@
                     loadJobs();
                 }
             }, 1000);
+
+            // Ensure contracts are displayed
+            setTimeout(() => {
+                console.log('🔄 Ensuring contracts are displayed...');
+                if (window.contracts && window.contracts.length > 0) {
+                    console.log('✅ Contracts already loaded, updating display...');
+                    displayContracts();
+                } else {
+                    console.log('⚠️ No contracts found, attempting to reload...');
+                    loadContracts();
+                }
+            }, 1200);
             
             console.log('✅ Main dashboard displayed successfully');
         }
@@ -1189,36 +1201,49 @@
                     await initializeFirebase();
                 }
                 
-                // Try to load from Firestore first with fallback
+                // Ensure Firestore is initialized, then load from Firestore only
+                console.log('🔥 Ensuring Firestore is initialized...');
+                if (window.FirestoreIntegration && typeof window.FirestoreIntegration.init === 'function') {
+                    await window.FirestoreIntegration.init();
+                } else if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                    await window.FirestoreDataManager.init();
+                }
+
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                    console.log('🔥 Loading data from Firestore with fallback...');
-                    
-                    // Load users with fallback
-                    window.users = await window.FirestoreDataManager.getDataWithFallback('users', async () => {
-                        console.log('📁 Falling back to users JSON API...');
-                        const response = await fetch(`${API_BASE}/api/users`);
-                        if (response.ok) {
-                            const data = await response.json();
-                            return data.users || {};
-                        }
-                        return {};
-                    });
-                    
-                    // Load jobs directly from Firestore (no JSON fallback)
-                    console.log('🔥 Loading jobs from Firestore...');
-                    window.jobs = await window.FirestoreDataManager.getJobListings();
-                    
-                    // Load dropdown options with fallback (extracted from users)
-                    window.dropdownOptions = await window.FirestoreDataManager.getDataWithFallback('dropdownOptions', async () => {
-                        console.log('📁 Falling back to dropdown options JSON API...');
-                        const response = await fetch(`${API_BASE}/api/dropdown-options`);
-                        if (response.ok) {
-                            return await response.json();
-                        }
-                        return {};
-                    });
-                    
-                    console.log('✅ Data loaded from Firestore with fallbacks');
+                    console.log('🔥 Loading data from Firestore (no JSON fallbacks)...');
+
+                    // Users (kept as-is for now; Firestore is source, no fallback)
+                    try {
+                        window.users = await window.FirestoreDataManager.getUsers();
+                    } catch (e) {
+                        console.warn('⚠️ Users load failed from Firestore:', e?.message || e);
+                        window.users = {};
+                    }
+
+                    // Jobs (Firestore only)
+                    try {
+                        window.jobs = await window.FirestoreDataManager.getJobListings();
+                    } catch (e) {
+                        console.warn('⚠️ Jobs load failed from Firestore:', e?.message || e);
+                        window.jobs = [];
+                    }
+
+                    // Contracts (Firestore only)
+                    try {
+                        window.contracts = await window.FirestoreDataManager.getContracts();
+                    } catch (e) {
+                        console.warn('⚠️ Contracts load failed from Firestore:', e?.message || e);
+                        window.contracts = [];
+                    }
+
+                    // Dropdown options (prefer Firestore; if missing, leave empty)
+                    try {
+                        window.dropdownOptions = await window.FirestoreDataManager.getDropdownOptions();
+                    } catch (e) {
+                        console.warn('⚠️ Dropdown options load failed from Firestore:', e?.message || e);
+                        window.dropdownOptions = {};
+                    }
+
                 } else {
                     console.log('📁 Firestore not available, loading from JSON APIs...');
                     await loadDataFromJSON();
@@ -1273,8 +1298,8 @@
                 console.error('❌ totalCreators element not found');
             }
 
-            // Active jobs from jobs dataset
-            const activeJobsCount = (window.jobs || []).filter(job => job.status === 'Active').length;
+            // Active jobs from jobs dataset (treat missing status as Active)
+            const activeJobsCount = (window.jobs || []).filter(job => (job.status || 'Active') === 'Active').length;
             const activeJobsElement = document.getElementById('activeJobs');
             if (activeJobsElement) {
                 activeJobsElement.textContent = activeJobsCount;
@@ -1295,8 +1320,13 @@
                 console.error('❌ pendingReviews element not found');
             }
 
-            // Signed contracts among active users
-            const signedContracts = activeUsers.filter(user => user?.contract?.contractStatus === 'signed').length;
+            // Signed contracts (prefer Firestore contracts collection if available)
+            let signedContracts = 0;
+            if (Array.isArray(window.contracts)) {
+                signedContracts = window.contracts.filter(c => (c.status || '').toLowerCase() === 'signed').length;
+            } else {
+                signedContracts = activeUsers.filter(user => user?.contract?.contractStatus === 'signed').length;
+            }
             const totalContractsElement = document.getElementById('totalContracts');
             if (totalContractsElement) {
                 totalContractsElement.textContent = signedContracts;
@@ -1327,6 +1357,88 @@
             console.log('🔄 Calling displayJobs after loading...');
             displayJobs();
             console.log('✅ loadJobs complete');
+        }
+
+        // Load contracts from Firestore and render
+        async function loadContracts() {
+            try {
+                console.log('🔄 loadContracts called (Firestore)');
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    window.contracts = await window.FirestoreDataManager.getContracts();
+                    console.log(`✅ Loaded ${window.contracts.length} contracts from Firestore`);
+                } else {
+                    console.warn('⚠️ Firestore not available; contracts set to empty');
+                    window.contracts = [];
+                }
+            } catch (error) {
+                console.error('❌ Error loading contracts from Firestore:', error);
+                window.contracts = [];
+            }
+            displayContracts();
+        }
+
+        // Display contracts
+        function displayContracts() {
+            const list = document.getElementById('contractsList');
+            if (!list) {
+                console.warn('⚠️ contractsList element not found');
+                return;
+            }
+
+            const contracts = Array.isArray(window.contracts) ? window.contracts : [];
+            if (contracts.length === 0) {
+                list.innerHTML = '<div class="item-card"><p style="text-align:center;color:rgba(255,255,255,0.7);">No contracts available</p></div>';
+                return;
+            }
+
+            // Sort newest first by createdAt if present
+            contracts.sort((a, b) => new Date(b.createdAt || b.updatedAt || 0) - new Date(a.createdAt || a.updatedAt || 0));
+            list.innerHTML = '';
+
+            const statusColors = {
+                signed: '#22c55e',
+                pending: '#f59e0b',
+                draft: '#6b7280',
+                expired: '#ef4444',
+                cancelled: '#ef4444'
+            };
+
+            contracts.forEach((c, index) => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                const status = (c.status || 'draft').toLowerCase();
+                const created = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—';
+                const id = c.id || c.contractId || `contract-${index}`;
+
+                const makeDownload = () => {
+                    if (c.fileUrl) {
+                        window.open(c.fileUrl, '_blank');
+                        return;
+                    }
+                    const filename = c.fileName || `${(c.userName || 'Contract').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`;
+                    const url = `${API_BASE}/api/contracts?filename=${encodeURIComponent(filename)}`;
+                    window.open(url, '_blank');
+                };
+
+                card.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+                        <h4 style="margin:0;">${c.userName || 'Unknown User'}</h4>
+                        <span style="background:${statusColors[status] || '#6b7280'};color:#fff;padding:0.25rem 0.75rem;border-radius:12px;font-size:0.8rem;text-transform:capitalize;">${status}</span>
+                    </div>
+                    <div class="item-meta">
+                        <span>📧 ${c.userEmail || 'N/A'}</span>
+                        <span>🆔 ${id}</span>
+                        <span>🗓️ ${created}</span>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-small" id="dl-${id}">⬇️ Download</button>
+                    </div>
+                `;
+
+                list.appendChild(card);
+                const btn = card.querySelector(`#dl-${CSS.escape(id)}`);
+                if (btn) btn.onclick = makeDownload;
+            });
         }
 
         // Display jobs
