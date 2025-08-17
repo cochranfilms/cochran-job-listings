@@ -20,7 +20,7 @@ npm run cleanup-tests:apply
 
 Notes
 - Quarantined files go to `backups/test-quarantine/<timestamp>/`.
-- References removed include `<script src="test-*|debug-*">`, `runDashboardTests(`, `testMainDashboard*(`, and python servers `https_server.py`/`platform-analysis-server.py`.
+- References removed include `<script src="test-*|debug-*">`, ``, `testMainDashboard*(`, and python servers ``/``.
 - Review quarantined files as needed before deletion.
 # Cleanup System Documentation
 

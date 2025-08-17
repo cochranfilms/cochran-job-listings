@@ -471,7 +471,7 @@ const DashboardManager = {
     },
 
     // Run dashboard tests
-    async runDashboardTests() {
+    async ) {
         try {
             console.log('🧪 Starting Dashboard Tests...\n');
             

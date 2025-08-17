@@ -9,7 +9,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "cleanup-tests": "node scripts/cleanup-tests.js --dry-run",
     "cleanup-tests:list": "node scripts/cleanup-tests.js --list",
-    "cleanup-tests:apply": "node scripts/cleanup-tests.js --apply"
+    "cleanup-tests:apply": "node scripts/cleanup-tests.js --apply",
+    "e2e-check": "node scripts/e2e-check.js"
   },
   "keywords": [
     "contract",
