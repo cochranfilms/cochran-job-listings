@@ -194,6 +194,73 @@ def api_upsert_user_approved(page: Page, ctx: TestContext):
     print("🔎 /api/update-users response:", r.json())
 
 
+def github_update_users_via_api(page: Page, ctx: TestContext):
+    print("🧪 Updating users.json via /api/github/file/users.json …")
+    # 1) GET current file to obtain SHA and content
+    gf = page.request.get(f"{ctx.base}/api/github/file/users.json")
+    if gf.status != 200:
+        print("⚠️ github file GET failed:", gf.status)
+        return
+    meta = gf.json()
+    sha = meta.get("sha")
+    content_b64 = meta.get("content", "")
+    try:
+        import base64
+        decoded = base64.b64decode(content_b64).decode("utf-8") if content_b64 else "{}"
+        data = json.loads(decoded or "{}")
+    except Exception:
+        data = {"users": {}}
+    users = data.get("users", {})
+    # Build/update the target user
+    title = ctx.job_title or "Contractor"
+    job = {
+        "title": title,
+        "date": "2025-12-31",
+        "location": "Atlanta, GA",
+        "rate": "$250/day",
+        "description": f"Automated E2E assignment for {title}",
+        "status": "upcoming"
+    }
+    entry = users.get(ctx.test_name, {})
+    profile = entry.get("profile", {})
+    jobs = entry.get("jobs", {})
+    jobs_key = entry.get("primaryJob") or title
+    jobs[jobs_key] = {**jobs.get(jobs_key, {}), **job}
+    payload_user = {
+        "profile": {
+            **profile,
+            "email": ctx.test_email,
+            "role": title,
+            "location": profile.get("location") or job["location"],
+            "approvedDate": profile.get("approvedDate") or time.strftime("%Y-%m-%d")
+        },
+        "application": {
+            **entry.get("application", {}),
+            "status": "approved",
+            "eventDate": job["date"],
+            "jobTitle": title
+        },
+        "jobs": jobs,
+        "primaryJob": jobs_key,
+        "contract": entry.get("contract", {"contractStatus": "pending"})
+    }
+    users[ctx.test_name] = payload_user
+    data["users"] = users
+    data["lastUpdated"] = time.strftime("%Y-%m-%d")
+    data["totalUsers"] = len(users)
+    body = {
+        "content": json.dumps(data, indent=2),
+        "message": f"E2E approve {ctx.test_name} and attach job {jobs_key}",
+    }
+    if sha:
+        body["sha"] = sha
+    put = page.request.put(f"{ctx.base}/api/github/file/users.json", data=json.dumps(body), headers={"Content-Type": "application/json"})
+    try:
+        print("🔎 github file PUT response:", put.json())
+    except Exception:
+        print("⚠️ github file PUT status:", put.status)
+
+
 def _firebase_login(page: Page, email: str, password: str):
     # The admin dashboard uses Firebase auth UI; fill and sign in
     page.fill("input[type='email']", email)
@@ -255,7 +322,29 @@ def test_contract_sign(page: Page, ctx: TestContext):
         page.wait_for_timeout(5000)
         print("✅ contract signed best-effort")
     else:
-        print("⚠️ contract access not granted or still hidden; continuing")
+        print("⚠️ contract access not granted or still hidden; attempting GitHub users.json approval update…")
+        try:
+            github_update_users_via_api(page, ctx)
+            # Retry the access flow once after GitHub update
+            page.reload(wait_until="domcontentloaded")
+            page.fill("#freelancerName", ctx.test_name)
+            page.fill("#freelancerEmail", ctx.test_email)
+            page.click("text=/Verify Access|Contract Access|Verify/i")
+            try:
+                page.wait_for_selector("#success-message:not(.hidden)", timeout=12000)
+                page.fill("#digitalSignature", ctx.test_name)
+                page.fill("#signatureDate", time.strftime("%Y-%m-%d"))
+                page.fill("#portalPassword", ctx.test_password)
+                page.fill("#confirmPassword", ctx.test_password)
+                page.wait_for_selector("#signContractBtn:not([disabled])", timeout=15000)
+                page.click("#signContractBtn")
+                page.wait_for_timeout(5000)
+                print("✅ contract signed after GitHub approval")
+                return
+            except Exception:
+                print("⚠️ still no contract access; proceeding")
+        except Exception as e:
+            print("⚠️ GitHub users.json approval update failed:", e)
 
 
 def _get_json(page: Page, url: str) -> Dict[str, Any]:
