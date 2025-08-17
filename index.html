@@ -2084,25 +2084,21 @@
         
         let jobs = [];
         
-                    // Try Firestore first if available
-            if (window.FirestoreIntegration && window.FirestoreIntegration.isAvailable()) {
-              console.log('🔥 Attempting to load jobs from Firestore users collection...');
-              try {
-                const firestoreJobs = await window.FirestoreIntegration.getData('jobs', async () => {
-                  console.log('📁 Firestore users collection empty, falling back to JSON API...');
-                  return null;
-                });
-                
-                if (firestoreJobs && firestoreJobs.length > 0) {
-                  console.log('✅ Jobs loaded from Firestore users collection:', firestoreJobs.length);
-                  jobs = firestoreJobs;
-                } else {
-                  throw new Error('No jobs found in Firestore users collection');
-                }
-              } catch (firestoreError) {
-                console.log('📁 Firestore failed, falling back to JSON API:', firestoreError.message);
-              }
+        // Try Firestore first if available (jobs collection)
+        if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+          console.log('🔥 Loading jobs from Firestore jobs collection...');
+          try {
+            const firestoreJobs = await window.FirestoreDataManager.getJobListings();
+            if (Array.isArray(firestoreJobs) && firestoreJobs.length > 0) {
+              console.log('✅ Jobs loaded from Firestore:', firestoreJobs.length);
+              jobs = firestoreJobs;
+            } else {
+              console.log('📁 No jobs found in Firestore. Will try API next.');
             }
+          } catch (firestoreError) {
+            console.log('📁 Firestore error, will try API:', firestoreError?.message || firestoreError);
+          }
+        }
         
         // Fallback to JSON API if Firestore failed or not available
         if (jobs.length === 0) {
@@ -2119,7 +2115,7 @@
         }
         
         // Filter jobs and exclude applicant submissions (now includes both active and inactive jobs)
-        const jobs = data.jobs.filter(job => {
+        jobs = jobs.filter(job => {
           const cleanStatus = String(job.status || '')
             .toLowerCase()
             .trim()
