@@ -32,6 +32,9 @@ const AdminDashboardApp = {
             // Initialize core modules
             await this.initializeCoreModules();
             
+            // Build redesigned layout shell (sidebar + header + routed content)
+            this.buildLayout();
+
             // Initialize dashboard components
             await this.initializeDashboardComponents();
             
@@ -66,6 +69,210 @@ const AdminDashboardApp = {
             }
             // Always hide loading state
             this.hideLoading();
+        }
+    },
+
+    // Build redesigned layout shell if not present
+    buildLayout() {
+        try {
+            // If layout already exists, wire route handlers and return
+            if (document.getElementById('dashboard') && document.getElementById('appContent')) {
+                this.setupRouteHandlers();
+                return;
+            }
+
+            // Create login screen container (hidden by default)
+            if (!document.getElementById('loginScreen')) {
+                const login = document.createElement('div');
+                login.id = 'loginScreen';
+                login.style.display = 'none';
+                login.style.minHeight = '100vh';
+                login.style.display = 'flex';
+                login.style.alignItems = 'center';
+                login.style.justifyContent = 'center';
+                const loginInner = document.createElement('div');
+                loginInner.style.maxWidth = '420px';
+                loginInner.style.width = '100%';
+                loginInner.style.padding = '1.25rem';
+                login.appendChild(loginInner);
+                document.body.appendChild(login);
+            }
+
+            // Create dashboard shell
+            if (!document.getElementById('dashboard')) {
+                const dash = document.createElement('div');
+                dash.id = 'dashboard';
+                dash.style.display = 'none';
+                dash.style.minHeight = '100vh';
+
+                const grid = document.createElement('div');
+                grid.style.display = 'grid';
+                grid.style.gridTemplateColumns = '260px 1fr';
+                grid.style.minHeight = '100vh';
+
+                // Sidebar
+                const aside = document.createElement('aside');
+                aside.style.background = '#111';
+                aside.style.borderRight = '1px solid rgba(255,255,255,0.08)';
+                aside.style.padding = '1rem';
+                aside.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+                        <img src="../Logo.png" alt="Cochran Films" style="height:28px;" />
+                        <strong style="color:#fff;letter-spacing:0.3px;">Admin</strong>
+                    </div>
+                    <nav id="appNav" style="display:flex;flex-direction:column;gap:6px;">
+                        <button class="btn" data-route="dashboard">🏠 Dashboard</button>
+                        <button class="btn" data-route="users">👥 Users</button>
+                        <button class="btn" data-route="jobs">💼 Jobs</button>
+                        <button class="btn" data-route="contracts">📄 Contracts</button>
+                        <button class="btn" data-route="dropdowns">🔽 Dropdowns</button>
+                    </nav>
+                `;
+
+                // Main column
+                const mainCol = document.createElement('div');
+                mainCol.style.display = 'flex';
+                mainCol.style.flexDirection = 'column';
+
+                // Topbar
+                const header = document.createElement('header');
+                header.style.display = 'flex';
+                header.style.alignItems = 'center';
+                header.style.justifyContent = 'space-between';
+                header.style.gap = '1rem';
+                header.style.padding = '0.75rem 1rem';
+                header.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
+                header.style.background = 'rgba(0,0,0,0.35)';
+                header.style.backdropFilter = 'blur(8px)';
+                header.innerHTML = `
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <input type="search" placeholder="Search…" class="search-input" style="padding:0.5rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;" />
+                    </div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button class="btn btn-secondary" data-route="dashboard">Refresh</button>
+                        <button class="btn btn-danger" id="logoutBtn">Logout</button>
+                    </div>
+                `;
+
+                // Routed content container
+                const main = document.createElement('main');
+                main.id = 'appContent';
+                main.style.padding = '1rem';
+                main.style.minHeight = '0';
+
+                mainCol.appendChild(header);
+                mainCol.appendChild(main);
+
+                grid.appendChild(aside);
+                grid.appendChild(mainCol);
+                dash.appendChild(grid);
+
+                document.body.appendChild(dash);
+            }
+
+            // Basic utility styles for buttons if not present
+            const styleId = 'adminShellStyles';
+            if (!document.getElementById(styleId)) {
+                const style = document.createElement('style');
+                style.id = styleId;
+                style.textContent = `
+                  .btn{cursor:pointer;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.12);padding:0.5rem 0.75rem;border-radius:8px;text-align:left}
+                  .btn:hover{background:rgba(255,255,255,0.14)}
+                  .btn-secondary{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35)}
+                  .btn-danger{background:rgba(220,38,38,0.2);border-color:rgba(220,38,38,0.35)}
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Wire route handlers and logout
+            this.setupRouteHandlers();
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => this.logout());
+            }
+
+            // Default route
+            this.navigate('dashboard');
+        } catch (e) {
+            console.warn('⚠️ Failed to build layout shell:', e);
+        }
+    },
+
+    // Route handler setup
+    setupRouteHandlers() {
+        const nav = document.getElementById('appNav') || document;
+        nav.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target && target.getAttribute && target.hasAttribute('data-route')) {
+                const route = target.getAttribute('data-route');
+                this.navigate(route);
+            }
+        });
+    },
+
+    // Navigate to a view and mount appropriate module(s)
+    navigate(route) {
+        try {
+            const container = document.getElementById('appContent');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const createSection = (id) => {
+                const sec = document.createElement('div');
+                sec.id = id;
+                container.appendChild(sec);
+                return sec.id;
+            };
+
+            switch ((route || 'dashboard').toLowerCase()) {
+                case 'users': {
+                    const id = createSection('userManagementRoot');
+                    if (window.UserList) {
+                        window.UserList.renderUserManagement(id);
+                    }
+                    break;
+                }
+                case 'jobs': {
+                    const formId = createSection('jobFormContainer');
+                    const listId = createSection('jobListContainer');
+                    if (window.JobForm) window.JobForm.renderForm(formId);
+                    if (window.JobList) window.JobList.renderJobManagement(listId);
+                    break;
+                }
+                case 'contracts': {
+                    const id = createSection('contractManagerContainer');
+                    if (window.ContractManager) window.ContractManager.renderContractManagement(id);
+                    break;
+                }
+                case 'dropdowns': {
+                    const id = createSection('dropdownManagerContainer');
+                    if (window.DropdownManager) window.DropdownManager.renderDropdownManagement(id);
+                    break;
+                }
+                case 'dashboard':
+                default: {
+                    // Minimal stats panel
+                    const statsWrap = document.createElement('div');
+                    statsWrap.className = 'content-card';
+                    statsWrap.innerHTML = `
+                        <div class="card-header"><h2>📊 Overview</h2></div>
+                        <div class="card-content">
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;">
+                                <div class="status-card"><div class="status-content"><h3>Total Creators</h3><div id="totalCreators">0</div></div></div>
+                                <div class="status-card"><div class="status-content"><h3>Active Jobs</h3><div id="activeJobs">0</div></div></div>
+                                <div class="status-card"><div class="status-content"><h3>Pending Reviews</h3><div id="pendingReviews">0</div></div></div>
+                                <div class="status-card"><div class="status-content"><h3>Total Contracts</h3><div id="totalContracts">0</div></div></div>
+                            </div>
+                        </div>`;
+                    container.appendChild(statsWrap);
+                    if (window.DashboardManager && typeof window.DashboardManager.updateDashboardStats === 'function') {
+                        window.DashboardManager.updateDashboardStats();
+                    }
+                    break;
+                }
+            }
+        } catch (e) {
+            console.error('❌ Navigation failed:', e);
         }
     },
 
@@ -518,6 +725,20 @@ const AdminDashboardApp = {
         
         if (loginScreen) loginScreen.style.display = 'none';
         if (dashboard) dashboard.style.display = 'block';
+
+        // Hide legacy test UI blocks if present
+        try {
+            const legacySelectors = [
+                '.test-header',
+                '.production-banner',
+                '.test-welcome',
+                '.test-status-dashboard',
+                '.test-results'
+            ];
+            legacySelectors.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => { el.style.display = 'none'; });
+            });
+        } catch (_) {}
         
         // Update page title
         document.title = 'Admin Dashboard | Cochran Films';
@@ -552,11 +773,18 @@ const AdminDashboardApp = {
             // Load users data
             if (window.UserManager) {
                 await window.UserManager.loadUsers();
+                // expose for legacy stats/UI that read from window
+                if (window.UserManager.state && window.UserManager.state.users) {
+                    window.users = window.UserManager.state.users;
+                }
             }
             
             // Load jobs data
             if (window.JobManager) {
                 await window.JobManager.loadJobs();
+                if (window.JobManager.state && window.JobManager.state.jobs) {
+                    window.jobs = window.JobManager.state.jobs;
+                }
             }
             
             // Load dropdown options

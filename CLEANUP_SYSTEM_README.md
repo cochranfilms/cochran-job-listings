@@ -227,6 +227,7 @@ The Firestore database integration system provides real-time data synchronizatio
 - **Modular System**: Compatible with existing modular architecture
 - **Performance Optimization**: Efficient data loading and caching strategies
  - **Assignments Alignment**: Per-user job progression stored under `users/{userId}/assignments/*`; global listings in `jobs` collection. JSON remains a fallback via `/api/update-users` and `/api/jobs-data`.
+ - **UI Shell**: `admin-dashboard-modular/index.html` now renders a sidebar/header shell via `AdminDashboardApp.buildLayout()`; legacy inline test sections are hidden at runtime by `showDashboard()`.
 
 #### Loading State Management Cleanup
 - **Infinite Loading Prevention**: Added safety timeouts and emergency clear functions

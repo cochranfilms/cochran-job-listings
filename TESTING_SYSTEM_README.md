@@ -24,6 +24,23 @@ After applying cleanup, re-test the main flows:
 ## Overview
 This document describes the comprehensive testing system for the Cochran Films admin dashboard and user management system.
 
+## Admin Dashboard Redesign (2025-08-17)
+
+- New shell with sidebar navigation and routed content area is built by `AdminDashboardApp.buildLayout()`.
+- Primary routes: `dashboard`, `users`, `jobs`, `contracts`, `dropdowns`.
+- Rendering:
+  - Users → `UserList.renderUserManagement('userManagementRoot')` (includes `UserForm`).
+  - Jobs → `JobForm.renderForm('jobFormContainer')` + `JobList.renderJobManagement('jobListContainer')`.
+  - Contracts → `ContractManager.renderContractManagement('contractManagerContainer')`.
+  - Dropdowns → `DropdownManager.renderDropdownManagement('dropdownManagerContainer')`.
+- Firestore manager is loaded via `../firestore-data-manager.js` and used with JSON fallback.
+
+### Quick Test Steps
+1. Open `admin-dashboard-modular/index.html`.
+2. Login; verify the legacy test UI hides and the new shell shows.
+3. Click each sidebar item; confirm the correct module renders and actions work (edit user jobs modal, job apply progress, etc.).
+4. Verify no console errors; Firestore presence is optional.
+
 ## Test Scripts
 ### 10. Firestore Job Assignments Alignment
 **Purpose**: Validate the Firestore-aligned model (global job listings + per-user assignments) and UI wiring.
