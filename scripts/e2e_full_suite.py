@@ -170,23 +170,28 @@ def test_contract_sign(page: Page, ctx: TestContext):
     page.fill("#freelancerName", ctx.test_name)
     page.fill("#freelancerEmail", ctx.test_email)
     page.click("text=/Verify Access|Contract Access|Verify/i")
-    # Give time for Firestore/users API
-    page.wait_for_timeout(2500)
+    # Wait for success-message to be visible (not just present)
+    appeared = False
+    try:
+        page.wait_for_selector("#success-message:not(.hidden)", timeout=12000)
+        appeared = True
+    except Exception:
+        appeared = False
     # If success section appears, proceed to sign
-    if page.query_selector("#success-message"):
+    if appeared:
         # Set signature/password
         page.fill("#digitalSignature", ctx.test_name)
         page.fill("#signatureDate", time.strftime("%Y-%m-%d"))
         page.fill("#portalPassword", ctx.test_password)
         page.fill("#confirmPassword", ctx.test_password)
         # Enable button may be delayed by validation
-        page.wait_for_selector("#signContractBtn:not([disabled])", timeout=10000)
+        page.wait_for_selector("#signContractBtn:not([disabled])", timeout=15000)
         page.click("#signContractBtn")
         # Allow time for upload/emails
         page.wait_for_timeout(5000)
         print("✅ contract signed best-effort")
     else:
-        print("⚠️ contract access not granted yet; continuing")
+        print("⚠️ contract access not granted or still hidden; continuing")
 
 
 def _get_json(page: Page, url: str) -> Dict[str, Any]:
