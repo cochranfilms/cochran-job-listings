@@ -493,6 +493,11 @@ const FirestoreDataManager = {
 
     async runAutoMigrationIfNeeded() {
         try {
+            // Only allow auto-migration from the admin dashboard to prevent re-seeding from public portals
+            if (!window || window.IS_ADMIN_DASHBOARD !== true) {
+                console.log('⏭️ Skipping auto-migration (non-admin context)');
+                return;
+            }
             const needUsers = !(await this.hasData(this.collections.users));
             const needJobs = !(await this.hasData(this.collections.jobs));
             const needOpts = !(await this.hasData(this.collections.dropdownOptions));

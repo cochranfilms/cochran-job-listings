@@ -176,23 +176,8 @@
             try {
                 console.log('🔄 Loading users data...');
                 
-                // Check if we have cached data and it's recent (less than 2 minutes old for payment data)
-                const cachedData = sessionStorage.getItem('cachedUsersData');
-                const cacheTimestamp = sessionStorage.getItem('cachedUsersDataTimestamp');
+                // Disable session cache to prevent stale user data in portal
                 const now = Date.now();
-                const cacheAge = now - (parseInt(cacheTimestamp) || 0);
-                const cacheValid = cacheAge < 2 * 60 * 1000; // 2 minutes for more responsive updates
-                
-                if (cachedData && cacheValid) {
-                    // Reduced logging - only log cache usage occasionally
-                if (!sessionStorage.getItem('cacheUsageLogged') || Date.now() - parseInt(sessionStorage.getItem('lastCacheLog') || '0') > 30000) {
-                    console.log('✅ Using cached users data (age:', Math.round(cacheAge / 1000), 'seconds)');
-                    sessionStorage.setItem('cacheUsageLogged', 'true');
-                    sessionStorage.setItem('lastCacheLog', Date.now().toString());
-                }
-                    users = JSON.parse(cachedData);
-                    return;
-                }
                 
                 // First, try to load directly from users API
                 try {
@@ -240,10 +225,6 @@
                                 contractId: u.contractId
                             })));
                             
-                            // Cache the data
-                            sessionStorage.setItem('cachedUsersData', JSON.stringify(users));
-                            sessionStorage.setItem('cachedUsersDataTimestamp', now.toString());
-                            
                             // Now merge with uploaded contracts data to get the most up-to-date contract information
                             await mergeUsersDataWithUploadedContracts();
                             return;
@@ -253,107 +234,9 @@
                     console.warn('⚠️ Could not fetch users.json, trying localStorage...', fetchError);
                 }
                 
-                // Fallback: Try to load from localStorage (admin dashboard format)
-                let data = JSON.parse(localStorage.getItem('users') || '[]');
-                
-                // If localStorage is empty or not an array, try to load from JSON file structure in localStorage
-                if (!Array.isArray(data) || data.length === 0) {
-                    const jsonData = localStorage.getItem('approvedUsers');
-                    if (jsonData) {
-                        const parsedJsonData = JSON.parse(jsonData);
-                        if (parsedJsonData.users) {
-                            // Convert the JSON structure to array format
-                            data = Object.entries(parsedJsonData.users).map(([name, user]) => ({
-                                name: name,
-                                email: user.profile?.email,
-                                password: user.profile?.password,
-                                approvedDate: user.profile?.approvedDate,
-                                contractUrl: user.contract?.contractUrl || 'contract.html',
-                                // CONTRACT STATUS FIELDS - CRITICAL!
-                                contractStatus: user.contract?.contractStatus || 'pending',
-                                contractSignedDate: user.contract?.contractSignedDate,
-                                contractUploadedDate: user.contract?.contractUploadedDate,
-                                contractId: user.contract?.contractId,
-                                // PAYMENT FIELDS - CRITICAL!
-                                paymentMethod: user.paymentMethod || null,
-                                paymentStatus: user.paymentStatus || 'pending',
-                                jobs: user.jobs || {
-                                    'legacy-job': {
-                                        id: 'legacy-job',
-                                        role: user.profile?.role,
-                                        location: user.profile?.location,
-                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
-                                        rate: user.profile?.rate,
-                                        status: 'upcoming',
-                                        projectType: 'Legacy Job',
-                                        description: `${user.profile?.role} position`
-                                    }
-                                },
-                                primaryJob: user.primaryJob || 'legacy-job'
-                            }));
-                        }
-                    } else {
-                        // Final fallback: hardcoded data with job structure
-                        data = [
-                            {
-                                name: "Francisco Flores",
-                                email: "ciscocinema@gmail.com",
-                                password: "Cinema2025",
-                                approvedDate: "2024-01-08",
-                                contractUrl: "contract.html",
-                                contractStatus: "pending",
-                                contractSignedDate: null,
-                                contractUploadedDate: null,
-                                contractId: null,
-                                jobs: {
-                                    'job-francisco-001': {
-                                        id: 'job-francisco-001',
-                                        role: "Backdrop Photographer",
-                                        location: "6695 Church Street, Douglasville, GA 30134",
-                                        projectStart: "November 8, 2025 at 3:15 PM",
-                                        rate: "$400.00 USD (Flat)",
-                                        status: 'upcoming',
-                                        projectType: 'Photography',
-                                        description: 'Backdrop photography for corporate event'
-                                    }
-                                },
-                                primaryJob: 'job-francisco-001'
-                            },
-                            {
-                                name: "Cody Cochran",
-                                email: "codylcochran89@gmail.com",
-                                password: "TestPassword2025",
-                                approvedDate: "2025-08-01",
-                                contractUrl: "contract.html",
-                                contractStatus: "pending",
-                                contractSignedDate: null,
-                                contractUploadedDate: null,
-                                contractId: null,
-                                jobs: {
-                                    'job-cody-001': {
-                                        id: 'job-cody-001',
-                                        role: "Assistant",
-                                        location: "New York, NY",
-                                        projectStart: "2025-08-06T00:04",
-                                        rate: "$125/hour",
-                                        status: 'upcoming',
-                                        projectType: 'Assistant',
-                                        description: 'Professional Assistant position in New York, NY. Details to be provided.'
-                                    }
-                                },
-                                primaryJob: 'job-cody-001'
-                            }
-                        ];
-                    }
-                }
-                
-                users = data;
-                console.log('✅ Users data loaded from localStorage:', users.length, 'users');
-                
-                // Cache the data
-                sessionStorage.setItem('cachedUsersData', JSON.stringify(users));
-                sessionStorage.setItem('cachedUsersDataTimestamp', now.toString());
-                
+                // If API failed, do not fallback to local storage/hardcoded; prefer empty to avoid stale data
+                users = [];
+                console.log('⚠️ Users API unavailable; using empty users array to avoid stale data');
             } catch (error) {
                 console.error('❌ Error loading users data:', error);
                 users = [];
@@ -384,14 +267,13 @@
         async function loadJobsData() {
             try {
                 console.log('🔄 Loading jobs data...');
-                const response = await fetch(`${API_BASE}/api/jobs-data`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    jobsData = data.jobs || [];
-                    console.log('✅ Jobs data loaded:', jobsData.length, 'jobs');
+                // Use Firestore as source of truth via window.FirestoreDataManager if available
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    jobsData = await window.FirestoreDataManager.getJobListings();
+                    console.log('✅ Jobs data loaded from Firestore:', jobsData.length, 'jobs');
                 } else {
-                    console.warn('⚠️ Could not load jobs-data.json, using empty array');
+                    // If Firestore unavailable, do not re-seed from JSON to avoid duplication
+                    console.warn('⚠️ Firestore unavailable; jobsData set to empty');
                     jobsData = [];
                 }
             } catch (error) {
@@ -497,7 +379,6 @@
             };
             return colors[type] || colors.info;
         }
-        
         // User-specific notification system for user actions
         function showUserNotification(title, message, type = 'info', data = {}) {
             showNotification(message, type);
@@ -945,26 +826,13 @@
                 modal.remove();
             }
         }
-
-
-
         // Load freelancer data from JSON file
         async function loadUsersData() {
             try {
                 console.log('🔄 Loading users data...');
                 
-                // Check if we have cached data and it's recent (less than 2 minutes old for payment data)
-                const cachedData = sessionStorage.getItem('cachedUsersData');
-                const cacheTimestamp = sessionStorage.getItem('cachedUsersDataTimestamp');
+                // Disable session cache to prevent stale user data in portal
                 const now = Date.now();
-                const cacheAge = now - (parseInt(cacheTimestamp) || 0);
-                const cacheValid = cacheAge < 30 * 1000; // 30 seconds for immediate updates
-                
-                if (cachedData && cacheValid) {
-                    console.log('✅ Using cached users data (age:', Math.round(cacheAge / 1000), 'seconds)');
-                    users = JSON.parse(cachedData);
-                    return;
-                }
                 
                 // First, try to load directly from users API
                 try {
@@ -1012,10 +880,6 @@
                                 contractId: u.contractId
                             })));
                             
-                            // Cache the data
-                            sessionStorage.setItem('cachedUsersData', JSON.stringify(users));
-                            sessionStorage.setItem('cachedUsersDataTimestamp', now.toString());
-                            
                             // Now merge with uploaded contracts data to get the most up-to-date contract information
                             await mergeUsersDataWithUploadedContracts();
                             return;
@@ -1025,154 +889,9 @@
                     console.warn('⚠️ Could not fetch users.json, trying localStorage...', fetchError);
                 }
                 
-                // Fallback: Try to load from localStorage (admin dashboard format)
-                let data = JSON.parse(localStorage.getItem('users') || '[]');
-                
-                // If localStorage is empty or not an array, try to load from JSON file structure in localStorage
-                if (!Array.isArray(data) || data.length === 0) {
-                    const jsonData = localStorage.getItem('approvedUsers');
-                    if (jsonData) {
-                        const parsedJsonData = JSON.parse(jsonData);
-                        if (parsedJsonData.users) {
-                            // Convert the JSON structure to array format
-                            data = Object.entries(parsedJsonData.users).map(([name, user]) => ({
-                                name: name,
-                                email: user.profile?.email,
-                                password: user.profile?.password,
-                                approvedDate: user.profile?.approvedDate,
-                                contractUrl: user.contract?.contractUrl || 'contract.html',
-                                // CONTRACT STATUS FIELDS - CRITICAL!
-                                contractStatus: user.contract?.contractStatus || 'pending',
-                                contractSignedDate: user.contract?.contractSignedDate,
-                                contractUploadedDate: user.contract?.contractUploadedDate,
-                                contractId: user.contract?.contractId,
-                                // PAYMENT FIELDS - CRITICAL!
-                                paymentMethod: user.paymentMethod || null,
-                                paymentStatus: user.paymentStatus || 'pending',
-                                jobs: user.jobs || {
-                                    'legacy-job': {
-                                        id: 'legacy-job',
-                                        role: user.profile?.role,
-                                        location: user.profile?.location,
-                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
-                                        rate: user.profile?.rate,
-                                        status: 'upcoming',
-                                        projectType: 'Legacy Job',
-                                        description: `${user.profile?.role} position`
-                                    }
-                                },
-                                primaryJob: user.primaryJob || 'legacy-job'
-                            }));
-                        }
-                    } else {
-                        // Final fallback: hardcoded data with job structure
-                        data = [
-                            {
-                                name: "Francisco Flores",
-                                email: "ciscocinema@gmail.com",
-                                password: "Cinema2025",
-                                approvedDate: "2024-01-08",
-                                contractUrl: "contract.html",
-                                contractStatus: "pending",
-                                contractSignedDate: null,
-                                contractUploadedDate: null,
-                                contractId: null,
-                                jobs: {
-                                    'job-francisco-001': {
-                                        id: 'job-francisco-001',
-                                        role: "Backdrop Photographer",
-                                        location: "6695 Church Street, Douglasville, GA 30134",
-                                        projectStart: "November 8, 2025 at 3:15 PM",
-                                        rate: "$400.00 USD (Flat)",
-                                        status: 'upcoming',
-                                        projectType: 'Photography',
-                                        description: 'Backdrop photography for corporate event'
-                                    }
-                                },
-                                primaryJob: 'job-francisco-001'
-                            },
-                            {
-                                name: "Cody Cochran",
-                                email: "codylcochran89@gmail.com",
-                                password: "TestPassword2025",
-                                approvedDate: "2025-08-01",
-                                contractUrl: "contract.html",
-                                contractStatus: "pending",
-                                contractSignedDate: null,
-                                contractUploadedDate: null,
-                                contractId: null,
-                                jobs: {
-                                    'job-cody-001': {
-                                        id: 'job-cody-001',
-                                        role: "Full Stack Designer",
-                                        location: "Douglasville, GA",
-                                        projectStart: "TBD",
-                                        rate: "$900.00 USD (Flat)",
-                                        status: 'upcoming',
-                                        projectType: 'Design',
-                                        description: 'Full stack design work'
-                                    }
-                                },
-                                primaryJob: 'job-cody-001'
-                            },
-                            {
-                                name: "Big Pharma",
-                                email: "bigpharma@example.com",
-                                password: "Pharma2025",
-                                approvedDate: "2025-08-01",
-                                contractUrl: "contract.html",
-                                contractStatus: "pending",
-                                contractSignedDate: null,
-                                contractUploadedDate: null,
-                                contractId: null,
-                                jobs: {
-                                    'job-bigpharma-001': {
-                                        id: 'job-bigpharma-001',
-                                        role: "Corporate Videographer",
-                                        location: "Atlanta, GA",
-                                        projectStart: "December 15th, 2025 at 9:00am",
-                                        rate: "$500.00 USD (Flat)",
-                                        status: 'upcoming',
-                                        projectType: 'Corporate Video',
-                                        description: 'Professional corporate video production for pharmaceutical company'
-                                    }
-                                },
-                                primaryJob: 'job-bigpharma-001'
-                            },
-                            {
-                                name: "Hannah Aryee",
-                                email: "hannah@luciacreates.co",
-                                password: "Collaboration2025",
-                                approvedDate: "2025-08-01",
-                                contractUrl: "contract.html",
-                                contractStatus: "pending",
-                                contractSignedDate: null,
-                                contractUploadedDate: null,
-                                contractId: null,
-                                jobs: {
-                                    'job-hannah-001': {
-                                        id: 'job-hannah-001',
-                                        role: "Backdrop Photographer",
-                                        location: "6700 Church Street, Douglasville, GA,  30134",
-                                        projectStart: "October 24, 2025 at 3:15 PM",
-                                        rate: "$300 + Tip",
-                                        status: 'upcoming',
-                                        projectType: 'Photography',
-                                        description: 'Backdrop photography session'
-                                    }
-                                },
-                                primaryJob: 'job-hannah-001'
-                            }
-                        ];
-                    }
-                }
-                
-                users = data;
-                console.log('✅ Users data loaded from localStorage/fallback:', users.length, 'users');
-                console.log('🔍 Available users:', users.map(u => ({ name: u.name, email: u.email, jobCount: Object.keys(u.jobs || {}).length })));
-                
-                // Also merge with uploaded contracts for fallback data
-                await mergeUsersDataWithUploadedContracts();
+                // If API failed, do not fallback to local storage/hardcoded; prefer empty to avoid stale data
+                users = [];
+                console.log('⚠️ Users API unavailable; using empty users array to avoid stale data');
             } catch (error) {
                 console.error('❌ Error loading users data:', error);
                 users = [];
@@ -1288,13 +1007,13 @@
         // Load jobs data from JSON file
         async function loadJobsData() {
             try {
-                const response = await fetch(`${API_BASE}/api/jobs-data`);
-                if (response.ok) {
-                    const jsonData = await response.json();
-                    jobsData = jsonData.jobs || [];
-                    console.log('✅ Jobs data loaded from JSON file:', jobsData.length, 'jobs');
+                // Use Firestore as source of truth via window.FirestoreDataManager if available
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    jobsData = await window.FirestoreDataManager.getJobListings();
+                    console.log('✅ Jobs data loaded from Firestore:', jobsData.length, 'jobs');
                 } else {
-                    console.warn('⚠️ Could not load jobs-data.json, using empty array');
+                    // If Firestore unavailable, do not re-seed from JSON to avoid duplication
+                    console.warn('⚠️ Firestore unavailable; jobsData set to empty');
                     jobsData = [];
                 }
             } catch (error) {
@@ -1866,7 +1585,6 @@
                 showLoginScreen();
             }
         }
-
         // Show user portal
         function showUserPortal() {
             const loginScreen = document.getElementById('loginScreen');
@@ -2353,7 +2071,6 @@
                 `;
             }
         }
-
         // Display performance reviews for modern layout
         function displayPerformanceReviews() {
             const container = document.getElementById('performanceContent');
@@ -2830,7 +2547,6 @@
             const selectedJob = userJobs[selectedJobIndex] || userJobs[0];
             return selectedJob;
         }
-
         // Fix timezone issues with date strings
         function fixTimezone(dateString) {
             if (!dateString) return null;
@@ -3163,7 +2879,6 @@
             // Load performance reviews from API
             loadUserPerformanceReviews(currentUser.email);
         }
-
         // Load and display user's performance reviews
         async function loadUserPerformanceReviews(userEmail) {
             const container = document.getElementById('performanceContent');
@@ -3488,9 +3203,6 @@
                 console.warn('⚠️ Error displaying jobs with status:', error);
             });
         }
-
-
-
         // Display jobs with project status
         async function displayJobsWithStatus() {
             const container = document.getElementById('jobsContent');
@@ -3845,7 +3557,6 @@
                 });
                 sessionStorage.setItem('timelineSourcesLogged', 'true');
             }
-            
             const timeline = [
                 {
                     id: 'application',
@@ -4294,7 +4005,6 @@
                 }
             }
         }
-
         // Update payment method
         async function updatePaymentMethod() {
             const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
@@ -4787,7 +4497,6 @@
                 return null;
             }
         }
-
         function viewJobDetails() {
             const selectedJob = getSelectedJob();
             if (!selectedJob) {
@@ -5659,7 +5368,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             height: 40%;
             animation-duration: 8s;
         }
-
         @keyframes core-pulse {
             0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
             50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
@@ -6159,7 +5867,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             pointer-events: none;
             z-index: 4;
         }
-
         .data-stream {
             position: absolute;
             background: linear-gradient(180deg, transparent, rgba(0, 255, 255, 0.3), transparent);
@@ -6649,7 +6356,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
                 padding: var(--space-lg);
             }
         }
-        
         @media (max-width: 480px) {
             .login-screen {
                 padding: 60px 15px;
@@ -7144,7 +6850,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             position: relative;
             overflow: hidden;
         }
-
         /* Ensure readability in key dashboard cards */
         .card.profile-card,
         .card.project-card,
@@ -7644,7 +7349,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             0%, 100% { transform: translateY(0) scale(1); }
             50% { transform: translateY(-15px) scale(1.05); }
         }
-
         .login-title {
             font-size: 2.8rem;
             font-weight: bold;
@@ -8142,7 +7846,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             gap: 2.5rem;
             margin-top: 2rem;
         }
-
         .job-card {
             position: relative;
         }
@@ -8639,7 +8342,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             border-color: rgba(239, 68, 68, 0.3);
             color: #ef4444;
         }
-        
         .logout-btn:hover {
             background: rgba(239, 68, 68, 0.2);
             border-color: #ef4444;
@@ -9631,7 +9333,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             position: absolute;
             left: -1.25rem;
         }
-
         .timeline-requirements li::before {
             content: '•';
             color: #FFB200;
@@ -10131,7 +9832,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             gap: 0.75rem;
             margin-bottom: 1rem;
         }
-
         .job-title i {
             color: #FFB200;
             font-size: 1.2rem;
@@ -10627,7 +10327,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .review-comments {
             margin-bottom: 2rem;
         }
-
         .review-comments h4 {
             color: #FFB200;
             margin-bottom: 1rem;
@@ -11036,7 +10735,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             <div class="data-stream stream-3"></div>
         </div>
     </div>
-
     <!-- Elegant User Portal -->
     <div id="userPortal" class="app-container">
         <!-- Sophisticated Sidebar -->

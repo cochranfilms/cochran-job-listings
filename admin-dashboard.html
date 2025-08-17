@@ -5498,6 +5498,8 @@
         
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Mark this context as admin for FirestoreDataManager behaviors
+            window.IS_ADMIN_DASHBOARD = true;
             // Set ADMIN_PASSWORD for the main dashboard authentication
             window.ADMIN_PASSWORD = 'Cochranfilms2@';
             console.log('✅ Main dashboard ADMIN_PASSWORD set:', window.ADMIN_PASSWORD);
