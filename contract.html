@@ -1814,42 +1814,27 @@
             
             console.log('📝 Input data:', { name, email });
             
-            // First, load the latest users data from Firestore (fallback to JSON API)
+            // First, load the latest users data from Firestore, fallback to JSON API
             try {
                 await window.FirebaseConfig.waitForInit();
                 try {
-                    const fsUsers = await window.FirestoreDataManager.getUsers();
-                    if (fsUsers && Object.keys(fsUsers).length > 0) {
-                        approvedUsers = fsUsers;
-                        console.log('✅ Loaded latest users from Firestore:', Object.keys(fsUsers));
-                        console.log('🔍 Contract statuses (FS):', Object.entries(fsUsers).map(([n, d]) => ({
-                            name: n,
-                            email: d.profile?.email,
-                            contractStatus: d.contract?.contractStatus
-                        })));
+                    // Firestore-only access check: read just this user's doc by name
+                    const db = firebase.firestore();
+                    const docRef = db.collection('users').doc(name);
+                    const snap = await docRef.get();
+                    if (snap && snap.exists) {
+                        const data = snap.data() || {};
+                        approvedUsers = { [name]: data };
+                        console.log('✅ Loaded user from Firestore by name:', name);
                     } else {
-                        const response = await fetch('/api/users');
-                        if (response.ok) {
-                            const jsonData = await response.json();
-                            if (jsonData.users) {
-                                approvedUsers = jsonData.users;
-                                console.log('✅ Loaded latest users data from JSON file:', Object.keys(jsonData.users));
-                            }
-                        }
+                        console.warn('⚠️ No Firestore doc for name:', name);
                     }
                 } catch (fsErr) {
-                    console.warn('⚠️ Firestore read failed, using JSON API fallback:', fsErr?.message || fsErr);
-                    const response = await fetch('/api/users');
-                    if (response.ok) {
-                        const jsonData = await response.json();
-                        if (jsonData.users) {
-                            approvedUsers = jsonData.users;
-                            console.log('✅ Loaded latest users data from JSON file:', Object.keys(jsonData.users));
-                        }
-                    }
+                    console.warn('⚠️ Firestore direct read failed:', fsErr?.message || fsErr);
                 }
+                // If not found in Firestore by name, do NOT fall back for gating; require Firestore
             } catch (error) {
-                console.warn('⚠️ Could not load latest users data, using fallback:', error);
+                console.warn('⚠️ Could not initialize Firebase/Firestore:', error);
             }
             
             console.log('👥 Available users:', Object.keys(approvedUsers));
@@ -1875,11 +1860,11 @@
             console.log('🔍 Matching logic:', { 
                 normalizedName, 
                 matchingUser,
-                expectedEmail: matchingUser ? approvedUsers[matchingUser].profile?.email.toLowerCase() : 'N/A',
+                expectedEmail: matchingUser ? approvedUsers[matchingUser].profile?.email?.toLowerCase?.() : 'N/A',
                 inputEmail: email
             });
             
-            if (matchingUser && approvedUsers[matchingUser].profile?.email.toLowerCase() === email) {
+            if (matchingUser && (approvedUsers[matchingUser].profile?.email || '').toLowerCase() === email) {
                 const userData = approvedUsers[matchingUser];
                 
                 // Store freelancer data for both signed and unsigned contracts
