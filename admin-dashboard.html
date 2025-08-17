@@ -46,17 +46,20 @@
     
     <style>
         :root {
-            --primary: #FFB200;
-            --primary-dark: #FF9000;
-            --gold: #FFD700;
+            --primary: #ffbf34;               /* modern gold */
+            --primary-dark: #ff9900;
+            --gold: #ffd76a;
+            --accent: #7dd3fc;                /* subtle neon blue accent */
             --black: #000000;
             --white: #ffffff;
             --gray-light: #f8f9fa;
-            --gray-medium: #6c757d;
-            --gray-dark: #343a40;
-            --border-radius: 12px;
-            --shadow: 0 4px 20px rgba(0,0,0,0.1);
-            --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
+            --gray-medium: #9ca3af;
+            --gray-dark: #1f2937;
+            --border-radius: 14px;
+            --card-bg: rgba(0,0,0,0.78);
+            --glass: rgba(255,255,255,0.04);
+            --shadow: 0 10px 30px rgba(0,0,0,0.35);
+            --shadow-hover: 0 18px 48px rgba(0,0,0,0.45);
         }
         
         * {
@@ -178,13 +181,14 @@
         }
         
         .dashboard-header {
-            background: rgba(0, 0, 0, 0.8);
+            background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 100%);
             padding: 2rem;
-            border-radius: 16px;
+            border-radius: 18px;
             margin-bottom: 2rem;
             text-align: center;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,178,0,0.2);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,178,0,0.25);
+            box-shadow: var(--shadow);
         }
         
         .dashboard-header h1 {
@@ -228,18 +232,20 @@
         }
         
         .stat-card {
-            background: rgba(0, 0, 0, 0.8);
+            background: var(--card-bg);
             padding: 2rem;
             border-radius: 16px;
             text-align: center;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,178,0,0.2);
-            transition: all 0.3s ease;
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,178,0,0.25);
+            box-shadow: var(--shadow);
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
         }
         
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(255,178,0,0.2);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(255,178,0,0.45);
         }
         
         .stat-icon {
@@ -281,17 +287,18 @@
         }
         
         .content-card {
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,178,0,0.2);
+            background: var(--card-bg);
+            border-radius: 18px;
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,178,0,0.22);
             overflow: hidden;
+            box-shadow: var(--shadow);
         }
         
         .card-header {
-            background: rgba(255,178,0,0.1);
+            background: linear-gradient(180deg, rgba(255,178,0,0.14) 0%, rgba(255,178,0,0.06) 100%);
             padding: 1.5rem;
-            border-bottom: 1px solid rgba(255,178,0,0.3);
+            border-bottom: 1px solid rgba(255,178,0,0.28);
         }
         
         .card-header h2 {
@@ -334,28 +341,29 @@
         }
         
         .btn {
-            background: linear-gradient(135deg, #FFB200, #FFD700);
-            color: #000;
+            background: linear-gradient(135deg, var(--primary), var(--gold));
+            color: #0b0b0b;
             border: none;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            font-weight: 700;
+            padding: 0.9rem 1.6rem;
+            border-radius: 10px;
+            font-weight: 800;
             cursor: pointer;
-            margin-right: 1rem;
-            transition: all 0.3s ease;
+            margin-right: 0.75rem;
+            transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: .9px;
+            box-shadow: 0 8px 20px rgba(255,191,52,0.25);
         }
         
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255,178,0,0.4);
+            transform: translateY(-1px) scale(1.01);
+            box-shadow: 0 12px 26px rgba(255,191,52,0.35);
         }
         
         .btn-secondary {
-            background: rgba(255,178,0,0.2);
-            color: #FFB200;
-            border: 1px solid rgba(255,178,0,0.5);
+            background: rgba(255,178,0,0.12);
+            color: var(--primary);
+            border: 1px solid rgba(255,178,0,0.35);
         }
         
         /* List Styles */
@@ -412,6 +420,15 @@
             background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
         }
+
+        /* Command Palette */
+        .cmdk-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); z-index: 11000; display: none; }
+        .cmdk { position: fixed; top: 10%; left: 50%; transform: translateX(-50%); width: 680px; max-width: calc(100% - 32px); background: rgba(12,12,12,0.9); border: 1px solid rgba(255,178,0,0.25); border-radius: 14px; box-shadow: var(--shadow-hover); z-index: 11001; display: none; }
+        .cmdk-header { padding: 12px 16px; border-bottom: 1px solid rgba(255,178,0,0.2); display: flex; gap: 8px; align-items: center; }
+        .cmdk-header input { flex: 1; padding: 10px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,178,0,0.24); color: #fff; border-radius: 8px; outline: none; }
+        .cmdk-list { max-height: 360px; overflow: auto; }
+        .cmdk-item { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .cmdk-item:hover { background: rgba(255,178,0,0.08); }
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -511,18 +528,7 @@
             <p>Cochran Films - Central Management System</p>
             
             <!-- Manual refresh button for troubleshooting -->
-            <button onclick="manualRefreshStats()" style="
-                position: absolute;
-                top: 1rem;
-                left: 1rem;
-                background: rgba(59, 130, 246, 0.2);
-                color: #3b82f6;
-                border: 1px solid rgba(59, 130, 246, 0.3);
-                padding: 0.5rem 1rem;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 0.9rem;
-            ">🔄 Refresh Stats</button>
+            <!-- Removed manual refresh button per new UX -->
             
             <!-- Modular System Status -->
             <div id="modularSystemStatus" style="margin-top: 1rem; padding: 0.5rem; background: rgba(255,178,0,0.1); border-radius: 8px; border: 1px solid rgba(255,178,0,0.3);">
@@ -735,8 +741,7 @@
                                         <option value="Completed">Completed</option>
                                         <option value="Cancelled">Cancelled</option>
                                     </select>
-                                    <button class="btn btn-small" onclick="refreshJobs()">🔄 Refresh</button>
-                                <button class="btn btn-small" onclick="forceRefreshJobs()" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">🔄 Force Refresh</button>
+                                    <!-- Refresh buttons removed; realtime Firestore updates handle changes -->
                                 </div>
                             </div>
                             <div class="item-list" id="jobsList">
@@ -820,6 +825,16 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Command Palette -->
+    <div class="cmdk-backdrop" id="cmdkBackdrop"></div>
+    <div class="cmdk" id="cmdk">
+        <div class="cmdk-header">
+            <span style="color:var(--primary);font-weight:800;">⌘K</span>
+            <input id="cmdkInput" type="text" placeholder="Type a command… (New Job, Add User, Assign Job, Refresh)" />
+        </div>
+        <div class="cmdk-list" id="cmdkList"></div>
     </div>
 
     <script>
@@ -3164,11 +3179,12 @@
         
         // Start notification polling
         function startNotificationPolling() {
+            // Less frequent now; Firestore covers app realtime
             notificationUpdateInterval = setInterval(async () => {
                 await loadNotifications();
                 updateNotificationBadge();
                 updateNotificationList();
-            }, 30000); // Check every 30 seconds
+            }, 60000);
         }
         
         // Stop notification polling
@@ -3333,29 +3349,7 @@
             }
         }
 
-        // Manual refresh function
-        async function refreshFreelancers() {
-            try {
-                console.log('🔄 Refreshing freelancers data...');
-                
-                // Reload users data
-                await loadUsers();
-                
-                // Reload jobs data
-                await loadJobs();
-                
-                // Update display
-                displayUsers();
-                displayJobs();
-                updateStats();
-                
-                showNotification('✅ Data refreshed successfully', 'success');
-                
-            } catch (error) {
-                console.error('❌ Error refreshing data:', error);
-                showNotification('❌ Error refreshing data', 'error');
-            }
-        }
+        // Manual refresh removed from UI; data is realtime via Firestore listeners
         
         // Force refresh users function - bypasses all modular system interference
         async function forceRefreshUsers() {
@@ -5424,9 +5418,64 @@
             setTimeout(() => {
                 loadModularSystem();
             }, 2000); // Increased delay to ensure main dashboard is fully loaded first
-                
+            
+            // Command palette bindings
+            initCommandPalette();
             
         });
+        // ==================== COMMAND PALETTE ====================
+        function initCommandPalette() {
+            const palette = document.getElementById('cmdk');
+            const backdrop = document.getElementById('cmdkBackdrop');
+            const input = document.getElementById('cmdkInput');
+            const list = document.getElementById('cmdkList');
+
+            if (!palette || !backdrop || !input || !list) return;
+
+            const hide = () => { palette.style.display = 'none'; backdrop.style.display = 'none'; };
+            const show = () => { palette.style.display = 'block'; backdrop.style.display = 'block'; input.value=''; renderList(''); input.focus(); };
+
+            const commands = [
+                { id: 'new-job', label: 'New Job', action: () => document.getElementById('jobTitle')?.focus() },
+                { id: 'add-user', label: 'Add User', action: () => document.getElementById('freelancerName')?.focus() },
+                { id: 'assign-job', label: 'Assign Job', action: () => assignJobsToUsers() },
+                { id: 'refresh', label: 'Refresh Data', action: async () => { await loadData(); updateStats(); } }
+            ];
+
+            function renderList(q) {
+                const ql = (q||'').toLowerCase();
+                const items = commands.filter(c => c.label.toLowerCase().includes(ql));
+                list.innerHTML = '';
+                items.forEach(c => {
+                    const el = document.createElement('div');
+                    el.className = 'cmdk-item';
+                    el.innerHTML = `<span>${c.label}</span><span style="opacity:.65">↩︎</span>`;
+                    el.onclick = () => { hide(); setTimeout(c.action, 0); };
+                    list.appendChild(el);
+                });
+                if (items.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'cmdk-item';
+                    empty.innerHTML = '<span>No results</span>';
+                    list.appendChild(empty);
+                }
+            }
+
+            // Global key handler for ⌘K / Ctrl+K
+            window.addEventListener('keydown', (e) => {
+                const isMac = navigator.platform.toUpperCase().includes('MAC');
+                if ((isMac && e.metaKey && e.key.toLowerCase() === 'k') || (!isMac && e.ctrlKey && e.key.toLowerCase() === 'k')) {
+                    e.preventDefault();
+                    if (palette.style.display === 'block') hide(); else show();
+                } else if (e.key === 'Escape') {
+                    hide();
+                }
+            });
+
+            input.addEventListener('input', (e) => renderList(e.target.value));
+            backdrop.addEventListener('click', hide);
+        }
+
         
         // Test function to run all dashboard tests
         async function runAutomaticDashboardTests() {
