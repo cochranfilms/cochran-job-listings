@@ -357,6 +357,19 @@ def test_contract_sign(page: Page, ctx: TestContext):
         appeared = True
     except Exception:
         appeared = False
+    # Retry loop up to ~60s if not yet visible
+    if not appeared:
+        for _ in range(5):
+            page.wait_for_timeout(10000)
+            try:
+                page.fill("#freelancerName", ctx.test_name)
+                page.fill("#freelancerEmail", ctx.test_email)
+                page.click("text=/Verify Access|Contract Access|Verify/i")
+                page.wait_for_selector("#success-message:not(.hidden)", timeout=8000)
+                appeared = True
+                break
+            except Exception:
+                continue
     # If success section appears, proceed to sign
     if appeared:
         # Set signature/password
