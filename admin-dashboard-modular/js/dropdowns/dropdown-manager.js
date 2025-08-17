@@ -63,20 +63,29 @@ const DropdownManager = {
                 window.LoadingManager.show('Loading dropdown options...');
             }
 
-            const response = await fetch('/api/dropdown-options');
-            if (response.ok) {
-                const data = await response.json();
-                
-                // Merge with existing options, preserving defaults for missing categories
-                this.state.options = {
-                    ...this.state.options,
-                    ...data
-                };
-                
-                this.state.lastSaved = new Date();
-                console.log('✅ Loaded dropdown options from API');
-            } else {
-                console.log('⚠️ Using default dropdown options');
+            // Prefer Firestore
+            let loaded = false;
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                try {
+                    const fsOptions = await window.FirestoreDataManager.getDropdownOptions();
+                    if (fsOptions && Object.keys(fsOptions).length) {
+                        this.state.options = { ...this.state.options, ...fsOptions };
+                        this.state.lastSaved = new Date();
+                        console.log('✅ Loaded dropdown options from Firestore');
+                        loaded = true;
+                    }
+                } catch (_) {}
+            }
+            if (!loaded) {
+                const response = await fetch('/api/dropdown-options');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.state.options = { ...this.state.options, ...data };
+                    this.state.lastSaved = new Date();
+                    console.log('✅ Loaded dropdown options from API');
+                } else {
+                    console.log('⚠️ Using default dropdown options');
+                }
             }
             
         } catch (error) {

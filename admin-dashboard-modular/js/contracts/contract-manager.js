@@ -59,7 +59,7 @@ const ContractManager = {
         });
     },
 
-    // Load contracts from API
+    // Load contracts from Firestore (preferred) or API fallback
     async loadContracts() {
         try {
             this.state.isLoading = true;
@@ -68,12 +68,24 @@ const ContractManager = {
                 window.LoadingManager.show('Loading contracts...');
             }
 
+            // Prefer Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                try {
+                    const list = await window.FirestoreDataManager.getContracts();
+                    if (Array.isArray(list) && list.length) {
+                        this.state.contracts = list;
+                        console.log(`✅ Loaded ${this.state.contracts.length} contracts (Firestore)`);
+                        return;
+                    }
+                } catch (_) {}
+            }
+
+            // Fallback API
             const response = await fetch('/api/contracts');
             if (response.ok) {
                 const data = await response.json();
-                // Handle both data structures for backward compatibility
                 this.state.contracts = data.uploadedContracts || data.contracts || [];
-                console.log(`✅ Loaded ${this.state.contracts.length} contracts`);
+                console.log(`✅ Loaded ${this.state.contracts.length} contracts (API)`);
             } else {
                 throw new Error(`Failed to load contracts: ${response.status}`);
             }
@@ -941,7 +953,7 @@ const ContractManager = {
         }
     },
 
-    // Save contract to GitHub
+    // Save contract to GitHub (legacy) — Firestore is source of truth
     async saveContractToGitHub(contractData) {
         try {
             const response = await fetch('/api/github/file/contracts.json', {
@@ -967,7 +979,7 @@ const ContractManager = {
         }
     },
 
-    // Update contract in GitHub
+    // Update contract in GitHub (legacy)
     async updateContractInGitHub(contractData) {
         try {
             const response = await fetch('/api/github/file/contracts.json', {

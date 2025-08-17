@@ -54,6 +54,20 @@ const JobForm = {
     // Load dropdown options from API or use defaults
     async loadDropdownOptions() {
         try {
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                try {
+                    const fsOptions = await window.FirestoreDataManager.getDropdownOptions();
+                    if (fsOptions && Object.keys(fsOptions).length) {
+                        this.state.dropdownOptions = {
+                            types: fsOptions.projectTypes || this.state.dropdownOptions.types,
+                            statuses: fsOptions.statuses || this.state.dropdownOptions.statuses,
+                            locations: fsOptions.locations || this.state.dropdownOptions.locations
+                        };
+                        console.log('✅ Loaded dropdown options from Firestore');
+                        return;
+                    }
+                } catch (_) {}
+            }
             const response = await fetch('/api/dropdown-options');
             if (response.ok) {
                 const data = await response.json();

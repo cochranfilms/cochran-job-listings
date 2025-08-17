@@ -50,10 +50,22 @@ const UserForm = {
     // Load dropdown options
     async loadDropdownOptions() {
         try {
+            // Try Firestore first
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                try {
+                    const fsOptions = await window.FirestoreDataManager.getDropdownOptions();
+                    if (fsOptions && Object.keys(fsOptions).length) {
+                        this.state.dropdownOptions = fsOptions;
+                        console.log('✅ Loaded dropdown options from Firestore');
+                        return;
+                    }
+                } catch (_) {}
+            }
+            // Fallback API
             const response = await fetch('/api/dropdown-options');
             if (response.ok) {
                 this.state.dropdownOptions = await response.json();
-                console.log('✅ Loaded dropdown options');
+                console.log('✅ Loaded dropdown options from API');
             } else {
                 console.warn('⚠️ Failed to load dropdown options, using defaults');
                 this.state.dropdownOptions = this.getDefaultDropdownOptions();

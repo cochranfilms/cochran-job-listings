@@ -10,13 +10,19 @@ const FirestoreDataManager = {
     // Collections
     collections: {
         users: 'users',
-        jobs: 'jobs' // job listings live here
+        jobs: 'jobs', // job listings live here
+        dropdownOptions: 'dropdownOptions', // centralized dropdowns
+        contracts: 'contracts'
     },
 
     // Initialize the data manager
     async init() {
         try {
             console.log('🔥 Initializing Firestore Data Manager...');
+            if (this.db) {
+                console.log('✅ Firestore Data Manager already initialized');
+                return;
+            }
             
             // Wait for Firebase to be initialized
             if (!window.FirebaseConfig || !window.FirebaseConfig.isInitialized) {
@@ -31,6 +37,10 @@ const FirestoreDataManager = {
             
             // Initialize collections if empty
             await this.initializeCollectionsIfEmpty();
+            // Repair misplaced docs (jobs/options under users)
+            await this.repairCollections();
+            // One-time migration from API JSON if Firestore empty
+            await this.runAutoMigrationIfNeeded();
             
             // Set up real-time listeners
             this.setupRealtimeListeners();
@@ -115,7 +125,6 @@ const FirestoreDataManager = {
     },
 
     // Handle dropdown options updates
-    // This function is no longer needed as dropdown options are in users
     handleDropdownOptionsUpdate(snapshot) {
         const changes = snapshot.docChanges();
         changes.forEach((change) => {
@@ -372,19 +381,22 @@ const FirestoreDataManager = {
     // Get all dropdown options
     async getDropdownOptions() {
         try {
-            const snapshot = await this.db.collection(this.collections.users).get(); // Changed to users collection
-            const options = {};
-            snapshot.forEach(doc => {
-                const userData = doc.data();
-                if (userData.dropdownOptions) {
-                    for (const category in userData.dropdownOptions) {
-                        options[category] = userData.dropdownOptions[category];
-                    }
-                }
-            });
-            return options;
+            const doc = await this.db.collection(this.collections.dropdownOptions).doc('default').get();
+            return doc.exists ? (doc.data() || {}) : {};
         } catch (error) {
             console.error('❌ Error getting dropdown options:', error);
+            throw error;
+        }
+    },
+
+    async setDropdownOptions(allOptions) {
+        try {
+            const ref = this.db.collection(this.collections.dropdownOptions).doc('default');
+            await ref.set(allOptions || {}, { merge: true });
+            console.log('✅ Dropdown options (bulk) saved');
+            return true;
+        } catch (error) {
+            console.error('❌ Error saving dropdown options bulk:', error);
             throw error;
         }
     },
@@ -392,12 +404,8 @@ const FirestoreDataManager = {
     // Get specific dropdown option category
     async getDropdownOptionCategory(category) {
         try {
-            const doc = await this.db.collection(this.collections.users).doc(category).get(); // Changed to users collection
-            if (doc.exists) {
-                const userData = doc.data();
-                return userData.dropdownOptions ? userData.dropdownOptions[category] : null;
-            }
-            return null;
+            const doc = await this.db.collection(this.collections.dropdownOptions).doc('default').get();
+            return doc.exists ? (doc.data() || {})[category] || null : null;
         } catch (error) {
             console.error('❌ Error getting dropdown option category:', error);
             throw error;
@@ -407,8 +415,8 @@ const FirestoreDataManager = {
     // Set dropdown option category
     async setDropdownOptionCategory(category, options) {
         try {
-            const userRef = this.db.collection(this.collections.users).doc(category); // Changed to users collection
-            await userRef.set({ [`dropdownOptions.${category}`]: options }, { merge: true });
+            const ref = this.db.collection(this.collections.dropdownOptions).doc('default');
+            await ref.set({ [category]: options }, { merge: true });
             console.log('✅ Dropdown options saved to Firestore:', category);
             return true;
         } catch (error) {
@@ -448,9 +456,7 @@ const FirestoreDataManager = {
             // Migrate dropdown options
             if (window.dropdownOptions) {
                 console.log('📋 Migrating dropdown options to Firestore...');
-                for (const [category, options] of Object.entries(window.dropdownOptions)) {
-                    await this.setDropdownOptionCategory(category, options);
-                }
+                await this.setDropdownOptions(window.dropdownOptions);
                 console.log('✅ Dropdown options migration complete');
             }
             
@@ -460,6 +466,97 @@ const FirestoreDataManager = {
         } catch (error) {
             console.error('❌ Error during data migration:', error);
             throw error;
+        }
+    },
+
+    // Contracts collection helpers
+    async setContract(contractId, contractData) {
+        try {
+            const ref = this.db.collection(this.collections.contracts).doc(contractId);
+            await ref.set({ ...contractData, updatedAt: new Date().toISOString() }, { merge: true });
+            return true;
+        } catch (e) { throw e; }
+    },
+    async getContracts() {
+        try {
+            const snap = await this.db.collection(this.collections.contracts).get();
+            const list = [];
+            snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+            return list;
+        } catch (e) { throw e; }
+    },
+
+    async runAutoMigrationIfNeeded() {
+        try {
+            const needUsers = !(await this.hasData(this.collections.users));
+            const needJobs = !(await this.hasData(this.collections.jobs));
+            const needOpts = !(await this.hasData(this.collections.dropdownOptions));
+            const needContracts = !(await this.hasData(this.collections.contracts));
+
+            if (!needUsers && !needJobs && !needOpts && !needContracts) return;
+
+            console.log('🚀 Auto-migration starting (from API JSON)...');
+
+            if (needUsers) {
+                try {
+                    const res = await fetch('/api/users');
+                    if (res.ok) {
+                        const data = await res.json();
+                        const users = data.users || {};
+                        for (const [id, u] of Object.entries(users)) {
+                            if (id.startsWith('_')) continue;
+                            await this.setUser(id, u);
+                        }
+                        console.log('✅ Auto-migrated users');
+                    }
+                } catch (e) { console.warn('Users auto-migration skipped:', e?.message || e); }
+            }
+
+            if (needJobs) {
+                try {
+                    const res = await fetch('/api/jobs-data');
+                    if (res.ok) {
+                        const data = await res.json();
+                        const jobs = data.jobs || [];
+                        for (const job of jobs) {
+                            const slug = (job.title || 'job').toLowerCase().replace(/\s+/g, '-');
+                            const jobId = `job-${slug}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+                            await this.setJobListing(jobId, job);
+                        }
+                        console.log('✅ Auto-migrated jobs');
+                    }
+                } catch (e) { console.warn('Jobs auto-migration skipped:', e?.message || e); }
+            }
+
+            if (needOpts) {
+                try {
+                    const res = await fetch('/api/dropdown-options');
+                    if (res.ok) {
+                        const data = await res.json();
+                        await this.setDropdownOptions(data);
+                        console.log('✅ Auto-migrated dropdown options');
+                    }
+                } catch (e) { console.warn('Options auto-migration skipped:', e?.message || e); }
+            }
+
+            if (needContracts) {
+                try {
+                    const res = await fetch('/api/contracts');
+                    if (res.ok) {
+                        const data = await res.json();
+                        const list = data.uploadedContracts || data.contracts || [];
+                        for (const c of list) {
+                            const id = c.contractId || c.fileName || `CF-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+                            await this.setContract(id, c);
+                        }
+                        console.log('✅ Auto-migrated contracts');
+                    }
+                } catch (e) { console.warn('Contracts auto-migration skipped:', e?.message || e); }
+            }
+
+            console.log('🎉 Auto-migration complete');
+        } catch (error) {
+            console.warn('⚠️ Auto-migration encountered an issue:', error?.message || error);
         }
     },
 
@@ -570,27 +667,9 @@ const FirestoreDataManager = {
                     case 'users':
                         return await this.getUsers();
                     case 'jobs':
-                        // Jobs are extracted from users collection
-                        const users = await this.getUsers();
-                        const jobs = [];
-                        Object.values(users).forEach(user => {
-                            if (user.jobs) {
-                                Object.values(user.jobs).forEach(job => {
-                                    jobs.push(job);
-                                });
-                            }
-                        });
-                        return jobs;
+                        return await this.getJobListings();
                     case 'dropdownOptions':
-                        // Dropdown options are extracted from users collection
-                        const allUsers = await this.getUsers();
-                        const options = {};
-                        Object.values(allUsers).forEach(user => {
-                            if (user.dropdownOptions) {
-                                Object.assign(options, user.dropdownOptions);
-                            }
-                        });
-                        return options;
+                        return await this.getDropdownOptions();
                     default:
                         throw new Error(`Unknown collection: ${collectionName}`);
                 }
@@ -630,11 +709,9 @@ const FirestoreDataManager = {
             }
             
             // Check dropdown options collection
-            // This check is no longer needed as dropdown options are in users
-            // if (!(await this.hasData('dropdownOptions'))) {
-            //     console.log('📋 Dropdown options collection empty, initializing...');
-            //     // You can add default dropdown options here if needed
-            // }
+            if (!(await this.hasData(this.collections.dropdownOptions))) {
+                console.log('📋 Dropdown options collection empty (ok)');
+            }
             
             console.log('✅ Collections initialization check complete');
         } catch (error) {
@@ -677,6 +754,50 @@ const FirestoreDataManager = {
         } catch (error) {
             console.error('❌ Error in batch write:', error);
             throw error;
+        }
+    },
+
+    // Repair misplaced docs: move job-* docs and option docs out of users
+    async repairCollections() {
+        try {
+            console.log('🛠️ Repairing Firestore collections (misfiled docs)...');
+            const usersSnap = await this.db.collection(this.collections.users).get();
+            const ops = [];
+            const optionsAggregate = { roles: [], rates: [], locations: [], projectTypes: [] };
+
+            usersSnap.forEach(doc => {
+                const id = doc.id;
+                const data = doc.data() || {};
+                if (id.startsWith('job-')) {
+                    ops.push({ type: 'set', collection: this.collections.jobs, docId: id, data });
+                    ops.push({ type: 'delete', collection: this.collections.users, docId: id });
+                }
+                if (['roles','rates','locations','projectTypes','system-dropdown-options'].includes(id)) {
+                    Object.keys(data).forEach(k => {
+                        const val = data[k];
+                        if (Array.isArray(val) && optionsAggregate[k]) {
+                            optionsAggregate[k] = Array.from(new Set([...optionsAggregate[k], ...val]));
+                        }
+                    });
+                    if (Array.isArray(data.values) && optionsAggregate[id]) {
+                        optionsAggregate[id] = Array.from(new Set([...optionsAggregate[id], ...data.values]));
+                    }
+                    ops.push({ type: 'delete', collection: this.collections.users, docId: id });
+                }
+            });
+
+            if (ops.length) {
+                await this.batchWrite(ops);
+            }
+
+            const hasAny = Object.values(optionsAggregate).some(arr => (arr || []).length > 0);
+            if (hasAny) {
+                await this.db.collection(this.collections.dropdownOptions).doc('default').set(optionsAggregate, { merge: true });
+                console.log('✅ Migrated dropdown options to dropdownOptions/default');
+            }
+            console.log('✅ Repair pass complete');
+        } catch (err) {
+            console.warn('⚠️ repairCollections skipped:', err?.message || err);
         }
     }
 };
