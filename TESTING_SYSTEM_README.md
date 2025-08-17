@@ -41,6 +41,17 @@ This document describes the comprehensive testing system for the Cochran Films a
 node test-admin-user-deletion-system.js
 ```
 
+### Admin Dashboard Inline Test Helpers (maintenance)
+- Named previously anonymous inline test helpers in `admin-dashboard.html` to resolve IDE "Identifier expected" errors and make invocation explicit:
+  - `runAutomaticDashboardTests()`
+  - `testMainDashboardLoginForm()`
+  - `testMainDashboardAuthentication()`
+- Scope: Dev/testing helpers only; no production behavior changed.
+- Usage (open console on admin dashboard page):
+  - `runAutomaticDashboardTests()` → runs a quick smoke test
+  - `testMainDashboardLoginForm()` → validates form presence/wiring
+  - `testMainDashboardAuthentication()` → exercises fallback auth path
+
 ### 2. Simple Admin Deletion Test (`test-admin-deletion-simple.js`)
 **Purpose**: API-focused testing without browser automation
 **Requirements**: Node.js only

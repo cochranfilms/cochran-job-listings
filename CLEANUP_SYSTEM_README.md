@@ -94,6 +94,13 @@ npm run cleanup:notification-system
 - **Weekly**: Archive notifications older than 30 days
 - **Monthly**: Deep clean of monitoring cache and logs
 
+### Maintenance Note: Admin Dashboard Inline Tests
+- Fixed three anonymous inline test functions in `admin-dashboard.html` by assigning names:
+  - `runAutomaticDashboardTests()`
+  - `testMainDashboardLoginForm()`
+  - `testMainDashboardAuthentication()`
+- This resolves IDE syntax errors ("Identifier expected") and makes cleanup tools easier to target if we later decide to quarantine or strip inline test helpers.
+
 ## 🎬 AI Video Editor Cleanup
 
 ### New Addition: Automated Premiere Pro Editing System Cleanup
