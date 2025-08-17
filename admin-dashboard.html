@@ -1515,6 +1515,9 @@
                 
                 const jobDiv = document.createElement('div');
                 jobDiv.className = 'item-card';
+                // Ensure each job has a stable id for safe actions
+                const jobId = job.id || job.contractId || job._id || `job-${(job.title||'job').toLowerCase().replace(/[^a-z0-9\s-]/gi,'').replace(/\s+/g,'-')}-${index}`;
+                job.id = jobId;
                 jobDiv.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                         <h4 style="margin: 0;">${job.title || 'Untitled Job'}</h4>
@@ -1539,9 +1542,9 @@
                         ${job.description || 'No description provided'}
                     </div>
                     <div class="item-actions">
-                        <button class="btn btn-small" onclick="editJob(${index})">✏️ Edit</button>
-                        <button class="btn btn-small" onclick="duplicateJob(${index})">📋 Duplicate</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">🗑️ Delete</button>
+                        <button class="btn btn-small" onclick="editJobById('${jobId}')">✏️ Edit</button>
+                        <button class="btn btn-small" onclick="duplicateJobById('${jobId}')">📋 Duplicate</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteJobById('${jobId}')">🗑️ Delete</button>
                     </div>
                 `;
                 jobsList.appendChild(jobDiv);
@@ -1595,7 +1598,8 @@
 
         // Edit job
         function editJob(index) {
-            const job = window.jobs[index];
+            const job = (Array.isArray(window.jobs) ? window.jobs[index] : null);
+            if (!job) { showNotification('Job not found', 'error'); return; }
             document.getElementById('jobTitle').value = job.title || '';
             document.getElementById('jobDate').value = job.date || '';
             document.getElementById('jobLocation').value = job.location || '';
@@ -1613,7 +1617,8 @@
             const newJob = {
                 ...originalJob,
                 title: `${originalJob.title} (Copy)`,
-                status: 'Active'
+                status: 'Active',
+                id: `job-${(originalJob.title||'job').toLowerCase().replace(/[^a-z0-9\s-]/gi,'').replace(/\s+/g,'-')}-${Date.now()}-${Math.random().toString(36).slice(2,6)}`
             };
             
             window.jobs.push(newJob);
@@ -5781,6 +5786,92 @@
                 console.error('❌ Manual stats refresh failed:', error);
                 showNotification('❌ Failed to refresh stats', 'error');
             }
+        }
+
+        // Helpers to resolve job index by id for safe actions
+        function getJobIndexById(jobId) {
+            if (!jobId || !Array.isArray(window.jobs)) return -1;
+            return window.jobs.findIndex(j => j && (j.id === jobId));
+        }
+        function editJobById(jobId) {
+            const idx = getJobIndexById(jobId);
+            if (idx < 0) { showNotification('Job not found', 'error'); return; }
+            return editJob(idx);
+        }
+        function duplicateJobById(jobId) {
+            const idx = getJobIndexById(jobId);
+            if (idx < 0) { showNotification('Job not found', 'error'); return; }
+            return duplicateJob(idx);
+        }
+        function deleteJobById(jobId) {
+            const idx = getJobIndexById(jobId);
+            if (idx < 0) { showNotification('Job not found', 'error'); return; }
+            return deleteJob(idx);
+        }
+        function displayJobs() {
+            console.log('🔄 displayJobs called');
+            console.log('🔍 window.jobs:', window.jobs);
+            console.log('🔍 Jobs count:', window.jobs ? window.jobs.length : 'undefined');
+            
+            const jobsList = document.getElementById('jobsList');
+            if (!jobsList) {
+                console.error('❌ jobsList element not found');
+                return;
+            }
+            
+            if (!window.jobs || !Array.isArray(window.jobs) || window.jobs.length === 0) {
+                console.log('⚠️ No jobs to display');
+                jobsList.innerHTML = '<div class="item-card"><p style="text-align: center; color: rgba(255,255,255,0.7);">No jobs available</p></div>';
+                return;
+            }
+            
+            console.log(`✅ Displaying ${window.jobs.length} jobs`);
+            jobsList.innerHTML = '';
+
+            window.jobs.forEach((job, index) => {
+                const statusColors = {
+                    'Active': '#22c55e',
+                    'Pending': '#f59e0b',
+                    'Completed': '#3b82f6',
+                    'Cancelled': '#ef4444',
+                    'Inactive': '#6b7280'
+                };
+                
+                const jobDiv = document.createElement('div');
+                jobDiv.className = 'item-card';
+                jobDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <h4 style="margin: 0;">${job.title || 'Untitled Job'}</h4>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap;">
+                            <span class="job-status" style="background: ${statusColors[job.status] || '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                ${job.status || 'Active'}
+                            </span>
+                            ${job.type ? `
+                                <span style="background: rgba(255, 178, 0, 0.2); color: #FFB200; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                                    ${job.type}
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="item-meta">
+                        <span>📅 ${job.date || 'TBD'}</span>
+                        <span>📍 ${job.location || 'Location TBD'}</span>
+                        <span>💰 ${job.pay || 'Pay TBD'}</span>
+                        ${job.type ? `<span>🎯 ${job.type}</span>` : ''}
+                    </div>
+                    <div class="item-description">
+                        ${job.description || 'No description provided'}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-small" onclick="editJob(${index})">✏️ Edit</button>
+                        <button class="btn btn-small" onclick="duplicateJob(${index})">📋 Duplicate</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">🗑️ Delete</button>
+                    </div>
+                `;
+                jobsList.appendChild(jobDiv);
+            });
+            
+            console.log('✅ Jobs display complete');
         }
     </script>
 </body>
