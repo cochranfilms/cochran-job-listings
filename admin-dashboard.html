@@ -1530,9 +1530,8 @@
                 
                 const jobDiv = document.createElement('div');
                 jobDiv.className = 'item-card';
-                // Ensure each job has a stable id for safe actions
-                const jobId = job.id || job.contractId || job._id || `job-${(job.title||'job').toLowerCase().replace(/[^a-z0-9\s-]/gi,'').replace(/\s+/g,'-')}-${index}`;
-                job.id = jobId;
+                // Resolve id for actions without mutating dataset
+                const jobId = job.id || job.contractId || job._id || `temp-${index}`;
                 jobDiv.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                         <h4 style="margin: 0;">${job.title || 'Untitled Job'}</h4>
@@ -1557,9 +1556,9 @@
                         ${job.description || 'No description provided'}
                     </div>
                     <div class="item-actions">
-                        <button class="btn btn-small" onclick="editJobById('${jobId}')">✏️ Edit</button>
-                        <button class="btn btn-small" onclick="duplicateJobById('${jobId}')">📋 Duplicate</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteJobById('${jobId}')">🗑️ Delete</button>
+                        <button class="btn btn-small" onclick="editJob(${index})">✏️ Edit</button>
+                        <button class="btn btn-small" onclick="duplicateJob(${index})">📋 Duplicate</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteJob(${index})">🗑️ Delete</button>
                     </div>
                 `;
                 jobsList.appendChild(jobDiv);
@@ -1859,16 +1858,16 @@
         }
 
         // Update jobs-data.json on GitHub
-        async function updateJobsOnGitHub(action = 'update', jobTitle = '') {
+        async function updateJobsOnGitHub(action = 'update', jobTitle = '', singleJob = null) {
             try {
                 // Always save to Firestore (single source of truth)
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                    const writes = (window.jobs || []).map(j => {
-                        const id = j.id || `job-${(j.title||'job').toLowerCase().replace(/\s+/g,'-')}-${Date.now()}`;
-                        j.id = id; // persist id locally for future deletes/edits
-                        return window.FirestoreDataManager.setJobListing(id, j);
-                    });
-                    await Promise.allSettled(writes);
+                    if (singleJob && singleJob.id) {
+                        await window.FirestoreDataManager.setJobListing(singleJob.id, singleJob);
+                    } else {
+                        const writes = (window.jobs || []).map(j => j && j.id ? window.FirestoreDataManager.setJobListing(j.id, j) : null).filter(Boolean);
+                        await Promise.allSettled(writes);
+                    }
                     showNotification('✅ Jobs saved to Firestore', 'success');
                     try { await loadJobs(); } catch(_){ }
                 }
@@ -5546,7 +5545,7 @@
                     const { collection } = evt.detail || {};
                     if (collection === 'jobs') {
                         schedule('jobs', async () => {
-                            try { window.jobs = await window.FirestoreDataManager.getJobListings(); displayJobs(); updateStats(); } catch(_){}
+                            try { window.jobs = await window.FirestoreDataManager.getJobListings(); await enforceUniqueJobs(); displayJobs(); updateStats(); } catch(_){}
                         });
                     } else if (collection === 'users') {
                         schedule('users', async () => {
@@ -5824,7 +5823,8 @@
         function editJobById(jobId) {
             const idx = getJobIndexById(jobId);
             if (idx < 0) { showNotification('Job not found', 'error'); return; }
-            return editJob(idx);
+            const job = window.jobs[idx];
+            return openJobEditModal(job);
         }
         function duplicateJobById(jobId) {
             const idx = getJobIndexById(jobId);
@@ -5835,6 +5835,95 @@
             const idx = getJobIndexById(jobId);
             if (idx < 0) { showNotification('Job not found', 'error'); return; }
             return deleteJob(idx);
+        }
+        // Modal editor for jobs (single-source Firestore write)
+        function openJobEditModal(job) {
+            if (!job) { showNotification('Job not found', 'error'); return; }
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:12000;display:flex;align-items:center;justify-content:center;';
+            modal.innerHTML = `
+                <div style="background:#0f1115;border:1px solid rgba(255,178,0,0.25);border-radius:14px;width:min(620px,92%);box-shadow:0 24px 64px rgba(0,0,0,.5);">
+                    <div style="padding:16px 18px;border-bottom:1px solid rgba(255,178,0,0.2);display:flex;justify-content:space-between;align-items:center;">
+                        <h3 style="margin:0;color:#FFB200;font-family:Cinzel,serif;">Edit Job</h3>
+                        <button id="je-close" class="btn btn-secondary" style="margin:0;">✖</button>
+                    </div>
+                    <div style="padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div style="grid-column:span 2;">
+                            <label>Title</label>
+                            <input id="je-title" type="text" value="${job.title || ''}">
+                        </div>
+                        <div>
+                            <label>Date</label>
+                            <input id="je-date" type="date" value="${job.date || ''}">
+                        </div>
+                        <div>
+                            <label>Location</label>
+                            <input id="je-location" type="text" value="${job.location || ''}">
+                        </div>
+                        <div>
+                            <label>Pay</label>
+                            <input id="je-pay" type="text" value="${job.pay || ''}">
+                        </div>
+                        <div>
+                            <label>Type</label>
+                            <input id="je-type" type="text" value="${job.type || ''}">
+                        </div>
+                        <div>
+                            <label>Status</label>
+                            <select id="je-status">
+                                <option ${String(job.status||'Active')==='Active'?'selected':''}>Active</option>
+                                <option ${String(job.status||'')==='Inactive'?'selected':''}>Inactive</option>
+                                <option ${String(job.status||'')==='Pending'?'selected':''}>Pending</option>
+                                <option ${String(job.status||'')==='Completed'?'selected':''}>Completed</option>
+                                <option ${String(job.status||'')==='Cancelled'?'selected':''}>Cancelled</option>
+                            </select>
+                        </div>
+                        <div style="grid-column:span 2;">
+                            <label>Description</label>
+                            <textarea id="je-desc" rows="3">${job.description || ''}</textarea>
+                        </div>
+                    </div>
+                    <div style="padding:14px 18px;border-top:1px solid rgba(255,178,0,0.2);display:flex;justify-content:flex-end;gap:10px;">
+                        <button id="je-cancel" class="btn btn-secondary">Cancel</button>
+                        <button id="je-save" class="btn">Save</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            const close = () => modal.remove();
+            modal.querySelector('#je-close').onclick = close;
+            modal.querySelector('#je-cancel').onclick = close;
+            modal.addEventListener('click', (e)=>{ if(e.target===modal) close(); });
+            modal.querySelector('#je-save').onclick = async () => {
+                const updated = {
+                    id: job.id,
+                    title: modal.querySelector('#je-title').value.trim() || job.title,
+                    date: modal.querySelector('#je-date').value || job.date,
+                    location: modal.querySelector('#je-location').value.trim() || job.location,
+                    pay: modal.querySelector('#je-pay').value.trim() || job.pay,
+                    type: modal.querySelector('#je-type').value.trim() || job.type,
+                    status: modal.querySelector('#je-status').value || job.status,
+                    description: modal.querySelector('#je-desc').value.trim() || job.description
+                };
+                try {
+                    if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                        await window.FirestoreDataManager.setJobListing(updated.id, updated);
+                        // refresh local state minimally
+                        const idx = getJobIndexById(updated.id);
+                        if (idx >= 0) { window.jobs[idx] = { ...window.jobs[idx], ...updated }; }
+                        displayJobs();
+                        updateStats();
+                        showNotification('✅ Job saved', 'success');
+                        // single-job archival (no repo re-seed)
+                        try { await updateJobsOnGitHub('update', updated.title, updated); } catch(_){ }
+                    } else {
+                        showNotification('❌ Firestore unavailable', 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showNotification('❌ Failed to save job', 'error');
+                }
+                close();
+            };
         }
         function displayJobs() {
             console.log('🔄 displayJobs called');
@@ -5900,6 +5989,26 @@
             });
             
             console.log('✅ Jobs display complete');
+        }
+
+        // Enforce only one of each allowed job remains
+        async function enforceUniqueJobs() {
+            try {
+                const allowed = new Set(['backdrop photographer base','backdrop photographer spotlight']);
+                const keep = new Map();
+                const purge = [];
+                for (const j of (window.jobs || [])) {
+                    const t = String(j.title||'').toLowerCase().trim();
+                    if (!allowed.has(t)) { if (j.id) purge.push(j.id); continue; }
+                    if (!keep.has(t)) { keep.set(t, j); }
+                    else {
+                        const a = keep.get(t); const tA = Date.parse(a.updatedAt||0); const tB = Date.parse(j.updatedAt||0);
+                        if (tB > tA) { if (a.id) purge.push(a.id); keep.set(t, j); } else { if (j.id) purge.push(j.id); }
+                    }
+                }
+                for (const id of purge) { try { await window.FirestoreDataManager.deleteJobListing(id); } catch(_){} }
+                if (purge.length) { try { window.jobs = await window.FirestoreDataManager.getJobListings(); } catch(_){} }
+            } catch (e) { console.warn('enforceUniqueJobs skipped:', e?.message||e); }
         }
     </script>
 </body>
