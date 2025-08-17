@@ -96,6 +96,8 @@
                     console.log('✅ User authenticated:', user.email);
                     // User is signed in, check if they exist in our system
                     checkUserInSystem(user.email);
+                    // Persist lightweight session snapshot to mitigate reload kicks
+                    try { sessionStorage.setItem('userPortalAuthEmail', user.email); } catch(_) {}
                 } else {
                     console.log('❌ User signed out');
                     showLoginScreen();
@@ -171,39 +173,74 @@
             return review;
         }
 
-        // Load freelancer data from JSON file
+        // Load freelancer data (Firestore-first, API fallback)
         async function loadUsersData() {
             try {
                 console.log('🔄 Loading users data...');
                 
-                // Disable session cache to prevent stale user data in portal
-                const now = Date.now();
-                
-                // First, try to load directly from users API
+                // Prefer Firestore single source of truth
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    try {
+                        const fsUsersObj = await window.FirestoreDataManager.getUsers();
+                        if (fsUsersObj && Object.keys(fsUsersObj).length > 0) {
+                            users = Object.entries(fsUsersObj).map(([name, user]) => ({
+                                name: name,
+                                email: user.profile?.email,
+                                password: null,
+                                approvedDate: user.profile?.approvedDate,
+                                contractUrl: user.contract?.contractUrl || 'contract.html',
+                                contractStatus: user.contract?.contractStatus || 'pending',
+                                contractSignedDate: user.contract?.contractSignedDate,
+                                contractUploadedDate: user.contract?.contractUploadedDate,
+                                contractId: user.contract?.contractId,
+                                paymentMethod: user.paymentMethod || null,
+                                paymentStatus: user.paymentStatus || 'pending',
+                                jobs: user.jobs && Object.keys(user.jobs).length ? user.jobs : {
+                                    'legacy-job': {
+                                        id: 'legacy-job',
+                                        title: user.profile?.role || 'Contractor',
+                                        role: user.profile?.role,
+                                        location: user.profile?.location,
+                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
+                                        rate: user.profile?.rate,
+                                        status: 'upcoming',
+                                        projectType: 'Legacy Job',
+                                        description: `${user.profile?.role || 'Contractor'} position`
+                                    }
+                                },
+                                primaryJob: user.primaryJob || Object.keys(user.jobs || {})[0] || 'legacy-job'
+                            }));
+                            console.log('✅ Users data loaded from Firestore:', users.length, 'users');
+                            await mergeUsersDataWithUploadedContracts();
+                            return;
+                        }
+                    } catch (fsErr) {
+                        console.warn('⚠️ Firestore users read failed, will try API fallback:', fsErr?.message || fsErr);
+                    }
+                }
+
+                // Fallback: centralized users API
                 try {
                     const response = await fetch(`${API_BASE}/api/users`);
                     if (response.ok) {
                         const jsonData = await response.json();
                         if (jsonData.users) {
-                            // Convert the JSON structure to array format with job support
                             users = Object.entries(jsonData.users).map(([name, user]) => ({
                                 name: name,
                                 email: user.profile?.email,
                                 password: user.profile?.password,
                                 approvedDate: user.profile?.approvedDate,
                                 contractUrl: user.contract?.contractUrl || 'contract.html',
-                                // CONTRACT STATUS FIELDS - CRITICAL!
                                 contractStatus: user.contract?.contractStatus || 'pending',
                                 contractSignedDate: user.contract?.contractSignedDate,
                                 contractUploadedDate: user.contract?.contractUploadedDate,
                                 contractId: user.contract?.contractId,
-                                // PAYMENT FIELDS - CRITICAL!
                                 paymentMethod: user.paymentMethod || null,
                                 paymentStatus: user.paymentStatus || 'pending',
-                                // Handle both old single job format and new multiple jobs format
                                 jobs: user.jobs || {
                                     'legacy-job': {
                                         id: 'legacy-job',
+                                        title: user.profile?.role || 'Contractor',
                                         role: user.profile?.role,
                                         location: user.profile?.location,
                                         projectStart: user.application?.eventDate || user.profile?.projectStart,
@@ -215,28 +252,17 @@
                                 },
                                 primaryJob: user.primaryJob || 'legacy-job'
                             }));
-                            
                             console.log('✅ Users data loaded from API:', users.length, 'users');
-                            console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
-                                name: u.name, 
-                                email: u.email, 
-                                jobCount: Object.keys(u.jobs || {}).length,
-                                contractStatus: u.contractStatus,
-                                contractId: u.contractId
-                            })));
-                            
-                            // Now merge with uploaded contracts data to get the most up-to-date contract information
                             await mergeUsersDataWithUploadedContracts();
                             return;
                         }
                     }
-                } catch (fetchError) {
-                    console.warn('⚠️ Could not fetch users.json, trying localStorage...', fetchError);
+                } catch (apiErr) {
+                    console.warn('⚠️ Users API fallback failed:', apiErr?.message || apiErr);
                 }
                 
-                // If API failed, do not fallback to local storage/hardcoded; prefer empty to avoid stale data
                 users = [];
-                console.log('⚠️ Users API unavailable; using empty users array to avoid stale data');
+                console.log('⚠️ No users data available');
             } catch (error) {
                 console.error('❌ Error loading users data:', error);
                 users = [];
@@ -1568,7 +1594,13 @@
                     await checkUserInSystem(auth.currentUser.email);
                     return;
                 }
-                // Fallback to session cache
+                // Fallback to cached email snapshot if auth takes time to hydrate
+                const cachedEmail = sessionStorage.getItem('userPortalAuthEmail');
+                if (cachedEmail) {
+                    await checkUserInSystem(cachedEmail);
+                    return;
+                }
+                // Fallback to session cache payload
                 const session = sessionStorage.getItem('userPortalAuthenticated');
                 if (session) {
                     const user = JSON.parse(session);
@@ -1889,21 +1921,19 @@
         // Helper function to get selected job
         function getSelectedJob() {
             if (!currentUser || !currentUser.jobs) return null;
-            
-            const jobs = Object.values(currentUser.jobs);
-            if (jobs.length === 0) return null;
-            
-            console.log('🔍 getSelectedJob debug:', {
-                currentUser: currentUser.name,
-                jobs: currentUser.jobs,
-                jobCount: jobs.length
-            });
-            
-            // Simply return the first available job for a cleaner, simpler approach
-            const selectedJob = jobs[0];
-            console.log('🎯 Selected job result:', selectedJob);
-            
-            return selectedJob;
+            const jobKeys = Object.keys(currentUser.jobs);
+            if (jobKeys.length === 0) return null;
+            // Prefer primaryJob if valid, else first key
+            const key = (currentUser.primaryJob && currentUser.jobs[currentUser.primaryJob]) ? currentUser.primaryJob : jobKeys[0];
+            const selected = currentUser.jobs[key];
+            // Normalize fields
+            if (selected) {
+                selected.title = selected.title || selected.role || 'Project';
+                selected.projectStart = selected.projectStart || selected.date || currentUser.application?.eventDate || '';
+                selected.location = selected.location || currentUser.profile?.location || '';
+                selected.rate = selected.rate || currentUser.profile?.rate || '';
+            }
+            return selected;
         }
         // Helper function to get project progress
         function getProjectProgress() {
