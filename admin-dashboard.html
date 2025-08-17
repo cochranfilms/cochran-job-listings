@@ -3756,6 +3756,8 @@
 
                 // Map our data to the template_job_acceptance format
                 const emailParams = {
+                    // destination
+                    to_email: userData.profile.email,
                     // template_job_acceptance expects these specific variable names
                     freelancer_name: userName || 'User',
                     role: userData.profile.role || jobTitle || 'Contractor',
@@ -3763,7 +3765,11 @@
                     rate: rate || 'Rate to be determined',
                     project_start: projectStart || 'TBD',
                     job: jobTitle || 'Contractor Position',
-                    contract_id: 'Will be generated when you sign the contract'
+                    contract_id: 'Will be generated when you sign the contract',
+                    // helpful extras commonly used by templates
+                    to_name: userName || 'User',
+                    reply_to: 'info@cochranfilms.com',
+                    from_name: 'Cochran Films Admin'
                 };
 
                 // Validate email parameters to prevent 422 errors
