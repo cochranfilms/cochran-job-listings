@@ -24,6 +24,21 @@ After applying cleanup, re-test the main flows:
 ## Overview
 This document describes the comprehensive testing system for the Cochran Films admin dashboard and user management system.
 
+## Landing Page Slideshow/Header Merge (2025-08-17)
+
+- The standalone header in `index.html` has been merged into the first slide of the pitch slideshow to focus messaging on creators joining the team.
+- The logo is preserved and displayed at the top of slide 1. The original header copy is adapted for creators.
+- CTA buttons on slide 1 now include a primary in-page CTA that scrolls to the jobs grid via `#jobs`.
+- The jobs section root is now `section id="jobs"` for anchor navigation.
+
+### Quick Test
+1. Open `index.html` locally (or `https://collaborate.cochranfilms.com`).
+2. Verify slide 1 shows the Cochran Films logo, the creator-focused headline/subhead, and two CTAs.
+3. Click “JOIN THE ROSTER” → page should smooth-scroll to the jobs list.
+4. Use arrow keys or nav dots to move between slides; ensure the last slide no longer auto-advances.
+5. Confirm mobile swipe left/right still changes slides; first slide content fits and remains centered.
+6. Verify jobs still load from Firestore (or fallback) and the Refresh button still works.
+
 ## Admin Dashboard Redesign (2025-08-17)
 
 - New shell with sidebar navigation and routed content area is built by `AdminDashboardApp.buildLayout()`.

@@ -27,6 +27,13 @@ Notes
 ## Overview
 This document outlines the cleanup procedures and systems used in the Cochran Films Landing project, including the revolutionary AI-powered Premiere Pro automation system.
 
+## 🖼️ Landing Page Slideshow/Header Consolidation (2025-08-17)
+
+- The standalone hero header in `index.html` has been consolidated into slide 1 of the slideshow to create a single creator-focused entry experience.
+- Keep the logo asset and creator copy intact when refactoring; do not reintroduce a separate header block above the slideshow.
+- Anchor `#jobs` is now the canonical in-page link for CTAs that jump to the jobs grid.
+- When performing cleanup: ensure no duplicate hero/header remnants exist above `.slideshow-container` and that slide 1 remains the primary hero.
+
 ## 🎨 User Portal Login Redesign Cleanup
 
 ### New Addition: Modern Apple Glass Login Design Cleanup

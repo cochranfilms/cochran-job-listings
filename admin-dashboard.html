@@ -1566,6 +1566,12 @@
             };
 
             const editIndex = e.target.dataset.editIndex;
+            // Ensure a persistent id exists for Firestore writes/deletes
+            if (editIndex !== undefined && window.jobs && window.jobs[editIndex] && window.jobs[editIndex].id) {
+                job.id = window.jobs[editIndex].id;
+            } else {
+                job.id = job.id || `job-${(job.title||'job').toLowerCase().replace(/\s+/g,'-')}-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+            }
             const actionType = (editIndex !== undefined) ? 'update' : 'create';
             if (editIndex !== undefined) {
                 window.jobs[editIndex] = job;
@@ -1631,7 +1637,29 @@
                             await window.FirestoreDataManager.deleteJobListing(jobId);
                             console.log('✅ Deleted job from Firestore:', jobId);
                         } else {
-                            console.warn('⚠️ No job id available for Firestore delete; skipping direct delete');
+                            console.warn('⚠️ No job id available for Firestore delete; attempting field-match lookup');
+                            try {
+                                const latestJobs = await window.FirestoreDataManager.getJobListings();
+                                const match = (latestJobs || []).find(j => {
+                                    const t1 = (j.title||'').toLowerCase().trim();
+                                    const t2 = (removed.title||'').toLowerCase().trim();
+                                    const d1 = (j.date||'').trim();
+                                    const d2 = (removed.date||'').trim();
+                                    const l1 = (j.location||'').toLowerCase().trim();
+                                    const l2 = (removed.location||'').toLowerCase().trim();
+                                    const p1 = String(j.pay||'').trim();
+                                    const p2 = String(removed.pay||'').trim();
+                                    return t1 === t2 && d1 === d2 && l1 === l2 && p1 === p2;
+                                });
+                                if (match && match.id) {
+                                    await window.FirestoreDataManager.deleteJobListing(match.id);
+                                    console.log('✅ Deleted matched job from Firestore by fields:', match.id);
+                                } else {
+                                    console.warn('⚠️ Could not locate matching Firestore doc to delete');
+                                }
+                            } catch (lookupErr) {
+                                console.warn('⚠️ Firestore lookup delete failed:', lookupErr?.message || lookupErr);
+                            }
                         }
                     }
                 } catch (err) {
@@ -1817,11 +1845,12 @@
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     const writes = (window.jobs || []).map(j => {
                         const id = j.id || `job-${(j.title||'job').toLowerCase().replace(/\s+/g,'-')}-${Date.now()}`;
+                        j.id = id; // persist id locally for future deletes/edits
                         return window.FirestoreDataManager.setJobListing(id, j);
                     });
                     await Promise.allSettled(writes);
                     showNotification('✅ Jobs saved to Firestore', 'success');
-                    try { await loadJobs(); } catch(_){}
+                    try { await loadJobs(); } catch(_){ }
                 }
 
                 // Optionally sync to GitHub for archival if enabled
