@@ -46,6 +46,30 @@
       "primaryJob": "Video Production",
       "paymentMethod": "zelle",
       "paymentStatus": "configured"
+    },
+    "Cody Cochran": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "location": "Douglasville, GA",
+        "role": "",
+        "projectType": ""
+      },
+      "contract": {
+        "contractStatus": "pending"
+      },
+      "application": {
+        "status": "pending",
+        "submittedAt": "2025-08-17T20:30:00.945Z",
+        "jobTitle": "Backdrop Photographer Spotlight",
+        "eventDate": "2025-10-24",
+        "pay": "$300 + Tip",
+        "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+        "phone": "4704202169",
+        "portfolio": "https://www.cochranfilms.com",
+        "source": "apply-html"
+      },
+      "jobs": {},
+      "primaryJob": null
     }
   },
   "statusOptions": {
@@ -62,15 +86,10 @@
       "overdue"
     ]
   },
-  "lastUpdated": "2025-08-16",
-  "totalUsers": 1,
+  "lastUpdated": "2025-08-17",
+  "totalUsers": 2,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-16"
-  },
-  "_metadata": {
-    "dataSource": "github",
-    "fetchedAt": "2025-08-16T10:09:52.744Z",
-    "totalUsers": 1
   }
 }
