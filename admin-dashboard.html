@@ -559,6 +559,11 @@
                 <div class="stat-label">Active Jobs</div>
             </div>
             <div class="stat-card">
+                <div class="stat-icon">🗂️</div>
+                <div class="stat-number" id="totalJobs">0</div>
+                <div class="stat-label">All Jobs</div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-icon">📄</div>
                 <div class="stat-number" id="pendingReviews">0</div>
                 <div class="stat-label">Pending Reviews</div>
@@ -1318,8 +1323,18 @@
                 console.error('❌ totalCreators element not found');
             }
 
+            // All jobs
+            const totalJobsCount = Array.isArray(window.jobs) ? window.jobs.length : 0;
+            const totalJobsElement = document.getElementById('totalJobs');
+            if (totalJobsElement) {
+                totalJobsElement.textContent = totalJobsCount;
+                console.log('✅ Updated totalJobs:', totalJobsCount);
+            } else {
+                console.error('❌ totalJobs element not found');
+            }
+
             // Active jobs from jobs dataset (treat missing status as Active)
-            const activeJobsCount = (window.jobs || []).filter(job => (job.status || 'Active') === 'Active').length;
+            const activeJobsCount = (window.jobs || []).filter(job => String(job.status || 'active').toLowerCase() === 'active').length;
             const activeJobsElement = document.getElementById('activeJobs');
             if (activeJobsElement) {
                 activeJobsElement.textContent = activeJobsCount;
@@ -5522,14 +5537,25 @@
 
             // React to Firestore realtime updates to keep UI in sync
             if (window.FirestoreIntegration) {
+                const debounceMap = { jobs: null, users: null, dropdownOptions: null };
+                const schedule = (key, fn) => {
+                    if (debounceMap[key]) clearTimeout(debounceMap[key]);
+                    debounceMap[key] = setTimeout(fn, 200);
+                };
                 window.FirestoreIntegration.setupListeners(async (evt) => {
                     const { collection } = evt.detail || {};
                     if (collection === 'jobs') {
-                        try { window.jobs = await window.FirestoreDataManager.getJobListings(); displayJobs(); updateStats(); } catch(_){}
+                        schedule('jobs', async () => {
+                            try { window.jobs = await window.FirestoreDataManager.getJobListings(); displayJobs(); updateStats(); } catch(_){}
+                        });
                     } else if (collection === 'users') {
-                        try { window.users = await window.FirestoreDataManager.getUsers(); displayUsers(); displayArchivedUsers(); updateStats(); } catch(_){}
+                        schedule('users', async () => {
+                            try { window.users = await window.FirestoreDataManager.getUsers(); displayUsers(); displayArchivedUsers(); updateStats(); } catch(_){}
+                        });
                     } else if (collection === 'dropdownOptions') {
-                        try { window.dropdownOptions = await window.FirestoreDataManager.getDropdownOptions(); populateDropdownManagementInterface(); populateUserCreationDropdowns(); populateJobAssignmentDropdowns(); } catch(_){}
+                        schedule('dropdownOptions', async () => {
+                            try { window.dropdownOptions = await window.FirestoreDataManager.getDropdownOptions(); populateDropdownManagementInterface(); populateUserCreationDropdowns(); populateJobAssignmentDropdowns(); } catch(_){}
+                        });
                     }
                 });
             }
