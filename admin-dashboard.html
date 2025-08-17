@@ -1223,6 +1223,8 @@
                     // Jobs (Firestore only)
                     try {
                         window.jobs = await window.FirestoreDataManager.getJobListings();
+                        // Normalize any migrated docs that stored data under a single nested key like 'jobs.<id>'
+                        window.jobs = (window.jobs || []).map(j => normalizeJobRecord(j));
                     } catch (e) {
                         console.warn('⚠️ Jobs load failed from Firestore:', e?.message || e);
                         window.jobs = [];
@@ -1344,6 +1346,7 @@
                 console.log('🔄 loadJobs called (Firestore)');
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     window.jobs = await window.FirestoreDataManager.getJobListings();
+                    window.jobs = (window.jobs || []).map(j => normalizeJobRecord(j));
                     console.log(`✅ Loaded ${window.jobs.length} jobs from Firestore`);
                 } else {
                     console.warn('⚠️ Firestore not available; jobs set to empty');
@@ -1357,6 +1360,23 @@
             console.log('🔄 Calling displayJobs after loading...');
             displayJobs();
             console.log('✅ loadJobs complete');
+        }
+
+        // Normalize a Firestore job doc that may have nested data under a single key like 'jobs.<id>'
+        function normalizeJobRecord(jobDoc) {
+            if (!jobDoc || typeof jobDoc !== 'object') return jobDoc;
+            const keys = Object.keys(jobDoc).filter(k => k.startsWith('jobs.'));
+            if (keys.length === 1 && typeof jobDoc[keys[0]] === 'object') {
+                const inner = jobDoc[keys[0]] || {};
+                // Preserve id and overlay top-level fields
+                return {
+                    id: jobDoc.id || jobDoc.contractId || jobDoc._id || keys[0].slice(5),
+                    ...inner,
+                    // prefer explicit status if present
+                    status: inner.status || jobDoc.status || 'Active'
+                };
+            }
+            return jobDoc;
         }
 
         // Load contracts from Firestore and render
@@ -1391,12 +1411,13 @@
                 return;
             }
 
-            // Sort newest first by createdAt if present
-            contracts.sort((a, b) => new Date(b.createdAt || b.updatedAt || 0) - new Date(a.createdAt || a.updatedAt || 0));
+            // Sort newest first by any available date
+            contracts.sort((a, b) => new Date(b.signedDate || b.contractDate || b.uploadDate || b.createdAt || 0) - new Date(a.signedDate || a.contractDate || a.uploadDate || a.createdAt || 0));
             list.innerHTML = '';
 
             const statusColors = {
                 signed: '#22c55e',
+                uploaded: '#64748b',
                 pending: '#f59e0b',
                 draft: '#6b7280',
                 expired: '#ef4444',
@@ -1407,26 +1428,29 @@
                 const card = document.createElement('div');
                 card.className = 'item-card';
                 const status = (c.status || 'draft').toLowerCase();
-                const created = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—';
+                const createdIso = c.signedDate || c.contractDate || c.uploadDate || c.createdAt;
+                const created = createdIso ? new Date(createdIso).toLocaleDateString() : '—';
                 const id = c.id || c.contractId || `contract-${index}`;
+                const name = c.userName || c.freelancerName || (c.fileName ? c.fileName.replace(/\.pdf$/i,'') : 'Unknown User');
+                const email = c.userEmail || c.freelancerEmail || 'N/A';
 
                 const makeDownload = () => {
-                    if (c.fileUrl) {
-                        window.open(c.fileUrl, '_blank');
+                    if (c.fileUrl || c.githubUrl) {
+                        window.open(c.fileUrl || c.githubUrl, '_blank');
                         return;
                     }
-                    const filename = c.fileName || `${(c.userName || 'Contract').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`;
+                    const filename = c.fileName || `${(name || 'Contract').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`;
                     const url = `${API_BASE}/api/contracts?filename=${encodeURIComponent(filename)}`;
                     window.open(url, '_blank');
                 };
 
                 card.innerHTML = `
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
-                        <h4 style="margin:0;">${c.userName || 'Unknown User'}</h4>
+                        <h4 style="margin:0;">${name}</h4>
                         <span style="background:${statusColors[status] || '#6b7280'};color:#fff;padding:0.25rem 0.75rem;border-radius:12px;font-size:0.8rem;text-transform:capitalize;">${status}</span>
                     </div>
                     <div class="item-meta">
-                        <span>📧 ${c.userEmail || 'N/A'}</span>
+                        <span>📧 ${email}</span>
                         <span>🆔 ${id}</span>
                         <span>🗓️ ${created}</span>
                     </div>
