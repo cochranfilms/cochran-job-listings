@@ -9,6 +9,13 @@
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" href="/styles/apply.css" />
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <!-- Project Firebase config + Firestore data manager (single source of truth) -->
+  <script src="/firebase-config.js"></script>
+  <script src="/firestore-data-manager.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded',()=>AOS.init({duration:1000,once:true,offset:100}));
     function showToast(msg, type='success'){ const t=document.getElementById('toast'); t.style.background = type==='error'?'#ef4444':'#22c55e'; t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
@@ -17,21 +24,56 @@
       const fd = new FormData(e.target);
       const payload = Object.fromEntries(fd.entries());
       try{
-        const res = await fetch('/api/apply', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-          fullName: payload.fullName,
-          email: payload.email,
-          phone: payload.phone,
-          location: payload.location,
-          applyingFor: payload.applyingFor,
-          eventDate: payload.eventDate,
-          pay: payload.pay,
-          description: payload.description,
-          portfolio: payload.portfolio,
-          source: 'apply-html'
-        })});
-        const j = await res.json();
-        if (j.success){ showToast('Application received!'); e.target.reset(); try{ location.reload(); }catch(_){} }
-        else { showToast('Failed to submit: '+(j.error||'Unknown'), 'error'); }
+        // 1) Primary write → Firestore (single source of truth)
+        await window.FirebaseConfig.waitForInit();
+        // Normalize a deterministic userId; prefer full name as id (existing structure)
+        const userId = (payload.fullName || '').trim();
+        if (!userId) throw new Error('Full name is required');
+
+        const firestoreUser = {
+          profile: {
+            email: payload.email,
+            location: payload.location || '',
+            role: '',
+            projectType: ''
+          },
+          contract: { contractStatus: 'pending' },
+          application: {
+            status: 'pending',
+            submittedAt: new Date().toISOString(),
+            jobTitle: payload.applyingFor || '',
+            eventDate: payload.eventDate || '',
+            pay: payload.pay || '',
+            description: payload.description || '',
+            phone: payload.phone || '',
+            portfolio: payload.portfolio || '',
+            source: 'apply-html'
+          },
+          jobs: {},
+          primaryJob: null
+        };
+        await window.FirestoreDataManager.setUser(userId, firestoreUser);
+
+        // 2) Best-effort backup write → existing JSON/GitHub API (non-blocking)
+        try {
+          const res = await fetch('/api/apply', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+            fullName: payload.fullName,
+            email: payload.email,
+            phone: payload.phone,
+            location: payload.location,
+            applyingFor: payload.applyingFor,
+            eventDate: payload.eventDate,
+            pay: payload.pay,
+            description: payload.description,
+            portfolio: payload.portfolio,
+            source: 'apply-html'
+          })});
+          await res.json().catch(()=>({}));
+        } catch(_) { /* ignore backup failure */ }
+
+        showToast('Application received!');
+        e.target.reset();
+        try{ location.reload(); }catch(_){}
       }catch(err){ showToast('Error: '+err.message, 'error'); }
     }
   </script>
@@ -109,12 +151,27 @@
       const set=(n)=>{const el=document.querySelector(`[name="${n}"]`); if(el&&p.get(n)) el.value=p.get(n);};
       ['fullName','email','phone','location','applyingFor','eventDate','pay','description','portfolio'].forEach(set);
     })();
-    // Populate job dropdown from jobs-data and lock prefilled fields
+    // Populate job dropdown from Firestore jobs and lock prefilled fields
     (async function(){
       const sel=document.getElementById('applyJobSelect'); if(!sel) return;
       sel.innerHTML='<option value="">Select a job...</option>';
       const jobsIndex = {};
-      try{ const r=await fetch('/api/jobs-data'); const j=await r.json(); (j.jobs||[]).forEach(job=>{ const o=document.createElement('option'); o.value=job.title; o.textContent=(job.title||'Untitled Job'); sel.appendChild(o); jobsIndex[job.title]=job; }); }catch{}
+      try{
+        await window.FirebaseConfig.waitForInit();
+        // Prefer Firestore as source of truth
+        const jobs = await window.FirestoreDataManager.getJobListings();
+        (jobs||[]).forEach(job=>{
+          const title = job.title || 'Untitled Job';
+          const o=document.createElement('option'); o.value=title; o.textContent=title; sel.appendChild(o); jobsIndex[title]=job;
+        });
+        // Fallback to JSON API if Firestore has no jobs
+        if ((!jobs || jobs.length===0)){
+          const r=await fetch('/api/jobs-data'); const j=await r.json();
+          (j.jobs||[]).forEach(job=>{ const o=document.createElement('option'); const t=job.title||'Untitled Job'; o.value=t; o.textContent=t; sel.appendChild(o); jobsIndex[t]=job; });
+        }
+      }catch{
+        try{ const r=await fetch('/api/jobs-data'); const j=await r.json(); (j.jobs||[]).forEach(job=>{ const o=document.createElement('option'); const t=job.title||'Untitled Job'; o.value=t; o.textContent=t; sel.appendChild(o); jobsIndex[t]=job; }); }catch{}
+      }
       // If query provided applyingFor, ensure it's selected
       const q=new URLSearchParams(location.search).get('applyingFor'); if(q) { sel.value=q; }
 

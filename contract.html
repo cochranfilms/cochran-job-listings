@@ -58,10 +58,15 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <!-- PDF Generation Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Project Firebase config + Firestore Data Manager -->
+    <script src="/firebase-config.js"></script>
+    <script src="/firestore-data-manager.js"></script>
     
     <style>
         :root {
@@ -769,19 +774,7 @@
         let signatureData = null; // Store signature information
         let signedContractData = null; // Store signed contract data for download
         
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: 'AIzaSyCkL31Phi7FxYCeB5zgHeYTb2iY2sTJJdw',
-            authDomain: 'cochran-films.firebaseapp.com',
-            projectId: 'cochran-films',
-            storageBucket: 'cochran-films.appspot.com',
-            messagingSenderId: '566448458094',
-            appId: '1:566448458094:web:default'
-        };
-        
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+        // Firebase is initialized via firebase-config.js (single source)
         
         // EmailJS Configuration
         const EMAILJS_CONFIG = {
@@ -1607,17 +1600,32 @@
         // Load users data from JSON file
         async function loadUsersData() {
             try {
-                const response = await fetch('/api/users');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                // Prefer Firestore single source of truth
+                await window.FirebaseConfig.waitForInit();
+                try {
+                    const fsUsers = await window.FirestoreDataManager.getUsers();
+                    if (fsUsers && Object.keys(fsUsers).length > 0) {
+                        approvedUsers = fsUsers;
+                        console.log('✅ Users data loaded from Firestore:', Object.keys(approvedUsers).length);
+                        return;
+                    }
+                } catch (fsErr) {
+                    console.warn('⚠️ Firestore users load failed, will try API fallback:', fsErr?.message || fsErr);
                 }
-                const data = await response.json();
-                approvedUsers = data.users || {};
-                console.log('✅ Users data loaded:', Object.keys(approvedUsers).length, 'users');
+
+                // Fallback to JSON API
+                const response = await fetch('/api/users');
+                if (response.ok) {
+                    const data = await response.json();
+                    approvedUsers = data.users || {};
+                    console.log('✅ Users data loaded from API:', Object.keys(approvedUsers).length);
+                    return;
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
             } catch (error) {
                 console.error('❌ Error loading users data:', error);
                 console.log('📋 Using fallback users data for testing');
-                // Fallback to hardcoded data if JSON loading fails
+                // Fallback to hardcoded data if both Firestore and API fail
                 approvedUsers = {
                     "Francisco Flores": {
                         email: "ciscocinema@gmail.com",
@@ -1806,20 +1814,38 @@
             
             console.log('📝 Input data:', { name, email });
             
-            // First, load the latest users data from JSON file (prevent caching)
+            // First, load the latest users data from Firestore (fallback to JSON API)
             try {
-                const timestamp = new Date().getTime();
-                const response = await fetch('/api/users');
-                if (response.ok) {
-                    const jsonData = await response.json();
-                    if (jsonData.users) {
-                        approvedUsers = jsonData.users;
-                        console.log('✅ Loaded latest users data from JSON file:', Object.keys(jsonData.users));
-                        console.log('🔍 Contract statuses:', Object.entries(jsonData.users).map(([name, data]) => ({
-                            name,
-                            email: data.profile?.email,
-                            contractStatus: data.contract?.contractStatus
+                await window.FirebaseConfig.waitForInit();
+                try {
+                    const fsUsers = await window.FirestoreDataManager.getUsers();
+                    if (fsUsers && Object.keys(fsUsers).length > 0) {
+                        approvedUsers = fsUsers;
+                        console.log('✅ Loaded latest users from Firestore:', Object.keys(fsUsers));
+                        console.log('🔍 Contract statuses (FS):', Object.entries(fsUsers).map(([n, d]) => ({
+                            name: n,
+                            email: d.profile?.email,
+                            contractStatus: d.contract?.contractStatus
                         })));
+                    } else {
+                        const response = await fetch('/api/users');
+                        if (response.ok) {
+                            const jsonData = await response.json();
+                            if (jsonData.users) {
+                                approvedUsers = jsonData.users;
+                                console.log('✅ Loaded latest users data from JSON file:', Object.keys(jsonData.users));
+                            }
+                        }
+                    }
+                } catch (fsErr) {
+                    console.warn('⚠️ Firestore read failed, using JSON API fallback:', fsErr?.message || fsErr);
+                    const response = await fetch('/api/users');
+                    if (response.ok) {
+                        const jsonData = await response.json();
+                        if (jsonData.users) {
+                            approvedUsers = jsonData.users;
+                            console.log('✅ Loaded latest users data from JSON file:', Object.keys(jsonData.users));
+                        }
                     }
                 }
             } catch (error) {
@@ -2598,6 +2624,34 @@
                     console.warn('⚠️ PDF upload failed (contract still signed):', uploadError);
                 }
                 
+                // Persist contract to Firestore users collection first, then JSON backup
+                try {
+                    // Find user by email and update their contract status in Firestore
+                    await window.FirebaseConfig.waitForInit();
+                    try {
+                        const fsUsers = await window.FirestoreDataManager.getUsers();
+                        const userKey = Object.keys(fsUsers || {}).find(k => (fsUsers[k]?.profile?.email || '').toLowerCase() === (signedContractData.freelancerEmail || '').toLowerCase());
+                        if (userKey) {
+                            const fileUrl = signedContractData?.uploadedContract?.githubUrl || null;
+                            await window.FirestoreDataManager.setUser(userKey, {
+                                profile: { ...(fsUsers[userKey].profile||{}), approvedDate: fsUsers[userKey].profile?.approvedDate || new Date().toISOString().split('T')[0] },
+                                contract: {
+                                    ...(fsUsers[userKey].contract||{}),
+                                    contractStatus: fileUrl ? 'uploaded' : 'signed',
+                                    contractSignedDate: signedContractData.signedDateTime,
+                                    ...(fileUrl ? { contractUploadedDate: new Date().toISOString(), fileUrl } : {}),
+                                    contractId: signedContractData.contractId
+                                }
+                            });
+                            console.log('✅ Firestore user contract status updated');
+                        } else {
+                            console.warn('⚠️ Firestore user not found for contract update');
+                        }
+                    } catch (errFsUpdate) {
+                        console.warn('⚠️ Firestore setUser failed:', errFsUpdate?.message || errFsUpdate);
+                    }
+                } catch (_) {}
+
                 // Persist contract status to users.json (includes file URL when available)
                 try {
                     await updateUsersJsonWithPassword(signedContractData);
@@ -2823,6 +2877,30 @@
                 await updateGitHubFile('uploaded-contracts.json', JSON.stringify(uploadedContractsData, null, 2), `Add signed contract: ${contractData.contractId} - ${contractData.freelancerName}`);
                 
                 console.log('✅ Uploaded-contracts.json updated on GitHub');
+
+                // Mirror contract record to Firestore contracts collection
+                try {
+                    await window.FirebaseConfig.waitForInit();
+                    const record = {
+                        contractId: contractData.contractId,
+                        freelancerName: contractData.freelancerName,
+                        freelancerEmail: contractData.freelancerEmail,
+                        role: contractData.role,
+                        rate: contractData.rate,
+                        location: contractData.location,
+                        fileName: `${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
+                        uploadDate: new Date().toISOString(),
+                        status: 'uploaded',
+                        githubUrl: `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
+                        notes: 'Automatically uploaded via contract signing',
+                        contractDate: contractData.effectiveDate,
+                        signedDate: contractData.signatureDate
+                    };
+                    await window.FirestoreDataManager.setContract(contractData.contractId, record);
+                    console.log('✅ Contract recorded in Firestore');
+                } catch (fsErr) {
+                    console.warn('⚠️ Firestore contract save failed:', fsErr?.message || fsErr);
+                }
                 
             } catch (error) {
                 console.error('❌ Error updating uploaded-contracts.json:', error);

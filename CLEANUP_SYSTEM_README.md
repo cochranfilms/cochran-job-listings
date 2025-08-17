@@ -1,3 +1,9 @@
+### Firestore Integration Notes
+
+- Canonical data source is Firestore. JSON files (`users.json`, `uploaded-contracts.json`) remain as backups to support existing APIs and GH Pages mirrors.
+- New writes from `apply.html` go to Firestore first, then attempt a backup write to `/api/apply`.
+- Contract signing updates the Firestore `users` document and records a `contracts` document. The JSON files are updated afterward as a non-blocking backup.
+- Admin approve/deny flows persist to Firestore via `FirestoreDataManager.setUser` in addition to current GitHub JSON update routines.
 Cleanup Tests Utility
 
 - Run inventory (no changes):

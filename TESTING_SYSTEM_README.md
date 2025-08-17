@@ -1,3 +1,14 @@
+## Firestore Single Source of Truth Integration (Apply + Contract)
+
+- apply.html now initializes Firebase/Firestore via `firebase-config.js` and writes applications to the `users` collection using `FirestoreDataManager.setUser(name, {...})`. It still performs a best-effort backup to `/api/apply` to keep GitHub JSON in sync, but Firestore is primary.
+- contract.html now loads users primarily from Firestore (`FirestoreDataManager.getUsers()`), falling back to `/api/users` only if Firestore is unavailable. When a contract is signed, it:
+  - Updates the user's `contract` metadata in Firestore (`contractStatus`, `contractSignedDate`, optional `fileUrl` if uploaded), then updates users.json via the existing GitHub API as a backup.
+  - Mirrors the signed contract into the `contracts` collection with `FirestoreDataManager.setContract(id, data)`.
+  - Existing EmailJS flows are unchanged, but now assume Firestore holds the canonical user/job state.
+
+Smoke tests:
+- Apply Flow: Open `/apply.html`, submit a new application, verify a new doc appears in Firestore `users` with `application.status=pending`, and the user appears in `admin-dashboard.html` pending list. Approve from admin; verify EmailJS fired and Firestore user updated to `application.status=approved` with `profile.approvedDate`.
+- Contract Flow: In `/contract.html`, access with the approved user. Sign contract; verify Firestore `users/<name>.contract.contractStatus` updates to `signed` or `uploaded` and `contracts/<contractId>` exists. Verify backup JSON also updated.
 Test/Debug Cleanup Policy
 
 - The repository includes historical test and debug artifacts. Use the cleanup utility to keep production HTMLs clean (`admin-dashboard.html`, `user-portal.html`).

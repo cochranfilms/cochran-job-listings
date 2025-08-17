@@ -3918,6 +3918,12 @@
                 }
                 // Rate is now ONLY determined by the job they're assigned to
 
+                // Persist to Firestore (single source of truth)
+                try {
+                    await window.FirebaseConfig.waitForInit();
+                    await window.FirestoreDataManager.setUser(userName, userData);
+                } catch (e) { console.warn('⚠️ Firestore setUser failed on approve:', e?.message || e); }
+
                 // Send job acceptance email
                 sendJobAcceptanceEmail(userName, userData);
                 
@@ -3961,6 +3967,7 @@
                                 jobPublic.status = 'Inactive';
                                 displayJobs();
                                 await updateJobsOnGitHub('set-inactive', jobPublic.title || resolvedJobTitle);
+                                try { await window.FirebaseConfig.waitForInit(); await window.FirestoreDataManager.setJobListing(jobPublic.id || (`job-${(jobPublic.title||'').toLowerCase().replace(/\s+/g,'-')}`), jobPublic); } catch(_){ }
                             }
                         }
                     } catch (err) {
@@ -4032,8 +4039,12 @@
                 window.users._archived = window.users._archived || {};
                 const archivedCopy = { ...userData };
                 archivedCopy.application = { ...(archivedCopy.application || {}), status: 'denied', updatedAt: new Date().toISOString() };
+                archivedCopy.archived = true;
                 window.users._archived[userName] = archivedCopy;
                 delete window.users[userName];
+
+                // Persist denial state to Firestore
+                try { await window.FirebaseConfig.waitForInit(); await window.FirestoreDataManager.setUser(userName, archivedCopy); } catch(e){ console.warn('⚠️ Firestore setUser failed on deny:', e?.message || e); }
 
                 await updateUsersOnGitHub('deny->archive', userName);
                 displayUsers();
