@@ -599,6 +599,19 @@ const JobList = {
         } else {
             actions.push('<button class="btn btn-small btn-info" onclick="JobList.duplicateJob(' + index + ')">📋 Duplicate</button>');
         }
+
+        // Assign to users button
+        if (window.Button) {
+            const assignBtn = window.Button.create({
+                text: '🎯 Assign',
+                variant: 'primary',
+                size: 'sm',
+                onClick: () => (window.JobManager && window.JobManager.assignJobsToUsers ? window.JobManager.assignJobsToUsers() : null)
+            });
+            actions.push(assignBtn.outerHTML);
+        } else {
+            actions.push('<button class="btn btn-small" onclick="JobManager && JobManager.assignJobsToUsers && JobManager.assignJobsToUsers()">🎯 Assign</button>');
+        }
         
         // Selection checkbox
         const checkbox = document.createElement('input');
