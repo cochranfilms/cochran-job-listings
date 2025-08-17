@@ -707,6 +707,7 @@
                                         <option value="Pending">Pending</option>
                                         <option value="Completed">Completed</option>
                                         <option value="Cancelled">Cancelled</option>
+                                        <option value="Inactive">Inactive</option>
                                     </select>
                                 </div>
                                 <textarea id="jobDescription" name="description" placeholder="Job Description" rows="3"></textarea>
@@ -721,12 +722,7 @@
                         <div class="form-section">
                             <h3>Job Management Tools</h3>
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <button class="btn" onclick="exportJobData()">📊 Export Jobs</button>
-                                <button class="btn btn-secondary" onclick="downloadJobJSON()" id="downloadJobBtn" style="display: none;">📥 Download Jobs</button>
-                                <button class="btn btn-secondary" onclick="showJobStats()">📈 Job Statistics</button>
-                                <button class="btn btn-secondary" onclick="bulkJobActions()">⚡ Bulk Actions</button>
-                                <button class="btn btn-secondary" onclick="debugJobsState()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">🐛 Debug State</button>
-                                <button class="btn btn-secondary" onclick="testEmailJS()" style="background: linear-gradient(135deg, #10b981, #059669);">📧 Test EmailJS</button>
+                                <!-- Removed colorful legacy tools per new UX; minimal surface here -->
                             </div>
                         </div>
                         
@@ -740,6 +736,7 @@
                                         <option value="Pending">Pending</option>
                                         <option value="Completed">Completed</option>
                                         <option value="Cancelled">Cancelled</option>
+                                        <option value="Inactive">Inactive</option>
                                     </select>
                                     <!-- Refresh buttons removed; realtime Firestore updates handle changes -->
                                 </div>
@@ -2337,18 +2334,108 @@
         // Edit user
         function editUser(name) {
             const user = window.users[name];
-            document.getElementById('freelancerName').value = name;
-            document.getElementById('freelancerEmail').value = user.profile?.email || '';
-            document.getElementById('contractUrl').value = user.contract?.contractUrl || 'contract.html';
-            document.getElementById('freelancerRole').value = user.profile?.role || '';
-            document.getElementById('freelancerLocation').value = user.profile?.location || 'Atlanta Area';
-                            document.getElementById('freelancerRate').value = user.jobs?.[user.primaryJob]?.rate || '';
-            const pt = document.getElementById('freelancerProjectType');
-            if (pt) pt.value = user.profile?.projectType || '';
-            document.getElementById('approvedDate').value = user.profile?.approvedDate || '';
-            document.getElementById('projectDate').value = user.profile?.projectDate || '';
-            
-            document.getElementById('contractForm').dataset.editName = name;
+            if (!user) return;
+            openUserEditModal(name, user);
+        }
+
+        // Lightweight modal for editing a user
+        function openUserEditModal(name, user) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:12000;display:flex;align-items:center;justify-content:center;';
+            modal.innerHTML = `
+                <div style="background:#0f1115;border:1px solid rgba(255,178,0,0.25);border-radius:14px;width:min(560px,92%);box-shadow:0 24px 64px rgba(0,0,0,.5);">
+                    <div style="padding:16px 18px;border-bottom:1px solid rgba(255,178,0,0.2);display:flex;justify-content:space-between;align-items:center;">
+                        <h3 style="margin:0;color:#FFB200;font-family:Cinzel,serif;">Edit User</h3>
+                        <button id="ue-close" class="btn btn-secondary" style="margin:0;">✖</button>
+                    </div>
+                    <div style="padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div style="grid-column:span 2;">
+                            <label>Name</label>
+                            <input id="ue-name" type="text" value="${name}">
+                        </div>
+                        <div>
+                            <label>Email</label>
+                            <input id="ue-email" type="email" value="${user.profile?.email || ''}">
+                        </div>
+                        <div>
+                            <label>Role</label>
+                            <select id="ue-role"></select>
+                        </div>
+                        <div>
+                            <label>Location</label>
+                            <select id="ue-location"></select>
+                        </div>
+                        <div>
+                            <label>Rate</label>
+                            <select id="ue-rate"></select>
+                        </div>
+                        <div>
+                            <label>Project Type</label>
+                            <select id="ue-projectType"></select>
+                        </div>
+                        <div>
+                            <label>Approved Date</label>
+                            <input id="ue-approved" type="date" value="${user.profile?.approvedDate || ''}">
+                        </div>
+                        <div>
+                            <label>Project Start</label>
+                            <input id="ue-project" type="date" value="${user.profile?.projectDate || ''}">
+                        </div>
+                    </div>
+                    <div style="padding:14px 18px;border-top:1px solid rgba(255,178,0,0.2);display:flex;justify-content:flex-end;gap:10px;">
+                        <button id="ue-cancel" class="btn btn-secondary">Cancel</button>
+                        <button id="ue-save" class="btn">Save</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+
+            // Populate dropdowns
+            function fillSelect(id, items, value) {
+                const el = modal.querySelector(id);
+                if (!el) return;
+                el.innerHTML = '<option value="">Select…</option>' + (items||[]).map(v=>`<option value="${v}">${v}</option>`).join('');
+                if (value) el.value = value;
+            }
+            fillSelect('#ue-role', (window.dropdownOptions?.roles)||[], user.profile?.role);
+            fillSelect('#ue-location', (window.dropdownOptions?.locations)||[], user.profile?.location);
+            fillSelect('#ue-rate', (window.dropdownOptions?.rates)||[], user.jobs?.[user.primaryJob]?.rate);
+            fillSelect('#ue-projectType', (window.dropdownOptions?.projectTypes)||[], user.profile?.projectType);
+
+            const close = () => modal.remove();
+            modal.querySelector('#ue-close').onclick = close;
+            modal.querySelector('#ue-cancel').onclick = close;
+            modal.addEventListener('click', (e)=>{ if(e.target===modal) close(); });
+
+            modal.querySelector('#ue-save').onclick = async () => {
+                const newName = modal.querySelector('#ue-name').value.trim();
+                const updated = {
+                    profile: {
+                        ...(user.profile||{}),
+                        email: modal.querySelector('#ue-email').value.trim(),
+                        role: modal.querySelector('#ue-role').value,
+                        location: modal.querySelector('#ue-location').value,
+                        projectType: modal.querySelector('#ue-projectType').value,
+                        approvedDate: modal.querySelector('#ue-approved').value,
+                        projectDate: modal.querySelector('#ue-project').value
+                    }
+                };
+                // Save to Firestore
+                try {
+                    if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                        await window.FirestoreDataManager.setUser(newName, { ...user, ...updated });
+                        // if name changed, remove old key in local state
+                        if (newName !== name) { delete window.users[name]; }
+                        window.users[newName] = { ...(user||{}), ...updated };
+                        showNotification('✅ User updated', 'success');
+                        displayUsers();
+                        updateStats();
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showNotification('❌ Failed to save user', 'error');
+                }
+                close();
+            };
         }
 
         // Assign jobs to users
