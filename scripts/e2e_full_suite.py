@@ -130,6 +130,70 @@ def test_apply(page: Page, ctx: TestContext):
     print("✅ apply.html submitted (continuing without toast assertion)")
 
 
+def api_create_firebase_user(page: Page, ctx: TestContext):
+    print("🧪 Creating Firebase user via API…")
+    resp = page.request.post(f"{ctx.base}/api/firebase", data=json.dumps({
+        "email": ctx.test_email,
+        "password": ctx.test_password
+    }), headers={"Content-Type": "application/json"})
+    try:
+        payload = resp.json()
+    except Exception:
+        payload = {"status": resp.status}
+    print("🔎 /api/firebase response:", payload)
+
+
+def api_upsert_user_approved(page: Page, ctx: TestContext):
+    print("🧪 Upserting approved user into users.json via API…")
+    # 1) GET current users
+    u = page.request.get(f"{ctx.base}/api/users")
+    users_data = u.json()
+    users = users_data.get("users", {})
+    # 2) Pick a job title (default to Contractor)
+    title = ctx.job_title or "Contractor"
+    # Build a basic job entry
+    job = {
+        "title": title,
+        "date": "2025-12-31",
+        "location": "Atlanta, GA",
+        "rate": "$250/day",
+        "description": f"Automated E2E assignment for {title}",
+        "status": "upcoming"
+    }
+    # 3) Upsert user block
+    entry = users.get(ctx.test_name, {})
+    profile = entry.get("profile", {})
+    jobs = entry.get("jobs", {})
+    jobs_key = entry.get("primaryJob") or title
+    jobs[jobs_key] = {**jobs.get(jobs_key, {}), **job}
+    payload_user = {
+        "profile": {
+            **profile,
+            "email": ctx.test_email,
+            "role": title,
+            "location": profile.get("location") or job["location"],
+            "approvedDate": profile.get("approvedDate") or time.strftime("%Y-%m-%d")
+        },
+        "application": {
+            **entry.get("application", {}),
+            "status": "approved",
+            "eventDate": job["date"],
+            "jobTitle": title
+        },
+        "jobs": jobs,
+        "primaryJob": jobs_key,
+        "contract": entry.get("contract", {"contractStatus": "pending"})
+    }
+    users[ctx.test_name] = payload_user
+    # 4) POST update
+    r = page.request.post(f"{ctx.base}/api/update-users", data=json.dumps({
+        "users": users,
+        "action": "e2e-approve",
+        "userName": ctx.test_name
+    }), headers={"Content-Type": "application/json"})
+    print("🔎 /api/update-users response:", r.json())
+
+
 def _firebase_login(page: Page, email: str, password: str):
     # The admin dashboard uses Firebase auth UI; fill and sign in
     page.fill("input[type='email']", email)
@@ -228,6 +292,11 @@ def run_suite(ctx: TestContext) -> int:
         try:
             test_index(page, ctx)
             test_apply(page, ctx)
+            # Ensure Firebase account exists for portal login
+            api_create_firebase_user(page, ctx)
+            # Approve and attach a job via API to make contract access deterministic
+            api_upsert_user_approved(page, ctx)
+            # Still attempt UI approve for parity (best-effort)
             test_admin_approve(page, ctx)
             test_contract_sign(page, ctx)
             test_portal(page, ctx)
