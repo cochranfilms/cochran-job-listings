@@ -757,6 +757,15 @@ This comprehensive cleanup system ensures both the original Cochran Films Landin
 
 ---
 
+## User Portal Race Condition Hardening (2025-08-17)
+
+- Hardened `user-portal.html` against sign-out races during data refresh.
+- Change: `loadUserData()` now snapshots `currentUser.email` before awaits and re-validates after `loadUsersData()`/`loadPerformanceReviews()`.
+- Effect: Prevents `Cannot read properties of null (reading 'email')` when a sign-out occurs mid-refresh.
+- Cleanup impact: None. Defensive checks only; no behavior change for normal flows.
+
+---
+
 ## Modular System Fixes (2025-01-09)
 
 ### Critical Issues Resolved

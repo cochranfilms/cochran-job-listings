@@ -18,6 +18,7 @@ npm run cleanup-tests:apply
 After applying cleanup, re-test the main flows:
 - Admin auth/login and stats load in `admin-dashboard.html`
 - User portal auth and data load in `user-portal.html`
+ - Sign-out race hardening in `user-portal.html` (2025-08-17): `loadUserData()` snapshots `currentUser.email` and re-validates after async awaits to prevent null dereference when the user signs out during refresh.
 # 🧪 Testing System Documentation
 
 ## Overview

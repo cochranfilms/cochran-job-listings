@@ -1923,7 +1923,9 @@
 
         // Load user-specific data
         async function loadUserData() {
-            if (!currentUser) return;
+            // Snapshot the email to avoid race conditions during async awaits
+            const emailSnapshot = (currentUser && currentUser.email) ? currentUser.email : null;
+            if (!emailSnapshot) return;
 
             // Clear cache to ensure fresh data for payment updates
             sessionStorage.removeItem('cachedUsersData');
@@ -1933,8 +1935,13 @@
             await loadUsersData();
             await loadPerformanceReviews(); // Ensure performance reviews are loaded
             
+            // If user signed out or switched during awaits, abort safely
+            if (!currentUser || !currentUser.email || currentUser.email !== emailSnapshot) {
+                return;
+            }
+            
             // Find the current user with updated data
-            const updatedUser = users.find(u => u.email === currentUser.email);
+            const updatedUser = Array.isArray(users) ? users.find(u => u && u.email === emailSnapshot) : null;
             if (updatedUser) {
                 currentUser = updatedUser;
                 console.log('✅ Updated current user data:', {
@@ -1946,14 +1953,21 @@
                     primaryJob: currentUser.primaryJob
                 });
             } else {
-                console.warn('⚠️ Could not find updated user data for:', currentUser.email);
-                console.log('📋 Available users:', users.map(u => ({ name: u.name, email: u.email })));
+                console.warn('⚠️ Could not find updated user data for:', emailSnapshot);
+                if (Array.isArray(users)) {
+                    console.log('📋 Available users:', users.map(u => ({ name: u.name, email: u.email })));
+                }
+                // If we cannot resolve the user, abort to prevent null access below
+                return;
             }
 
             // Check for automatic project status updates
             await checkAutomaticProjectStatusUpdates();
 
-            // Update welcome message
+            // Update welcome message (re-validate session before UI update)
+            if (!currentUser || !currentUser.email || currentUser.email !== emailSnapshot) {
+                return;
+            }
             const userNameElement = document.getElementById('userName');
             if (userNameElement) {
                 userNameElement.textContent = currentUser.name;
