@@ -1005,6 +1005,25 @@ const JobList = {
                 });
                 if (!saveRes.ok) throw new Error('Failed to save users');
 
+                // Also try to update Firestore assignments if available
+                try {
+                    if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                        await Promise.all(Object.entries(users).map(async ([userName, user]) => {
+                            if (!user || userName.startsWith('_') || !user.jobs) return;
+                            const jobs = Object.entries(user.jobs);
+                            for (const [jid, uj] of jobs) {
+                                const refMatches = uj?.jobRef?.source === 'jobs-data' && (uj?.jobRef?.index === jobIndex || uj?.jobRef?.key === `${job.title}|${job.date}`);
+                                const titleFuzzy = (uj.title || '').toLowerCase() === (job.title || '').toLowerCase();
+                                if (refMatches || titleFuzzy) {
+                                    await window.FirestoreDataManager.updateAssignmentStatus(userName, jid, status, progress);
+                                }
+                            }
+                        }));
+                    }
+                } catch (fsErr) {
+                    console.warn('⚠️ Firestore bulk assignment update skipped:', fsErr?.message || fsErr);
+                }
+
                 this.showSuccess(`Applied progress to ${changes} assignment${changes === 1 ? '' : 's'}`);
                 this.triggerEvent('jobList:userProgressApplied', { jobIndex, changes, status, progress });
             } else {

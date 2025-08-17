@@ -25,6 +25,32 @@ After applying cleanup, re-test the main flows:
 This document describes the comprehensive testing system for the Cochran Films admin dashboard and user management system.
 
 ## Test Scripts
+### 10. Firestore Job Assignments Alignment
+**Purpose**: Validate the Firestore-aligned model (global job listings + per-user assignments) and UI wiring.
+
+**What changed**:
+- Global job listings now live in Firestore `jobs` collection (plus existing JSON fallback via `/api/jobs-data`).
+- Per-user job progression lives under `users/{userId}/assignments/{assignmentId}` (status, progress, paymentStatus, snapshots), with JSON fallback via `/api/update-users`.
+- Admin UI updates both Firestore (when available) and JSON for reliability.
+
+**Admin UI points**:
+- Jobs → each job card shows “User Status” + “Progress” controls with an Apply button. Applies to all users assigned to that listing (by `jobRef` or title match), persists to Firestore assignments and `users.json`.
+- Users → “🧭 Jobs” opens a modal to manage that user’s assignments (status/progress/primary/remove). Persists to Firestore and `users.json`.
+
+**Testing Steps**:
+1. Start local server: `node server.js` (ensure port 8000 is free).
+2. Open `admin-dashboard.html` and sign in.
+3. In Jobs, change “User Status” to `in-progress`, set Progress to `25`, click Apply.
+4. Verify success toast; wait for 30s polling or refresh Users.
+5. Open Users → “🧭 Jobs” for an assigned user; confirm status= `in-progress`, progress= `25`.
+6. If Firestore is enabled, confirm the assignment exists/updates under `users/{userId}/assignments/*` and listing exists in `jobs`.
+7. Toggle to `completed` with progress `100` and verify propagation to user portal.
+
+**Expected Behavior**:
+- UI changes persist immediately to JSON and Firestore (when available).
+- User portal displays updated assignment status without breaking legacy flows.
+- No errors when Firestore is unavailable (JSON fallback works).
+
 
 ### 1. Admin User Deletion System Test (`test-admin-user-deletion-system.js`)
 **Purpose**: Comprehensive testing of the user deletion flow using browser automation

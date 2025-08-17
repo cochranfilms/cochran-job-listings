@@ -9,9 +9,8 @@ const FirestoreDataManager = {
     
     // Collections
     collections: {
-        users: 'users'
-        // Note: All data (jobs, contracts, etc.) is stored directly in user documents
-        // No separate collections for jobs, contracts, etc.
+        users: 'users',
+        jobs: 'jobs' // job listings live here
     },
 
     // Initialize the data manager
@@ -56,15 +55,14 @@ const FirestoreDataManager = {
                     console.error('❌ Users listener error:', error);
                 });
             
-            // Listen for jobs changes
-            // This listener is no longer needed as jobs are in users
-            // this.db.collection(this.collections.jobs)
-            //     .onSnapshot((snapshot) => {
-            //         console.log('📋 Jobs collection updated:', snapshot.docChanges().length, 'changes');
-            //         this.handleJobsUpdate(snapshot);
-            //     }, (error) => {
-            //         console.error('❌ Jobs listener error:', error);
-            //     });
+            // Listen for job listings changes
+            this.db.collection(this.collections.jobs)
+                .onSnapshot((snapshot) => {
+                    console.log('📋 Jobs collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleJobsUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Jobs listener error:', error);
+                });
             
             // Listen for dropdown options changes
             // This listener is no longer needed as dropdown options are in users
@@ -100,8 +98,6 @@ const FirestoreDataManager = {
         });
     },
 
-    // Handle jobs collection updates
-    // This function is no longer needed as jobs are in users
     handleJobsUpdate(snapshot) {
         const changes = snapshot.docChanges();
         changes.forEach((change) => {
@@ -238,21 +234,14 @@ const FirestoreDataManager = {
         }
     },
 
-    // ==================== JOBS OPERATIONS ====================
+    // ==================== JOB LISTINGS (GLOBAL) ====================
 
-    // Get all jobs
-    async getJobs() {
+    // Get all job listings
+    async getJobListings() {
         try {
-            const snapshot = await this.db.collection(this.collections.users).get(); // Changed to users collection
+            const snapshot = await this.db.collection(this.collections.jobs).get();
             const jobs = [];
-            snapshot.forEach(doc => {
-                const userData = doc.data();
-                if (userData.jobs) {
-                    for (const jobId in userData.jobs) {
-                        jobs.push({ id: jobId, ...userData.jobs[jobId] });
-                    }
-                }
-            });
+            snapshot.forEach(doc => jobs.push({ id: doc.id, ...doc.data() }));
             return jobs;
         } catch (error) {
             console.error('❌ Error getting jobs:', error);
@@ -260,13 +249,12 @@ const FirestoreDataManager = {
         }
     },
 
-    // Get job by ID
-    async getJob(jobId) {
+    // Get job listing by ID
+    async getJobListing(jobId) {
         try {
-            const doc = await this.db.collection(this.collections.users).doc(jobId).get(); // Changed to users collection
+            const doc = await this.db.collection(this.collections.jobs).doc(jobId).get();
             if (doc.exists) {
-                const userData = doc.data();
-                return userData.jobs ? userData.jobs[jobId] : null;
+                return { id: doc.id, ...doc.data() };
             }
             return null;
         } catch (error) {
@@ -275,12 +263,12 @@ const FirestoreDataManager = {
         }
     },
 
-    // Create or update job
-    async setJob(jobId, jobData) {
+    // Create or update job listing
+    async setJobListing(jobId, jobData) {
         try {
-            const userRef = this.db.collection(this.collections.users).doc(jobId); // Changed to users collection
-            await userRef.set({ [`jobs.${jobId}`]: jobData }, { merge: true });
-            console.log('✅ Job saved to Firestore:', jobId);
+            const jobRef = this.db.collection(this.collections.jobs).doc(jobId);
+            await jobRef.set({ ...jobData, updatedAt: new Date().toISOString() }, { merge: true });
+            console.log('✅ Job listing saved to Firestore:', jobId);
             return true;
         } catch (error) {
             console.error('❌ Error saving job:', error);
@@ -288,15 +276,93 @@ const FirestoreDataManager = {
         }
     },
 
-    // Delete job
-    async deleteJob(jobId) {
+    // Delete job listing
+    async deleteJobListing(jobId) {
         try {
-            const userRef = this.db.collection(this.collections.users).doc(jobId); // Changed to users collection
-            await userRef.update({ [`jobs.${jobId}`]: null }); // Set to null to remove
-            console.log('✅ Job deleted from Firestore:', jobId);
+            await this.db.collection(this.collections.jobs).doc(jobId).delete();
+            console.log('✅ Job listing deleted from Firestore:', jobId);
             return true;
         } catch (error) {
             console.error('❌ Error deleting job:', error);
+            throw error;
+        }
+    },
+
+    // Backward-compat wrappers (deprecated)
+    async getJobs() {
+        console.warn('⚠️ FirestoreDataManager.getJobs is deprecated. Use getJobListings().');
+        return this.getJobListings();
+    },
+    async getJob(jobId) {
+        console.warn('⚠️ FirestoreDataManager.getJob is deprecated. Use getJobListing(jobId).');
+        return this.getJobListing(jobId);
+    },
+    async setJob(jobId, jobData) {
+        console.warn('⚠️ FirestoreDataManager.setJob is deprecated. Use setJobListing(jobId, data).');
+        return this.setJobListing(jobId, jobData);
+    },
+    async deleteJob(jobId) {
+        console.warn('⚠️ FirestoreDataManager.deleteJob is deprecated. Use deleteJobListing(jobId).');
+        return this.deleteJobListing(jobId);
+    },
+
+    // ==================== ASSIGNMENTS (PER-USER JOBS) ====================
+
+    // Get all assignments for a user
+    async getUserAssignments(userId) {
+        try {
+            const ref = this.db.collection(this.collections.users).doc(userId).collection('assignments');
+            const snapshot = await ref.get();
+            const assignments = {};
+            snapshot.forEach(doc => {
+                assignments[doc.id] = { id: doc.id, ...doc.data() };
+            });
+            return assignments;
+        } catch (error) {
+            console.error('❌ Error getting user assignments:', error);
+            throw error;
+        }
+    },
+
+    // Create or update an assignment for a user
+    async setAssignment(userId, assignmentId, data) {
+        try {
+            const ref = this.db.collection(this.collections.users).doc(userId).collection('assignments').doc(assignmentId);
+            await ref.set({ ...data, updatedAt: new Date().toISOString() }, { merge: true });
+            console.log('✅ Assignment saved:', userId, assignmentId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error saving assignment:', error);
+            throw error;
+        }
+    },
+
+    // Update assignment status/progress
+    async updateAssignmentStatus(userId, assignmentId, status, progress = null) {
+        try {
+            const ref = this.db.collection(this.collections.users).doc(userId).collection('assignments').doc(assignmentId);
+            const payload = { status, projectStatus: status, updatedAt: new Date().toISOString() };
+            if (progress !== null && progress !== undefined) {
+                payload.progress = Math.max(0, Math.min(100, Number(progress)));
+            }
+            await ref.set(payload, { merge: true });
+            console.log('✅ Assignment status updated:', userId, assignmentId, status, progress);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating assignment status:', error);
+            throw error;
+        }
+    },
+
+    // Delete an assignment
+    async deleteAssignment(userId, assignmentId) {
+        try {
+            const ref = this.db.collection(this.collections.users).doc(userId).collection('assignments').doc(assignmentId);
+            await ref.delete();
+            console.log('✅ Assignment deleted:', userId, assignmentId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting assignment:', error);
             throw error;
         }
     },
@@ -559,11 +625,9 @@ const FirestoreDataManager = {
             }
             
             // Check jobs collection
-            // This check is no longer needed as jobs are in users
-            // if (!(await this.hasData('jobs'))) {
-            //     console.log('📋 Jobs collection empty, initializing...');
-            //     // You can add default job data here if needed
-            // }
+            if (!(await this.hasData(this.collections.jobs))) {
+                console.log('📋 Jobs collection empty (ok)');
+            }
             
             // Check dropdown options collection
             // This check is no longer needed as dropdown options are in users

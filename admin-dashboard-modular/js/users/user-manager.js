@@ -984,8 +984,17 @@ const UserManager = {
             user.jobs[jobId].status = mappedStatus; // keep fields aligned
             user.jobs[jobId].updatedAt = new Date().toISOString();
 
-            // Persist
+            // Persist to JSON (GitHub)
             await this.updateUsersOnGitHub('job-status', userName);
+
+            // Also persist to Firestore if available
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    await window.FirestoreDataManager.updateAssignmentStatus(userName, jobId, mappedStatus);
+                }
+            } catch (fsErr) {
+                console.warn('⚠️ Firestore assignment update skipped:', fsErr?.message || fsErr);
+            }
 
             // Notify
             if (window.NotificationManager) {
@@ -1030,6 +1039,15 @@ const UserManager = {
             user.jobs[jobId].updatedAt = new Date().toISOString();
 
             await this.updateUsersOnGitHub('job-progress', userName);
+
+            // Also persist to Firestore if available
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    await window.FirestoreDataManager.updateAssignmentStatus(userName, jobId, user.jobs[jobId].status, pct);
+                }
+            } catch (fsErr) {
+                console.warn('⚠️ Firestore assignment progress update skipped:', fsErr?.message || fsErr);
+            }
 
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -1078,6 +1096,32 @@ const UserManager = {
             if (!user.primaryJob) user.primaryJob = jobId;
 
             await this.updateUsersOnGitHub('add-job', userName);
+
+            // Firestore assignment create (best-effort)
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const assignmentPayload = {
+                        title: user.jobs[jobId].title,
+                        role: user.jobs[jobId].role,
+                        location: user.jobs[jobId].location,
+                        rate: user.jobs[jobId].rate,
+                        description: user.jobs[jobId].description,
+                        status: user.jobs[jobId].status,
+                        projectStatus: user.jobs[jobId].projectStatus,
+                        paymentStatus: user.jobs[jobId].paymentStatus,
+                        progress: user.jobs[jobId].progress || 0,
+                        assignedDate: user.jobs[jobId].assignedDate,
+                        listingSnapshot: {
+                            date: user.jobs[jobId].date || user.jobs[jobId].projectStart || '',
+                            type: jobData.type || user.profile?.projectType || '',
+                            listingStatus: user.jobs[jobId].listingStatus || 'Active'
+                        }
+                    };
+                    await window.FirestoreDataManager.setAssignment(userName, jobId, assignmentPayload);
+                }
+            } catch (fsErr) {
+                console.warn('⚠️ Firestore assignment create skipped:', fsErr?.message || fsErr);
+            }
             this.triggerEvent('user:job-added', { userName, jobId, job: user.jobs[jobId] });
             return jobId;
         } catch (error) {
@@ -1102,6 +1146,15 @@ const UserManager = {
             }
 
             await this.updateUsersOnGitHub('remove-job', userName);
+
+            // Firestore assignment delete (best-effort)
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    await window.FirestoreDataManager.deleteAssignment(userName, jobId);
+                }
+            } catch (fsErr) {
+                console.warn('⚠️ Firestore assignment delete skipped:', fsErr?.message || fsErr);
+            }
             this.triggerEvent('user:job-removed', { userName, jobId });
             return true;
         } catch (error) {
@@ -1120,6 +1173,7 @@ const UserManager = {
             if (!user || !user.jobs || !user.jobs[jobId]) throw new Error('User/job not found');
             user.primaryJob = jobId;
             await this.updateUsersOnGitHub('set-primary-job', userName);
+            // Note: primaryJob remains a user doc field; Firestore user doc will be synced by higher-level flows if needed
             this.triggerEvent('user:primary-job-set', { userName, jobId });
             return true;
         } catch (error) {

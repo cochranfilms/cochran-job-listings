@@ -226,6 +226,7 @@ The Firestore database integration system provides real-time data synchronizatio
 - **User Portal**: Real-time data updates and cloud storage
 - **Modular System**: Compatible with existing modular architecture
 - **Performance Optimization**: Efficient data loading and caching strategies
+ - **Assignments Alignment**: Per-user job progression stored under `users/{userId}/assignments/*`; global listings in `jobs` collection. JSON remains a fallback via `/api/update-users` and `/api/jobs-data`.
 
 #### Loading State Management Cleanup
 - **Infinite Loading Prevention**: Added safety timeouts and emergency clear functions
