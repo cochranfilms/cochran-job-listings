@@ -1792,8 +1792,9 @@
   </footer>
 
   <script>
-    // Configuration - JSON file data source
-    const JOBS_DATA_URL = '/api/jobs-data';
+    // Configuration - Firestore is single source of truth
+    const JOBS_DATA_URL = '/api/jobs-data'; // optional archival API
+    const FALLBACK_TO_JSON = false; // keep false to enforce Firestore-only source
     
     // Fallback job data if JSON file fails
     const FALLBACK_JOBS = [
@@ -2059,7 +2060,7 @@
       jobsCache.timestamp = Date.now();
     }
     
-    // Enhanced Data Loader with Firestore Integration
+    // Enhanced Data Loader with Firestore Integration (single source of truth)
     async function loadJobsFromJSON(forceRefresh = false) {
       const loadingElement = document.getElementById('loading');
       const jobsGrid = document.getElementById('jobs-grid');
@@ -2100,18 +2101,25 @@
           }
         }
         
-        // Fallback to JSON API if Firestore failed or not available
+        // Firestore unavailable OR returned nothing → handle fallback strategy
         if (jobs.length === 0) {
-          console.log('📁 Loading jobs from JSON API...');
-          const response = await fetch(JOBS_DATA_URL);
-          
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const firestoreAvailable = !!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable());
+          if (!firestoreAvailable && FALLBACK_TO_JSON) {
+            console.log('📁 Loading jobs from JSON API (Firestore unavailable, fallback enabled)...');
+            const response = await fetch(JOBS_DATA_URL);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('📁 JSON data loaded:', data);
+            jobs = data.jobs || [];
+          } else if (!firestoreAvailable && !FALLBACK_TO_JSON) {
+            console.log('📦 Firestore unavailable; using local FALLBACK_JOBS');
+            jobs = FALLBACK_JOBS;
+          } else {
+            // Firestore available but empty → treat as no jobs currently open
+            throw new Error('NO_JOBS_AVAILABLE');
           }
-          
-          const data = await response.json();
-          console.log('📁 JSON data loaded:', data);
-          jobs = data.jobs || [];
         }
         
         // Filter jobs and exclude applicant submissions (now includes both active and inactive jobs)
@@ -2436,33 +2444,33 @@
     
 
     
-    // Preload jobs data even before DOM is ready
-    let preloadPromise = null;
-    if (document.readyState === 'loading') {
-      // Try JSON file first, fallback to local data
-      preloadPromise = loadJobsFromJSON().catch(() => {
-        console.log('JSON file failed, using fallback data');
-        renderJobs(FALLBACK_JOBS);
-      });
-    }
-    
     // Initialize page
     document.addEventListener('DOMContentLoaded', async function() {
-      // If we preloaded, wait for it, otherwise load now
-      if (preloadPromise) {
-        try {
-          await preloadPromise;
-        } catch (error) {
-          console.log('Preload failed, using fallback');
-          renderJobs(FALLBACK_JOBS);
-        }
-      } else {
-        try {
-          await loadJobsFromJSON();
-        } catch (error) {
-          console.log('Load failed, using fallback');
-          renderJobs(FALLBACK_JOBS);
-        }
+      // Initialize Firebase first (ensures Firestore availability)
+      await initializeFirebase();
+      
+      // Initial load from Firestore (or configured fallback)
+      try {
+        await loadJobsFromJSON();
+      } catch (error) {
+        console.log('Initial load failed, using fallback');
+        renderJobs(FALLBACK_JOBS);
+      }
+      
+      // Realtime updates: refresh when Firestore jobs change
+      if (window.FirestoreIntegration) {
+        window.FirestoreIntegration.setupListeners(async (evt) => {
+          const { collection } = evt.detail || {};
+          if (collection === 'jobs') {
+            try {
+              const latest = await window.FirestoreDataManager.getJobListings();
+              if (Array.isArray(latest)) {
+                setCachedJobs(latest);
+                renderJobs(latest);
+              }
+            } catch (_) {}
+          }
+        });
       }
       
 
