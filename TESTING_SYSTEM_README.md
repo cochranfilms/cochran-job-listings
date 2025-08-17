@@ -35,6 +35,22 @@ This document describes the comprehensive testing system for the Cochran Films a
   - Dropdowns → `DropdownManager.renderDropdownManagement('dropdownManagerContainer')`.
 - Firestore manager is loaded via `../firestore-data-manager.js` and used with JSON fallback.
 
+### Firestore Single Source of Truth (2025-08-17)
+- The admin dashboard now reads/writes Firestore first for all data (users, jobs, dropdownOptions, contracts).
+- JSON files on GitHub are optional archival only. Toggle with `SYNC_TO_GITHUB` flag in `admin-dashboard.html` (default: false).
+- Realtime listeners are enabled for `users`, `jobs`, and `dropdownOptions`; UI updates automatically on changes.
+
+#### Dropdown Options Schema
+- Collection: `dropdownOptions`
+- Document: `default`
+- Fields (arrays of strings): `roles`, `locations`, `rates`, `projectTypes`
+- The manager auto-sanitizes legacy numeric-key fields by promoting them into `projectTypes` and persists the fix.
+
+#### Quick Test: Dropdowns load from Firestore
+1. Open the dashboard → Dropdown Management section should populate without refresh.
+2. In Firestore console, edit `dropdownOptions/default.rates` (add a value); confirm it appears within a second in the UI.
+3. Use the “Add” buttons; confirm values appear immediately and exist in Firestore `dropdownOptions/default`.
+
 ### Quick Test Steps
 1. Open `admin-dashboard-modular/index.html`.
 2. Login; verify the legacy test UI hides and the new shell shows.

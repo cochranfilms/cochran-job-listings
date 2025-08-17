@@ -222,12 +222,16 @@ The Firestore database integration system provides real-time data synchronizatio
 - **Data Validation**: Input validation and data integrity checks
 
 #### Application Integration Cleanup
-- **Admin Dashboard**: Full Firestore integration with fallback to GitHub
+- **Admin Dashboard**: Full Firestore integration with optional GitHub archival (controlled by `SYNC_TO_GITHUB`)
 - **User Portal**: Real-time data updates and cloud storage
 - **Modular System**: Compatible with existing modular architecture
 - **Performance Optimization**: Efficient data loading and caching strategies
- - **Assignments Alignment**: Per-user job progression stored under `users/{userId}/assignments/*`; global listings in `jobs` collection. JSON remains a fallback via `/api/update-users` and `/api/jobs-data`.
+ - **Assignments Alignment**: Per-user job progression stored under `users/{userId}/assignments/*`; global listings in `jobs` collection. JSON write-backs are disabled by default.
  - **UI Shell**: `admin-dashboard-modular/index.html` now renders a sidebar/header shell via `AdminDashboardApp.buildLayout()`; legacy inline test sections are hidden at runtime by `showDashboard()`.
+
+### Dropdown Options Canonical Shape
+- Collection `dropdownOptions`, document `default` with array fields: `roles`, `rates`, `locations`, `projectTypes`.
+- Sanitization now runs on read and normalizes legacy numeric-keyed fields into `projectTypes`, then merges the corrected doc back to Firestore.
 
 #### Loading State Management Cleanup
 - **Infinite Loading Prevention**: Added safety timeouts and emergency clear functions

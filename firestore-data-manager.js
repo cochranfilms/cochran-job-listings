@@ -74,15 +74,14 @@ const FirestoreDataManager = {
                     console.error('❌ Jobs listener error:', error);
                 });
             
-            // Listen for dropdown options changes
-            // This listener is no longer needed as dropdown options are in users
-            // this.db.collection(this.collections.dropdownOptions)
-            //     .onSnapshot((snapshot) => {
-            //         console.log('📋 Dropdown options updated:', snapshot.docChanges().length, 'changes');
-            //         this.handleDropdownOptionsUpdate(snapshot);
-            //     }, (error) => {
-            //         console.error('❌ Dropdown options listener error:', error);
-            //     });
+            // Listen for dropdown options changes (single source of truth)
+            this.db.collection(this.collections.dropdownOptions)
+                .onSnapshot((snapshot) => {
+                    console.log('📋 Dropdown options updated:', snapshot.docChanges().length, 'changes');
+                    this.handleDropdownOptionsUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Dropdown options listener error:', error);
+                });
             
             console.log('✅ Real-time listeners set up successfully');
             
@@ -382,7 +381,13 @@ const FirestoreDataManager = {
     async getDropdownOptions() {
         try {
             const doc = await this.db.collection(this.collections.dropdownOptions).doc('default').get();
-            return doc.exists ? (doc.data() || {}) : {};
+            const raw = doc.exists ? (doc.data() || {}) : {};
+            const sanitized = this.sanitizeDropdownOptions(raw);
+            // If sanitization changed the structure, persist the fix silently
+            if (JSON.stringify(raw) !== JSON.stringify(sanitized)) {
+                try { await this.setDropdownOptions(sanitized); } catch (_) {}
+            }
+            return sanitized;
         } catch (error) {
             console.error('❌ Error getting dropdown options:', error);
             throw error;
@@ -392,7 +397,7 @@ const FirestoreDataManager = {
     async setDropdownOptions(allOptions) {
         try {
             const ref = this.db.collection(this.collections.dropdownOptions).doc('default');
-            await ref.set(allOptions || {}, { merge: true });
+            await ref.set(this.sanitizeDropdownOptions(allOptions || {}), { merge: true });
             console.log('✅ Dropdown options (bulk) saved');
             return true;
         } catch (error) {
@@ -416,7 +421,7 @@ const FirestoreDataManager = {
     async setDropdownOptionCategory(category, options) {
         try {
             const ref = this.db.collection(this.collections.dropdownOptions).doc('default');
-            await ref.set({ [category]: options }, { merge: true });
+            await ref.set({ [category]: Array.isArray(options) ? options : [] }, { merge: true });
             console.log('✅ Dropdown options saved to Firestore:', category);
             return true;
         } catch (error) {
@@ -710,7 +715,9 @@ const FirestoreDataManager = {
             
             // Check dropdown options collection
             if (!(await this.hasData(this.collections.dropdownOptions))) {
-                console.log('📋 Dropdown options collection empty (ok)');
+                console.log('📋 Dropdown options collection empty (initializing defaults)');
+                const defaults = { roles: [], rates: [], locations: [], projectTypes: [] };
+                await this.db.collection(this.collections.dropdownOptions).doc('default').set(defaults, { merge: true });
             }
             
             console.log('✅ Collections initialization check complete');
@@ -799,6 +806,35 @@ const FirestoreDataManager = {
         } catch (err) {
             console.warn('⚠️ repairCollections skipped:', err?.message || err);
         }
+    },
+
+    // Ensure dropdown options doc is in canonical shape
+    sanitizeDropdownOptions(data) {
+        const out = {
+            roles: Array.isArray(data.roles) ? data.roles.slice() : [],
+            rates: Array.isArray(data.rates) ? data.rates.slice() : [],
+            locations: Array.isArray(data.locations) ? data.locations.slice() : [],
+            projectTypes: Array.isArray(data.projectTypes) ? data.projectTypes.slice() : []
+        };
+        // Promote any numeric-keyed string values into projectTypes (common bad write)
+        Object.entries(data || {}).forEach(([k, v]) => {
+            const isNumericKey = /^\d+$/.test(k);
+            if (isNumericKey && typeof v === 'string' && v.trim()) {
+                if (!out.projectTypes.includes(v)) out.projectTypes.push(v);
+            }
+            // Also support legacy { values: [...] }
+            if (k === 'values' && Array.isArray(v)) {
+                v.forEach(val => {
+                    if (typeof val === 'string' && !out.projectTypes.includes(val)) out.projectTypes.push(val);
+                });
+            }
+        });
+        // Deduplicate
+        out.roles = Array.from(new Set(out.roles));
+        out.rates = Array.from(new Set(out.rates));
+        out.locations = Array.from(new Set(out.locations));
+        out.projectTypes = Array.from(new Set(out.projectTypes));
+        return out;
     }
 };
 

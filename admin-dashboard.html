@@ -1253,6 +1253,12 @@
                     // Dropdown options (prefer Firestore; if missing, leave empty)
                     try {
                         window.dropdownOptions = await window.FirestoreDataManager.getDropdownOptions();
+                        // Populate UI immediately when loaded from Firestore
+                        try {
+                            populateDropdownManagementInterface();
+                            populateUserCreationDropdowns();
+                            populateJobAssignmentDropdowns();
+                        } catch (_) {}
                     } catch (e) {
                         console.warn('⚠️ Dropdown options load failed from Firestore:', e?.message || e);
                         window.dropdownOptions = {};
@@ -1788,40 +1794,36 @@
         // Update jobs-data.json on GitHub
         async function updateJobsOnGitHub(action = 'update', jobTitle = '') {
             try {
+                // Always save to Firestore (single source of truth)
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const writes = (window.jobs || []).map(j => {
+                        const id = j.id || `job-${(j.title||'job').toLowerCase().replace(/\s+/g,'-')}-${Date.now()}`;
+                        return window.FirestoreDataManager.setJobListing(id, j);
+                    });
+                    await Promise.allSettled(writes);
+                    showNotification('✅ Jobs saved to Firestore', 'success');
+                    try { await loadJobs(); } catch(_){}
+                }
+
+                // Optionally sync to GitHub for archival if enabled
+                if (!SYNC_TO_GITHUB) return true;
+
                 const jobsPayload = {
                     jobs: window.jobs || [],
                     lastUpdated: new Date().toISOString().split('T')[0],
                     totalJobs: (window.jobs || []).length
                 };
-
-                // Get current SHA if exists
                 let sha = null;
                 try {
                     const getRes = await fetch('/api/github/file/jobs-data.json');
-                    if (getRes.ok) {
-                        const j = await getRes.json();
-                        sha = j.sha || null;
-                    }
+                    if (getRes.ok) { const j = await getRes.json(); sha = j.sha || null; }
                 } catch (_) {}
-
-                const body = { content: JSON.stringify(jobsPayload, null, 2), message: `Update jobs-data.json - ${action} ${jobTitle} - ${new Date().toLocaleString()}` };
+                const body = { content: JSON.stringify(jobsPayload, null, 2), message: `Archive jobs-data.json - ${action} ${jobTitle} - ${new Date().toLocaleString()}` };
                 if (sha) body.sha = sha;
-
-                const res = await fetch('/api/github/file/jobs-data.json', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                if (res.ok) {
-                    showNotification('✅ jobs-data.json updated on GitHub', 'success');
-                    try { await loadJobs(); } catch(_){}
-                    return true;
-                }
-                const err = await res.json().catch(() => ({}));
-                console.warn('❌ Failed to update jobs-data.json', err);
-                return false;
+                await fetch('/api/github/file/jobs-data.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                return true;
             } catch (e) {
-                console.error('❌ Error updating jobs-data.json:', e);
+                console.error('❌ Error updating jobs-data:', e);
                 return false;
             }
         }
@@ -2889,7 +2891,7 @@
         // Update users with Firestore integration
         async function updateUsersOnGitHub(action = 'update', userName = '') {
             try {
-                console.log('🔄 Updating users data...');
+                console.log('🔄 Updating users data (Firestore first)...');
                 
                 // Count performance reviews in users
                 let totalReviews = 0;
@@ -2931,8 +2933,13 @@
                     }
                 }
                 
-                // Fallback to GitHub (existing functionality)
-                console.log('🔄 Updating users.json on GitHub...');
+                // Optional archival to GitHub
+                if (!SYNC_TO_GITHUB) {
+                    console.log('📦 Skipping GitHub users.json archival (SYNC_TO_GITHUB=false)');
+                    try { await loadUsers(); } catch(_){}
+                    return true;
+                }
+                console.log('🔄 Archiving users.json to GitHub...');
                 
                 // First, get the current file SHA
                 const getResponse = await fetch('/api/github/file/users.json');
@@ -3022,6 +3029,8 @@
         
         // Admin password for testing purposes (Firebase auth is used in production)
         const ADMIN_PASSWORD = 'admin123';
+        // Source of truth: Firestore. Disable JSON/GitHub file writes by default
+        const SYNC_TO_GITHUB = false;
         
         console.log(`🌍 Environment detected: ${isLocal ? 'Local Development' : 'Live Site'}`);
         console.log(`🔗 API Base URL: ${API_BASE || 'Local (localhost:8000)'}`);
@@ -4293,48 +4302,20 @@
             }
             
             try {
-                console.log('🔄 Saving dropdown options to GitHub via server...');
-                
-                // First, get the current file SHA
+                // Always save dropdown options to Firestore first
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    await window.FirestoreDataManager.setDropdownOptions(window.dropdownOptions);
+                    showNotification('✅ Dropdown options saved to Firestore', 'success');
+                }
+
+                // Optional archival sync to GitHub
+                if (!SYNC_TO_GITHUB) return;
                 const getResponse = await fetch('/api/github/file/dropdown-options.json');
                 let sha = null;
-                
-                if (getResponse.ok) {
-                    const fileData = await getResponse.json();
-                    sha = fileData.sha;
-                    console.log('📄 Got current file SHA:', sha.substring(0, 7));
-                } else if (getResponse.status === 404) {
-                    console.log('📄 File does not exist, will create new file');
-                } else {
-                    console.warn('⚠️ Could not get current file SHA, proceeding without it');
-                }
-                
-                const updateBody = {
-                    content: btoa(JSON.stringify(window.dropdownOptions, null, 2)),
-                    message: `Update dropdown options via admin dashboard - ${new Date().toLocaleString()}`
-                };
-                
-                // Include SHA if we have it (for updates)
-                if (sha) {
-                    updateBody.sha = sha;
-                }
-                
-                // Update the file on GitHub
-                const updateResponse = await fetch('/api/github/file/dropdown-options.json', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(updateBody)
-                });
-                
-                if (updateResponse.ok) {
-                    console.log('✅ Successfully saved dropdown options to GitHub');
-                    showNotification('✅ Dropdown options saved successfully to GitHub!', 'success');
-                } else {
-                    const errorData = await updateResponse.json();
-                    throw new Error(`GitHub API error: ${errorData.error || 'Unknown error'}`);
-                }
+                if (getResponse.ok) { const fileData = await getResponse.json(); sha = fileData.sha; }
+                const updateBody = { content: btoa(JSON.stringify(window.dropdownOptions, null, 2)), message: `Archive dropdown options - ${new Date().toLocaleString()}` };
+                if (sha) updateBody.sha = sha;
+                await fetch('/api/github/file/dropdown-options.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateBody) });
             } catch (error) {
                 console.error('❌ Error saving dropdown options:', error);
                 showNotification(`❌ Failed to save dropdown options: ${error.message}`, 'error');
@@ -5483,6 +5464,20 @@
             });
             
             checkAuth();
+
+            // React to Firestore realtime updates to keep UI in sync
+            if (window.FirestoreIntegration) {
+                window.FirestoreIntegration.setupListeners(async (evt) => {
+                    const { collection } = evt.detail || {};
+                    if (collection === 'jobs') {
+                        try { window.jobs = await window.FirestoreDataManager.getJobListings(); displayJobs(); updateStats(); } catch(_){}
+                    } else if (collection === 'users') {
+                        try { window.users = await window.FirestoreDataManager.getUsers(); displayUsers(); displayArchivedUsers(); updateStats(); } catch(_){}
+                    } else if (collection === 'dropdownOptions') {
+                        try { window.dropdownOptions = await window.FirestoreDataManager.getDropdownOptions(); populateDropdownManagementInterface(); populateUserCreationDropdowns(); populateJobAssignmentDropdowns(); } catch(_){}
+                    }
+                });
+            }
             
             
             
