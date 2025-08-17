@@ -271,8 +271,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-16",
       "signedDate": "2025-08-16"
+    },
+    {
+      "contractId": "CF-1755468061709-BKTC7",
+      "freelancerName": "Andria Stevens",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Backdrop Photographer Spotlight",
+      "rate": "$300 + Tip",
+      "location": "Douglasville, GA",
+      "fileName": "Andria Stevens.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-17T22:01:15.004Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Andria Stevens.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-17",
+      "signedDate": "2025-08-17"
     }
   ],
-  "lastUpdated": "2025-08-16T10:08:12.024Z",
-  "totalContracts": 17
+  "lastUpdated": "2025-08-17T22:01:15.004Z",
+  "totalContracts": 18
 }
