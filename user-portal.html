@@ -56,6 +56,9 @@
         let projectStatus = [];
         let jobsData = [];
         let performanceReviews = {};
+        // Auth state management flags
+        let isManualSignOut = false;
+        let authNullDebounceTimer = null;
 
         // Firebase Configuration - Now handled by firebase-config.js
         let auth = null;
@@ -92,22 +95,42 @@
         // Setup authentication state observer
         function setupAuthStateObserver() {
             auth.onAuthStateChanged(function(user) {
+                // Clear any pending debounce when we receive a user
+                if (authNullDebounceTimer) {
+                    clearTimeout(authNullDebounceTimer);
+                    authNullDebounceTimer = null;
+                }
+
                 if (user && user.email) {
+                    isManualSignOut = false; // reset manual sign-out flag on valid auth
                     console.log('✅ User authenticated:', user.email);
                     // User is signed in, check if they exist in our system
                     checkUserInSystem(user.email);
                     // Persist lightweight session snapshot to mitigate reload kicks
                     try { sessionStorage.setItem('userPortalAuthEmail', user.email); } catch(_) {}
-                } else {
-                    console.log('❌ User signed out');
-                    showLoginScreen();
-                    // If sign-in just failed recently, hint the password reset path
-                    const lastErr = sessionStorage.getItem('lastSignInError');
-                    if (lastErr) {
-                        toast('Having trouble signing in? Ask admin to reset your password.', 'error');
-                        sessionStorage.removeItem('lastSignInError');
-                    }
+                    return;
                 }
+
+                // Handle null user with debounce to avoid bounce during init/network blips
+                authNullDebounceTimer = setTimeout(() => {
+                    const stillNoUser = !(auth && auth.currentUser && auth.currentUser.email);
+                    if (stillNoUser) {
+                        if (isManualSignOut) {
+                            console.log('ℹ️ Manual sign-out: showing login');
+                        } else if (!window.FirebaseConfig || !window.FirebaseConfig.isInitialized) {
+                            // Do not flip UI while Firebase is still initializing
+                            return;
+                        }
+                        console.log('❌ User signed out');
+                        showLoginScreen();
+                        // If sign-in just failed recently, hint the password reset path
+                        const lastErr = sessionStorage.getItem('lastSignInError');
+                        if (lastErr) {
+                            toast('Having trouble signing in? Ask admin to reset your password.', 'error');
+                            sessionStorage.removeItem('lastSignInError');
+                        }
+                    }
+                }, 1200);
             });
         }
 
@@ -1442,6 +1465,10 @@
         // Minimal auth gate to show login or portal
         async function checkAuth() {
             try {
+                // Avoid UI flips until Firebase is ready; rely on auth observer to drive UI
+                if (!window.FirebaseConfig || !window.FirebaseConfig.isInitialized) {
+                    return;
+                }
                 // Prefer Firebase auth state if available
                 if (typeof auth !== 'undefined' && auth && auth.currentUser && auth.currentUser.email) {
                     await checkUserInSystem(auth.currentUser.email);
@@ -1512,6 +1539,7 @@
         // Logout with Firebase
         async function logout() {
             try {
+                isManualSignOut = true;
                 await auth.signOut();
                 sessionStorage.removeItem('userPortalAuthenticated');
                 currentUser = null;
