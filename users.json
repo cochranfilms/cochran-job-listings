@@ -50,7 +50,7 @@
     "Cody Cochran": {
       "profile": {
         "email": "codylcochran87@gmail.com",
-        "location": "Douglasville, GA",
+        "location": "Atlanta Area",
         "role": "",
         "projectType": ""
       },
@@ -59,13 +59,13 @@
       },
       "application": {
         "status": "pending",
-        "submittedAt": "2025-08-17T20:30:00.945Z",
-        "jobTitle": "Backdrop Photographer Spotlight",
-        "eventDate": "2025-10-24",
-        "pay": "$300 + Tip",
-        "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+        "submittedAt": "2025-08-18T00:34:33.967Z",
+        "jobTitle": "Firebase",
+        "eventDate": "2025-08-09",
+        "pay": "$300",
+        "description": "Firestore elements",
         "phone": "4704202169",
-        "portfolio": "https://www.cochranfilms.com",
+        "portfolio": "https://pitch.cochranfilms.com",
         "source": "apply-html"
       },
       "jobs": {},
@@ -434,10 +434,5 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-16"
-  },
-  "_metadata": {
-    "dataSource": "github",
-    "fetchedAt": "2025-08-18T00:11:48.286Z",
-    "totalUsers": 14
   }
 }
