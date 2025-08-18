@@ -351,8 +351,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-18",
       "signedDate": "2025-08-18"
+    },
+    {
+      "contractId": "CF-1755495837660-3VT2J",
+      "freelancerName": "eric thomas",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Firebase",
+      "rate": "$300",
+      "location": "Atlanta Area",
+      "fileName": "eric thomas.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-18T05:44:14.021Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/eric thomas.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-18",
+      "signedDate": "2025-08-18"
     }
   ],
-  "lastUpdated": "2025-08-18T04:20:50.873Z",
-  "totalContracts": 22
+  "lastUpdated": "2025-08-18T05:44:14.021Z",
+  "totalContracts": 23
 }
