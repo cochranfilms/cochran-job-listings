@@ -2507,7 +2507,10 @@
                 // Also mirror to user's primary job status if present
                 if ((user.jobs && user.primaryJob && user.jobs[user.primaryJob])) {
                     const jobsCopy = { ...(user.jobs || {}) };
-                    jobsCopy[user.primaryJob] = { ...(jobsCopy[user.primaryJob]||{}), status: selectedProjectStatus };
+                    jobsCopy[user.primaryJob] = { ...(jobsCopy[user.primaryJob]||{}),
+                        status: selectedProjectStatus,
+                        projectStatus: selectedProjectStatus
+                    };
                     updated.jobs = jobsCopy;
                 }
                 // Save to Firestore

@@ -3053,7 +3053,7 @@
             }
 
             // Get project status for this job from users data (not project-status.json)
-            const userJob = currentUser.jobs[selectedJob.id];
+            const userJob = currentUser.jobs[selectedJob.id] || currentUser.jobs[currentUser.primaryJob] || null;
             const jobProjectStatus = userJob ? {
                 projectStatus: userJob.projectStatus || 'upcoming',
                 paymentStatus: userJob.paymentStatus || 'pending'
@@ -3075,7 +3075,7 @@
             };
 
             // Add job selector if user has multiple jobs
-            const userJobsArray = Object.values(currentUser.jobs || {});
+            const userJobsArray = Object.values(currentUser.jobs || {}).map((j, idx) => ({...j, id: j.id || j.jobId || Object.keys(currentUser.jobs)[idx]}));
             const jobSelectorHTML = userJobsArray.length > 1 ? `
                 <div class="job-selector-header">
                     <h3>Your Jobs:</h3>
