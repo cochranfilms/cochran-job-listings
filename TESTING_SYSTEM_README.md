@@ -41,6 +41,7 @@ This document describes the comprehensive testing system for the Cochran Films a
 ### Modular Managers Firestore-First Loading (2025-08-18)
 - User and Job managers in `admin-dashboard-modular/js/users/user-manager.js` and `admin-dashboard-modular/js/jobs/job-manager.js` now load from Firestore first and only attempt JSON API fallback if Firestore is unavailable.
 - The legacy endpoints `/api/users` and `/api/jobs-data` intentionally return 410 (Gone). Seeing 410s is expected only if Firestore is not available. In normal operation with Firebase initialized, managers should not hit these endpoints.
+- 2025-08-18 follow-up: `admin-dashboard-modular/js/users/user-list.js` no longer calls `/api/users`. It now reads via `FirestoreDataManager.getUsers()` (with a light in-memory fallback to `UserManager.state.users`). This eliminates recurring 410 errors from the user list refresh loop.
 - Quick test:
   - Open the admin dashboard, sign in, and confirm users and jobs load without 410 errors from the modular managers.
   - Temporarily disable Firebase initialization to observe fallback behavior; managers will attempt the JSON endpoints and report errors (by design, since endpoints are deprecated).

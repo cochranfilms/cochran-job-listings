@@ -380,26 +380,52 @@ const UserList = {
         return search;
     },
 
-    // Load and display users
+    // Load and display users (Firestore-first; no JSON API)
     async loadAndDisplayUsers() {
         try {
             if (window.LoadingManager) {
                 window.LoadingManager.showLoading('Loading users...');
             }
 
-            const response = await fetch('/api/users');
-            if (response.ok) {
-                const data = await response.json();
-                const users = data.users || [];
-                
-                this.displayUsers(users);
+            let usersArray = [];
+
+            // Prefer Firestore
+            if (window.FirestoreDataManager && typeof window.FirestoreDataManager.isAvailable === 'function' && window.FirestoreDataManager.isAvailable()) {
+                const usersMap = await window.FirestoreDataManager.getUsers();
+                usersArray = Object.entries(usersMap)
+                    .filter(([name]) => name !== '_archived' && !name.startsWith('_'))
+                    .map(([name, data]) => ({
+                        name,
+                        email: (data && data.profile && data.profile.email) || '',
+                        role: (data && data.profile && data.profile.role) || '',
+                        location: (data && data.profile && data.profile.location) || '',
+                        rate: (data && data.profile && data.profile.rate) || '',
+                        status: (data && data.application && data.application.status) || (data && data.contract && data.contract.contractStatus) || 'pending'
+                    }));
+            } else if (window.UserManager && window.UserManager.state && window.UserManager.state.users) {
+                // Fallback to in-memory UserManager state if present
+                const usersMap = typeof window.UserManager.getActiveUsers === 'function'
+                    ? window.UserManager.getActiveUsers()
+                    : window.UserManager.state.users;
+                usersArray = Object.entries(usersMap)
+                    .filter(([name]) => name !== '_archived' && !name.startsWith('_'))
+                    .map(([name, data]) => ({
+                        name,
+                        email: (data && data.profile && data.profile.email) || '',
+                        role: (data && data.profile && data.profile.role) || '',
+                        location: (data && data.profile && data.profile.location) || '',
+                        rate: (data && data.profile && data.profile.rate) || '',
+                        status: (data && data.application && data.application.status) || (data && data.contract && data.contract.contractStatus) || 'pending'
+                    }));
             } else {
-                throw new Error('Failed to load users');
+                throw new Error('Firestore unavailable');
             }
+
+            this.displayUsers(usersArray);
 
         } catch (error) {
             console.error('❌ Failed to load users:', error);
-            this.showError('Failed to load users: ' + error.message);
+            this.showError('Failed to load users' + (error && error.message ? ': ' + error.message : ''));
         } finally {
             if (window.LoadingManager) {
                 window.LoadingManager.hideLoading();
@@ -740,28 +766,33 @@ const UserList = {
         }
     },
 
-    // Download users JSON
+    // Download users JSON (Firestore source)
     async downloadUsersJSON() {
         try {
-            const response = await fetch('/api/users');
-            if (response.ok) {
-                const data = await response.json();
-                
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'users.json';
-                a.click();
-                
-                URL.revokeObjectURL(url);
-                
-                this.showSuccess('Users JSON downloaded successfully');
+            let usersPayload = {};
+            if (window.FirestoreDataManager && typeof window.FirestoreDataManager.isAvailable === 'function' && window.FirestoreDataManager.isAvailable()) {
+                usersPayload = await window.FirestoreDataManager.getUsers();
+            } else if (window.UserManager && window.UserManager.state && window.UserManager.state.users) {
+                usersPayload = window.UserManager.state.users;
+            } else {
+                throw new Error('No data source available');
             }
+
+            const data = { users: usersPayload };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'users.json';
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            
+            this.showSuccess('Users JSON downloaded successfully');
         } catch (error) {
             console.error('❌ Failed to download users JSON:', error);
-            this.showError('Failed to download users JSON');
+            this.showError('Failed to download users JSON' + (error && error.message ? ': ' + error.message : ''));
         }
     },
 
