@@ -47,10 +47,34 @@
       },
       "jobs": {},
       "primaryJob": null
+    },
+    "eric thomas": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "location": "Atlanta Area",
+        "role": "",
+        "projectType": ""
+      },
+      "contract": {
+        "contractStatus": "pending"
+      },
+      "application": {
+        "status": "pending",
+        "submittedAt": "2025-08-18T05:43:04.539Z",
+        "jobTitle": "Firebase",
+        "eventDate": "2025-08-09",
+        "pay": "$300",
+        "description": "Firestore elements",
+        "phone": "4704202169",
+        "portfolio": "https://landing.cochranfilms.com",
+        "source": "apply-html"
+      },
+      "jobs": {},
+      "primaryJob": null
     }
   },
   "statusOptions": {},
   "lastUpdated": "2025-08-18",
-  "totalUsers": 2,
+  "totalUsers": 3,
   "system": {}
 }
