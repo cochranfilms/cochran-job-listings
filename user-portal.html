@@ -766,10 +766,18 @@
                 
                 // Update users data with contract information from uploaded-contracts.json
                 users.forEach(user => {
-                    // Find ALL contracts for this user
-                    const userContracts = uploadedContracts.filter(contract => 
-                        contract.freelancerEmail && contract.freelancerEmail.toLowerCase() === user.email.toLowerCase()
-                    );
+                    const userEmailLower = (user && user.email ? String(user.email).toLowerCase() : '');
+                    if (!userEmailLower) {
+                        return; // skip users without valid email
+                    }
+
+                    // Find ALL contracts for this user (support multiple email field shapes)
+                    const userContracts = uploadedContracts.filter(contract => {
+                        const contractEmailLower = (contract && (contract.freelancerEmail || contract.userEmail)
+                            ? String(contract.freelancerEmail || contract.userEmail).toLowerCase()
+                            : '');
+                        return contractEmailLower && contractEmailLower === userEmailLower;
+                    });
                     
                     if (userContracts.length > 0) {
                         // Sort by upload date to get the most recent contract
@@ -791,14 +799,15 @@
                         user.contractUploadedDate = mostRecentContract.uploadDate;
                         
                         // Update job information if available
-                        if (mostRecentContract.role && user.jobs && user.jobs.length > 0) {
-                            user.jobs[0].role = mostRecentContract.role;
-                        }
-                        if (mostRecentContract.rate && user.jobs && user.jobs.length > 0) {
-                            user.jobs[0].rate = mostRecentContract.rate;
-                        }
-                        if (mostRecentContract.location && user.jobs && user.jobs.length > 0) {
-                            user.jobs[0].location = mostRecentContract.location;
+                        // Best-effort job detail sync (supports object map shape)
+                        if (user.jobs && typeof user.jobs === 'object') {
+                            const firstJobKey = Object.keys(user.jobs)[0];
+                            const firstJob = firstJobKey ? user.jobs[firstJobKey] : null;
+                            if (firstJob) {
+                                if (mostRecentContract.role) firstJob.role = mostRecentContract.role;
+                                if (mostRecentContract.rate) firstJob.rate = mostRecentContract.rate;
+                                if (mostRecentContract.location) firstJob.location = mostRecentContract.location;
+                            }
                         }
                         
                         console.log(`✅ Updated ${user.name} with most recent contract ID: ${mostRecentContract.contractId}`);
@@ -810,6 +819,22 @@
                 console.log('✅ Users data merged with uploaded contracts');
             } catch (error) {
                 console.error('❌ Error merging freelancer data with uploaded contracts:', error);
+            }
+        }
+
+        // Validate that the current authenticated user still exists in the loaded users list
+        async function validateUserSession(userCandidate) {
+            try {
+                if (!userCandidate || !userCandidate.email) return false;
+                const target = String(userCandidate.email).toLowerCase();
+                // Ensure we have the latest users snapshot
+                if (!Array.isArray(users) || users.length === 0) {
+                    await loadUsersData();
+                }
+                return Array.isArray(users) && users.some(u => (u.email ? String(u.email).toLowerCase() : '') === target);
+            } catch (_) {
+                // If uncertain, do not force sign-out
+                return true;
             }
         }
 
