@@ -904,6 +904,16 @@
                                     isAuthenticated = true;
                                     showDashboard();
                                 } else {
+                                    // If a non-admin user is observed but we have an active admin session, preserve dashboard
+                                    const session = sessionStorage.getItem('adminDashboardAuthenticated');
+                                    const notExpired = Date.now() < getAdminSessionExpiry();
+                                    if ((session === 'true' || notExpired) && isAuthenticated === true) {
+                                        if (typeof showNotification === 'function') {
+                                            showNotification('Another tab signed in as a non-admin. Preserving admin session here.', 'info');
+                                        }
+                                        setAdminSession(30);
+                                        return;
+                                    }
                                     if (typeof showNotification === 'function') {
                                         showNotification('Access denied. Admin privileges required.', 'error');
                                     }

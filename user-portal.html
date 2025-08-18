@@ -124,6 +124,7 @@
         function setupAuthStateObserver() {
             // mark first auth event to coordinate UI flips
             window._USER_PORTAL_AUTH_SEEN = false;
+            window._USER_PORTAL_LAST_USER_EMAIL = '';
             auth.onAuthStateChanged(function(user) {
                 if (!window._USER_PORTAL_AUTH_SEEN) { window._USER_PORTAL_AUTH_SEEN = true; }
                 // Clear any pending debounce when we receive a user
@@ -135,10 +136,12 @@
                 if (user && user.email) {
                     isManualSignOut = false; // reset manual sign-out flag on valid auth
                     console.log('✅ User authenticated:', user.email);
+                    try { window._USER_PORTAL_LAST_USER_EMAIL = user.email || ''; } catch(_) {}
                     // User is signed in, check if they exist in our system
                     checkUserInSystem(user.email);
-                    // Persist lightweight session snapshot to mitigate reload kicks
+                    // Persist lightweight session snapshot to mitigate reload kicks (both stores)
                     try { sessionStorage.setItem('userPortalAuthEmail', user.email); } catch(_) {}
+                    try { localStorage.setItem('userPortalAuthEmail', user.email); } catch(_) {}
                     // Start/refresh 30-minute cross-tab session
                     setPortalSession(30);
                     return;
@@ -155,23 +158,27 @@
                         const notExpired = Date.now() < getPortalSessionExpiry();
                         if (isManualSignOut) {
                             console.log('ℹ️ Manual sign-out: showing login');
+                            showLoginScreen();
+                            return;
                         } else if (!window.FirebaseConfig || !window.FirebaseConfig.isInitialized) {
                             // Do not flip UI while Firebase is still initializing
                             return;
-                        } else if (notExpired || hasSessionSnapshot || currentUser || portalVisible) {
-                            // Soft-ignore transient nulls within grace period; retry lookup shortly
-                            setTimeout(() => { try { checkUserInSystem(cachedEmailLS || cachedEmailSS || ''); } catch(_) {} }, 2000);
+                        } else if (notExpired || hasSessionSnapshot || currentUser || portalVisible || window._USER_PORTAL_LAST_USER_EMAIL) {
+                            // Hold UI steady; try to recover with cached email shortly
+                            setTimeout(() => { try { checkUserInSystem(cachedEmailLS || cachedEmailSS || window._USER_PORTAL_LAST_USER_EMAIL || ''); } catch(_) {} }, 2000);
                             return;
-                        }
-                        console.log('❌ User signed out');
-                        showLoginScreen();
-                        const lastErr = sessionStorage.getItem('lastSignInError');
-                        if (lastErr) {
-                            toast('Having trouble signing in? Ask admin to reset your password.', 'error');
-                            sessionStorage.removeItem('lastSignInError');
+                        } else {
+                            // As a last resort, only show login if we have absolutely no recent session/email
+                            const lastErr = sessionStorage.getItem('lastSignInError');
+                            console.log('❌ No active session detected; showing login');
+                            showLoginScreen();
+                            if (lastErr) {
+                                toast('Having trouble signing in? Ask admin to reset your password.', 'error');
+                                sessionStorage.removeItem('lastSignInError');
+                            }
                         }
                     }
-                }, 2500);
+                }, 6000);
             });
         }
 
