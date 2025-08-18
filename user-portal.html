@@ -106,6 +106,13 @@
         
         // Initialize Firebase on page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Temporarily hide both views to prevent flicker during auth hydration
+            try {
+                const loginScreen = document.getElementById('loginScreen');
+                const userPortal = document.getElementById('userPortal');
+                if (loginScreen) loginScreen.style.display = 'none';
+                if (userPortal) userPortal.style.display = 'none';
+            } catch(_) {}
             initializeFirebase();
         });
 
@@ -115,7 +122,10 @@
 
         // Setup authentication state observer
         function setupAuthStateObserver() {
+            // mark first auth event to coordinate UI flips
+            window._USER_PORTAL_AUTH_SEEN = false;
             auth.onAuthStateChanged(function(user) {
+                if (!window._USER_PORTAL_AUTH_SEEN) { window._USER_PORTAL_AUTH_SEEN = true; }
                 // Clear any pending debounce when we receive a user
                 if (authNullDebounceTimer) {
                     clearTimeout(authNullDebounceTimer);
@@ -161,7 +171,7 @@
                             sessionStorage.removeItem('lastSignInError');
                         }
                     }
-                }, 3000);
+                }, 2500);
             });
         }
 

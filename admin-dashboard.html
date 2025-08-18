@@ -887,7 +887,10 @@
                     // Add auth state listener to avoid hydration race causing false logouts
                     if (auth && typeof auth.onAuthStateChanged === 'function') {
                         let authNullDebounceTimer = null;
+                        // mark when we've received the first auth state
+                        window._ADMIN_AUTH_SEEN = false;
                         auth.onAuthStateChanged((user) => {
+                            if (!window._ADMIN_AUTH_SEEN) { window._ADMIN_AUTH_SEEN = true; }
                             if (authNullDebounceTimer) { clearTimeout(authNullDebounceTimer); authNullDebounceTimer = null; }
 
                             if (user && user.email) {
@@ -1062,8 +1065,14 @@
             console.log('🔍 Session storage value:', sessionStorage.getItem('adminDashboardAuthenticated'));
             console.log('🔍 Current isAuthenticated state:', isAuthenticated);
             
+            // If auth event not seen yet, suppress initial UI flips briefly
+            if (!window._ADMIN_AUTH_SEEN) {
+                window.ADMIN_SUPPRESS_LOGIN_FLIP = true;
+                setTimeout(() => { window.ADMIN_SUPPRESS_LOGIN_FLIP = false; }, 4000);
+            }
+
             const session = sessionStorage.getItem('adminDashboardAuthenticated');
-            if (session === 'true' || Date.now() < getAdminSessionExpiry()) {
+            if (session === 'true' || Date.now() < getAdminSessionExpiry() || (auth && auth.currentUser && auth.currentUser.email)) {
                 isAuthenticated = true;
                 showDashboard();
                 console.log('✅ Main dashboard authentication restored from session');
@@ -1077,6 +1086,12 @@
         function showLoginScreen() {
             console.log('🔐 Main dashboard showLoginScreen called');
             
+            // Avoid UI flip while auth is still resolving
+            if (window.ADMIN_SUPPRESS_LOGIN_FLIP) {
+                console.log('⏳ Suppressing login screen during auth hydration');
+                return;
+            }
+
             // Always show login screen when not authenticated
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('dashboard').style.display = 'none';
