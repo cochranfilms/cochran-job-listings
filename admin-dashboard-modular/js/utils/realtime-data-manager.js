@@ -203,7 +203,11 @@ const RealtimeDataManager = {
                 return cached.data;
             }
 
-            // Final fallback to JSON API
+            // Final fallback to JSON API (disabled in strict Firestore mode)
+            if (window.STRICT_FIRESTORE_MODE === true) {
+                console.warn('🚫 STRICT_FIRESTORE_MODE enabled: skipping JSON fallback');
+                return null;
+            }
             return await this.fetchFromJSON(collectionName, documentId);
             
         } catch (error) {

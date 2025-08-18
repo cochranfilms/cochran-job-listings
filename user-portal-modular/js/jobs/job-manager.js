@@ -39,23 +39,20 @@ export class JobManager {
 
     async fetchJobsFromAPI(userEmail) {
         try {
-            const response = await fetch(`${this.apiBase}/api/users`);
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
+            // Firestore lookup by profile.email
+            if (window.FirebaseConfig && window.FirebaseConfig.isInitialized) {
+                const db = window.FirebaseConfig.getFirestore();
+                const snap = await db.collection('users')
+                    .where('profile.email', '==', userEmail)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    const user = doc.data() || {};
+                    return this.extractJobsFromUser(doc.id, user);
+                }
             }
-            
-            const usersData = await response.json();
-            const userEntry = Object.entries(usersData.users).find(([name, user]) => 
-                user.profile?.email?.toLowerCase() === userEmail.toLowerCase()
-            );
-            
-            if (userEntry) {
-                const [name, user] = userEntry;
-                return this.extractJobsFromUser(name, user);
-            }
-            
             return [];
-            
         } catch (error) {
             console.error('❌ API fetch failed:', error);
             throw error;

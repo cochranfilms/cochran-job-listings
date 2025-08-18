@@ -40,21 +40,19 @@ export class PaymentManager {
 
     async fetchPaymentsFromAPI(userEmail) {
         try {
-            const response = await fetch(`${this.apiBase}/api/users`);
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
+            // Firestore lookup by profile.email
+            if (window.FirebaseConfig && window.FirebaseConfig.isInitialized) {
+                const db = window.FirebaseConfig.getFirestore();
+                const snap = await db.collection('users')
+                    .where('profile.email', '==', userEmail)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    const user = doc.data() || {};
+                    return this.extractPaymentsFromUser(doc.id, user);
+                }
             }
-            
-            const usersData = await response.json();
-            const userEntry = Object.entries(usersData.users).find(([name, user]) => 
-                user.profile?.email?.toLowerCase() === userEmail.toLowerCase()
-            );
-            
-            if (userEntry) {
-                const [name, user] = userEntry;
-                return this.extractPaymentsFromUser(name, user);
-            }
-            
             return null;
             
         } catch (error) {
@@ -272,6 +270,24 @@ export class PaymentManager {
                 payments.bankDetails = { ...payments.bankDetails, ...details.bankDetails };
             }
             
+            // Persist to Firestore
+            if (window.FirebaseConfig && window.FirebaseConfig.isInitialized) {
+                const db = window.FirebaseConfig.getFirestore();
+                const snap = await db.collection('users')
+                    .where('profile.email', '==', userEmail)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    await db.collection('users').doc(doc.id).set({
+                        paymentMethod: payments.paymentMethod,
+                        paymentStatus: payments.paymentStatus || 'pending',
+                        bankDetails: payments.bankDetails || null,
+                        paymentUpdatedAt: payments.updatedAt
+                    }, { merge: true });
+                }
+            }
+            
             // Update cache
             this.paymentData.set(userEmail, payments);
             
@@ -303,6 +319,22 @@ export class PaymentManager {
             payments.bankDetails.isVerified = false; // Reset verification
             payments.bankDetails.lastVerified = null;
             payments.updatedAt = new Date().toISOString();
+            
+            // Persist to Firestore
+            if (window.FirebaseConfig && window.FirebaseConfig.isInitialized) {
+                const db = window.FirebaseConfig.getFirestore();
+                const snap = await db.collection('users')
+                    .where('profile.email', '==', userEmail)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    await db.collection('users').doc(doc.id).set({
+                        bankDetails: payments.bankDetails,
+                        paymentUpdatedAt: payments.updatedAt
+                    }, { merge: true });
+                }
+            }
             
             // Update cache
             this.paymentData.set(userEmail, payments);
@@ -377,6 +409,23 @@ export class PaymentManager {
             // Add to payment history
             payments.paymentHistory.push(payment);
             payments.updatedAt = new Date().toISOString();
+            
+            // Persist payment history to Firestore
+            if (window.FirebaseConfig && window.FirebaseConfig.isInitialized) {
+                const db = window.FirebaseConfig.getFirestore();
+                const snap = await db.collection('users')
+                    .where('profile.email', '==', userEmail)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    const userRef = db.collection('users').doc(doc.id);
+                    await userRef.set({
+                        paymentHistory: firebase.firestore.FieldValue.arrayUnion(payment),
+                        paymentUpdatedAt: payments.updatedAt
+                    }, { merge: true });
+                }
+            }
             
             // Update cache
             this.paymentData.set(userEmail, payments);

@@ -39,23 +39,20 @@ export class PerformanceManager {
 
     async fetchPerformanceFromAPI(userEmail) {
         try {
-            const response = await fetch(`${this.apiBase}/api/users`);
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
+            // Firestore lookup by profile.email
+            if (window.FirebaseConfig && window.FirebaseConfig.isInitialized) {
+                const db = window.FirebaseConfig.getFirestore();
+                const snap = await db.collection('users')
+                    .where('profile.email', '==', userEmail)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    const user = doc.data() || {};
+                    return this.extractPerformanceFromUser(doc.id, user);
+                }
             }
-            
-            const usersData = await response.json();
-            const userEntry = Object.entries(usersData.users).find(([name, user]) => 
-                user.profile?.email?.toLowerCase() === userEmail.toLowerCase()
-            );
-            
-            if (userEntry) {
-                const [name, user] = userEntry;
-                return this.extractPerformanceFromUser(name, user);
-            }
-            
             return null;
-            
         } catch (error) {
             console.error('❌ API fetch failed:', error);
             throw error;
@@ -601,7 +598,7 @@ export class PerformanceManager {
                 return 'insufficient data';
             }
             
-            const sortedReviews = reviews.sort((a, b) => new Date(a.reviewDate) - new Date(b.reviewDate));
+            const sortedReviews = performance.reviews.sort((a, b) => new Date(a.reviewDate) - new Date(b.reviewDate));
             const totalDays = (new Date(sortedReviews[sortedReviews.length - 1].reviewDate) - new Date(sortedReviews[0].reviewDate)) / (1000 * 60 * 60 * 24);
             const averageDaysBetweenReviews = totalDays / (sortedReviews.length - 1);
             

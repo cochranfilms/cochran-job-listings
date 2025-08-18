@@ -886,3 +886,18 @@ curl "http://localhost:8000/api/contracts?filename=test.pdf"
 # Check API health
 curl http://localhost:8000/api/health
 ```
+
+## 2025-08-18 — Modular Portal Firestore-Only Cleanup
+- Removed remaining `/api/users` reads from modular portal managers; now query Firestore `users` by `profile.email`.
+- Managers updated:
+  - `user-portal-modular/js/auth/auth-manager.js`
+  - `user-portal-modular/js/users/user-manager.js`
+  - `user-portal-modular/js/contracts/contract-manager.js`
+  - `user-portal-modular/js/jobs/job-manager.js`
+  - `user-portal-modular/js/users/performance-manager.js`
+  - `user-portal-modular/js/users/payment-manager.js` (also persists payment fields + history to Firestore)
+- Ensure `user-portal-modular/index.html` includes:
+  - Firebase SDKs (app/auth/firestore)
+  - `../firebase-config.js`
+  - `../firestore-data-manager.js`
+- Admin strict mode (optional): add `window.STRICT_FIRESTORE_MODE = true;` before loading admin modules to disable JSON fallbacks in `admin-dashboard-modular/js/utils/realtime-data-manager.js`.

@@ -42,21 +42,19 @@ export class UserManager {
 
     async fetchUserFromAPI(email) {
         try {
-            const response = await fetch(`${this.apiBase}/api/users`);
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
+            // Firestore lookup by profile.email
+            if (window.FirebaseConfig && window.FirebaseConfig.isInitialized) {
+                const db = window.FirebaseConfig.getFirestore();
+                const snap = await db.collection('users')
+                    .where('profile.email', '==', email)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    const user = doc.data() || {};
+                    return this.transformUserData(doc.id, user);
+                }
             }
-            
-            const usersData = await response.json();
-            const userEntry = Object.entries(usersData.users).find(([name, user]) => 
-                user.profile?.email?.toLowerCase() === email.toLowerCase()
-            );
-            
-            if (userEntry) {
-                const [name, user] = userEntry;
-                return this.transformUserData(name, user);
-            }
-            
             return null;
             
         } catch (error) {

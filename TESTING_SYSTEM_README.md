@@ -712,3 +712,18 @@ curl http://localhost:8000/api/uploaded-contracts
 
 ### 1. User Deletion Not Persisting
 **Problem**: The `deleteUser`
+
+### Modular Portal Firestore Conversion (2025-08-18)
+- Modular portal managers now load from Firestore instead of `/api/users`:
+  - `js/auth/auth-manager.js`: validates user by querying Firestore `users` with `profile.email`.
+  - `js/users/user-manager.js`: looks up user via Firestore and transforms shape for UI.
+  - `js/contracts/contract-manager.js`, `js/jobs/job-manager.js`, `js/users/performance-manager.js`: read from Firestore by `profile.email`.
+  - `js/users/payment-manager.js`: persists `paymentMethod`, `bankDetails`, and `paymentHistory` to Firestore.
+- Ensure Firebase SDKs (app/auth/firestore) plus `../firebase-config.js` and `../firestore-data-manager.js` are included in `user-portal-modular/index.html`.
+
+### Admin Strict Firestore Mode
+- To disable JSON fallbacks in admin modular realtime utility, add before loading modules:
+```html
+<script>window.STRICT_FIRESTORE_MODE = true;</script>
+```
+- This prevents `/api/*` fallbacks in `admin-dashboard-modular/js/utils/realtime-data-manager.js`.

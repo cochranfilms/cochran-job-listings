@@ -15,17 +15,21 @@ export class AuthManager {
         try {
             // Initialize Firebase if available
             if (typeof firebase !== 'undefined') {
-                const firebaseConfig = {
-                    apiKey: 'AIzaSyCkL31Phi7FxYCeB5zgHeYTb2iY2sTJJdw',
-                    authDomain: 'cochran-films.firebaseapp.com',
-                    projectId: 'cochran-films',
-                    storageBucket: 'cochran-films.appspot.com',
-                    messagingSenderId: '566448458094',
-                    appId: '1:566448458094:web:default'
-                };
-
-                firebase.initializeApp(firebaseConfig);
-                this.auth = firebase.auth();
+                // Reuse existing app if already initialized (avoid duplicate init)
+                if (firebase.apps && firebase.apps.length > 0) {
+                    this.auth = firebase.auth();
+                } else {
+                    const firebaseConfig = {
+                        apiKey: 'AIzaSyCkL31Phi7FxYCeB5zgHeYTb2iY2sTJJdw',
+                        authDomain: 'cochran-films.firebaseapp.com',
+                        projectId: 'cochran-films',
+                        storageBucket: 'cochran-films.appspot.com',
+                        messagingSenderId: '566448458094',
+                        appId: '1:566448458094:web:default'
+                    };
+                    firebase.initializeApp(firebaseConfig);
+                    this.auth = firebase.auth();
+                }
                 
                 // Set persistence
                 await this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
@@ -98,28 +102,30 @@ export class AuthManager {
 
     async validateUserInSystem(email) {
         try {
-            const response = await fetch(`${this.apiBase}/api/users`);
-            if (response.ok) {
-                const usersData = await response.json();
-                const userEntry = Object.entries(usersData.users).find(([name, user]) => 
-                    user.profile?.email?.toLowerCase() === email.toLowerCase()
-                );
-                
-                if (userEntry) {
-                    const [name, user] = userEntry;
+            // Prefer Firestore: look up user document by profile.email
+            if (window.FirebaseConfig && window.FirebaseConfig.isInitialized) {
+                const db = window.FirebaseConfig.getFirestore();
+                const snap = await db.collection('users')
+                    .where('profile.email', '==', email)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    const user = doc.data() || {};
                     return {
-                        name: name,
-                        email: user.profile.email,
-                        approvedDate: user.profile.approvedDate,
-                        role: user.profile.role,
-                        location: user.profile.location,
-                        rate: user.profile.rate,
+                        name: doc.id,
+                        email: user.profile?.email,
+                        approvedDate: user.profile?.approvedDate,
+                        role: user.profile?.role,
+                        location: user.profile?.location,
+                        rate: user.profile?.rate,
                         contractStatus: user.contract?.contractStatus || 'pending',
                         paymentMethod: user.paymentMethod || null,
                         paymentStatus: user.paymentStatus || 'pending'
                     };
                 }
             }
+            // Fallback: no user found
             return null;
         } catch (error) {
             console.error('❌ User validation failed:', error);
