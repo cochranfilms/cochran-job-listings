@@ -3382,11 +3382,12 @@
             const userContract = getUserContractStatus(currentUser.email);
             const contractSigned = userContract ? true : (currentUser.contractStatus === 'uploaded');
             
-            // Get project status from users data
+            // Get project status from users data (normalized, with fallbacks)
             const selectedJob = getSelectedJob();
             const userJob = selectedJob ? currentUser.jobs[selectedJob.id] : null;
-            const projectStatus = userJob ? userJob.projectStatus : 'upcoming';
-            const paymentStatus = userJob ? userJob.paymentStatus : (currentUser.paymentStatus || 'pending');
+            const rawProj = userJob ? (userJob.projectStatus || userJob.status || currentUser.profile?.projectStatus) : (currentUser.profile?.projectStatus || 'upcoming');
+            const projectStatus = (typeof normalizeProjectStatus === 'function') ? normalizeProjectStatus(rawProj) : (rawProj || 'upcoming');
+            const paymentStatus = userJob ? (userJob.paymentStatus || 'pending') : (currentUser.paymentStatus || 'pending');
             
             // Reduced timeline logging - only log once per session
             if (!sessionStorage.getItem('timelineDataLogged')) {
