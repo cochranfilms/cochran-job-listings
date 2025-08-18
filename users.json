@@ -389,6 +389,30 @@
       "contract": {
         "contractStatus": "pending"
       }
+    },
+    "jerry stringer": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "location": "Douglasville, GA",
+        "role": "",
+        "projectType": ""
+      },
+      "contract": {
+        "contractStatus": "pending"
+      },
+      "application": {
+        "status": "pending",
+        "submittedAt": "2025-08-18T00:10:05.718Z",
+        "jobTitle": "Backdrop Photographer Spotlight",
+        "eventDate": "2025-10-24",
+        "pay": "$300 + Tip",
+        "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+        "phone": "4704202169",
+        "portfolio": "https://www.cochranfilms.com",
+        "source": "apply-html"
+      },
+      "jobs": {},
+      "primaryJob": null
     }
   },
   "statusOptions": {
@@ -405,8 +429,8 @@
       "overdue"
     ]
   },
-  "lastUpdated": "2025-08-17",
-  "totalUsers": 13,
+  "lastUpdated": "2025-08-18",
+  "totalUsers": 14,
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-16"
