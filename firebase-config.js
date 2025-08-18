@@ -36,7 +36,8 @@ const FirebaseConfig = {
     ],
 
     // Initialize Firebase with Firestore
-    async init() {
+    // Optional appName allows multiple independent auth sessions per origin
+    async init(appName) {
         // If already initialized, return the existing promise
         if (this.initPromise) {
             return this.initPromise;
@@ -64,9 +65,22 @@ const FirebaseConfig = {
 
                 console.log('✅ firebase.initializeApp method found');
                 
-                // Initialize Firebase app
+                // Initialize Firebase app (support multiple named apps)
                 console.log('🔧 Creating Firebase app...');
-                this.app = firebase.initializeApp(this.config);
+                const name = appName ? String(appName) : undefined;
+                if (name) {
+                    if (firebase.apps && firebase.apps.some(a => a && a.name === name)) {
+                        this.app = firebase.app(name);
+                    } else {
+                        this.app = firebase.initializeApp(this.config, name);
+                    }
+                } else {
+                    if (firebase.apps && firebase.apps.length > 0) {
+                        this.app = firebase.app();
+                    } else {
+                        this.app = firebase.initializeApp(this.config);
+                    }
+                }
                 console.log('✅ Firebase app created:', this.app);
                 
                 // Initialize Firebase Auth
@@ -76,7 +90,7 @@ const FirebaseConfig = {
                     throw new Error('Firebase auth method not available');
                 }
                 
-                this.auth = firebase.auth();
+                this.auth = this.app.auth();
                 console.log('✅ Firebase Auth initialized:', this.auth);
                 
                 // Initialize Firestore
@@ -86,7 +100,7 @@ const FirebaseConfig = {
                     throw new Error('Firestore method not available');
                 }
                 
-                this.firestore = firebase.firestore();
+                this.firestore = this.app.firestore();
                 console.log('✅ Firestore initialized:', this.firestore);
                 
                 // Set persistence to LOCAL for better offline support

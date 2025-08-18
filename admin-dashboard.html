@@ -879,7 +879,8 @@
         async function initializeFirebase() {
             try {
                 if (window.FirebaseConfig) {
-                    await window.FirebaseConfig.init();
+                    // Initialize default app for admin context
+                    await window.FirebaseConfig.init('admin-dashboard');
                     auth = window.FirebaseConfig.auth;
                     firestore = window.FirebaseConfig.getFirestore();
                     console.log('✅ Firebase initialized in admin dashboard');
@@ -908,9 +909,6 @@
                                     const session = sessionStorage.getItem('adminDashboardAuthenticated');
                                     const notExpired = Date.now() < getAdminSessionExpiry();
                                     if ((session === 'true' || notExpired) && isAuthenticated === true) {
-                                        if (typeof showNotification === 'function') {
-                                            showNotification('Another tab signed in as a non-admin. Preserving admin session here.', 'info');
-                                        }
                                         setAdminSession(30);
                                         return;
                                     }

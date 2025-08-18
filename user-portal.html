@@ -89,7 +89,8 @@
         async function initializeFirebase() {
             try {
                 if (window.FirebaseConfig) {
-                    await window.FirebaseConfig.init();
+                    // Initialize a dedicated app instance for portal to isolate auth from admin tabs
+                    await window.FirebaseConfig.init('user-portal');
                     auth = window.FirebaseConfig.auth;
                     firestore = window.FirebaseConfig.getFirestore();
                     console.log('✅ Firebase initialized in user portal');
@@ -1368,8 +1369,13 @@
             // Always pull latest users from Firestore
             await loadUsersData();
 
-            // Find user by email (case-insensitive)
-            let user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+            // Find user by email (case-insensitive). Support both flat email and profile.email
+            let user = users.find(u => {
+                const e1 = (u && typeof u.email === 'string') ? u.email.toLowerCase() : '';
+                const e2 = (u && u.profile && typeof u.profile.email === 'string') ? u.profile.email.toLowerCase() : '';
+                const target = email.toLowerCase();
+                return e1 === target || e2 === target;
+            });
 
             // If not found, auto-provision a minimal user record in Firestore
             if (!user && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
@@ -1386,7 +1392,12 @@
                     });
                     // Reload to include the newly created user
                     await loadUsersData();
-                    user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+                    user = users.find(u => {
+                        const e1 = (u && typeof u.email === 'string') ? u.email.toLowerCase() : '';
+                        const e2 = (u && u.profile && typeof u.profile.email === 'string') ? u.profile.email.toLowerCase() : '';
+                        const target = email.toLowerCase();
+                        return e1 === target || e2 === target;
+                    });
                     console.log('✅ Auto-provisioned user in Firestore:', userDocId);
                 } catch (e) {
                     console.warn('⚠️ Auto-provision failed (continuing if purely auth-based access is acceptable):', e?.message || e);
