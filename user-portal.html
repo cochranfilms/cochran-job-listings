@@ -1459,6 +1459,8 @@
                 sessionStorage.removeItem('userPortalAuthenticated');
                 currentUser = null;
                 showLoginScreen();
+                const err = document.getElementById('loginError');
+                if (err) { err.textContent = ''; err.style.display = 'none'; err.className = 'ai-error'; }
                 showNotification('Successfully signed out!', 'info');
             } catch (error) {
                 console.error('Logout error:', error);
@@ -10329,6 +10331,109 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
     </style>
     <!-- New premium theme stylesheet (loaded last to override older visuals) -->
     <link rel="stylesheet" href="styles/user-portal-theme.css">
+    <style>
+        /* ==================== FINAL AI LOGIN THEME (2025) ==================== */
+        :root {
+            --brand-indigo: #6366f1;
+            --brand-emerald: #10b981;
+            --brand-amber: #f59e0b;
+            --brand-gold: #FFB200;
+            --brand-blue: #0066CC;
+            --brand-red: #ef4444;
+            --dark-900: #0f172a;
+            --dark-950: #020617;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --card-bg: rgba(15, 23, 42, 0.75);
+            --card-border-color: rgba(99,102,241,0.20);
+            --backdrop: blur(20px);
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 10px;
+            --shadow-lg: 0 30px 80px rgba(0,0,0,0.45);
+            --shadow-md: 0 18px 40px rgba(0,0,0,0.35);
+            --shadow-sm: 0 10px 24px rgba(0,0,0,0.25);
+            --glow-gold: 0 0 40px rgba(255,178,0,0.35);
+            --transition: all 300ms cubic-bezier(.4,0,.2,1);
+            --transition-fast: all 180ms cubic-bezier(.4,0,.2,1);
+        }
+
+        /* Background + layout */
+        #loginScreen.login-screen {
+            position: fixed; inset: 0; display: grid; place-items: center;
+            padding: 40px 20px;
+            background:
+                radial-gradient(1200px 600px at 10% 0%, rgba(99,102,241,0.10), transparent 60%),
+                radial-gradient(1000px 600px at 100% 20%, rgba(255,178,0,0.08), transparent 60%),
+                linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(2,6,23,0.95) 100%);
+        }
+
+        /* Hide legacy decorative layers that fight the new design */
+        #loginScreen .holographic-particles,
+        #loginScreen .quantum-portal,
+        #loginScreen .portal-rings,
+        #loginScreen .holographic-logo,
+        #loginScreen .portal-identity { display: none !important; }
+
+        /* Card */
+        #loginScreen .ai-login-card {
+            width: 100%; max-width: 460px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border-color);
+            border-radius: var(--radius-lg);
+            backdrop-filter: var(--backdrop);
+            box-shadow: var(--shadow-lg);
+            padding: 36px 28px;
+        }
+
+        /* Header */
+        .ai-login-header { text-align: center; margin-bottom: 24px; }
+        .ai-login-logo { height: 52px; width: auto; margin: 0 auto 12px; display: block; filter: drop-shadow(0 6px 14px rgba(0,0,0,.35)); }
+        .ai-login-title {
+            margin: 0 0 8px; font-weight: 900; letter-spacing: -0.02em;
+            font-size: clamp(24px, 4.8vw, 32px);
+            background: linear-gradient(135deg, #fff, #dbeafe 40%, #fde68a 85%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .ai-login-subtitle { margin: 0; color: var(--text-secondary); font-size: 14px; }
+
+        /* Form */
+        .ai-form { display: grid; gap: 14px; }
+        .ai-field { display: grid; gap: 8px; }
+        .ai-label { color: var(--text-primary); font-weight: 600; font-size: 13px; }
+        .ai-input {
+            width: 100%; padding: 14px 16px; border-radius: 12px;
+            background: rgba(15,23,42,0.6);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: var(--text-primary); font-size: 16px; transition: var(--transition-fast);
+        }
+        .ai-input::placeholder { color: var(--text-secondary); opacity: .7; }
+        .ai-input:focus {
+            outline: none; border-color: var(--brand-gold);
+            box-shadow: 0 0 0 3px rgba(255,178,0,0.18);
+        }
+
+        .ai-login-button {
+            width: 100%; margin-top: 6px; cursor: pointer;
+            background: linear-gradient(135deg, var(--brand-gold), #ffd166);
+            color: #0a0a0a; border: 0; padding: 14px 18px; border-radius: 14px;
+            font-weight: 800; font-size: 16px; letter-spacing: .02em;
+            box-shadow: var(--glow-gold); transition: var(--transition-fast);
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .ai-login-button:hover { transform: translateY(-2px); filter: brightness(1.05); }
+
+        /* Error */
+        .ai-error { display: none; border-radius: 10px; padding: 12px 14px; font-weight: 600; font-size: 13px;
+            background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff;
+            border: 1px solid rgba(239,68,68,.35); box-shadow: 0 6px 18px rgba(239,68,68,.25);
+        }
+
+        @media (max-width: 480px) {
+            #loginScreen .ai-login-card { padding: 26px 20px; }
+        }
+    </style>
 </head>
 <body>
     <!-- Premium Login Screen -->
@@ -10367,112 +10472,28 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
                 <div class="ring ring-3"></div>
             </div>
             
-            <!-- Main Login Container -->
-            <div class="login-container">
-                <!-- Holographic Logo -->
-                <div class="holographic-logo">
-                    <div class="logo-hologram">
-                        <img src="https://static.wixstatic.com/media/aeef42_af70013becbb4aa2b08179f9eba48dbc~mv2.png" alt="Cochran Films" class="real-logo">
-                        <div class="logo-glow"></div>
-                        <div class="logo-scan-line"></div>
-                    </div>
-                    <div class="logo-particles">
-                        <div class="logo-particle"></div>
-                        <div class="logo-particle"></div>
-                        <div class="logo-particle"></div>
-                    </div>
+            <!-- Main Login Container (AI Theme) -->
+            <div class="login-container ai-login-card">
+                <div class="ai-login-header">
+                    <img class="ai-login-logo" src="CF_Logo_White2025.png" alt="Cochran Films" onerror="this.style.display='none'">
+                    <h1 class="ai-login-title">Creator Portal</h1>
+                    <p class="ai-login-subtitle">Access your contracts and project information</p>
                 </div>
-                
-                <!-- Portal Identity -->
-                <div class="portal-identity">
-                    <div class="identity-icon">
-                        <div class="icon-core"></div>
-                        <div class="icon-rings">
-                            <div class="icon-ring"></div>
-                            <div class="icon-ring"></div>
-                            <div class="icon-ring"></div>
-                        </div>
+                <div id="loginError" class="ai-error"></div>
+                <form id="loginForm" class="ai-form" method="post" onsubmit="handleLogin(event); return false;">
+                    <div class="ai-field">
+                        <label for="email" class="ai-label">Email</label>
+                        <input type="email" id="email" name="email" class="ai-input" placeholder="you@example.com" required autocomplete="email" inputmode="email">
                     </div>
-                    <h1 class="login-title">
-                        <span class="title-text">CREATOR PORTAL</span>
-                        <span class="title-glow"></span>
-                        <span class="title-scan"></span>
-                    </h1>
-                    <p class="login-subtitle">
-                        <span class="subtitle-text">Access your contracts and project information</span>
-                        <span class="subtitle-pulse"></span>
-                    </p>
-                </div>
-                
-                <!-- Quantum Form Container -->
-                <div class="quantum-form-container">
-                    <div id="loginError" class="error-message" style="display: none;">
-                        <div class="error-icon">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <span>Invalid email or password. Please try again.</span>
-                        <div class="error-pulse"></div>
+                    <div class="ai-field">
+                        <label for="password" class="ai-label">Password</label>
+                        <input type="password" id="password" name="password" class="ai-input" placeholder="Enter your password" required autocomplete="current-password">
                     </div>
-                    
-                    <form id="loginForm" class="login-form" method="post" onsubmit="handleLogin(event); return false;">
-                        <div class="form-group">
-                            <div class="quantum-input-container">
-                                <div class="input-field">
-                                    <div class="input-border">
-                                        <div class="border-line border-top"></div>
-                                        <div class="border-line border-right"></div>
-                                        <div class="border-line border-bottom"></div>
-                                        <div class="border-line border-left"></div>
-                                    </div>
-                                    <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="email" inputmode="email">
-                                    <div class="input-glow"></div>
-                                    <div class="input-particles">
-                                        <div class="input-particle"></div>
-                                        <div class="input-particle"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <div class="quantum-input-container">
-                                <div class="input-field">
-                                    <div class="input-border">
-                                        <div class="border-line border-top"></div>
-                                        <div class="border-line border-right"></div>
-                                        <div class="border-line border-bottom"></div>
-                                        <div class="border-line border-left"></div>
-                                    </div>
-                                    <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
-                                    <div class="input-glow"></div>
-                                    <div class="input-particles">
-                                        <div class="input-particle"></div>
-                                        <div class="input-particle"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="quantum-login-btn">
-                            <div class="btn-core">
-                                <div class="btn-glow"></div>
-                                <div class="btn-particles">
-                                    <div class="btn-particle"></div>
-                                    <div class="btn-particle"></div>
-                                    <div class="btn-particle"></div>
-                                </div>
-                                <i class="fas fa-sign-in-alt"></i>
-                                <span>Sign In</span>
-                            </div>
-                            <div class="btn-border">
-                                <div class="btn-border-line"></div>
-                                <div class="btn-border-line"></div>
-                                <div class="btn-border-line"></div>
-                                <div class="btn-border-line"></div>
-                            </div>
-                        </button>
-                    </form>
-                </div>
+                    <button type="submit" class="ai-login-button">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Sign In</span>
+                    </button>
+                </form>
             </div>
         </div>
         
