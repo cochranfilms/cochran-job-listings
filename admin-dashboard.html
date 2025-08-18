@@ -1023,6 +1023,24 @@
         window.jobs = [];
         window.users = {};
 
+        // 30-minute admin session grace across tabs (localStorage)
+        const ADMIN_SESSION_KEY = 'adminDashboardSessionExpiry';
+        const ADMIN_EMAIL_KEY = 'adminDashboardAuthEmail';
+        function setAdminSession(minutes = 30) {
+            try {
+                localStorage.setItem(ADMIN_SESSION_KEY, String(Date.now() + minutes * 60000));
+                if (auth && auth.currentUser && auth.currentUser.email) {
+                    localStorage.setItem(ADMIN_EMAIL_KEY, auth.currentUser.email);
+                }
+            } catch(_) {}
+        }
+        function getAdminSessionExpiry() {
+            try { return Number(localStorage.getItem(ADMIN_SESSION_KEY) || '0'); } catch(_) { return 0; }
+        }
+        window.addEventListener('focus', () => {
+            if (auth && auth.currentUser && auth.currentUser.email) setAdminSession(30);
+        });
+
         // Check if already authenticated
         function checkAuth() {
             console.log('🔐 Main dashboard checkAuth called');
@@ -1030,7 +1048,7 @@
             console.log('🔍 Current isAuthenticated state:', isAuthenticated);
             
             const session = sessionStorage.getItem('adminDashboardAuthenticated');
-            if (session === 'true') {
+            if (session === 'true' || Date.now() < getAdminSessionExpiry()) {
                 isAuthenticated = true;
                 showDashboard();
                 console.log('✅ Main dashboard authentication restored from session');
@@ -1138,6 +1156,7 @@
                         uid: userCredential.user.uid
                     }));
                     isAuthenticated = true;
+                    setAdminSession(30);
                     showDashboard();
                     document.getElementById('password').value = '';
                     console.log('✅ Main dashboard Firebase authentication successful');
@@ -1164,6 +1183,7 @@
                         uid: 'fallback-admin-' + Date.now()
                     }));
                     isAuthenticated = true;
+                    setAdminSession(30);
                     showDashboard();
                     document.getElementById('password').value = '';
                     showNotification('✅ Login successful (fallback auth)', 'success');

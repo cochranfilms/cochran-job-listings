@@ -59,6 +59,24 @@
         // Auth state management flags
         let isManualSignOut = false;
         let authNullDebounceTimer = null;
+        // 30-minute session grace across tabs (localStorage)
+        const USER_PORTAL_SESSION_KEY = 'userPortalSessionExpiry';
+        const USER_PORTAL_EMAIL_KEY = 'userPortalAuthEmail';
+        function setPortalSession(minutes = 30) {
+            try {
+                localStorage.setItem(USER_PORTAL_SESSION_KEY, String(Date.now() + minutes * 60000));
+                if (auth && auth.currentUser && auth.currentUser.email) {
+                    localStorage.setItem(USER_PORTAL_EMAIL_KEY, auth.currentUser.email);
+                }
+            } catch(_) {}
+        }
+        function getPortalSessionExpiry() {
+            try { return Number(localStorage.getItem(USER_PORTAL_SESSION_KEY) || '0'); } catch(_) { return 0; }
+        }
+        function refreshPortalSessionIfAuthenticated() {
+            if (auth && auth.currentUser && auth.currentUser.email) setPortalSession(30);
+        }
+        window.addEventListener('focus', refreshPortalSessionIfAuthenticated);
         // In-flight guards to prevent duplicate loads
         let usersLoadInFlight = null;
         let contractsLoadInFlight = null;
@@ -111,6 +129,8 @@
                     checkUserInSystem(user.email);
                     // Persist lightweight session snapshot to mitigate reload kicks
                     try { sessionStorage.setItem('userPortalAuthEmail', user.email); } catch(_) {}
+                    // Start/refresh 30-minute cross-tab session
+                    setPortalSession(30);
                     return;
                 }
 
@@ -120,13 +140,15 @@
                     if (stillNoUser) {
                         const hasSessionSnapshot = !!sessionStorage.getItem('userPortalAuthEmail');
                         const portalVisible = (document.getElementById('userPortal')?.style.display === 'block');
+                        const notExpired = Date.now() < getPortalSessionExpiry();
                         if (isManualSignOut) {
                             console.log('ℹ️ Manual sign-out: showing login');
                         } else if (!window.FirebaseConfig || !window.FirebaseConfig.isInitialized) {
                             // Do not flip UI while Firebase is still initializing
                             return;
-                        } else if (hasSessionSnapshot || currentUser || portalVisible) {
-                            // Soft-ignore transient nulls if we have a session snapshot or the portal is visible
+                        } else if (notExpired || hasSessionSnapshot || currentUser || portalVisible) {
+                            // Soft-ignore transient nulls within grace period; retry lookup shortly
+                            setTimeout(() => { try { checkUserInSystem(localStorage.getItem('userPortalAuthEmail') || ''); } catch(_) {} }, 3000);
                             return;
                         }
                         console.log('❌ User signed out');
@@ -1500,6 +1522,22 @@
             const updatedUser = Array.isArray(users) ? users.find(u => u && u.email === emailSnapshot) : null;
             if (updatedUser) {
                 currentUser = updatedUser;
+                // Merge Firestore assignments into currentUser.jobs to reflect admin updates
+                try {
+                    if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable() && currentUser && currentUser.name) {
+                        const assignments = await window.FirestoreDataManager.getUserAssignments(currentUser.name);
+                        if (assignments && typeof assignments === 'object') {
+                            if (!currentUser.jobs) currentUser.jobs = {};
+                            Object.entries(assignments).forEach(([assignmentId, assignmentData]) => {
+                                const existing = currentUser.jobs[assignmentId] || {};
+                                currentUser.jobs[assignmentId] = { ...existing, ...assignmentData };
+                            });
+                            console.log('🔄 Merged Firestore assignments into user jobs:', Object.keys(assignments).length);
+                        }
+                    }
+                } catch (mergeErr) {
+                    console.warn('⚠️ Could not merge assignments:', mergeErr?.message || mergeErr);
+                }
                 console.log('✅ Updated current user data:', {
                     name: currentUser.name,
                     email: currentUser.email,
