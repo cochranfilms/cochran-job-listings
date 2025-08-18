@@ -52,6 +52,14 @@ This document describes the comprehensive testing system for the Cochran Films a
 - Payment method updates now write directly to Firestore (`FirestoreDataManager.setUser`) and no longer call `/api/users` or GitHub file APIs.
 - Auth observer is debounced and guarded to prevent transient sign-outs during initialization; UI no longer flips back to the login screen on brief nulls.
 
+#### Hotfix: Login 405 and JS Parse Error (2025-08-18)
+- Fixed a malformed async block in `user-portal.html` that caused a JavaScript parse error before `handleLogin()` bound, making the login form fall back to an HTTP POST to the page and return HTTP 405.
+- Restored the `usersLoadInFlight` pattern and balanced braces in the users loading flow; linter is now clean on `user-portal.html`.
+- Test steps:
+  1. Reload `http://localhost:8000/user-portal.html` (Cmd+Shift+R).
+  2. Open DevTools → Console; ensure no parse errors appear on load.
+  3. Submit login; verify no network POST is attempted to `user-portal.html` and that Firebase auth proceeds.
+
 Smoke test:
 1. Open `/contract.html`, sign as a new user to ensure Firebase account creation.
 2. Open `/user-portal.html`, log in with the same credentials; verify the portal opens without calling `/api/users`.

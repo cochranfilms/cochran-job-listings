@@ -199,119 +199,6 @@
             return review;
         }
 
-        // Load freelancer data (Firestore only)
-        async function loadUsersData() {
-            try {
-                console.log('🔄 Loading users data...');
-                if (usersLoadInFlight) { return usersLoadInFlight; }
-                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                    usersLoadInFlight = (async () => {
-                    const fsUsersObj = await window.FirestoreDataManager.getUsers();
-                    users = Object.entries(fsUsersObj || {}).map(([name, user]) => ({
-                        name: name,
-                        email: user.profile?.email,
-                        password: null,
-                        approvedDate: user.profile?.approvedDate,
-                        contractUrl: user.contract?.contractUrl || 'contract.html',
-                        contractStatus: user.contract?.contractStatus || 'pending',
-                        contractSignedDate: user.contract?.contractSignedDate,
-                        contractUploadedDate: user.contract?.contractUploadedDate,
-                        contractId: user.contract?.contractId,
-                        paymentMethod: user.paymentMethod || null,
-                        paymentStatus: user.paymentStatus || 'pending',
-                        jobs: user.jobs && Object.keys(user.jobs).length ? user.jobs : {
-                            'legacy-job': {
-                                id: 'legacy-job',
-                                title: user.profile?.role || 'Contractor',
-                                role: user.profile?.role,
-                                location: user.profile?.location,
-                                projectStart: user.application?.eventDate || user.profile?.projectStart,
-                                rate: user.profile?.rate,
-                                status: 'upcoming',
-                                projectType: 'Legacy Job',
-                                description: `${user.profile?.role || 'Contractor'} position`
-                            }
-                        },
-                        primaryJob: user.primaryJob || Object.keys(user.jobs || {})[0] || 'legacy-job'
-                    }));
-                    console.log('✅ Users data loaded from Firestore:', users.length, 'users');
-                    await mergeUsersDataWithUploadedContracts();
-                } else {
-                    users = [];
-                    console.warn('⚠️ Firestore unavailable; no JSON fallback (disabled)');
-                }
-            } catch (error) {
-                console.error('❌ Error loading users data:', error);
-                users = [];
-            }
-        }
-
-        // Load uploaded contracts data
-        async function loadUploadedContracts() {
-            try {
-                console.log('🔄 Loading uploaded contracts from Firestore (contracts collection)...');
-                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                    uploadedContracts = await window.FirestoreDataManager.getContracts();
-                    console.log('✅ Uploaded contracts loaded from Firestore:', uploadedContracts.length, 'contracts');
-                } else {
-                    uploadedContracts = [];
-                    console.warn('⚠️ Firestore unavailable; contracts list empty (no JSON fallback)');
-                }
-            } catch (error) {
-                console.error('❌ Error loading Firestore contracts:', error);
-                uploadedContracts = [];
-            }
-        }
-
-        // Load jobs data
-        async function loadJobsData() {
-            try {
-                console.log('🔄 Loading jobs data...');
-                // Use Firestore as source of truth via window.FirestoreDataManager if available
-                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                    jobsData = await window.FirestoreDataManager.getJobListings();
-                    console.log('✅ Jobs data loaded from Firestore:', jobsData.length, 'jobs');
-                } else {
-                    // If Firestore unavailable, do not re-seed from JSON to avoid duplication
-                    console.warn('⚠️ Firestore unavailable; jobsData set to empty');
-                    jobsData = [];
-                }
-            } catch (error) {
-                console.error('❌ Error loading jobs data:', error);
-                jobsData = [];
-            }
-        }
-
-        // Merge users data with uploaded contracts
-        async function mergeUsersDataWithUploadedContracts() {
-            try {
-                console.log('🔄 Merging users data with uploaded contracts...');
-                
-                // Load uploaded contracts if not already loaded
-                if (uploadedContracts.length === 0) {
-                    await loadUploadedContracts();
-                }
-                
-                // Update users with contract information from uploaded contracts
-                for (const user of users) {
-                    const matchingContract = uploadedContracts.find(contract => 
-                        contract.userEmail === user.email
-                    );
-                    
-                    if (matchingContract) {
-                        user.contractId = matchingContract.contractId;
-                        user.contractUploadedDate = matchingContract.uploadDate;
-                        user.contractStatus = 'uploaded';
-                        console.log(`✅ Updated user ${user.name} with contract info:`, matchingContract.contractId);
-                    }
-                }
-                
-                console.log('✅ Users data merged with uploaded contracts');
-            } catch (error) {
-                console.error('❌ Error merging users data with uploaded contracts:', error);
-            }
-        }
-
         // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
         
         // Enhanced notification system with real-time updates
@@ -811,7 +698,9 @@
         async function loadUsersData() {
             try {
                 console.log('🔄 Loading users data...');
+                if (usersLoadInFlight) { return usersLoadInFlight; }
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    usersLoadInFlight = (async () => {
                     const fsUsersObj = await window.FirestoreDataManager.getUsers();
                     users = Object.entries(fsUsersObj || {}).map(([name, user]) => ({
                         name: name,
@@ -853,7 +742,6 @@
                     await mergeUsersDataWithUploadedContracts();
                     })();
                     await usersLoadInFlight;
-                    usersLoadInFlight = null;
                 } else {
                     users = [];
                     console.warn('⚠️ Firestore unavailable; no JSON fallback (disabled)');

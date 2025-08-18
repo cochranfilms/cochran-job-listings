@@ -13,6 +13,11 @@
 - The functions `loadUsersData()` and `loadUploadedContracts()` were updated to Firestore-only implementations.
 - `checkUserInSystem(email)` auto-provisions a minimal user document if a Firebase-authenticated email has no profile yet, eliminating the need for the JSON gate.
 - When cleaning up future code, remove any lingering fetches to `/api/users` or `/api/github/file/users.json` from portal-specific flows; admin-only tools may still call GitHub APIs intentionally.
+
+#### Hotfix Note (2025-08-18)
+- Resolved a broken async closure in `user-portal.html` that introduced JS parse errors and a 405 on login due to form fallback POST.
+- Consolidated the users loading logic to use `usersLoadInFlight` with a proper `finally` cleanup to avoid duplicate loads and ensure consistent cleanup.
+- Action for future cleanup: if refactoring these loaders, keep the in-flight guard + `finally { usersLoadInFlight = null; }` pattern and avoid duplicating the functions.
 Cleanup Tests Utility
 
 - Run inventory (no changes):
