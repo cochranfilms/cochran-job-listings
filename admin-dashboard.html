@@ -2207,7 +2207,7 @@
                             </span>
                             ${user.jobs && Object.keys(user.jobs).length > 0 ? `
                                 <span style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
-                                    🎯 ${Object.keys(user.jobs).length} Job(s)
+                                    🎯 Current Job
                                 </span>
                             ` : ''}
                         </div>
@@ -2216,11 +2216,11 @@
                         <span>📧 ${user.profile?.email || 'Email not specified'}</span>
                         <span>🎭 ${user.profile?.role || 'Role not set'}</span>
                         <span>📍 ${user.profile?.location || 'Location not specified'}</span>
-                        <span>💰 ${user.jobs?.[user.primaryJob]?.rate || 'Rate not specified'}</span>
+                        <span>💰 ${(user.jobs && Object.values(user.jobs)[0]?.rate) || 'Rate not specified'}</span>
                     </div>
                     <div class="item-description">
                         ${user.application?.jobTitle ? `<div><strong>Applied For:</strong> ${user.application.jobTitle}</div>` : ''}
-                        <strong>Primary Job:</strong> ${user.primaryJob || 'None'}<br>
+                        ${user.jobs && Object.keys(user.jobs).length ? `<div><strong>Current Job:</strong> ${Object.values(user.jobs)[0].title || 'Untitled'}</div>` : '<div><strong>Current Job:</strong> None</div>'}
                         <strong>Payment Method:</strong> ${user.paymentMethod || 'Not specified'}<br>
                         <strong>Contract Status:</strong> ${user.contract?.contractStatus || 'Not specified'}
                     </div>
@@ -2372,7 +2372,6 @@
                         projectStart: userData.profile.projectDate || 'TBD',
                         jobRef: { source: 'jobs-data', index: idx, key: `${job.title}|${job.date}` }
                     };
-                    userData.primaryJob = jobId;
                 }
             }
 
@@ -2492,12 +2491,12 @@
                 el.innerHTML = `<option value="">${label}</option>` + opts.map(v=>`<option value="${v}">${v}</option>`).join('');
                 if (value) el.value = value;
             }
-            const primaryJobData = user && user.primaryJob && user.jobs ? user.jobs[user.primaryJob] : null;
-            const roleValue = user?.profile?.role || primaryJobData?.title || user?.application?.jobTitle || '';
-            const locationValue = user?.profile?.location || primaryJobData?.location || '';
-            const rateValue = (primaryJobData && primaryJobData.rate) || user?.profile?.rate || '';
-            const projectTypeValue = user?.profile?.projectType || primaryJobData?.type || '';
-            const currentProjectStatus = (primaryJobData && primaryJobData.status) || user?.profile?.projectStatus || 'upcoming';
+            const currentJob = (user && user.jobs) ? Object.values(user.jobs)[0] || null : null;
+            const roleValue = user?.profile?.role || user?.application?.jobTitle || '';
+            const locationValue = user?.profile?.location || currentJob?.location || '';
+            const rateValue = currentJob?.rate || user?.profile?.rate || '';
+            const projectTypeValue = user?.profile?.projectType || currentJob?.type || '';
+            const currentProjectStatus = (currentJob && (currentJob.projectStatus || currentJob.status)) || user?.profile?.projectStatus || 'upcoming';
             fillSelect('#ue-role', (window.dropdownOptions?.roles)||[], roleValue, 'Select…');
             fillSelect('#ue-location', (window.dropdownOptions?.locations)||[], locationValue, 'Select…');
             fillSelect('#ue-rate', (window.dropdownOptions?.rates)||[], rateValue, 'Select…');
@@ -2524,24 +2523,30 @@
                         projectStatus: selectedProjectStatus
                     }
                 };
-                // Also mirror to user's primary job status if present
-                if ((user.jobs && user.primaryJob && user.jobs[user.primaryJob])) {
-                    const jobsCopy = { ...(user.jobs || {}) };
-                    jobsCopy[user.primaryJob] = { ...(jobsCopy[user.primaryJob]||{}),
-                        status: selectedProjectStatus,
-                        projectStatus: selectedProjectStatus
-                    };
-                    updated.jobs = jobsCopy;
-                }
+                // Ensure a single current job under jobs and assignments
+                const existingJobId = (user.jobs && Object.keys(user.jobs)[0]) || `job-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+                const jobsCopy = {};
+                jobsCopy[existingJobId] = {
+                    ...(user.jobs && user.jobs[existingJobId] ? user.jobs[existingJobId] : {}),
+                    id: existingJobId,
+                    title: modal.querySelector('#ue-role').value || 'Assignment',
+                    location: modal.querySelector('#ue-location').value || '',
+                    rate: modal.querySelector('#ue-rate').value || '',
+                    projectType: modal.querySelector('#ue-projectType').value || '',
+                    status: selectedProjectStatus,
+                    projectStatus: selectedProjectStatus,
+                    projectStart: modal.querySelector('#ue-project').value || '',
+                    paymentStatus: (user.jobs && user.jobs[existingJobId]?.paymentStatus) || 'pending',
+                    updatedAt: new Date().toISOString()
+                };
+                updated.jobs = jobsCopy;
                 // Save to Firestore
                 try {
                     if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                         await window.FirestoreDataManager.setUser(newName, { ...user, ...updated });
-                        // Try to update assignment status for primary job if available
+                        // Persist single assignment under assignments/{id}
                         try {
-                            if (user.primaryJob) {
-                                await window.FirestoreDataManager.updateAssignmentStatus(newName, user.primaryJob, selectedProjectStatus);
-                            }
+                            await window.FirestoreDataManager.setAssignment(newName, existingJobId, jobsCopy[existingJobId]);
                         } catch (_) {}
                         // if name changed, remove old key in local state
                         if (newName !== name) { delete window.users[name]; }
@@ -2690,7 +2695,7 @@
                 const jobsData = await jobsResponse.json();
                 
                 const assignedJobs = {};
-                let primaryJob = null;
+                let primaryJob = null; // deprecated, will collapse to single job
                 
                 // Match jobs based on role and location
                 jobsData.jobs.forEach((job, idx) => {
@@ -2719,9 +2724,7 @@
                         };
                         
                         // Set as primary job if it's the first match
-                        if (!primaryJob) {
-                            primaryJob = jobId;
-                        }
+                        if (!primaryJob) { primaryJob = jobId; }
                     }
                 });
                 
@@ -2749,10 +2752,7 @@
                 console.log('✅ Assigned jobs to user:', assignedJobs);
                 console.log('✅ Primary job:', primaryJob);
                 
-                return {
-                    jobs: assignedJobs,
-                    primaryJob: primaryJob
-                };
+                return { jobs: assignedJobs };
                 
             } catch (error) {
                 console.error('❌ Error assigning jobs to user:', error);
@@ -2774,10 +2774,7 @@
                     projectStart: document.getElementById('projectStart')?.value || 'TBD'
                 };
                 
-                return {
-                    jobs: { [defaultJobId]: defaultJob },
-                    primaryJob: defaultJobId
-                };
+                return { jobs: { [defaultJobId]: defaultJob } };
             }
         }
 
@@ -2828,9 +2825,7 @@
                 };
                 
                 // Set as primary job if user doesn't have one
-                if (!window.users[userName].primaryJob) {
-                    window.users[userName].primaryJob = jobId;
-                }
+                // overwrite single current job by key
             });
             
             // Update display
@@ -3514,7 +3509,7 @@
                 
                 for (const [userName, userData] of Object.entries(window.users || {})) {
                     // Check if user has empty jobs object or null primaryJob
-                    if (!userData.jobs || Object.keys(userData.jobs).length === 0 || !userData.primaryJob) {
+                    if (!userData.jobs || Object.keys(userData.jobs).length === 0) {
                         console.log(`🔄 Updating job data for user: ${userName}`);
                         
                         const role = userData.profile?.role || 'Producer';
@@ -3525,7 +3520,6 @@
                         
                         // Update user data
                         window.users[userName].jobs = assignedJobs.jobs;
-                        window.users[userName].primaryJob = assignedJobs.primaryJob;
                         
                         updatedCount++;
                         console.log(`✅ Updated job data for ${userName}`);
@@ -3811,19 +3805,18 @@
                 console.log('🔍 Debug: User data for email:', {
                     userName,
                     userData,
-                    primaryJob: userData?.primaryJob,
                     jobs: userData?.jobs,
-                    jobRate: userData?.jobs?.[userData?.primaryJob]?.rate,
+                    jobRate: (userData?.jobs && Object.values(userData.jobs)[0]?.rate),
                     applicationJobTitle: userData?.application?.jobTitle
                 });
 
                 // Prepare email parameters (no contract ID until user actually signs)
                 const projectStart = userData?.application?.eventDate 
-                    || (userData?.jobs && userData?.primaryJob && userData.jobs[userData.primaryJob]?.date)
+                    || (userData?.jobs && Object.values(userData.jobs)[0]?.date)
                     || userData?.profile?.projectDate
                     || userData?.profile?.projectStart
                     || 'TBD';
-                const jobTitle = (userData?.primaryJob && userData?.jobs?.[userData.primaryJob]?.title)
+                const jobTitle = ((userData?.jobs && Object.values(userData.jobs)[0]?.title))
                     || userData?.application?.jobTitle
                     || userData?.application?.job
                     || userData?.profile?.role
@@ -3831,8 +3824,8 @@
                 // Get rate ONLY from the job they're assigned to (no more personal rates)
                 let rate = 'Rate to be determined';
                 
-                if (userData?.primaryJob && userData?.jobs?.[userData.primaryJob]?.rate) {
-                    rate = userData.jobs[userData.primaryJob].rate;
+                if (userData?.jobs && Object.values(userData.jobs)[0]?.rate) {
+                    rate = Object.values(userData.jobs)[0].rate;
                     console.log('✅ Rate from assigned job:', rate);
                 } else if (userData?.jobs && Object.keys(userData.jobs).length > 0) {
                     // Fallback: get rate from any available job
@@ -3854,13 +3847,11 @@
                 });
 
                 // Additional debugging for job data structure
-                if (userData?.primaryJob && userData?.jobs) {
+                if (userData?.jobs) {
                     console.log('🔍 Debug: Job lookup details:', {
-                        primaryJob: userData.primaryJob,
                         availableJobKeys: Object.keys(userData.jobs),
-                        jobData: userData.jobs[userData.primaryJob],
-                        directRateAccess: userData.jobs[userData.primaryJob]?.rate,
-                        hasMatchingJob: userData.primaryJob in userData.jobs
+                        jobData: Object.values(userData.jobs)[0],
+                        directRateAccess: Object.values(userData.jobs)[0]?.rate
                     });
                 }
 
@@ -4040,7 +4031,7 @@
                     await window.FirestoreDataManager.setUser(userName, userData);
                 } catch (e) { console.warn('⚠️ Firestore setUser failed on approve:', e?.message || e); }
 
-                // Attach job by Firestore listing title and set primaryJob; inactivate listing
+                // Attach job by Firestore listing title as single current job; inactivate listing
                 try {
                     // Ensure jobs are loaded from Firestore
                     if (!Array.isArray(window.jobs) || window.jobs.length === 0) {
@@ -4069,7 +4060,6 @@
                                 assignedDate: new Date().toISOString().split('T')[0],
                                 jobRef: { source: 'firestore', id: jobId }
                             };
-                            userData.primaryJob = jobId;
                             // Map job details directly into user.profile for portal/profile editing surfaces
                             userData.profile = userData.profile || {};
                             userData.profile.role = jobPublic.title || userData.profile.role || 'Contractor';
@@ -4108,8 +4098,7 @@
 
             try {
                 // Prepare job reference/details if any
-                const primaryJobId = userData.primaryJob;
-                const job = primaryJobId && userData.jobs ? userData.jobs[primaryJobId] : null;
+                const job = (userData.jobs && Object.values(userData.jobs)[0]) || null;
                 const jobTitle = userData?.application?.jobTitle || job?.title || 'a Cochran Films role';
                 const projectStart = job?.date || userData?.profile?.projectDate || 'TBD';
 
@@ -4724,8 +4713,8 @@
                         </h4>
                         <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <strong>Primary Job:</strong> 
-                                <span style="color: #FFB200;">${user.primaryJob || 'None'}</span>
+                                <strong>Current Job:</strong> 
+                                <span style="color: #FFB200;">${(user.jobs && Object.values(user.jobs)[0]?.title) || 'None'}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <strong>Payment Method:</strong> 
@@ -5154,7 +5143,7 @@
             }
             
             // Create contract data for PDF generation
-            const primaryJob = userData.jobs?.[userData.primaryJob];
+            const primaryJob = (userData.jobs && Object.values(userData.jobs)[0]) || null;
             const contractData = {
                 contractId: userContract.contractId || userName,
                 freelancerName: userName,
