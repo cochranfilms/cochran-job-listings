@@ -1444,7 +1444,13 @@
                 userPortal.style.display = 'none';
                 // Ensure AI card is visible
                 const card = loginScreen.querySelector('.ai-login-card');
-                if (card) { card.style.visibility = 'visible'; card.style.opacity = '1'; }
+                if (card) {
+                    card.style.visibility = 'visible';
+                    card.style.opacity = '1';
+                    card.style.margin = '0 auto';
+                }
+                const submitBtn = loginScreen.querySelector('button[type="submit"]');
+                if (submitBtn) { submitBtn.textContent = 'Sign In'; submitBtn.disabled = false; }
                 console.log('✅ Display properties updated');
             } else {
                 console.error('❌ Elements not found:', { loginScreen: !!loginScreen, userPortal: !!userPortal });
@@ -10396,6 +10402,9 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             box-shadow: var(--shadow-lg);
             padding: 36px 28px;
             position: relative; z-index: 10005;
+            /* Centering overrides */
+            display: block !important;
+            margin: 0 auto !important;
         }
 
         /* Header */
