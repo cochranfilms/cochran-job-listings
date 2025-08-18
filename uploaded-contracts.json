@@ -303,8 +303,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-18",
       "signedDate": "2025-08-17"
+    },
+    {
+      "contractId": "CF-1755477356312-YBY3G",
+      "freelancerName": "Cody Cochran",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Firebase",
+      "rate": "Not specified",
+      "location": "Atlanta Area",
+      "fileName": "Cody Cochran.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-18T00:36:09.505Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Cody Cochran.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-18",
+      "signedDate": "2025-08-17"
     }
   ],
-  "lastUpdated": "2025-08-18T00:11:52.825Z",
-  "totalContracts": 19
+  "lastUpdated": "2025-08-18T00:36:09.505Z",
+  "totalContracts": 20
 }
