@@ -690,12 +690,18 @@
                             <h3>Add New Job</h3>
                             <form id="jobForm">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <input type="text" id="jobTitle" name="title" placeholder="Job Title" required>
+                                    <select id="jobTitle" name="title" required>
+                                        <option value="">Select Role/Title…</option>
+                                    </select>
                                     <input type="date" id="jobDate" name="date" placeholder="Event Date">
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <input type="text" id="jobLocation" name="location" placeholder="Location" value="Atlanta Area">
-                                    <input type="text" id="jobPay" name="pay" placeholder="Pay Rate">
+                                    <select id="jobLocation" name="location">
+                                        <option value="">Select Location…</option>
+                                    </select>
+                                    <select id="jobPay" name="pay">
+                                        <option value="">Select Rate…</option>
+                                    </select>
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                     <select id="jobType" name="type">
@@ -1668,19 +1674,11 @@
             }
         });
 
-        // Edit job
+        // Edit job → open modal editor for consistency with Edit User
         function editJob(index) {
             const job = (Array.isArray(window.jobs) ? window.jobs[index] : null);
             if (!job) { showNotification('Job not found', 'error'); return; }
-            document.getElementById('jobTitle').value = job.title || '';
-            document.getElementById('jobDate').value = job.date || '';
-            document.getElementById('jobLocation').value = job.location || '';
-            document.getElementById('jobPay').value = job.pay || '';
-            document.getElementById('jobType').value = job.type || 'Photography';
-            document.getElementById('jobDescription').value = job.description || '';
-            document.getElementById('jobStatus').value = job.status || 'Active';
-            
-            document.getElementById('jobForm').dataset.editIndex = index;
+            openJobEditModal(job);
         }
 
         // Duplicate job
@@ -4016,6 +4014,13 @@
                                 jobRef: { source: 'firestore', id: jobId }
                             };
                             userData.primaryJob = jobId;
+                            // Map job details directly into user.profile for portal/profile editing surfaces
+                            userData.profile = userData.profile || {};
+                            userData.profile.role = jobPublic.title || userData.profile.role || 'Contractor';
+                            userData.profile.location = jobPublic.location || userData.profile.location || 'Atlanta Area';
+                            userData.profile.rate = jobPublic.pay || userData.profile.rate || '';
+                            userData.profile.projectDate = jobPublic.date || userData.profile.projectDate || '';
+                            userData.profile.projectType = jobPublic.type || userData.profile.projectType || '';
                             try { await window.FirestoreDataManager.setUser(userName, userData); } catch(_) {}
                             try { jobPublic.status = 'Inactive'; await window.FirestoreDataManager.setJobListing(jobId, jobPublic); displayJobs(); } catch(_) {}
                         }
@@ -4354,8 +4359,9 @@
         function populateUserCreationDropdowns() {
             if (!window.dropdownOptions) return;
             
-            // Populate role dropdown
+            // Populate role dropdown and also jobTitle select with roles
             const roleSelect = document.getElementById('freelancerRole');
+            const jobTitleSelect = document.getElementById('jobTitle');
             if (roleSelect) {
                 roleSelect.innerHTML = '<option value="">Select Role...</option>';
                 window.dropdownOptions.roles.forEach(role => {
@@ -4365,9 +4371,19 @@
                     roleSelect.appendChild(option);
                 });
             }
+            if (jobTitleSelect) {
+                jobTitleSelect.innerHTML = '<option value="">Select Role/Title...</option>';
+                window.dropdownOptions.roles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role;
+                    option.textContent = role;
+                    jobTitleSelect.appendChild(option);
+                });
+            }
             
             // Populate location dropdown
             const locationSelect = document.getElementById('freelancerLocation');
+            const jobLocationSelect = document.getElementById('jobLocation');
             if (locationSelect) {
                 locationSelect.innerHTML = '<option value="">Select Location...</option>';
                 window.dropdownOptions.locations.forEach(location => {
@@ -4377,9 +4393,20 @@
                     locationSelect.appendChild(option);
                 });
             }
+            if (jobLocationSelect) {
+                jobLocationSelect.innerHTML = '<option value="">Select Location...</option>';
+                window.dropdownOptions.locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location;
+                    option.textContent = location;
+                    jobLocationSelect.appendChild(option);
+                });
+                if (!jobLocationSelect.value) jobLocationSelect.value = 'Atlanta Area';
+            }
             
             // Populate rate dropdown
             const rateSelect = document.getElementById('freelancerRate');
+            const jobRateSelect = document.getElementById('jobPay');
             if (rateSelect) {
                 rateSelect.innerHTML = '<option value="">Select Rate...</option>';
                 window.dropdownOptions.rates.forEach(rate => {
@@ -4387,6 +4414,15 @@
                     option.value = rate;
                     option.textContent = rate;
                     rateSelect.appendChild(option);
+                });
+            }
+            if (jobRateSelect) {
+                jobRateSelect.innerHTML = '<option value="">Select Rate...</option>';
+                window.dropdownOptions.rates.forEach(rate => {
+                    const option = document.createElement('option');
+                    option.value = rate;
+                    option.textContent = rate;
+                    jobRateSelect.appendChild(option);
                 });
             }
             

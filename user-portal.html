@@ -3826,8 +3826,7 @@
                     console.log('🔄 Starting payment method update to GitHub...');
                     await updateUserPaymentMethod(currentUser.email, paymentMethod);
                     
-                    // Immediately update UI without waiting for next refresh cycle
-                    loadUserData();
+                    // Immediately update UI without heavy full-page re-render to avoid theme flicker
                     updatePaymentStatusDisplay();
                     updateTimelineDisplay();
                     
@@ -3862,10 +3861,8 @@
                     showNotification(errorMessage, 'warning');
                 }
                 
-                // Refresh user data display
+                // Targeted refresh only; avoid full reload to prevent visual flicker
                 displayUserInfo();
-                
-                // Also refresh the jobs display to show updated payment method
                 displayCurrentJobs();
             }
         }
@@ -4097,20 +4094,19 @@
             }
 
             function checkForNewUserNotifications() {
-                // Quick check for new notifications without full reload
-                fetch(`${API_BASE}/api/notifications`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.notifications && currentUser) {
-                            const userNotifications = data.notifications.filter(n => 
-                                n.userEmail === currentUser.email || n.userEmail === currentUser.profile?.email
-                            );
-                            updateNotificationCount(userNotifications.length);
-                        }
-                    })
-                    .catch(error => {
-                        console.warn('Quick notification check failed:', error);
-                    });
+                // Legacy API disabled; rely on local/Firestore notification system
+                try {
+                    if (currentUser) {
+                        const notifications = (window.localStorage && localStorage.getItem('userNotifications'))
+                            ? JSON.parse(localStorage.getItem('userNotifications')) : [];
+                        const userNotifications = notifications.filter(n => 
+                            n.userEmail === currentUser.email || n.userEmail === currentUser.profile?.email
+                        );
+                        updateNotificationCount(userNotifications.length);
+                    }
+                } catch (e) {
+                    // no-op
+                }
             }
             
             // Set up real-time data updates (every 30 seconds to reduce performance impact)
@@ -4572,41 +4568,75 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             alert(details);
         }
 
-        // Download user contract
+        // Download user contract with robust fallbacks (Firestore → local file → API stream)
         function downloadUserContract(jobId = null) {
             console.log('📥 Download contract button clicked');
             console.log('👤 Current user:', currentUser);
             console.log('📋 Uploaded contracts:', uploadedContracts);
-            
-            // Check if user has uploaded contract
-            const userContract = uploadedContracts.find(contract => 
-                contract.freelancerEmail.toLowerCase() === currentUser.email.toLowerCase()
-            );
-            
-            console.log('📄 Found user contract:', userContract);
-            
-            if (!userContract) {
-                // If no uploaded contract, check if contract is signed but not uploaded
-                if (currentUser.contractStatus === 'signed') {
-                    alert('✅ Your contract has been signed and is being processed by admin. You will be able to download it once it\'s uploaded.');
-                } else {
-                    alert('❌ No contract found for your account. Please sign your contract first.');
+
+            try {
+                const userEmailLower = (currentUser && currentUser.email) ? currentUser.email.toLowerCase() : '';
+                if (!userEmailLower) {
+                    showNotification('Unable to determine your account email for download.', 'error');
+                    return;
                 }
-                return;
+
+                // Find the latest uploaded contract for the current user
+                const matchingContracts = (uploadedContracts || []).filter(contract => {
+                    const cEmail = (contract && (contract.freelancerEmail || contract.userEmail))
+                        ? String(contract.freelancerEmail || contract.userEmail).toLowerCase() : '';
+                    return cEmail && cEmail === userEmailLower;
+                });
+
+                const userContract = matchingContracts.length > 0 ? matchingContracts[0] : null;
+                console.log('📄 Found user contract:', userContract);
+
+                if (!userContract) {
+                    if (currentUser.contractStatus === 'signed') {
+                        showNotification("Your contract is signed and being processed. You'll be able to download it once uploaded.", 'info');
+                    } else {
+                        showNotification('No contract found. Please sign your contract first.', 'warning');
+                    }
+                    return;
+                }
+
+                const fileName = userContract.fileName || `${currentUser.name}.pdf`;
+                const candidates = [];
+                if (userContract.fileUrl) candidates.push(userContract.fileUrl);
+                candidates.push(`/contracts/${encodeURIComponent(fileName)}`);
+                candidates.push(`/api/contracts?filename=${encodeURIComponent(fileName)}`);
+
+                const testHead = async (url) => {
+                    try {
+                        const resp = await fetch(url, { method: 'HEAD' });
+                        return resp.ok;
+                    } catch (_) {
+                        return false;
+                    }
+                };
+
+                (async () => {
+                    for (const url of candidates) {
+                        const ok = await testHead(url);
+                        if (ok) {
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = fileName;
+                            link.target = '_blank';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            console.log('✅ Contract download initiated:', fileName);
+                            return;
+                        }
+                    }
+                    console.warn('❌ Contract file not available via known sources:', fileName);
+                    showNotification('Contract file is not available yet. Please try again later or contact support.', 'error');
+                })();
+            } catch (err) {
+                console.error('❌ Error during contract download:', err);
+                showNotification('Unable to download your contract due to an unexpected error.', 'error');
             }
-            
-            // Create download link
-            const link = document.createElement('a');
-            link.href = userContract.fileUrl;
-            link.download = userContract.fileName || 'contract.pdf';
-            link.target = '_blank';
-            
-            // Trigger download
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            console.log('✅ Contract download initiated:', userContract.fileName);
         }
 
         // Make functions globally accessible
