@@ -3052,6 +3052,17 @@
                 console.warn('⚠️ Error displaying jobs with status:', error);
             });
         }
+        // Normalize project status strings into canonical values
+        function normalizeProjectStatus(status) {
+            const s = String(status || '').toLowerCase();
+            if (s === 'in progress') return 'in-progress';
+            if (s === 'active') return 'in-progress';
+            if (s === 'pending') return 'upcoming';
+            if (['upcoming','in-progress','completed','cancelled','canceled','on-hold','on hold'].includes(s)) {
+                return s === 'canceled' ? 'cancelled' : (s === 'on hold' ? 'on-hold' : s);
+            }
+            return 'upcoming';
+        }
         // Display jobs with project status
         async function displayJobsWithStatus() {
             const container = document.getElementById('jobsContent');
@@ -3097,11 +3108,12 @@
 
             // Get project status for this job from users data with robust fallbacks
             const userJob = currentUser.jobs[selectedJob.id] || currentUser.jobs[currentUser.primaryJob] || null;
+            const rawStatus = (userJob && (userJob.projectStatus || userJob.status)) || (currentUser.profile && currentUser.profile.projectStatus) || 'upcoming';
             const jobProjectStatus = userJob ? {
-                projectStatus: userJob.projectStatus || currentUser.profile?.projectStatus || 'upcoming',
+                projectStatus: normalizeProjectStatus(rawStatus),
                 paymentStatus: userJob.paymentStatus || 'pending'
             } : {
-                projectStatus: currentUser.profile?.projectStatus || 'upcoming',
+                projectStatus: normalizeProjectStatus(rawStatus),
                 paymentStatus: 'pending'
             };
 
