@@ -381,6 +381,12 @@ const AdminDashboardApp = {
         console.log('🔍 window.FirebaseConfig:', window.FirebaseConfig);
         console.log('🔍 window.ADMIN_PASSWORD:', window.ADMIN_PASSWORD);
         
+        // Respect main dashboard control: do not install a redundant auth listener
+        if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
+            console.log('✅ Main dashboard auth override disabled - skipping modular auth listener');
+            return;
+        }
+
         if (window.FirebaseConfig && window.FirebaseConfig.auth) {
             console.log('🔥 Firebase authentication available - using Firebase');
             
@@ -760,9 +766,9 @@ const AdminDashboardApp = {
                 { title: 'Access Denied', duration: 10000 }
             );
         }
-        
-        // Sign out the user
-        this.logout();
+
+        // Do not sign out the global Firebase session here to avoid kicking other tabs/pages.
+        // Let the main dashboard control the visible state.
     },
 
     // Load dashboard data
