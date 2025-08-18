@@ -1425,12 +1425,18 @@
                 console.error('❌ pendingReviews element not found');
             }
 
-            // Signed contracts (prefer Firestore contracts collection if available)
+            // Signed contracts (treat "uploaded" as signed since uploaded PDFs are completed)
             let signedContracts = 0;
             if (Array.isArray(window.contracts)) {
-                signedContracts = window.contracts.filter(c => (c.status || '').toLowerCase() === 'signed').length;
+                signedContracts = window.contracts.filter(c => {
+                    const s = String(c.status || '').toLowerCase();
+                    return s === 'signed' || s === 'uploaded';
+                }).length;
             } else {
-                signedContracts = activeUsers.filter(user => user?.contract?.contractStatus === 'signed').length;
+                signedContracts = activeUsers.filter(user => {
+                    const s = String(user?.contract?.contractStatus || '').toLowerCase();
+                    return s === 'signed' || s === 'uploaded';
+                }).length;
             }
             const totalContractsElement = document.getElementById('totalContracts');
             if (totalContractsElement) {
@@ -2512,6 +2518,16 @@
                             <label>Project Status</label>
                             <select id="ue-projectStatus"></select>
                         </div>
+                        <div>
+                            <label>Payment Status</label>
+                            <select id="ue-paymentStatus">
+                                <option value="">Select…</option>
+                                <option value="pending">pending</option>
+                                <option value="processing">processing</option>
+                                <option value="paid">paid</option>
+                                <option value="overdue">overdue</option>
+                            </select>
+                        </div>
                     </div>
                     <div style="padding:14px 18px;border-top:1px solid rgba(255,178,0,0.2);display:flex;justify-content:flex-end;gap:10px;">
                         <button id="ue-cancel" class="btn btn-secondary">Cancel</button>
@@ -2537,11 +2553,13 @@
             const rateValue = currentJob?.rate || user?.profile?.rate || '';
             const projectTypeValue = user?.profile?.projectType || currentJob?.type || '';
             const currentProjectStatus = (currentJob && (currentJob.projectStatus || currentJob.status)) || user?.profile?.projectStatus || 'upcoming';
+            const currentPaymentStatus = (currentJob && currentJob.paymentStatus) || user?.paymentStatus || 'pending';
             fillSelect('#ue-role', (window.dropdownOptions?.roles)||[], roleValue, 'Select…');
             fillSelect('#ue-location', (window.dropdownOptions?.locations)||[], locationValue, 'Select…');
             fillSelect('#ue-rate', (window.dropdownOptions?.rates)||[], rateValue, 'Select…');
             fillSelect('#ue-projectType', (window.dropdownOptions?.projectTypes)||[], projectTypeValue, 'Select…');
             fillSelect('#ue-projectStatus', ['upcoming','in-progress','active','completed','on-hold','cancelled'], currentProjectStatus, 'Select…');
+            fillSelect('#ue-paymentStatus', ['pending','processing','paid','overdue'], currentPaymentStatus, 'Select…');
 
             const close = () => modal.remove();
             modal.querySelector('#ue-close').onclick = close;
@@ -2576,9 +2594,11 @@
                     status: selectedProjectStatus,
                     projectStatus: selectedProjectStatus,
                     projectStart: modal.querySelector('#ue-project').value || '',
-                    paymentStatus: (user.jobs && user.jobs[existingJobId]?.paymentStatus) || 'pending',
+                    paymentStatus: modal.querySelector('#ue-paymentStatus').value || (user.jobs && user.jobs[existingJobId]?.paymentStatus) || 'pending',
                     updatedAt: new Date().toISOString()
                 };
+                // Also allow top-level paymentStatus for backward compatibility
+                updated.paymentStatus = modal.querySelector('#ue-paymentStatus').value || user.paymentStatus || '';
                 updated.jobs = jobsCopy;
                 // Save to Firestore
                 try {
