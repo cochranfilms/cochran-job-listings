@@ -45,6 +45,17 @@ This document describes the comprehensive testing system for the Cochran Films a
   - Open the admin dashboard, sign in, and confirm users and jobs load without 410 errors from the modular managers.
   - Temporarily disable Firebase initialization to observe fallback behavior; managers will attempt the JSON endpoints and report errors (by design, since endpoints are deprecated).
 
+### User Portal: Firebase Auth as the Gate (2025-08-18)
+- `user-portal.html` now relies on Firebase Auth for login. After auth, it loads profiles from Firestore via `FirestoreDataManager.getUsers()`.
+- The legacy `users.json`/`/api/users` reads have been removed from the portal. Contract merging also uses Firestore `contracts` collection.
+- If an authenticated email has no Firestore profile, the portal auto-provisions a minimal user doc and proceeds.
+
+Smoke test:
+1. Open `/contract.html`, sign as a new user to ensure Firebase account creation.
+2. Open `/user-portal.html`, log in with the same credentials; verify the portal opens without calling `/api/users`.
+3. In Firestore console, confirm a user doc exists under `users` (auto-provision if not already present from contract flow).
+4. Verify jobs and performance data load from Firestore and no 410 errors appear for `/api/users`.
+
 ## Landing Page Slideshow/Header Merge (2025-08-17)
 
 - The standalone header in `index.html` has been merged into the first slide of the pitch slideshow to focus messaging on creators joining the team.

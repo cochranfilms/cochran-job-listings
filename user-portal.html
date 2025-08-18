@@ -792,72 +792,54 @@
                 modal.remove();
             }
         }
-        // Load freelancer data from JSON file
+        // Load freelancer data (Firestore only - JSON/API removed)
         async function loadUsersData() {
             try {
                 console.log('🔄 Loading users data...');
-                
-                // Disable session cache to prevent stale user data in portal
-                const now = Date.now();
-                
-                // First, try to load directly from users API
-                try {
-                    const response = await fetch(`${API_BASE}/api/users`);
-                    if (response.ok) {
-                        const jsonData = await response.json();
-                        if (jsonData.users) {
-                            // Convert the JSON structure to array format with job support
-                            users = Object.entries(jsonData.users).map(([name, user]) => ({
-                                name: name,
-                                email: user.profile?.email,
-                                password: user.profile?.password,
-                                approvedDate: user.profile?.approvedDate,
-                                contractUrl: user.contract?.contractUrl || 'contract.html',
-                                // CONTRACT STATUS FIELDS - CRITICAL!
-                                contractStatus: user.contract?.contractStatus || 'pending',
-                                contractSignedDate: user.contract?.contractSignedDate,
-                                contractUploadedDate: user.contract?.contractUploadedDate,
-                                contractId: user.contract?.contractId,
-                                // PAYMENT FIELDS - CRITICAL!
-                                paymentMethod: user.paymentMethod || null,
-                                paymentStatus: user.paymentStatus || 'pending',
-                                // Handle both old single job format and new multiple jobs format
-                                jobs: user.jobs || {
-                                    'legacy-job': {
-                                        id: 'legacy-job',
-                                        role: user.profile?.role,
-                                        location: user.profile?.location,
-                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
-                                        rate: user.profile?.rate,
-                                        status: 'upcoming',
-                                        projectType: 'Legacy Job',
-                                        description: `${user.profile?.role} position`
-                                    }
-                                },
-                                primaryJob: user.primaryJob || 'legacy-job'
-                            }));
-                            
-                            console.log('✅ Users data loaded from API:', users.length, 'users');
-                            console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
-                                name: u.name, 
-                                email: u.email, 
-                                jobCount: Object.keys(u.jobs || {}).length,
-                                contractStatus: u.contractStatus,
-                                contractId: u.contractId
-                            })));
-                            
-                            // Now merge with uploaded contracts data to get the most up-to-date contract information
-                            await mergeUsersDataWithUploadedContracts();
-                            return;
-                        }
-                    }
-                } catch (fetchError) {
-                    console.warn('⚠️ Could not fetch users.json, trying localStorage...', fetchError);
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const fsUsersObj = await window.FirestoreDataManager.getUsers();
+                    users = Object.entries(fsUsersObj || {}).map(([name, user]) => ({
+                        name: name,
+                        email: user.profile?.email,
+                        password: null,
+                        approvedDate: user.profile?.approvedDate,
+                        contractUrl: user.contract?.contractUrl || 'contract.html',
+                        // CONTRACT STATUS FIELDS - CRITICAL!
+                        contractStatus: user.contract?.contractStatus || 'pending',
+                        contractSignedDate: user.contract?.contractSignedDate,
+                        contractUploadedDate: user.contract?.contractUploadedDate,
+                        contractId: user.contract?.contractId,
+                        // PAYMENT FIELDS - CRITICAL!
+                        paymentMethod: user.paymentMethod || null,
+                        paymentStatus: user.paymentStatus || 'pending',
+                        // Handle both old single job format and new multiple jobs format
+                        jobs: user.jobs && Object.keys(user.jobs).length ? user.jobs : {
+                            'legacy-job': {
+                                id: 'legacy-job',
+                                role: user.profile?.role,
+                                location: user.profile?.location,
+                                projectStart: user.application?.eventDate || user.profile?.projectStart,
+                                rate: user.profile?.rate,
+                                status: 'upcoming',
+                                projectType: 'Legacy Job',
+                                description: `${user.profile?.role} position`
+                            }
+                        },
+                        primaryJob: user.primaryJob || Object.keys(user.jobs || {})[0] || 'legacy-job'
+                    }));
+                    console.log('✅ Users data loaded from Firestore:', users.length, 'users');
+                    console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
+                        name: u.name, 
+                        email: u.email, 
+                        jobCount: Object.keys(u.jobs || {}).length,
+                        contractStatus: u.contractStatus,
+                        contractId: u.contractId
+                    })));
+                    await mergeUsersDataWithUploadedContracts();
+                } else {
+                    users = [];
+                    console.warn('⚠️ Firestore unavailable; no JSON fallback (disabled)');
                 }
-                
-                // If API failed, do not fallback to local storage/hardcoded; prefer empty to avoid stale data
-                users = [];
-                console.log('⚠️ Users API unavailable; using empty users array to avoid stale data');
             } catch (error) {
                 console.error('❌ Error loading users data:', error);
                 users = [];
@@ -923,47 +905,19 @@
             }
         }
 
-        // Load uploaded contracts from centralized users.json
+        // Load uploaded contracts (Firestore only)
         async function loadUploadedContracts() {
             try {
-                console.log('🔄 Loading contracts from centralized users.json...');
-                const response = await fetch(`${API_BASE}/api/users`);
-                if (response.ok) {
-                    const usersData = await response.json();
-                    uploadedContracts = [];
-                    
-                    // Extract contract data from centralized users data
-                    for (const [userName, userData] of Object.entries(usersData.users)) {
-                        if (userData.contract && userData.contract.contractId) {
-                            // Convert user contract data to uploaded contracts format
-                            const contractData = {
-                                contractId: userData.contract.contractId,
-                                freelancerName: userData.contract.freelancerName || userName,
-                                freelancerEmail: userData.contract.freelancerEmail || userData.profile?.email,
-                                role: userData.contract.role || userData.profile?.role,
-                                rate: userData.contract.rate || userData.profile?.rate,
-                                location: userData.contract.location || userData.profile?.location,
-                                fileName: userData.contract.fileName,
-                                fileSize: userData.contract.fileSize,
-                                uploadDate: userData.contract.uploadDate,
-                                status: userData.contract.status,
-                                githubUrl: userData.contract.githubUrl,
-                                notes: userData.contract.notes,
-                                contractDate: userData.contract.contractDate,
-                                signedDate: userData.contract.signedDate
-                            };
-                            uploadedContracts.push(contractData);
-                            console.log(`✅ Found contract for: ${userName} (${contractData.fileName})`);
-                        }
-                    }
-                    
-                    console.log('✅ Contracts loaded from centralized users.json:', uploadedContracts.length, 'contracts');
+                console.log('🔄 Loading uploaded contracts from Firestore (contracts collection)...');
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    uploadedContracts = await window.FirestoreDataManager.getContracts();
+                    console.log('✅ Uploaded contracts loaded from Firestore:', uploadedContracts.length, 'contracts');
                 } else {
-                    console.warn('⚠️ Could not load users.json, using empty array');
                     uploadedContracts = [];
+                    console.warn('⚠️ Firestore unavailable; contracts list empty (no JSON fallback)');
                 }
             } catch (error) {
-                console.error('❌ Error loading contracts from centralized data:', error);
+                console.error('❌ Error loading contracts from Firestore:', error);
                 uploadedContracts = [];
             }
         }
@@ -1425,35 +1379,62 @@
             return null;
         }
 
-        // Check if authenticated user exists in our system (simplified)
+        // Check or provision authenticated user in Firestore, then enter portal
         async function checkUserInSystem(email) {
             console.log('🔍 Checking user in system:', email);
-            
-            // Validate email before proceeding
             if (!email || !email.trim()) {
                 console.warn('⚠️ Invalid email provided');
                 return;
             }
-            
+
+            // Always pull latest users from Firestore
             await loadUsersData();
-            
-            // Try to find user by email (case-insensitive)
-            const user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
-            
+
+            // Find user by email (case-insensitive)
+            let user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+
+            // If not found, auto-provision a minimal user record in Firestore
+            if (!user && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                try {
+                    const nameFromEmail = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    const userDocId = nameFromEmail || email;
+                    await window.FirestoreDataManager.setUser(userDocId, {
+                        profile: { email, name: nameFromEmail },
+                        contract: {},
+                        jobs: {},
+                        primaryJob: '',
+                        paymentMethod: '',
+                        paymentStatus: 'pending'
+                    });
+                    // Reload to include the newly created user
+                    await loadUsersData();
+                    user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+                    console.log('✅ Auto-provisioned user in Firestore:', userDocId);
+                } catch (e) {
+                    console.warn('⚠️ Auto-provision failed (continuing if purely auth-based access is acceptable):', e?.message || e);
+                }
+            }
+
             if (user) {
-                console.log('✅ User found in system:', user.name);
+                console.log('✅ User found in system:', user.name || email);
                 currentUser = user;
                 sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(user));
                 console.log('🔍 About to call showUserPortal()');
                 showUserPortal();
                 console.log('🔍 showUserPortal() called');
             } else {
-                // User not found in our system
-                console.warn('⚠️ User not found in system:', email);
+                // As a last resort, allow viewing portal with auth-only session if design permits
+                if (auth && auth.currentUser && auth.currentUser.email && auth.currentUser.email.toLowerCase() === email.toLowerCase()) {
+                    console.warn('⚠️ No Firestore profile yet; proceeding with auth-only session');
+                    currentUser = { name: email.split('@')[0], email, jobs: {}, primaryJob: '', paymentStatus: 'pending' };
+                    sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(currentUser));
+                    showUserPortal();
+                    return;
+                }
+                console.warn('⚠️ User not found in system and cannot provision:', email);
                 console.log('📋 Available users:', users.map(u => ({ name: u.name, email: u.email })));
-                // Only show error if user is actually trying to access the system
                 if (document.getElementById('userPortal').style.display !== 'block') {
-                    showNotification('Account not found in system. Please contact support.', 'error');
+                    showNotification('Account not found. Please contact support.', 'error');
                 }
             }
         }
