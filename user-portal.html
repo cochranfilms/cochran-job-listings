@@ -10374,7 +10374,13 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         #loginScreen .quantum-portal,
         #loginScreen .portal-rings,
         #loginScreen .holographic-logo,
-        #loginScreen .portal-identity { display: none !important; }
+        #loginScreen .portal-identity,
+        #loginScreen .ambient-lights,
+        #loginScreen .data-streams,
+        #loginScreen .data-stream { display: none !important; }
+
+        /* Ensure neural background sits behind */
+        #loginScreen .neural-background { z-index: 0 !important; }
 
         /* Card */
         #loginScreen .ai-login-card {
@@ -10385,6 +10391,7 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             backdrop-filter: var(--backdrop);
             box-shadow: var(--shadow-lg);
             padding: 36px 28px;
+            position: relative; z-index: 10005;
         }
 
         /* Header */
