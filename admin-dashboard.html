@@ -899,7 +899,11 @@
                             showDashboard();
                         } else {
                             console.log('❌ User does not have admin privileges');
-                            await auth.signOut();
+                            // Do not sign the user out; just show the login screen and notify
+                            if (typeof showNotification === 'function') {
+                                showNotification('Access denied. Admin privileges required.', 'error');
+                            }
+                            showLoginScreen();
                         }
                     }
                 }

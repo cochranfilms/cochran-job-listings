@@ -56,31 +56,24 @@ This document outlines the cleanup procedures and systems used in the Cochran Fi
 
 ## 🎨 User Portal Login Redesign Cleanup
 
-### New Addition: Modern Apple Glass Login Design Cleanup
+### New Addition: AI-Style Neural Glass Login Cleanup
 The user portal login redesign includes cleanup procedures to maintain the new glass-morphism design and remove old animated elements.
 
 #### Removed Elements
-- **Floating Elements**: Removed animated 3D floating icons (🎬📹🎥✨🌟)
-- **Old Background**: Replaced with modern gradient background
+- **Old Background**: Replaced with neural network canvas + holographic particle system
 - **Input Icons**: Removed old input field icons and lines
 - **3D Animations**: Replaced with subtle glass effects and shadows
 
 #### Design Cleanup
 - **CSS Variables**: Updated to use modern design tokens
-- **Glass Effects**: Implemented backdrop-filter blur effects
+- **Glass Effects**: Implemented backdrop-filter blur effects with strong isolation of `#loginScreen` to avoid external overrides
 - **Responsive Design**: Added mobile-first responsive breakpoints
 - **Accessibility**: Improved focus states and contrast
 
 #### Cleanup Commands
 ```bash
-# Clean up old login styles
-npm run cleanup:login-styles
-
-# Remove old floating elements
-npm run cleanup:floating-elements
-
-# Update design system
-npm run cleanup:design-system
+# Normalize login assets and remove legacy remnants
+npm run cleanup:login
 ```
 
 ## 🔔 Enhanced Notification System Cleanup

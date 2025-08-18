@@ -51,6 +51,11 @@ This document describes the comprehensive testing system for the Cochran Films a
 - If an authenticated email has no Firestore profile, the portal auto-provisions a minimal user doc and proceeds.
 - Payment method updates now write directly to Firestore (`FirestoreDataManager.setUser`) and no longer call `/api/users` or GitHub file APIs.
 - Auth observer is debounced and guarded to prevent transient sign-outs during initialization; UI no longer flips back to the login screen on brief nulls.
+  - 2025-08-18 refinement: increased null-auth debounce from 3000ms to 5000ms in `user-portal.html` to further reduce spurious logout flicker during slow Firebase init.
+
+### Admin Dashboard: Non-admin Handling (2025-08-18)
+- During initialization, if a signed-in user lacks admin privileges, the app no longer calls `auth.signOut()`. Instead, it shows the login screen with an "Access denied" notification. This prevents kicking users out of other tabs.
+- File: `admin-dashboard.html` (init block around existing user check)
 
 #### Hotfix: Login 405 and JS Parse Error (2025-08-18)
 - Fixed a malformed async block in `user-portal.html` that caused a JavaScript parse error before `handleLogin()` bound, making the login form fall back to an HTTP POST to the page and return HTTP 405.
