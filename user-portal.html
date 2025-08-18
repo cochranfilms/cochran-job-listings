@@ -3037,6 +3037,11 @@
                 await loadPerformanceReviews();
             }
             
+            // Ensure a primary job exists for fallback
+            if (!currentUser.primaryJob && currentUser.jobs && Object.keys(currentUser.jobs).length) {
+                try { currentUser.primaryJob = Object.keys(currentUser.jobs)[0]; } catch (_) {}
+            }
+
             // Get the selected job or fall back to primary job
             const selectedJob = getSelectedJob();
             console.log('Selected job:', selectedJob);
@@ -3052,30 +3057,38 @@
                 return;
             }
 
-            // Get project status for this job from users data (not project-status.json)
+            // Get project status for this job from users data with robust fallbacks
             const userJob = currentUser.jobs[selectedJob.id] || currentUser.jobs[currentUser.primaryJob] || null;
             const jobProjectStatus = userJob ? {
-                projectStatus: userJob.projectStatus || 'upcoming',
+                projectStatus: userJob.projectStatus || currentUser.profile?.projectStatus || 'upcoming',
                 paymentStatus: userJob.paymentStatus || 'pending'
             } : {
-                projectStatus: 'upcoming',
+                projectStatus: currentUser.profile?.projectStatus || 'upcoming',
                 paymentStatus: 'pending'
             };
 
             // Display the selected job's information
+            const profileProjectDate = (currentUser.profile && currentUser.profile.projectDate) || '';
+            const effectiveProjectStart = (userJob && (userJob.projectStart || userJob.date)) || profileProjectDate || selectedJob.projectStart || selectedJob.date || '';
+            const effectiveProjectStatus = jobProjectStatus.projectStatus || 'upcoming';
+
             const jobInfo = {
                 role: selectedJob.title || selectedJob.role || 'Current Position',
                 location: selectedJob.location || 'Location TBD',
-                projectStart: selectedJob.projectStart || selectedJob.date || 'Start Date TBD',
+                projectStart: effectiveProjectStart || 'Start Date TBD',
                 rate: selectedJob.rate || 'Rate TBD',
-                status: jobProjectStatus.projectStatus || getJobStatus(selectedJob.projectStart),
+                status: effectiveProjectStatus || getJobStatus(effectiveProjectStart),
                 paymentStatus: jobProjectStatus.paymentStatus || 'pending',
                 projectType: selectedJob.projectType || 'Project',
                 description: selectedJob.description || 'Project details to be provided.'
             };
 
             // Add job selector if user has multiple jobs
-            const userJobsArray = Object.values(currentUser.jobs || {}).map((j, idx) => ({...j, id: j.id || j.jobId || Object.keys(currentUser.jobs)[idx]}));
+            const userJobsArray = Object.values(currentUser.jobs || {}).map((j, idx) => ({
+                ...j,
+                id: j.id || j.jobId || Object.keys(currentUser.jobs)[idx],
+                projectStart: j.projectStart || j.date || (currentUser.profile && currentUser.profile.projectDate) || ''
+            }));
             const jobSelectorHTML = userJobsArray.length > 1 ? `
                 <div class="job-selector-header">
                     <h3>Your Jobs:</h3>
