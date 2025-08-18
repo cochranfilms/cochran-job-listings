@@ -48,33 +48,35 @@ const JobManager = {
         }
     },
 
-    // Load jobs from API
+    // Load jobs (Firestore first, fallback to JSON API)
     async loadJobs() {
         try {
             this.state.isLoading = true;
-            
             if (window.LoadingManager) {
                 window.LoadingManager.show('Loading jobs...');
             }
-            
-            const response = await fetch('/api/jobs-data');
-            if (response.ok) {
-                const data = await response.json();
-                this.state.jobs = data.jobs || [];
-                console.log(`✅ Loaded ${this.state.jobs.length} jobs`);
+            if (window.FirestoreDataManager && typeof window.FirestoreDataManager.isAvailable === 'function' && window.FirestoreDataManager.isAvailable()) {
+                const listings = await window.FirestoreDataManager.getJobListings();
+                this.state.jobs = Array.isArray(listings) ? listings : [];
+                console.log(`✅ Loaded ${this.state.jobs.length} jobs (Firestore)`);
             } else {
-                throw new Error(`Failed to load jobs: ${response.status}`);
+                const response = await fetch('/api/jobs-data');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.state.jobs = data.jobs || [];
+                    console.log(`✅ Loaded ${this.state.jobs.length} jobs (API)`);
+                } else {
+                    throw new Error(`Failed to load jobs: ${response.status}`);
+                }
             }
-            
         } catch (error) {
             console.error('❌ Error loading jobs:', error);
             if (window.NotificationManager) {
-                window.NotificationManager.error('Failed to load jobs', { 
+                window.NotificationManager.error('Failed to load jobs', {
                     title: 'Load Error',
-                    details: error.message 
+                    details: error.message
                 });
             }
-            // Initialize with empty jobs array
             this.state.jobs = [];
         } finally {
             this.state.isLoading = false;

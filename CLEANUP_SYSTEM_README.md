@@ -228,6 +228,7 @@ The Firestore database integration system provides real-time data synchronizatio
 - **Authentication Integration**: Seamless Firebase Auth integration with existing systems
 - **Error Handling**: Comprehensive error handling for Firebase operations
 - **Fallback Systems**: Graceful fallback to JSON APIs when Firestore unavailable
+  - Note (2025-08-18): Modular `UserManager` and `JobManager` use Firestore-first. Deprecated JSON endpoints `/api/users` and `/api/jobs-data` intentionally return 410 (Gone) and are retained only for temporary fallback. Cleanup tasks must not re-enable these endpoints.
 
 #### Data Management Cleanup
 - **Real-time Listeners**: Automatic data synchronization across all clients

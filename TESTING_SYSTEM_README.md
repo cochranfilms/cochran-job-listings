@@ -38,6 +38,13 @@ After applying cleanup, re-test the main flows:
 ## Overview
 This document describes the comprehensive testing system for the Cochran Films admin dashboard and user management system.
 
+### Modular Managers Firestore-First Loading (2025-08-18)
+- User and Job managers in `admin-dashboard-modular/js/users/user-manager.js` and `admin-dashboard-modular/js/jobs/job-manager.js` now load from Firestore first and only attempt JSON API fallback if Firestore is unavailable.
+- The legacy endpoints `/api/users` and `/api/jobs-data` intentionally return 410 (Gone). Seeing 410s is expected only if Firestore is not available. In normal operation with Firebase initialized, managers should not hit these endpoints.
+- Quick test:
+  - Open the admin dashboard, sign in, and confirm users and jobs load without 410 errors from the modular managers.
+  - Temporarily disable Firebase initialization to observe fallback behavior; managers will attempt the JSON endpoints and report errors (by design, since endpoints are deprecated).
+
 ## Landing Page Slideshow/Header Merge (2025-08-17)
 
 - The standalone header in `index.html` has been merged into the first slide of the pitch slideshow to focus messaging on creators joining the team.

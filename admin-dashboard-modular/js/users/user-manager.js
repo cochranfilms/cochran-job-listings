@@ -47,33 +47,36 @@ const UserManager = {
         }
     },
 
-    // Load users from API
+    // Load users (Firestore first, fallback to JSON API)
     async loadUsers() {
         try {
             this.state.isLoading = true;
-            
             if (window.LoadingManager) {
                 window.LoadingManager.show('Loading users...');
             }
-            
-            const response = await fetch('/api/users');
-            if (response.ok) {
-                const data = await response.json();
-                this.state.users = data.users || {};
-                console.log(`✅ Loaded ${Object.keys(this.state.users).length} users`);
+            // Prefer Firestore if available
+            if (window.FirestoreDataManager && typeof window.FirestoreDataManager.isAvailable === 'function' && window.FirestoreDataManager.isAvailable()) {
+                const users = await window.FirestoreDataManager.getUsers();
+                this.state.users = users || {};
+                console.log(`✅ Loaded ${Object.keys(this.state.users).length} users (Firestore)`);
             } else {
-                throw new Error(`Failed to load users: ${response.status}`);
+                const response = await fetch('/api/users');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.state.users = data.users || {};
+                    console.log(`✅ Loaded ${Object.keys(this.state.users).length} users (API)`);
+                } else {
+                    throw new Error(`Failed to load users: ${response.status}`);
+                }
             }
-            
         } catch (error) {
             console.error('❌ Error loading users:', error);
             if (window.NotificationManager) {
-                window.NotificationManager.error('Failed to load users', { 
+                window.NotificationManager.error('Failed to load users', {
                     title: 'Load Error',
-                    details: error.message 
+                    details: error.message
                 });
             }
-            // Initialize with empty users object
             this.state.users = {};
         } finally {
             this.state.isLoading = false;
@@ -559,15 +562,21 @@ const UserManager = {
     // Assign jobs to user based on role and location
     async assignJobsToUser(role, location) {
         try {
-            // Load jobs data
-            const jobsResponse = await fetch('/api/jobs-data');
-            const jobsData = await jobsResponse.json();
+            // Load jobs data (Firestore first, fallback to JSON API)
+            let jobsList = [];
+            if (window.FirestoreDataManager && typeof window.FirestoreDataManager.isAvailable === 'function' && window.FirestoreDataManager.isAvailable()) {
+                jobsList = await window.FirestoreDataManager.getJobListings();
+            } else {
+                const jobsResponse = await fetch('/api/jobs-data');
+                const jobsData = await jobsResponse.json();
+                jobsList = jobsData.jobs || [];
+            }
             
             const assignedJobs = {};
             let primaryJob = null;
             
             // Match jobs based on role and location
-            jobsData.jobs.forEach((job, idx) => {
+            jobsList.forEach((job, idx) => {
                 if (job.title.toLowerCase().includes(role.toLowerCase()) || 
                     role.toLowerCase().includes(job.title.toLowerCase())) {
                     
@@ -586,7 +595,7 @@ const UserManager = {
                         paymentStatus: 'pending',
                         assignedDate: new Date().toISOString().split('T')[0],
                         projectStart: 'TBD',
-                        jobRef: { source: 'jobs-data', index: idx, key: `${job.title}|${job.date}` }
+                        jobRef: { source: 'jobs', index: idx, key: `${job.title}|${job.date}` }
                     };
                     
                     if (!primaryJob) {
