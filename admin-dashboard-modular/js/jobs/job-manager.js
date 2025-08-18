@@ -48,7 +48,7 @@ const JobManager = {
         }
     },
 
-    // Load jobs (Firestore first, fallback to JSON API)
+    // Load jobs (Firestore only)
     async loadJobs() {
         try {
             this.state.isLoading = true;
@@ -60,14 +60,8 @@ const JobManager = {
                 this.state.jobs = Array.isArray(listings) ? listings : [];
                 console.log(`✅ Loaded ${this.state.jobs.length} jobs (Firestore)`);
             } else {
-                const response = await fetch('/api/jobs-data');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.state.jobs = data.jobs || [];
-                    console.log(`✅ Loaded ${this.state.jobs.length} jobs (API)`);
-                } else {
-                    throw new Error(`Failed to load jobs: ${response.status}`);
-                }
+                this.state.jobs = [];
+                console.warn('⚠️ Firestore unavailable; skipping API fallback');
             }
         } catch (error) {
             console.error('❌ Error loading jobs:', error);
@@ -113,11 +107,13 @@ const JobManager = {
                 updatedAt: new Date().toISOString()
             };
             
-            // Add to jobs array
-            this.state.jobs.push(newJob);
-            
-            // Persist to GitHub
-            await this.updateJobsOnGitHub('create', newJob.title);
+            // Persist to Firestore
+            let jobId = jobData.id || `job-${(jobData.title || 'job').toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setJobListing(jobId, newJob);
+            }
+            // Add to jobs array with id
+            this.state.jobs.push({ id: jobId, ...newJob });
             
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -160,15 +156,19 @@ const JobManager = {
                 throw new Error('Job index out of range');
             }
             
-            // Update job data
+            // Update job data (local)
             this.state.jobs[jobIndex] = {
                 ...this.state.jobs[jobIndex],
                 ...updates,
                 updatedAt: new Date().toISOString()
             };
             
-            // Persist to GitHub
-            await this.updateJobsOnGitHub('update', this.state.jobs[jobIndex].title);
+            // Persist to Firestore
+            const jobId = this.state.jobs[jobIndex].id;
+            if (jobId && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                const { id, ...payload } = this.state.jobs[jobIndex];
+                await window.FirestoreDataManager.setJobListing(jobId, payload);
+            }
             
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -220,11 +220,13 @@ const JobManager = {
             
             const removedJob = this.state.jobs[jobIndex];
             
+            // Persist to Firestore
+            const jobId = removedJob && removedJob.id;
+            if (jobId && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.deleteJobListing(jobId);
+            }
             // Remove from jobs array
             this.state.jobs.splice(jobIndex, 1);
-            
-            // Persist to GitHub
-            await this.updateJobsOnGitHub('delete', removedJob.title);
             
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -272,11 +274,14 @@ const JobManager = {
                 updatedAt: new Date().toISOString()
             };
             
-            // Add to jobs array
-            this.state.jobs.push(newJob);
-            
-            // Persist to GitHub
-            await this.updateJobsOnGitHub('duplicate', newJob.title);
+            // Persist to Firestore
+            const jobId = `job-${(newJob.title || 'job').toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                const { id, ...payload } = newJob;
+                await window.FirestoreDataManager.setJobListing(jobId, payload);
+            }
+            // Add to jobs array with id
+            this.state.jobs.push({ id: jobId, ...newJob });
             
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -771,8 +776,16 @@ const JobManager = {
             }
             
             if (updatedCount > 0) {
-                // Persist to GitHub
-                await this.updateJobsOnGitHub('bulk-status-update', `${updatedCount} jobs`);
+                // Persist to Firestore
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    for (const index of jobIndices) {
+                        const job = this.state.jobs[index];
+                        if (job && job.id) {
+                            const { id, ...payload } = job;
+                            await window.FirestoreDataManager.setJobListing(job.id, payload);
+                        }
+                    }
+                }
                 
                 if (window.NotificationManager) {
                     window.NotificationManager.success(
@@ -833,8 +846,14 @@ const JobManager = {
             }
             
             if (deletedJobs.length > 0) {
-                // Persist to GitHub
-                await this.updateJobsOnGitHub('bulk-delete', `${deletedJobs.length} jobs`);
+                // Persist to Firestore
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    for (const job of deletedJobs) {
+                        if (job && job.id) {
+                            await window.FirestoreDataManager.deleteJobListing(job.id);
+                        }
+                    }
+                }
                 
                 if (window.NotificationManager) {
                     window.NotificationManager.success(

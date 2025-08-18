@@ -61,15 +61,8 @@ const UserForm = {
                     }
                 } catch (_) {}
             }
-            // Fallback API
-            const response = await fetch('/api/dropdown-options');
-            if (response.ok) {
-                this.state.dropdownOptions = await response.json();
-                console.log('✅ Loaded dropdown options from API');
-            } else {
-                console.warn('⚠️ Failed to load dropdown options, using defaults');
-                this.state.dropdownOptions = this.getDefaultDropdownOptions();
-            }
+            console.warn('⚠️ Firestore unavailable; using default dropdown options');
+            this.state.dropdownOptions = this.getDefaultDropdownOptions();
         } catch (error) {
             console.warn('⚠️ Error loading dropdown options, using defaults:', error);
             this.state.dropdownOptions = this.getDefaultDropdownOptions();
@@ -330,11 +323,11 @@ const UserForm = {
             const jobSelect = this.state.formElement?.querySelector('select[name="jobSelection"]');
             if (!jobSelect) return;
 
-            const response = await fetch('/api/jobs-data');
-            if (response.ok) {
-                const data = await response.json();
-                const jobs = data.jobs || [];
-                
+            let jobs = [];
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                jobs = (await window.FirestoreDataManager.getJobListings()) || [];
+            }
+                 
                 // Clear existing options except the first one
                 while (jobSelect.children.length > 1) {
                     jobSelect.removeChild(jobSelect.lastChild);
@@ -347,8 +340,7 @@ const UserForm = {
                     jobSelect.appendChild(option);
                 });
                 
-                console.log('✅ Populated job dropdown with', jobs.length, 'jobs');
-            }
+            console.log('✅ Populated job dropdown with', jobs.length, 'jobs');
         } catch (error) {
             console.warn('⚠️ Error populating job dropdown:', error);
         }
@@ -408,8 +400,22 @@ const UserForm = {
                 createdAt: new Date().toISOString()
             };
 
-            // Save to GitHub
-            await this.saveUserToGitHub(newUser);
+            // Save to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setUser(newUser.name, {
+                    profile: {
+                        email: newUser.email,
+                        role: newUser.role,
+                        location: newUser.location,
+                        rate: newUser.rate,
+                        projectType: newUser.projectType,
+                        approvedDate: newUser.approvedDate,
+                        projectDate: newUser.projectDate
+                    },
+                    contract: { contractUrl: newUser.contractUrl, contractStatus: 'pending' },
+                    application: { status: 'pending', updatedAt: new Date().toISOString() }
+                });
+            }
 
             // Show success message
             this.showSuccess('User created successfully!');
@@ -466,8 +472,22 @@ const UserForm = {
                 updatedAt: new Date().toISOString()
             };
 
-            // Update in GitHub
-            await this.updateUserInGitHub(updatedUser, userIndex);
+            // Update in Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setUser(updatedUser.name, {
+                    profile: {
+                        email: updatedUser.email,
+                        role: updatedUser.role,
+                        location: updatedUser.location,
+                        rate: updatedUser.rate,
+                        projectType: updatedUser.projectType,
+                        approvedDate: updatedUser.approvedDate,
+                        projectDate: updatedUser.projectDate
+                    },
+                    contract: { contractUrl: updatedUser.contractUrl },
+                    application: { ...(updatedUser.application || {}), updatedAt: new Date().toISOString() }
+                });
+            }
 
             // Show success message
             this.showSuccess('User updated successfully!');
@@ -508,80 +528,18 @@ const UserForm = {
         return true;
     },
 
-    // Save user to GitHub
-    async saveUserToGitHub(userData) {
-        try {
-            const response = await fetch('/api/github/file/users.json', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Add user: ${userData.name}`,
-                    content: btoa(JSON.stringify(userData, null, 2)),
-                    sha: await this.getUsersFileSHA()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to save user to GitHub');
-            }
-
-            console.log('✅ User saved to GitHub');
-        } catch (error) {
-            console.error('❌ GitHub save failed:', error);
-            throw error;
-        }
-    },
-
-    // Update user in GitHub
-    async updateUserInGitHub(userData, userIndex) {
-        try {
-            const response = await fetch('/api/github/file/users.json', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Update user: ${userData.name}`,
-                    content: btoa(JSON.stringify(userData, null, 2)),
-                    sha: await this.getUsersFileSHA()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update user in GitHub');
-            }
-
-            console.log('✅ User updated in GitHub');
-        } catch (error) {
-            console.error('❌ GitHub update failed:', error);
-            throw error;
-        }
-    },
-
-    // Get users file SHA
-    async getUsersFileSHA() {
-        try {
-            const response = await fetch('/api/github/info');
-            if (response.ok) {
-                const data = await response.json();
-                return data.sha;
-            }
-            return null;
-        } catch (error) {
-            console.warn('⚠️ Could not get file SHA:', error);
-            return null;
-        }
-    },
+    // Save/Update to GitHub deprecated (no-ops)
+    async saveUserToGitHub() { /* deprecated - no-op */ },
+    async updateUserInGitHub() { /* deprecated - no-op */ },
+    async getUsersFileSHA() { return null; },
 
     // Get existing users
     async getExistingUsers() {
         try {
-            const response = await fetch('/api/users');
-            if (response.ok) {
-                const data = await response.json();
-                return data.users || [];
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                const usersObj = await window.FirestoreDataManager.getUsers();
+                // Convert map to array with name field
+                return Object.entries(usersObj || {}).map(([name, data]) => ({ name, ...data.profile, contractUrl: data.contract?.contractUrl }));
             }
             return [];
         } catch (error) {
@@ -755,18 +713,11 @@ const UserForm = {
     // Save dropdown options
     async saveDropdownOptions() {
         try {
-            const response = await fetch('/api/dropdown-options', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(this.state.dropdownOptions)
-            });
-
-            if (response.ok) {
-                console.log('✅ Dropdown options saved');
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setDropdownOptions(this.state.dropdownOptions);
+                console.log('✅ Dropdown options saved to Firestore');
             } else {
-                console.warn('⚠️ Failed to save dropdown options');
+                console.warn('⚠️ Firestore unavailable; cannot save dropdown options');
             }
         } catch (error) {
             console.error('❌ Error saving dropdown options:', error);

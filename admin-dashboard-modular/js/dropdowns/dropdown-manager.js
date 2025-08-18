@@ -35,7 +35,7 @@ const DropdownManager = {
                 });
             }
             
-            // Load dropdown options from API
+            // Load dropdown options from Firestore
             await this.loadDropdownOptions();
             
             // Setup event listeners
@@ -54,7 +54,7 @@ const DropdownManager = {
         }
     },
 
-    // Load dropdown options from API
+    // Load dropdown options (Firestore only)
     async loadDropdownOptions() {
         try {
             this.state.isLoading = true;
@@ -63,8 +63,6 @@ const DropdownManager = {
                 window.LoadingManager.show('Loading dropdown options...');
             }
 
-            // Prefer Firestore
-            let loaded = false;
             if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                 try {
                     const fsOptions = await window.FirestoreDataManager.getDropdownOptions();
@@ -72,20 +70,14 @@ const DropdownManager = {
                         this.state.options = { ...this.state.options, ...fsOptions };
                         this.state.lastSaved = new Date();
                         console.log('✅ Loaded dropdown options from Firestore');
-                        loaded = true;
+                    } else {
+                        console.log('⚠️ No dropdown options in Firestore; using defaults');
                     }
-                } catch (_) {}
-            }
-            if (!loaded) {
-                const response = await fetch('/api/dropdown-options');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.state.options = { ...this.state.options, ...data };
-                    this.state.lastSaved = new Date();
-                    console.log('✅ Loaded dropdown options from API');
-                } else {
-                    console.log('⚠️ Using default dropdown options');
+                } catch (e) {
+                    console.warn('⚠️ Firestore dropdown load failed:', e?.message || e);
                 }
+            } else {
+                console.warn('⚠️ Firestore unavailable; using default dropdown options');
             }
             
         } catch (error) {
@@ -363,7 +355,7 @@ const DropdownManager = {
         console.log(`🗑️ Removed "${removedValue}" from ${category}`);
     },
 
-    // Save dropdown options to API
+    // Save dropdown options to Firestore
     async saveDropdownOptions() {
         try {
             this.state.isLoading = true;
@@ -371,32 +363,18 @@ const DropdownManager = {
             if (window.LoadingManager) {
                 window.LoadingManager.show('Saving dropdown options...');
             }
-
-            const response = await fetch('/api/dropdown-options', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(this.state.options)
-            });
-
-            if (response.ok) {
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setDropdownOptions(this.state.options);
                 this.state.isDirty = false;
                 this.state.lastSaved = new Date();
-                
-                // Update save status display
                 this.updateSaveStatus();
-                
                 if (window.NotificationManager) {
                     window.NotificationManager.success('Dropdown options saved successfully', { title: 'Saved' });
                 }
-                
-                // Trigger options saved event
                 this.triggerEvent('dropdown:optionsSaved', { options: this.state.options });
-                
                 console.log('✅ Dropdown options saved successfully');
             } else {
-                throw new Error(`Failed to save: ${response.status}`);
+                throw new Error('Firestore unavailable');
             }
             
         } catch (error) {

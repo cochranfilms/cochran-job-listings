@@ -407,13 +407,12 @@ const JobList = {
                 window.LoadingManager.showLoading('Loading jobs...');
             }
 
-            // Get jobs from API
-            const response = await fetch('/api/jobs-data');
-            if (response.ok) {
-                const data = await response.json();
-                this.state.jobs = data.jobs || [];
+            // Get jobs from Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                this.state.jobs = (await window.FirestoreDataManager.getJobListings()) || [];
             } else {
-                throw new Error('Failed to load jobs');
+                this.state.jobs = [];
+                console.warn('⚠️ Firestore unavailable; cannot load jobs');
             }
 
             // Apply current filters and display
@@ -926,25 +925,12 @@ const JobList = {
             
             const newStatus = job.status === 'Active' ? 'Inactive' : 'Active';
             
-            // Call API to update job status
-            const response = await fetch('/api/update-job-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    jobTitle: job.title,
-                    newStatus: newStatus
-                })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to update job status');
+            // Update job status in Firestore
+            if (job.id && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                const payload = { ...job, status: newStatus, updatedAt: new Date().toISOString() };
+                delete payload.id;
+                await window.FirestoreDataManager.setJobListing(job.id, payload);
             }
-            
-            const result = await response.json();
-            console.log('✅ Job status updated successfully:', result);
             
             // Update local state
             this.state.jobs[index].status = newStatus;
@@ -984,11 +970,11 @@ const JobList = {
             const progress = progressInput ? Number(progressInput.value) : 0;
             const status = statusSelect ? statusSelect.value : 'upcoming';
 
-            // Load users and fan-out update by jobRef/title match
-            const usersRes = await fetch('/api/users');
-            if (!usersRes.ok) throw new Error('Failed to load users');
-            const usersData = await usersRes.json();
-            const users = usersData.users || {};
+            // Load users from Firestore and fan-out update by jobRef/title match
+            let users = {};
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                users = await window.FirestoreDataManager.getUsers();
+            }
 
             let changes = 0;
             Object.entries(users).forEach(([userName, user]) => {
@@ -1010,15 +996,7 @@ const JobList = {
             });
 
             if (changes > 0) {
-                // Persist via update-users API
-                const saveRes = await fetch('/api/update-users', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ users, action: 'bulk-job-progress', userName: 'multiple' })
-                });
-                if (!saveRes.ok) throw new Error('Failed to save users');
-
-                // Also try to update Firestore assignments if available
+                // Update Firestore assignments
                 try {
                     if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                         await Promise.all(Object.entries(users).map(async ([userName, user]) => {

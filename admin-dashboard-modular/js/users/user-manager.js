@@ -47,27 +47,21 @@ const UserManager = {
         }
     },
 
-    // Load users (Firestore first, fallback to JSON API)
+    // Load users (Firestore only)
     async loadUsers() {
         try {
             this.state.isLoading = true;
             if (window.LoadingManager) {
                 window.LoadingManager.show('Loading users...');
             }
-            // Prefer Firestore if available
+            // Firestore only
             if (window.FirestoreDataManager && typeof window.FirestoreDataManager.isAvailable === 'function' && window.FirestoreDataManager.isAvailable()) {
                 const users = await window.FirestoreDataManager.getUsers();
                 this.state.users = users || {};
                 console.log(`✅ Loaded ${Object.keys(this.state.users).length} users (Firestore)`);
             } else {
-                const response = await fetch('/api/users');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.state.users = data.users || {};
-                    console.log(`✅ Loaded ${Object.keys(this.state.users).length} users (API)`);
-                } else {
-                    throw new Error(`Failed to load users: ${response.status}`);
-                }
+                this.state.users = {};
+                console.warn('⚠️ Firestore unavailable; skipping API fallback');
             }
         } catch (error) {
             console.error('❌ Error loading users:', error);
@@ -128,12 +122,13 @@ const UserManager = {
                 newUser.primaryJob = assignedJobs.primaryJob;
             }
             
-            // Add to users object
+            // Persist to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setUser(userData.name, newUser);
+            }
+            // Update local state
             this.state.users[userData.name] = newUser;
-            
-            // Persist to GitHub
-            await this.updateUsersOnGitHub('create', userData.name);
-            
+
             // Create Firebase account
             await this.createFirebaseAccount(userData.email);
             
@@ -181,14 +176,16 @@ const UserManager = {
                 throw new Error('User not found');
             }
             
-            // Update user data
+            // Update user data (local)
             this.state.users[userName] = {
                 ...this.state.users[userName],
                 ...updates
             };
             
-            // Persist to GitHub
-            await this.updateUsersOnGitHub('update', userName);
+            // Persist to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setUser(userName, this.state.users[userName]);
+            }
             
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -254,8 +251,10 @@ const UserManager = {
                 delete this.state.users[userName];
             }
             
-            // Persist to GitHub
-            await this.updateUsersOnGitHub('hard-delete', userName);
+            // Persist deletion to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.deleteUser(userName);
+            }
             
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -310,8 +309,11 @@ const UserManager = {
             this.state.users._archived[userName] = archivedCopy;
             delete this.state.users[userName];
             
-            // Persist to GitHub
-            await this.updateUsersOnGitHub('archive', userName);
+            // Persist to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setUser(`_archived/${userName}`, archivedCopy);
+                await window.FirestoreDataManager.deleteUser(userName);
+            }
             
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -360,8 +362,11 @@ const UserManager = {
             // Remove from archived
             delete this.state.users._archived[userName];
             
-            // Persist to GitHub
-            await this.updateUsersOnGitHub('restore', userName);
+            // Persist to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setUser(userName, this.state.users[userName]);
+                // Optional: if archived stored under `_archived/<name>` path in Firestore, delete it here.
+            }
             
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -411,8 +416,10 @@ const UserManager = {
             // Send job acceptance email
             await this.sendJobAcceptanceEmail(userName, userData);
             
-            // Persist to GitHub
-            await this.updateUsersOnGitHub('approve', userName);
+            // Persist to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setUser(userName, userData);
+            }
             
             if (window.NotificationManager) {
                 window.NotificationManager.success(
@@ -993,10 +1000,7 @@ const UserManager = {
             user.jobs[jobId].status = mappedStatus; // keep fields aligned
             user.jobs[jobId].updatedAt = new Date().toISOString();
 
-            // Persist to JSON (GitHub)
-            await this.updateUsersOnGitHub('job-status', userName);
-
-            // Also persist to Firestore if available
+            // Persist to Firestore
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     await window.FirestoreDataManager.updateAssignmentStatus(userName, jobId, mappedStatus);
@@ -1047,9 +1051,7 @@ const UserManager = {
             }
             user.jobs[jobId].updatedAt = new Date().toISOString();
 
-            await this.updateUsersOnGitHub('job-progress', userName);
-
-            // Also persist to Firestore if available
+            // Persist to Firestore
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     await window.FirestoreDataManager.updateAssignmentStatus(userName, jobId, user.jobs[jobId].status, pct);
@@ -1104,9 +1106,7 @@ const UserManager = {
 
             if (!user.primaryJob) user.primaryJob = jobId;
 
-            await this.updateUsersOnGitHub('add-job', userName);
-
-            // Firestore assignment create (best-effort)
+            // Firestore assignment create
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     const assignmentPayload = {
@@ -1154,9 +1154,7 @@ const UserManager = {
                 user.primaryJob = Object.keys(user.jobs)[0] || null;
             }
 
-            await this.updateUsersOnGitHub('remove-job', userName);
-
-            // Firestore assignment delete (best-effort)
+            // Firestore assignment delete
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     await window.FirestoreDataManager.deleteAssignment(userName, jobId);
@@ -1181,8 +1179,10 @@ const UserManager = {
             const user = this.state.users[userName];
             if (!user || !user.jobs || !user.jobs[jobId]) throw new Error('User/job not found');
             user.primaryJob = jobId;
-            await this.updateUsersOnGitHub('set-primary-job', userName);
-            // Note: primaryJob remains a user doc field; Firestore user doc will be synced by higher-level flows if needed
+            // Persist primaryJob to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setUser(userName, { primaryJob: user.primaryJob });
+            }
             this.triggerEvent('user:primary-job-set', { userName, jobId });
             return true;
         } catch (error) {

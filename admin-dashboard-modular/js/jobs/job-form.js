@@ -51,7 +51,7 @@ const JobForm = {
         });
     },
 
-    // Load dropdown options from API or use defaults
+    // Load dropdown options (Firestore only or defaults)
     async loadDropdownOptions() {
         try {
             if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
@@ -68,16 +68,7 @@ const JobForm = {
                     }
                 } catch (_) {}
             }
-            const response = await fetch('/api/dropdown-options');
-            if (response.ok) {
-                const data = await response.json();
-                this.state.dropdownOptions = {
-                    types: data.projectTypes || this.state.dropdownOptions.types,
-                    statuses: data.statuses || this.state.dropdownOptions.statuses,
-                    locations: data.locations || this.state.dropdownOptions.locations
-                };
-                console.log('✅ Loaded dropdown options from API');
-            }
+            console.warn('⚠️ Firestore unavailable; using default dropdown options');
         } catch (error) {
             console.log('⚠️ Using default dropdown options');
             // Keep default options
@@ -338,8 +329,11 @@ const JobForm = {
                 createdAt: new Date().toISOString()
             };
 
-            // Save to GitHub
-            await this.saveJobToGitHub(newJob);
+            // Save to Firestore
+            const id = `job-${(newJob.title || 'job').toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setJobListing(id, newJob);
+            }
 
             // Show success message
             this.showSuccess('Job created successfully!');
@@ -393,8 +387,12 @@ const JobForm = {
                 updatedAt: new Date().toISOString()
             };
 
-            // Update in GitHub
-            await this.updateJobInGitHub(updatedJob, jobIndex);
+            // Update in Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                const id = updatedJob.id || `job-${(updatedJob.title || 'job').toLowerCase().replace(/\s+/g, '-')}`;
+                const { id: _omit, ...payload } = updatedJob;
+                await window.FirestoreDataManager.setJobListing(id, payload);
+            }
 
             // Show success message
             this.showSuccess('Job updated successfully!');
@@ -434,80 +432,12 @@ const JobForm = {
         return true;
     },
 
-    // Save job to GitHub
-    async saveJobToGitHub(jobData) {
-        try {
-            const response = await fetch('/api/github/file/jobs-data.json', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Add job: ${jobData.title}`,
-                    content: btoa(JSON.stringify(jobData, null, 2)),
-                    sha: await this.getJobsFileSHA()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to save job to GitHub');
-            }
-
-            console.log('✅ Job saved to GitHub');
-        } catch (error) {
-            console.error('❌ GitHub save failed:', error);
-            throw error;
-        }
-    },
-
-    // Update job in GitHub
-    async updateJobInGitHub(jobData, jobIndex) {
-        try {
-            const response = await fetch('/api/github/file/jobs-data.json', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Update job: ${jobData.title}`,
-                    content: btoa(JSON.stringify(jobData, null, 2)),
-                    sha: await this.getJobsFileSHA()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update job in GitHub');
-            }
-
-            console.log('✅ Job updated in GitHub');
-        } catch (error) {
-            console.error('❌ GitHub update failed:', error);
-            throw error;
-        }
-    },
-
-    // Get jobs file SHA
-    async getJobsFileSHA() {
-        try {
-            const response = await fetch('/api/github/info');
-            if (response.ok) {
-                const data = await response.json();
-                return data.sha;
-            }
-            return null;
-        } catch (error) {
-            console.warn('⚠️ Could not get file SHA:', error);
-            return null;
-        }
-    },
-
-    // Get existing jobs
+    // Get existing jobs (Firestore)
     async getExistingJobs() {
         try {
-            const response = await fetch('/api/jobs-data');
-            if (response.ok) {
-                const data = await response.json();
-                return data.jobs || [];
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                const listings = await window.FirestoreDataManager.getJobListings();
+                return listings || [];
             }
             return [];
         } catch (error) {

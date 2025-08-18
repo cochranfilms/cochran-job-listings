@@ -68,26 +68,19 @@ const ContractManager = {
                 window.LoadingManager.show('Loading contracts...');
             }
 
-            // Prefer Firestore
+            // Firestore only
             if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                 try {
                     const list = await window.FirestoreDataManager.getContracts();
-                    if (Array.isArray(list) && list.length) {
-                        this.state.contracts = list;
-                        console.log(`✅ Loaded ${this.state.contracts.length} contracts (Firestore)`);
-                        return;
-                    }
-                } catch (_) {}
-            }
-
-            // Fallback API
-            const response = await fetch('/api/contracts');
-            if (response.ok) {
-                const data = await response.json();
-                this.state.contracts = data.uploadedContracts || data.contracts || [];
-                console.log(`✅ Loaded ${this.state.contracts.length} contracts (API)`);
+                    this.state.contracts = Array.isArray(list) ? list : [];
+                    console.log(`✅ Loaded ${this.state.contracts.length} contracts (Firestore)`);
+                } catch (e) {
+                    console.warn('⚠️ Firestore contracts load failed:', e?.message || e);
+                    this.state.contracts = [];
+                }
             } else {
-                throw new Error(`Failed to load contracts: ${response.status}`);
+                console.warn('⚠️ Firestore unavailable; skipping API fallback');
+                this.state.contracts = [];
             }
             
         } catch (error) {
@@ -416,8 +409,10 @@ const ContractManager = {
                 ...contractData
             };
 
-            // Save to GitHub
-            await this.saveContractToGitHub(newContract);
+            // Save to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setContract(newContract.id, newContract);
+            }
 
             // Add to local state
             this.state.contracts.push(newContract);
@@ -463,8 +458,10 @@ const ContractManager = {
                 updatedAt: new Date().toISOString()
             };
 
-            // Save to GitHub
-            await this.updateContractInGitHub(updatedContract);
+            // Save to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setContract(contractId, updatedContract);
+            }
 
             // Update local state
             this.state.contracts[contractIndex] = updatedContract;
@@ -503,8 +500,10 @@ const ContractManager = {
                 throw new Error('Contract not found');
             }
 
-            // Delete from GitHub
-            await this.deleteContractFromGitHub(contractId);
+            // Delete from Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.deleteContract(contractId);
+            }
 
             // Remove from local state
             this.state.contracts.splice(contractIndex, 1);
@@ -551,8 +550,10 @@ const ContractManager = {
                 signature: signatureData
             };
 
-            // Save to GitHub
-            await this.updateContractInGitHub(updatedContract);
+            // Save to Firestore
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                await window.FirestoreDataManager.setContract(contractId, updatedContract);
+            }
 
             // Update local state
             this.state.contracts[contractIndex] = updatedContract;
@@ -954,96 +955,16 @@ const ContractManager = {
     },
 
     // Save contract to GitHub (legacy) — Firestore is source of truth
-    async saveContractToGitHub(contractData) {
-        try {
-            const response = await fetch('/api/github/file/contracts.json', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Add contract: ${contractData.userName}`,
-                    content: btoa(JSON.stringify(contractData, null, 2)),
-                    sha: await this.getContractsFileSHA()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to save contract to GitHub');
-            }
-
-            console.log('✅ Contract saved to GitHub');
-        } catch (error) {
-            console.error('❌ GitHub save failed:', error);
-            throw error;
-        }
-    },
+    async saveContractToGitHub() { /* deprecated - no-op */ },
 
     // Update contract in GitHub (legacy)
-    async updateContractInGitHub(contractData) {
-        try {
-            const response = await fetch('/api/github/file/contracts.json', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Update contract: ${contractData.userName}`,
-                    content: btoa(JSON.stringify(contractData, null, 2)),
-                    sha: await this.getContractsFileSHA()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update contract in GitHub');
-            }
-
-            console.log('✅ Contract updated in GitHub');
-        } catch (error) {
-            console.error('❌ GitHub update failed:', error);
-            throw error;
-        }
-    },
+    async updateContractInGitHub() { /* deprecated - no-op */ },
 
     // Delete contract from GitHub
-    async deleteContractFromGitHub(contractId) {
-        try {
-            const response = await fetch('/api/github/file/contracts.json', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Delete contract: ${contractId}`,
-                    sha: await this.getContractsFileSHA()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete contract from GitHub');
-            }
-
-            console.log('✅ Contract deleted from GitHub');
-        } catch (error) {
-            console.error('❌ GitHub delete failed:', error);
-            throw error;
-        }
-    },
+    async deleteContractFromGitHub() { /* deprecated - no-op */ },
 
     // Get contracts file SHA
-    async getContractsFileSHA() {
-        try {
-            const response = await fetch('/api/github/info');
-            if (response.ok) {
-                const data = await response.json();
-                return data.sha;
-            }
-            return null;
-        } catch (error) {
-            console.warn('⚠️ Could not get file SHA:', error);
-            return null;
-        }
-    },
+    async getContractsFileSHA() { return null; },
 
     // Get contract statistics
     getContractStats() {
