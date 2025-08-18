@@ -287,8 +287,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-17",
       "signedDate": "2025-08-17"
+    },
+    {
+      "contractId": "CF-1755475899279-5CRDT",
+      "freelancerName": "jerry stringer",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Backdrop Photographer Spotlight",
+      "rate": "$300 + Tip",
+      "location": "Douglasville, GA",
+      "fileName": "jerry stringer.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-18T00:11:52.825Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/jerry stringer.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-18",
+      "signedDate": "2025-08-17"
     }
   ],
-  "lastUpdated": "2025-08-17T22:01:15.004Z",
-  "totalContracts": 18
+  "lastUpdated": "2025-08-18T00:11:52.825Z",
+  "totalContracts": 19
 }
