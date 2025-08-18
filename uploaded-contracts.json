@@ -335,8 +335,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-18",
       "signedDate": "2025-08-17"
+    },
+    {
+      "contractId": "CF-1755490834286-FNX46",
+      "freelancerName": "james brown",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Firebase",
+      "rate": "$300",
+      "location": "Atlanta Area",
+      "fileName": "james brown.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-18T04:20:50.873Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/james brown.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-18",
+      "signedDate": "2025-08-18"
     }
   ],
-  "lastUpdated": "2025-08-18T01:04:24.231Z",
-  "totalContracts": 21
+  "lastUpdated": "2025-08-18T04:20:50.873Z",
+  "totalContracts": 22
 }
