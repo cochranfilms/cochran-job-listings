@@ -2449,6 +2449,10 @@
                             <label>Project Start</label>
                             <input id="ue-project" type="date" value="${user.profile?.projectDate || ''}">
                         </div>
+                        <div>
+                            <label>Project Status</label>
+                            <select id="ue-projectStatus"></select>
+                        </div>
                     </div>
                     <div style="padding:14px 18px;border-top:1px solid rgba(255,178,0,0.2);display:flex;justify-content:flex-end;gap:10px;">
                         <button id="ue-cancel" class="btn btn-secondary">Cancel</button>
@@ -2473,10 +2477,12 @@
             const locationValue = user?.profile?.location || primaryJobData?.location || '';
             const rateValue = (primaryJobData && primaryJobData.rate) || user?.profile?.rate || '';
             const projectTypeValue = user?.profile?.projectType || primaryJobData?.type || '';
+            const currentProjectStatus = (primaryJobData && primaryJobData.status) || user?.profile?.projectStatus || 'upcoming';
             fillSelect('#ue-role', (window.dropdownOptions?.roles)||[], roleValue, 'Select…');
             fillSelect('#ue-location', (window.dropdownOptions?.locations)||[], locationValue, 'Select…');
             fillSelect('#ue-rate', (window.dropdownOptions?.rates)||[], rateValue, 'Select…');
             fillSelect('#ue-projectType', (window.dropdownOptions?.projectTypes)||[], projectTypeValue, 'Select…');
+            fillSelect('#ue-projectStatus', ['upcoming','in-progress','active','completed','on-hold','cancelled'], currentProjectStatus, 'Select…');
 
             const close = () => modal.remove();
             modal.querySelector('#ue-close').onclick = close;
@@ -2485,6 +2491,7 @@
 
             modal.querySelector('#ue-save').onclick = async () => {
                 const newName = modal.querySelector('#ue-name').value.trim();
+                const selectedProjectStatus = modal.querySelector('#ue-projectStatus').value || 'upcoming';
                 const updated = {
                     profile: {
                         ...(user.profile||{}),
@@ -2493,13 +2500,26 @@
                         location: modal.querySelector('#ue-location').value,
                         projectType: modal.querySelector('#ue-projectType').value,
                         approvedDate: modal.querySelector('#ue-approved').value,
-                        projectDate: modal.querySelector('#ue-project').value
+                        projectDate: modal.querySelector('#ue-project').value,
+                        projectStatus: selectedProjectStatus
                     }
                 };
+                // Also mirror to user's primary job status if present
+                if ((user.jobs && user.primaryJob && user.jobs[user.primaryJob])) {
+                    const jobsCopy = { ...(user.jobs || {}) };
+                    jobsCopy[user.primaryJob] = { ...(jobsCopy[user.primaryJob]||{}), status: selectedProjectStatus };
+                    updated.jobs = jobsCopy;
+                }
                 // Save to Firestore
                 try {
                     if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                         await window.FirestoreDataManager.setUser(newName, { ...user, ...updated });
+                        // Try to update assignment status for primary job if available
+                        try {
+                            if (user.primaryJob) {
+                                await window.FirestoreDataManager.updateAssignmentStatus(newName, user.primaryJob, selectedProjectStatus);
+                            }
+                        } catch (_) {}
                         // if name changed, remove old key in local state
                         if (newName !== name) { delete window.users[name]; }
                         window.users[newName] = { ...(user||{}), ...updated };
