@@ -1,0 +1,32 @@
+{
+  "users": {
+    "Cody Cochran": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "location": "Atlanta Area",
+        "role": "",
+        "projectType": ""
+      },
+      "contract": {
+        "contractStatus": "pending"
+      },
+      "application": {
+        "status": "pending",
+        "submittedAt": "2025-08-18T01:02:24.589Z",
+        "jobTitle": "Firebase",
+        "eventDate": "2025-08-09",
+        "pay": "$300",
+        "description": "Firestore elements",
+        "phone": "4704202169",
+        "portfolio": "",
+        "source": "apply-html"
+      },
+      "jobs": {},
+      "primaryJob": null
+    }
+  },
+  "statusOptions": {},
+  "lastUpdated": "2025-08-18",
+  "totalUsers": 1,
+  "system": {}
+}
