@@ -883,28 +883,43 @@
                     auth = window.FirebaseConfig.auth;
                     firestore = window.FirebaseConfig.getFirestore();
                     console.log('✅ Firebase initialized in admin dashboard');
-                    
-                    // Check if user is already signed in
-                    const currentUser = auth.currentUser;
-                    if (currentUser) {
-                        console.log('✅ User already signed in:', currentUser.email);
-                        // Check if user has admin privileges
-                        if (isAdminUser(currentUser.email)) {
-                            sessionStorage.setItem('adminDashboardAuthenticated', 'true');
-                            sessionStorage.setItem('adminUser', JSON.stringify({
-                                email: currentUser.email,
-                                uid: currentUser.uid
-                            }));
-                            isAuthenticated = true;
-                            showDashboard();
-                        } else {
-                            console.log('❌ User does not have admin privileges');
-                            // Do not sign the user out; just show the login screen and notify
-                            if (typeof showNotification === 'function') {
-                                showNotification('Access denied. Admin privileges required.', 'error');
+
+                    // Add auth state listener to avoid hydration race causing false logouts
+                    if (auth && typeof auth.onAuthStateChanged === 'function') {
+                        let authNullDebounceTimer = null;
+                        auth.onAuthStateChanged((user) => {
+                            if (authNullDebounceTimer) { clearTimeout(authNullDebounceTimer); authNullDebounceTimer = null; }
+
+                            if (user && user.email) {
+                                // Persist admin session and show dashboard
+                                if (isAdminUser(user.email)) {
+                                    try {
+                                        sessionStorage.setItem('adminDashboardAuthenticated', 'true');
+                                        sessionStorage.setItem('adminUser', JSON.stringify({ email: user.email, uid: user.uid }));
+                                    } catch(_) {}
+                                    setAdminSession(30);
+                                    isAuthenticated = true;
+                                    showDashboard();
+                                } else {
+                                    if (typeof showNotification === 'function') {
+                                        showNotification('Access denied. Admin privileges required.', 'error');
+                                    }
+                                    showLoginScreen();
+                                }
+                                return;
                             }
-                            showLoginScreen();
-                        }
+
+                            // Debounce null user during hydration instead of immediately flipping UI
+                            authNullDebounceTimer = setTimeout(() => {
+                                const notExpired = Date.now() < getAdminSessionExpiry();
+                                const cachedEmail = (function(){ try { return localStorage.getItem('adminDashboardAuthEmail') || ''; } catch(_) { return ''; } })();
+                                if (notExpired && cachedEmail) {
+                                    // Keep dashboard while hydration completes
+                                    return;
+                                }
+                                showLoginScreen();
+                            }, 1500);
+                        });
                     }
                 }
             } catch (error) {

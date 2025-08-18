@@ -138,7 +138,9 @@
                 authNullDebounceTimer = setTimeout(() => {
                     const stillNoUser = !(auth && auth.currentUser && auth.currentUser.email);
                     if (stillNoUser) {
-                        const hasSessionSnapshot = !!sessionStorage.getItem('userPortalAuthEmail');
+                        const cachedEmailLS = (function(){ try { return localStorage.getItem('userPortalAuthEmail') || ''; } catch(_) { return ''; } })();
+                        const cachedEmailSS = (function(){ try { return sessionStorage.getItem('userPortalAuthEmail') || ''; } catch(_) { return ''; } })();
+                        const hasSessionSnapshot = !!(cachedEmailLS || cachedEmailSS);
                         const portalVisible = (document.getElementById('userPortal')?.style.display === 'block');
                         const notExpired = Date.now() < getPortalSessionExpiry();
                         if (isManualSignOut) {
@@ -148,19 +150,18 @@
                             return;
                         } else if (notExpired || hasSessionSnapshot || currentUser || portalVisible) {
                             // Soft-ignore transient nulls within grace period; retry lookup shortly
-                            setTimeout(() => { try { checkUserInSystem(localStorage.getItem('userPortalAuthEmail') || ''); } catch(_) {} }, 3000);
+                            setTimeout(() => { try { checkUserInSystem(cachedEmailLS || cachedEmailSS || ''); } catch(_) {} }, 2000);
                             return;
                         }
                         console.log('❌ User signed out');
                         showLoginScreen();
-                        // If sign-in just failed recently, hint the password reset path
                         const lastErr = sessionStorage.getItem('lastSignInError');
                         if (lastErr) {
                             toast('Having trouble signing in? Ask admin to reset your password.', 'error');
                             sessionStorage.removeItem('lastSignInError');
                         }
                     }
-                }, 5000);
+                }, 3000);
             });
         }
 
