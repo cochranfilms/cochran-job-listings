@@ -111,33 +111,28 @@
             });
         }
 
-        // Load performance reviews from centralized users.json
+        // Load performance reviews from Firestore only (no JSON fallback)
         async function loadPerformanceReviews() {
             try {
-                const response = await fetch(`${API_BASE}/api/users`);
-                
-                if (response.ok) {
-                    const usersData = await response.json();
-                    performanceReviews = {};
-                    
-                    // Extract performance reviews from users data
-                    for (const [userName, userData] of Object.entries(usersData.users)) {
-                        if (userData.performance && userData.profile && userData.profile.email) {
-                            performanceReviews[userData.profile.email] = userData.performance;
+                performanceReviews = {};
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const fsUsersObj = await window.FirestoreDataManager.getUsers();
+                    for (const userData of Object.values(fsUsersObj || {})) {
+                        const email = userData?.profile?.email;
+                        const review = userData?.performance;
+                        if (email && review) {
+                            performanceReviews[email] = review;
                         }
                     }
-                    
-                    // Reduced logging - only log once per session
                     if (!sessionStorage.getItem('performanceReviewsLogged')) {
-                        console.log('✅ Performance reviews loaded from centralized users.json:', Object.keys(performanceReviews).length, 'reviews');
+                        console.log('✅ Performance reviews loaded from Firestore:', Object.keys(performanceReviews).length, 'reviews');
                         sessionStorage.setItem('performanceReviewsLogged', 'true');
                     }
                 } else {
-                    console.warn('⚠️ Could not load users.json, using empty object');
-                    performanceReviews = {};
+                    console.warn('⚠️ Firestore unavailable; performance reviews disabled');
                 }
             } catch (error) {
-                console.error('❌ Error loading performance reviews from centralized data:', error);
+                console.error('❌ Error loading performance reviews (Firestore):', error);
                 performanceReviews = {};
             }
         }
@@ -173,96 +168,45 @@
             return review;
         }
 
-        // Load freelancer data (Firestore-first, API fallback)
+        // Load freelancer data (Firestore only)
         async function loadUsersData() {
             try {
                 console.log('🔄 Loading users data...');
-                
-                // Prefer Firestore single source of truth
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                    try {
-                        const fsUsersObj = await window.FirestoreDataManager.getUsers();
-                        if (fsUsersObj && Object.keys(fsUsersObj).length > 0) {
-                            users = Object.entries(fsUsersObj).map(([name, user]) => ({
-                                name: name,
-                                email: user.profile?.email,
-                                password: null,
-                                approvedDate: user.profile?.approvedDate,
-                                contractUrl: user.contract?.contractUrl || 'contract.html',
-                                contractStatus: user.contract?.contractStatus || 'pending',
-                                contractSignedDate: user.contract?.contractSignedDate,
-                                contractUploadedDate: user.contract?.contractUploadedDate,
-                                contractId: user.contract?.contractId,
-                                paymentMethod: user.paymentMethod || null,
-                                paymentStatus: user.paymentStatus || 'pending',
-                                jobs: user.jobs && Object.keys(user.jobs).length ? user.jobs : {
-                                    'legacy-job': {
-                                        id: 'legacy-job',
-                                        title: user.profile?.role || 'Contractor',
-                                        role: user.profile?.role,
-                                        location: user.profile?.location,
-                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
-                                        rate: user.profile?.rate,
-                                        status: 'upcoming',
-                                        projectType: 'Legacy Job',
-                                        description: `${user.profile?.role || 'Contractor'} position`
-                                    }
-                                },
-                                primaryJob: user.primaryJob || Object.keys(user.jobs || {})[0] || 'legacy-job'
-                            }));
-                            console.log('✅ Users data loaded from Firestore:', users.length, 'users');
-                            await mergeUsersDataWithUploadedContracts();
-                            return;
-                        }
-                    } catch (fsErr) {
-                        console.warn('⚠️ Firestore users read failed, will try API fallback:', fsErr?.message || fsErr);
-                    }
+                    const fsUsersObj = await window.FirestoreDataManager.getUsers();
+                    users = Object.entries(fsUsersObj || {}).map(([name, user]) => ({
+                        name: name,
+                        email: user.profile?.email,
+                        password: null,
+                        approvedDate: user.profile?.approvedDate,
+                        contractUrl: user.contract?.contractUrl || 'contract.html',
+                        contractStatus: user.contract?.contractStatus || 'pending',
+                        contractSignedDate: user.contract?.contractSignedDate,
+                        contractUploadedDate: user.contract?.contractUploadedDate,
+                        contractId: user.contract?.contractId,
+                        paymentMethod: user.paymentMethod || null,
+                        paymentStatus: user.paymentStatus || 'pending',
+                        jobs: user.jobs && Object.keys(user.jobs).length ? user.jobs : {
+                            'legacy-job': {
+                                id: 'legacy-job',
+                                title: user.profile?.role || 'Contractor',
+                                role: user.profile?.role,
+                                location: user.profile?.location,
+                                projectStart: user.application?.eventDate || user.profile?.projectStart,
+                                rate: user.profile?.rate,
+                                status: 'upcoming',
+                                projectType: 'Legacy Job',
+                                description: `${user.profile?.role || 'Contractor'} position`
+                            }
+                        },
+                        primaryJob: user.primaryJob || Object.keys(user.jobs || {})[0] || 'legacy-job'
+                    }));
+                    console.log('✅ Users data loaded from Firestore:', users.length, 'users');
+                    await mergeUsersDataWithUploadedContracts();
+                } else {
+                    users = [];
+                    console.warn('⚠️ Firestore unavailable; no JSON fallback (disabled)');
                 }
-
-                // Fallback: centralized users API
-                try {
-                    const response = await fetch(`${API_BASE}/api/users`);
-                    if (response.ok) {
-                        const jsonData = await response.json();
-                        if (jsonData.users) {
-                            users = Object.entries(jsonData.users).map(([name, user]) => ({
-                                name: name,
-                                email: user.profile?.email,
-                                password: user.profile?.password,
-                                approvedDate: user.profile?.approvedDate,
-                                contractUrl: user.contract?.contractUrl || 'contract.html',
-                                contractStatus: user.contract?.contractStatus || 'pending',
-                                contractSignedDate: user.contract?.contractSignedDate,
-                                contractUploadedDate: user.contract?.contractUploadedDate,
-                                contractId: user.contract?.contractId,
-                                paymentMethod: user.paymentMethod || null,
-                                paymentStatus: user.paymentStatus || 'pending',
-                                jobs: user.jobs || {
-                                    'legacy-job': {
-                                        id: 'legacy-job',
-                                        title: user.profile?.role || 'Contractor',
-                                        role: user.profile?.role,
-                                        location: user.profile?.location,
-                                        projectStart: user.application?.eventDate || user.profile?.projectStart,
-                                        rate: user.profile?.rate,
-                                        status: 'upcoming',
-                                        projectType: 'Legacy Job',
-                                        description: `${user.profile?.role} position`
-                                    }
-                                },
-                                primaryJob: user.primaryJob || 'legacy-job'
-                            }));
-                            console.log('✅ Users data loaded from API:', users.length, 'users');
-                            await mergeUsersDataWithUploadedContracts();
-                            return;
-                        }
-                    }
-                } catch (apiErr) {
-                    console.warn('⚠️ Users API fallback failed:', apiErr?.message || apiErr);
-                }
-                
-                users = [];
-                console.log('⚠️ No users data available');
             } catch (error) {
                 console.error('❌ Error loading users data:', error);
                 users = [];
@@ -272,19 +216,16 @@
         // Load uploaded contracts data
         async function loadUploadedContracts() {
             try {
-                console.log('🔄 Loading uploaded contracts data...');
-                const response = await fetch(`${API_BASE}/api/uploaded-contracts`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    uploadedContracts = data.contracts || [];
-                    console.log('✅ Uploaded contracts loaded:', uploadedContracts.length, 'contracts');
+                console.log('🔄 Loading uploaded contracts from Firestore (contracts collection)...');
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    uploadedContracts = await window.FirestoreDataManager.getContracts();
+                    console.log('✅ Uploaded contracts loaded from Firestore:', uploadedContracts.length, 'contracts');
                 } else {
-                    console.warn('⚠️ Could not load uploaded-contracts.json, using empty array');
                     uploadedContracts = [];
+                    console.warn('⚠️ Firestore unavailable; contracts list empty (no JSON fallback)');
                 }
             } catch (error) {
-                console.error('❌ Error loading uploaded contracts:', error);
+                console.error('❌ Error loading Firestore contracts:', error);
                 uploadedContracts = [];
             }
         }
@@ -1480,77 +1421,8 @@
 
         // Quick user validation without heavy data loading
         async function validateUserQuickly(email, password) {
-            try {
-                // Try to get cached users data first
-                if (users.length === 0) {
-                    // Quick API call without heavy processing
-                    const response = await fetch(`${API_BASE}/api/users`);
-                    if (response.ok) {
-                        const jsonData = await response.json();
-                        if (jsonData.users) {
-                            // Quick user lookup without full data transformation
-                            const userEntry = Object.entries(jsonData.users).find(([name, user]) => {
-                                // Safely check if user and profile exist
-                                if (!user || !user.profile || !user.profile.email) {
-                                    return false;
-                                }
-                                return user.profile.email.toLowerCase() === email.toLowerCase();
-                            });
-                            
-                            if (userEntry) {
-                                const [name, user] = userEntry;
-                                // Check password
-                                if (user.profile?.password === password) {
-                                    // Return minimal user object for immediate login
-                                    return {
-                                        name: name,
-                                        email: user.profile.email,
-                                        password: user.profile.password,
-                                        approvedDate: user.profile.approvedDate,
-                                        contractUrl: user.contract?.contractUrl || 'contract.html',
-                                        contractStatus: user.contract?.contractStatus || 'pending',
-                                        contractSignedDate: user.contract?.contractSignedDate,
-                                        contractUploadedDate: user.contract?.contractUploadedDate,
-                                        contractId: user.contract?.contractId,
-                                        paymentMethod: user.paymentMethod || null,
-                                        paymentStatus: user.paymentStatus || 'pending',
-                                        jobs: user.jobs || {
-                                            'legacy-job': {
-                                                id: 'legacy-job',
-                                                role: user.profile?.role,
-                                                location: user.profile?.location,
-                                                projectStart: user.application?.eventDate || user.profile?.projectStart,
-                                                rate: user.profile?.rate,
-                                                status: 'upcoming',
-                                                projectType: 'Legacy Job',
-                                                description: `${user.profile?.role} position`
-                                            }
-                                        },
-                                        primaryJob: user.primaryJob || 'legacy-job'
-                                    };
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // Use cached data if available
-                    const user = users.find(u => {
-                        // Safely check if user and email exist
-                        if (!u || !u.email) {
-                            return false;
-                        }
-                        return u.email.toLowerCase() === email.toLowerCase();
-                    });
-                    if (user && user.password === password) {
-                        return user;
-                    }
-                }
-                
-                return null;
-            } catch (error) {
-                console.error('Quick validation error:', error);
-                return null;
-            }
+            // Deprecated: JSON-based quick validation removed. Always use Firebase Auth.
+            return null;
         }
 
         // Check if authenticated user exists in our system (simplified)
@@ -2907,7 +2779,7 @@
             // Load performance reviews from API
             loadUserPerformanceReviews(currentUser.email);
         }
-        // Load and display user's performance reviews
+        // Load and display user's performance reviews (Firestore only)
         async function loadUserPerformanceReviews(userEmail) {
             const container = document.getElementById('performanceContent');
             if (!container) {
@@ -2917,40 +2789,17 @@
             
             try {
                 console.log('🔍 Loading performance reviews for:', userEmail);
-                
-                // Load from centralized users.json system
-                let usersData = null;
-                
-                try {
-                    const response = await fetch(`${API_BASE}/api/users`);
-                    if (response.ok) {
-                        usersData = await response.json();
-                        console.log('✅ Users data loaded from API:', usersData);
-                    } else {
-                        console.warn('⚠️ API failed, trying direct JSON file...');
-                        const fallbackResponse = await fetch('users.json');
-                        if (fallbackResponse.ok) {
-                            usersData = await fallbackResponse.json();
-                            console.log('✅ Users data loaded from JSON file:', usersData);
-                        } else {
-                            console.warn('⚠️ JSON file also failed, using empty data');
-                            usersData = { users: {} };
-                        }
-                    }
-                } catch (error) {
-                    console.error('❌ Error loading users data:', error);
-                    usersData = { users: {} };
-                }
-
-                // Find user by email in centralized system
+                // Load from Firestore users collection
                 let userReview = null;
                 let currentUserData = null;
-                
-                for (const [userName, userData] of Object.entries(usersData.users)) {
-                    if (userData.profile && userData.profile.email === userEmail) {
-                        currentUserData = userData;
-                        userReview = userData.performance;
-                        break;
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const fsUsersObj = await window.FirestoreDataManager.getUsers();
+                    for (const [userName, userData] of Object.entries(fsUsersObj || {})) {
+                        if (userData?.profile?.email && userData.profile.email.toLowerCase() === String(userEmail).toLowerCase()) {
+                            currentUserData = userData;
+                            userReview = userData.performance;
+                            break;
+                        }
                     }
                 }
                 
