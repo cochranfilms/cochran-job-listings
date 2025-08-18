@@ -1440,8 +1440,11 @@
             
             if (loginScreen && userPortal) {
                 console.log('🔍 Showing login screen and hiding user portal');
-                loginScreen.style.display = 'flex';
+                loginScreen.style.display = 'grid';
                 userPortal.style.display = 'none';
+                // Ensure AI card is visible
+                const card = loginScreen.querySelector('.ai-login-card');
+                if (card) { card.style.visibility = 'visible'; card.style.opacity = '1'; }
                 console.log('✅ Display properties updated');
             } else {
                 console.error('❌ Elements not found:', { loginScreen: !!loginScreen, userPortal: !!userPortal });
@@ -10367,11 +10370,12 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
                 radial-gradient(1200px 600px at 10% 0%, rgba(99,102,241,0.10), transparent 60%),
                 radial-gradient(1000px 600px at 100% 20%, rgba(255,178,0,0.08), transparent 60%),
                 linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(2,6,23,0.95) 100%);
+            z-index: 99999 !important;
+            visibility: visible !important; opacity: 1 !important;
         }
 
         /* Hide legacy decorative layers that fight the new design */
         #loginScreen .holographic-particles,
-        #loginScreen .quantum-portal,
         #loginScreen .portal-rings,
         #loginScreen .holographic-logo,
         #loginScreen .portal-identity,
