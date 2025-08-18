@@ -253,22 +253,46 @@ class SecureBankModal {
     async saveEncryptedBankData(encryptedData) {
         if (!currentUser) return;
 
-        // Add bank data to current user
-        currentUser.bankData = {
-            encrypted: encryptedData.encrypted,
-            encryptionKey: encryptedData.encryptionKey, // Store the key for admin decryption
-            lastFour: encryptedData.lastFour,
-            bankName: encryptedData.bankName,
-            accountType: encryptedData.accountType,
-            hash: encryptedData.hash,
-            savedAt: new Date().toISOString()
+        // Prepare bank data payload
+        const bankPayload = {
+            bankData: {
+                encrypted: encryptedData.encrypted,
+                encryptionKey: encryptedData.encryptionKey,
+                lastFour: encryptedData.lastFour,
+                bankName: encryptedData.bankName,
+                accountType: encryptedData.accountType,
+                hash: encryptedData.hash,
+                savedAt: new Date().toISOString()
+            },
+            paymentMethod: 'bank-transfer',
+            paymentStatus: 'processing',
+            paymentUpdatedAt: new Date().toISOString()
         };
 
-        // First update payment method
-        await updateUserPaymentMethod(currentUser.email, 'bank');
-        
-        // Then update the bank data in users.json
-        await this.updateBankDataInUsersJson(encryptedData);
+        // Persist to Firestore
+        try {
+            if (window.FirebaseConfig && window.FirebaseConfig.isInitialized) {
+                const db = window.FirebaseConfig.getFirestore();
+                const snap = await db.collection('users')
+                    .where('profile.email', '==', currentUser.email)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    await db.collection('users').doc(doc.id).set(bankPayload, { merge: true });
+                }
+            }
+        } catch (e) {
+            console.warn('⚠️ Firestore bank data save failed, will try JSON archival later:', e?.message || e);
+        }
+
+        // Update local session view
+        currentUser.bankData = bankPayload.bankData;
+        currentUser.paymentMethod = bankPayload.paymentMethod;
+        currentUser.paymentStatus = bankPayload.paymentStatus;
+
+        // Best-effort JSON archival (non-blocking)
+        try { await this.updateBankDataInUsersJson(encryptedData); } catch(_){ }
     }
 
     // Update bank data in users.json

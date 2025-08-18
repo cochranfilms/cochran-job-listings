@@ -279,12 +279,32 @@ export class PaymentManager {
                     .get();
                 if (!snap.empty) {
                     const doc = snap.docs[0];
-                    await db.collection('users').doc(doc.id).set({
+                    const userRef = db.collection('users').doc(doc.id);
+                    // 1) Persist payment fields
+                    await userRef.set({
                         paymentMethod: payments.paymentMethod,
                         paymentStatus: payments.paymentStatus || 'pending',
                         bankDetails: payments.bankDetails || null,
                         paymentUpdatedAt: payments.updatedAt
                     }, { merge: true });
+
+                    // 2) Progress project timeline for all current jobs
+                    const userData = doc.data() || {};
+                    const existingJobs = userData.jobs || {};
+                    const progressedJobs = {};
+                    Object.entries(existingJobs).forEach(([jobId, job]) => {
+                        const currentProjectStatus = job && job.projectStatus ? job.projectStatus : 'upcoming';
+                        const currentPaymentStatus = job && job.paymentStatus ? job.paymentStatus : 'pending';
+                        progressedJobs[jobId] = {
+                            ...(job || {}),
+                            projectStatus: currentProjectStatus === 'upcoming' ? 'in-progress' : currentProjectStatus,
+                            paymentStatus: currentPaymentStatus === 'pending' ? 'processing' : currentPaymentStatus,
+                            updatedAt: new Date().toISOString()
+                        };
+                    });
+                    if (Object.keys(progressedJobs).length > 0) {
+                        await userRef.set({ jobs: progressedJobs }, { merge: true });
+                    }
                 }
             }
             
