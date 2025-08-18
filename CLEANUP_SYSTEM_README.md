@@ -4,6 +4,7 @@
 - New writes from `apply.html` go to Firestore first, then attempt a backup write to `/api/apply`.
 - Contract signing updates the Firestore `users` document and records a `contracts` document. The JSON files are updated afterward as a non-blocking backup.
 - Contract deletion from the admin dashboard removes the Firestore `contracts/<id>` doc, clears the user's `contract` field, and calls `/api/delete-pdf` to remove the PDF (local/GitHub best-effort). Include this in cleanup verification when removing users or purging test contracts.
+ - Firestore auto-migration from JSON backups is disabled by default to avoid accidental repopulation. To run a one-time re-seed, temporarily set `window.FIRESTORE_AUTO_MIGRATION = true;` in the dashboard, reload once, then set it back to false.
 - Admin approve/deny flows persist to Firestore via `FirestoreDataManager.setUser` in addition to current GitHub JSON update routines.
 Cleanup Tests Utility
 

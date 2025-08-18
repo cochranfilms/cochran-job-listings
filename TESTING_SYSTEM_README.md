@@ -6,6 +6,7 @@
   - Mirrors the signed contract into the `contracts` collection with `FirestoreDataManager.setContract(id, data)`.
   - Existing EmailJS flows are unchanged, but now assume Firestore holds the canonical user/job state.
   - Deletion flow: From `admin-dashboard.html` you can now delete a contract directly. This removes the Firestore `contracts/<id>` doc, clears the user's `contract` field, and calls `/api/delete-pdf` to remove the PDF (local/GitHub best-effort).
+  - Auto-migration is disabled by default. To re-seed Firestore from backups intentionally, set `window.FIRESTORE_AUTO_MIGRATION = true;` before loading the dashboard, then refresh.
 
 Smoke tests:
 - Apply Flow: Open `/apply.html`, submit a new application, verify a new doc appears in Firestore `users` with `application.status=pending`, and the user appears in `admin-dashboard.html` pending list. Approve from admin; verify EmailJS fired and Firestore user updated to `application.status=approved` with `profile.approvedDate`.

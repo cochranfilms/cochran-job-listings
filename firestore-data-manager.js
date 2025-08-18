@@ -503,6 +503,11 @@ const FirestoreDataManager = {
 
     async runAutoMigrationIfNeeded() {
         try {
+            // Guardrail: disabled by default; require explicit opt-in
+            if (!window || window.FIRESTORE_AUTO_MIGRATION !== true) {
+                console.log('⏭️ Skipping auto-migration (disabled)');
+                return;
+            }
             // Only allow auto-migration from the admin dashboard to prevent re-seeding from public portals
             if (!window || window.IS_ADMIN_DASHBOARD !== true) {
                 console.log('⏭️ Skipping auto-migration (non-admin context)');
