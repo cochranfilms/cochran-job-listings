@@ -11,11 +11,34 @@ class AdminBankViewer {
 
     // Show bank details for a specific user
     async showUserBankDetails(userName, userData) {
+        // If no bankData on the passed object, try to fetch a fresh copy from Firestore
+        if (!userData.bankData) {
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable) {
+                    // Prefer a single-doc read to avoid overriding UI state
+                    const fresh = await window.FirestoreDataManager.getUser(userName);
+                    if (fresh && (fresh.bankData || fresh.bankDetails)) {
+                        userData = { ...userData, ...fresh };
+                    }
+                }
+            } catch (_) {}
+        }
+        // If still no bankData but bankDetails exists (non-encrypted summary), synthesize minimal view
+        if (!userData.bankData && userData.bankDetails) {
+            userData.bankData = {
+                bankName: userData.bankDetails.bankName || '—',
+                accountType: userData.bankDetails.accountType || '—',
+                lastFour: userData.bankDetails.lastFour || '****',
+                savedAt: userData.paymentUpdatedAt || new Date().toISOString(),
+                encrypted: null,
+                encryptionKey: null
+            };
+        }
         if (!userData.bankData) {
             this.showNoBankDataModal(userName);
             return;
         }
-
+        
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed;
@@ -81,23 +104,24 @@ class AdminBankViewer {
                         <div style="display: grid; gap: 0.5rem;">
                             <div>
                                 <strong style="color: rgba(255,255,255,0.8);">Bank Name:</strong>
-                                <span style="color: white; margin-left: 0.5rem;">${userData.bankData.bankName}</span>
+                                <span style="color: white; margin-left: 0.5rem;">${userData.bankData.bankName || '—'}</span>
                             </div>
                             <div>
                                 <strong style="color: rgba(255,255,255,0.8);">Account Type:</strong>
-                                <span style="color: white; margin-left: 0.5rem;">${userData.bankData.accountType}</span>
+                                <span style="color: white; margin-left: 0.5rem;">${userData.bankData.accountType || '—'}</span>
                             </div>
                             <div>
                                 <strong style="color: rgba(255,255,255,0.8);">Last 4 Digits:</strong>
-                                <span style="color: white; margin-left: 0.5rem;">****${userData.bankData.lastFour}</span>
+                                <span style="color: white; margin-left: 0.5rem;">${userData.bankData.lastFour ? `****${userData.bankData.lastFour}` : '—'}</span>
                             </div>
                             <div>
                                 <strong style="color: rgba(255,255,255,0.8);">Saved:</strong>
-                                <span style="color: white; margin-left: 0.5rem;">${new Date(userData.bankData.savedAt).toLocaleString()}</span>
+                                <span style="color: white; margin-left: 0.5rem;">${userData.bankData.savedAt ? new Date(userData.bankData.savedAt).toLocaleString() : '—'}</span>
                             </div>
                         </div>
                     </div>
                     
+                    ${userData.bankData.encrypted && userData.bankData.encryptionKey ? `
                     <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px;">
                         <h3 style="color: #FFB200; margin-bottom: 1rem;">
                             <i class="fas fa-key"></i> Decrypt Full Details
@@ -133,7 +157,7 @@ class AdminBankViewer {
                                 Decrypt Details
                             </button>
                         </div>
-                    </div>
+                    </div>` : ''}
                     
                     <div id="decryptedDetails" style="display: none; background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px;">
                         <h3 style="color: #FFB200; margin-bottom: 1rem;">

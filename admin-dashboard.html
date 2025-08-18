@@ -2454,16 +2454,25 @@
             document.body.appendChild(modal);
 
             // Populate dropdowns
-            function fillSelect(id, items, value) {
+            function fillSelect(id, items, value, label = 'Select…') {
                 const el = modal.querySelector(id);
                 if (!el) return;
-                el.innerHTML = '<option value="">Select…</option>' + (items||[]).map(v=>`<option value="${v}">${v}</option>`).join('');
+                const opts = Array.isArray(items) ? items.slice() : [];
+                if (value && !opts.includes(value)) {
+                    opts.unshift(value);
+                }
+                el.innerHTML = `<option value="">${label}</option>` + opts.map(v=>`<option value="${v}">${v}</option>`).join('');
                 if (value) el.value = value;
             }
-            fillSelect('#ue-role', (window.dropdownOptions?.roles)||[], user.profile?.role);
-            fillSelect('#ue-location', (window.dropdownOptions?.locations)||[], user.profile?.location);
-            fillSelect('#ue-rate', (window.dropdownOptions?.rates)||[], user.jobs?.[user.primaryJob]?.rate);
-            fillSelect('#ue-projectType', (window.dropdownOptions?.projectTypes)||[], user.profile?.projectType);
+            const primaryJobData = user && user.primaryJob && user.jobs ? user.jobs[user.primaryJob] : null;
+            const roleValue = user?.profile?.role || primaryJobData?.title || user?.application?.jobTitle || '';
+            const locationValue = user?.profile?.location || primaryJobData?.location || '';
+            const rateValue = (primaryJobData && primaryJobData.rate) || user?.profile?.rate || '';
+            const projectTypeValue = user?.profile?.projectType || primaryJobData?.type || '';
+            fillSelect('#ue-role', (window.dropdownOptions?.roles)||[], roleValue, 'Select…');
+            fillSelect('#ue-location', (window.dropdownOptions?.locations)||[], locationValue, 'Select…');
+            fillSelect('#ue-rate', (window.dropdownOptions?.rates)||[], rateValue, 'Select…');
+            fillSelect('#ue-projectType', (window.dropdownOptions?.projectTypes)||[], projectTypeValue, 'Select…');
 
             const close = () => modal.remove();
             modal.querySelector('#ue-close').onclick = close;

@@ -161,18 +161,83 @@ const FirestoreDataManager = {
         try {
             const snapshot = await this.db.collection(this.collections.users).get();
             const users = {};
+            const seenByEmail = new Map();
+            const adminEmails = (window.FirebaseConfig && typeof window.FirebaseConfig.getAdminUsers === 'function')
+                ? (window.FirebaseConfig.getAdminUsers() || [])
+                : [];
+
             snapshot.forEach(doc => {
-                // Map Firestore document to your expected structure
-                const userData = doc.data();
-                users[doc.id] = {
+                const userData = doc.data() || {};
+                const email = (userData.profile && typeof userData.profile.email === 'string')
+                    ? userData.profile.email.toLowerCase()
+                    : '';
+
+                // Exclude admin accounts from general users list
+                if (email && adminEmails.includes(email)) {
+                    return;
+                }
+                // Also exclude obvious admin placeholder docs by id
+                if (!email && doc.id && doc.id.toLowerCase() === 'info') {
+                    return;
+                }
+
+                const normalized = {
                     profile: userData.profile || {},
                     contract: userData.contract || {},
                     application: userData.application || {},
                     jobs: userData.jobs || {},
                     primaryJob: userData.primaryJob || '',
                     paymentMethod: userData.paymentMethod || '',
-                    paymentStatus: userData.paymentStatus || ''
+                    paymentStatus: userData.paymentStatus || '',
+                    // Include secure payment/bank fields so admin can view them
+                    bankData: userData.bankData || null,
+                    bankDetails: userData.bankDetails || null,
+                    paymentUpdatedAt: userData.paymentUpdatedAt || userData.paymentUpdatedAt || null,
+                    paymentHistory: Array.isArray(userData.paymentHistory) ? userData.paymentHistory : []
                 };
+
+                // Deduplicate by profile.email across different doc ids
+                if (email) {
+                    const existingKey = seenByEmail.get(email);
+                    if (existingKey) {
+                        // Merge with preference for existing non-empty values while preserving any fields from the new doc
+                        const current = users[existingKey] || {};
+                        const mergePref = (base, incoming) => {
+                            const out = { ...(base || {}) };
+                            Object.entries(incoming || {}).forEach(([k, v]) => {
+                                const hasCurrent = out[k] !== undefined && out[k] !== null && out[k] !== '';
+                                const hasIncoming = v !== undefined && v !== null && v !== '' && !(typeof v === 'object' && Object.keys(v).length === 0);
+                                if (!hasCurrent && hasIncoming) out[k] = v;
+                            });
+                            return out;
+                        };
+                        // Merge profile/contract/application shallowly but preserve values
+                        const mergedProfile = mergePref(current.profile, normalized.profile);
+                        const mergedContract = mergePref(current.contract, normalized.contract);
+                        const mergedApplication = mergePref(current.application, normalized.application);
+                        // Merge jobs by key
+                        const mergedJobs = { ...(normalized.jobs || {}), ...(current.jobs || {}) };
+                        users[existingKey] = {
+                            profile: mergedProfile,
+                            contract: mergedContract,
+                            application: mergedApplication,
+                            jobs: mergedJobs,
+                            primaryJob: current.primaryJob || normalized.primaryJob,
+                            paymentMethod: current.paymentMethod || normalized.paymentMethod,
+                            paymentStatus: current.paymentStatus || normalized.paymentStatus,
+                            bankData: current.bankData || normalized.bankData,
+                            bankDetails: current.bankDetails || normalized.bankDetails,
+                            paymentUpdatedAt: current.paymentUpdatedAt || normalized.paymentUpdatedAt,
+                            paymentHistory: (Array.isArray(current.paymentHistory) && current.paymentHistory.length)
+                                ? current.paymentHistory
+                                : normalized.paymentHistory
+                        };
+                        return;
+                    }
+                    seenByEmail.set(email, doc.id);
+                }
+
+                users[doc.id] = normalized;
             });
             console.log('✅ Retrieved users from Firestore:', Object.keys(users).length);
             return users;
