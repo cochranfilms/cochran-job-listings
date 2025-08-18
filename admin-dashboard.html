@@ -3986,56 +3986,46 @@
                     await window.FirestoreDataManager.setUser(userName, userData);
                 } catch (e) { console.warn('⚠️ Firestore setUser failed on approve:', e?.message || e); }
 
+                // Attach job by Firestore listing title and set primaryJob; inactivate listing
+                try {
+                    // Ensure jobs are loaded from Firestore
+                    if (!Array.isArray(window.jobs) || window.jobs.length === 0) {
+                        try { window.jobs = await window.FirestoreDataManager.getJobListings(); } catch(_) {}
+                    }
+                    const desiredTitle = (userData.application?.jobTitle || userData.application?.job || userData.application?.title || '').trim();
+                    if (desiredTitle && Array.isArray(window.jobs)) {
+                        const t = desiredTitle.toLowerCase();
+                        const jobPublic = window.jobs.find(j => String(j.title||'').toLowerCase() === t) ||
+                                          window.jobs.find(j => String(j.title||'').toLowerCase().includes(t) || t.includes(String(j.title||'').toLowerCase()));
+                        if (jobPublic) {
+                            const jobId = jobPublic.id || `job-${(jobPublic.title||'').toLowerCase().replace(/[^a-z0-9\s-]/gi,'').replace(/\s+/g,'-')}`;
+                            userData.jobs = userData.jobs || {};
+                            userData.jobs[jobId] = {
+                                id: jobId,
+                                title: jobPublic.title,
+                                date: jobPublic.date || userData.application?.eventDate || '',
+                                location: jobPublic.location || userData.profile?.location || 'Atlanta Area',
+                                rate: jobPublic.pay || jobPublic.rate || '',
+                                description: jobPublic.description || userData.application?.description || '',
+                                type: jobPublic.type || '',
+                                listingStatus: jobPublic.status || 'Active',
+                                status: 'upcoming',
+                                projectStatus: 'upcoming',
+                                paymentStatus: 'pending',
+                                assignedDate: new Date().toISOString().split('T')[0],
+                                jobRef: { source: 'firestore', id: jobId }
+                            };
+                            userData.primaryJob = jobId;
+                            try { await window.FirestoreDataManager.setUser(userName, userData); } catch(_) {}
+                            try { jobPublic.status = 'Inactive'; await window.FirestoreDataManager.setJobListing(jobId, jobPublic); displayJobs(); } catch(_) {}
+                        }
+                    }
+                } catch (err) {
+                    console.warn('⚠️ Could not attach job or set inactive on approval:', err);
+                }
+
                 // Send job acceptance email
                 sendJobAcceptanceEmail(userName, userData);
-                
-                // If user applied via site, ensure their selected job is attached and set the public listing to Inactive
-                if (['apply-form','apply-html','apply'].includes((userData.application?.source||'').toLowerCase())) {
-                    try {
-                        // Resolve job title from existing primaryJob or application form
-                        let primaryJobId = userData.primaryJob;
-                        let resolvedJobTitle = (primaryJobId && userData.jobs) ? (userData.jobs[primaryJobId]?.title) : null;
-                        if (!resolvedJobTitle) {
-                            resolvedJobTitle = userData.application?.jobTitle || userData.application?.job || userData.application?.title || null;
-                        }
-
-                        // Attach the job to the user if missing
-                        if (resolvedJobTitle) {
-                            if (!userData.jobs) userData.jobs = {};
-
-                            // Use the job title as the key if we don't have a generated ID
-                            const jobKey = primaryJobId || resolvedJobTitle;
-                            const jobPublic = Array.isArray(window.jobs) ? window.jobs.find(j => j.title === resolvedJobTitle) : null;
-
-                            if (!userData.jobs[jobKey] && jobPublic) {
-                                userData.jobs[jobKey] = {
-                                    title: jobPublic.title || resolvedJobTitle,
-                                    date: jobPublic.date || userData.application?.eventDate || '',
-                                    location: jobPublic.location || userData.profile?.location || '',
-                                    rate: jobPublic.pay || jobPublic.rate || '',
-                                    description: jobPublic.description || userData.application?.description || '',
-                                    type: jobPublic.type || '',
-                                    status: 'upcoming',                // user-side status
-                                    listingStatus: jobPublic.status || 'Active',
-                                    jobRef: { source: 'jobs-data', index: Array.isArray(window.jobs) ? window.jobs.indexOf(jobPublic) : -1 }
-                                };
-                            }
-
-                            // Ensure primaryJob points at the attached job
-                            if (!userData.primaryJob) userData.primaryJob = jobKey;
-
-                            // Mark public job listing as Inactive and persist
-                            if (jobPublic) {
-                                jobPublic.status = 'Inactive';
-                                displayJobs();
-                                await updateJobsOnGitHub('set-inactive', jobPublic.title || resolvedJobTitle);
-                                try { await window.FirebaseConfig.waitForInit(); await window.FirestoreDataManager.setJobListing(jobPublic.id || (`job-${(jobPublic.title||'').toLowerCase().replace(/\s+/g,'-')}`), jobPublic); } catch(_){ }
-                            }
-                        }
-                    } catch (err) {
-                        console.warn('⚠️ Could not attach job or set inactive on approval:', err);
-                    }
-                }
 
                 // Save updated user data
                 localStorage.setItem('users', JSON.stringify(window.users));
