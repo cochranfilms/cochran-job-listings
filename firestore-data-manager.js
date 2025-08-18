@@ -189,6 +189,8 @@ const FirestoreDataManager = {
                     primaryJob: userData.primaryJob || '',
                     paymentMethod: userData.paymentMethod || '',
                     paymentStatus: userData.paymentStatus || '',
+                    // Include performance reviews so admin and user portal can read them
+                    performance: userData.performance || null,
                     // Include secure payment/bank fields so admin can view them
                     bankData: userData.bankData || null,
                     bankDetails: userData.bankDetails || null,
@@ -261,7 +263,8 @@ const FirestoreDataManager = {
                     jobs: userData.jobs || {},
                     primaryJob: userData.primaryJob || '',
                     paymentMethod: userData.paymentMethod || '',
-                    paymentStatus: userData.paymentStatus || ''
+                    paymentStatus: userData.paymentStatus || '',
+                    performance: userData.performance || null
                 };
             }
             return null;
@@ -283,6 +286,8 @@ const FirestoreDataManager = {
                 primaryJob: userData.primaryJob || '',
                 paymentMethod: userData.paymentMethod || '',
                 paymentStatus: userData.paymentStatus || '',
+                // Persist performance reviews if provided
+                performance: userData.performance || null,
                 lastUpdated: new Date().toISOString()
             };
             

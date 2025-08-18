@@ -2006,11 +2006,32 @@
                                     <span class="label">Reviewer:</span>
                                     <span class="value">${performance.reviewer || 'Admin Team'}</span>
                                 </div>
+                                ${performance.professionalism ? `<div class="info-item"><span class="label">Professionalism:</span><span class="value">${performance.professionalism}</span></div>` : ''}
+                                ${performance.communication ? `<div class="info-item"><span class="label">Communication:</span><span class="value">${performance.communication}</span></div>` : ''}
+                                ${performance.timeliness ? `<div class="info-item"><span class="label">Timeliness:</span><span class="value">${performance.timeliness}</span></div>` : ''}
                             </div>
-                            ${performance.comments ? `
+                            ${performance.strengths && performance.strengths.length ? `
                                 <div class="performance-comments">
-                                    <h4>Comments</h4>
-                                    <p>${performance.comments}</p>
+                                    <h4>Strengths</h4>
+                                    <p>${performance.strengths.join(', ')}</p>
+                                </div>
+                            ` : ''}
+                            ${performance.areasForImprovement && performance.areasForImprovement.length ? `
+                                <div class="performance-comments">
+                                    <h4>Areas for Improvement</h4>
+                                    <p>${performance.areasForImprovement.join(', ')}</p>
+                                </div>
+                            ` : ''}
+                            ${performance.goals && performance.goals.length ? `
+                                <div class="performance-comments">
+                                    <h4>Goals</h4>
+                                    <p>${performance.goals.join(', ')}</p>
+                                </div>
+                            ` : ''}
+                            ${performance.notes ? `
+                                <div class="performance-comments">
+                                    <h4>Notes</h4>
+                                    <p>${performance.notes}</p>
                                 </div>
                             ` : ''}
                         </div>

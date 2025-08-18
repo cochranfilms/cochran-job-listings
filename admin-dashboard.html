@@ -2612,6 +2612,19 @@
                         showNotification('✅ User updated', 'success');
                         displayUsers();
                         updateStats();
+
+                        // If payment has just been set to paid, raise a review-needed alert
+                        try {
+                            const justPaid = jobsCopy[existingJobId].paymentStatus === 'paid';
+                            if (justPaid) {
+                                await addNotification(
+                                    'Performance Review Needed',
+                                    `${newName} has a completed paid project and needs a performance review.`,
+                                    'warning',
+                                    { userEmail: window.users[newName]?.profile?.email, event: 'performance_review_needed', priority: 'high' }
+                                );
+                            }
+                        } catch(_) {}
                     }
                 } catch (e) {
                     console.error(e);
@@ -3717,7 +3730,7 @@
                 
                 // Show if there are completed paid jobs and no performance review exists
                 if (completedJobs.length > 0) {
-                    const existingReview = performanceReviews[userData.profile?.email];
+                    const existingReview = (userData && userData.performance) || null;
                     return !existingReview || existingReview.status === 'pending';
                 }
             }
@@ -5067,20 +5080,69 @@
                     
                     <div style="background: rgba(59,130,246,0.1); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59,130,246,0.3);">
                         <h4 style="color: #3b82f6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                            📝 Review Notes
+                            📝 Review Details
                         </h4>
-                        <textarea placeholder="Enter performance review notes here..." 
-                                  style="
-                                      width: 100%;
-                                      min-height: 100px;
-                                      background: rgba(0,0,0,0.4);
-                                      border: 1px solid rgba(255,178,0,0.3);
-                                      border-radius: 8px;
-                                      color: white;
-                                      padding: 0.75rem;
-                                      font-family: 'Inter', sans-serif;
-                                      resize: vertical;
-                                  "></textarea>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                            <div>
+                                <label style="display:block;color:#9ca3af;font-size:.9rem;margin-bottom:6px;">Overall Rating</label>
+                                <select id="pr-overall" style="width:100%;padding:.6rem;background:rgba(0,0,0,.4);border:1px solid rgba(255,178,0,.3);border-radius:8px;color:white;">
+                                    <option value="">Select…</option>
+                                    <option value="1">1 - Poor</option>
+                                    <option value="2">2 - Fair</option>
+                                    <option value="3">3 - Good</option>
+                                    <option value="4">4 - Very Good</option>
+                                    <option value="5">5 - Excellent</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block;color:#9ca3af;font-size:.9rem;margin-bottom:6px;">Professionalism</label>
+                                <select id="pr-professionalism" style="width:100%;padding:.6rem;background:rgba(0,0,0,.4);border:1px solid rgba(255,178,0,.3);border-radius:8px;color:white;">
+                                    <option value="">Select…</option>
+                                    <option>Excellent</option>
+                                    <option>Good</option>
+                                    <option>Average</option>
+                                    <option>Needs Improvement</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block;color:#9ca3af;font-size:.9rem;margin-bottom:6px;">Communication</label>
+                                <select id="pr-communication" style="width:100%;padding:.6rem;background:rgba(0,0,0,.4);border:1px solid rgba(255,178,0,.3);border-radius:8px;color:white;">
+                                    <option value="">Select…</option>
+                                    <option>Excellent</option>
+                                    <option>Good</option>
+                                    <option>Average</option>
+                                    <option>Needs Improvement</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block;color:#9ca3af;font-size:.9rem;margin-bottom:6px;">Timeliness</label>
+                                <select id="pr-timeliness" style="width:100%;padding:.6rem;background:rgba(0,0,0,.4);border:1px solid rgba(255,178,0,.3);border-radius:8px;color:white;">
+                                    <option value="">Select…</option>
+                                    <option>Excellent</option>
+                                    <option>Good</option>
+                                    <option>Average</option>
+                                    <option>Needs Improvement</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                            <div>
+                                <label style="display:block;color:#9ca3af;font-size:.9rem;margin-bottom:6px;">Strengths (comma separated)</label>
+                                <input id="pr-strengths" type="text" placeholder="e.g., Fast turnaround, Great lighting" style="width:100%;padding:.6rem;background:rgba(0,0,0,.4);border:1px solid rgba(255,178,0,.3);border-radius:8px;color:white;"/>
+                            </div>
+                            <div>
+                                <label style="display:block;color:#9ca3af;font-size:.9rem;margin-bottom:6px;">Areas for Improvement</label>
+                                <input id="pr-improvements" type="text" placeholder="e.g., Audio levels" style="width:100%;padding:.6rem;background:rgba(0,0,0,.4);border:1px solid rgba(255,178,0,.3);border-radius:8px;color:white;"/>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label style="display:block;color:#9ca3af;font-size:.9rem;margin-bottom:6px;">Goals for Next Project</label>
+                            <input id="pr-goals" type="text" placeholder="e.g., Lead a small unit shoot" style="width:100%;padding:.6rem;background:rgba(0,0,0,.4);border:1px solid rgba(255,178,0,.3);border-radius:8px;color:white;"/>
+                        </div>
+                        <div>
+                            <label style="display:block;color:#9ca3af;font-size:.9rem;margin-bottom:6px;">Review Notes</label>
+                            <textarea id="pr-notes" placeholder="Enter performance review notes here..." style="width: 100%; min-height: 100px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,178,0,0.3); border-radius: 8px; color: white; padding: 0.75rem; font-family: 'Inter', sans-serif; resize: vertical;"></textarea>
+                        </div>
                     </div>
                     
                     <div style="display: flex; gap: 1rem; margin-top: 2rem;">
@@ -5127,19 +5189,65 @@
         }
 
         // Submit performance review
-        function submitPerformanceReview(userName) {
+        async function submitPerformanceReview(userName) {
             const modal = document.getElementById('performanceReviewModal');
-            const textarea = modal.querySelector('textarea');
-            const notes = textarea.value.trim();
-            
-            if (!notes) {
-                showNotification('Please enter review notes', 'warning');
-                return;
+            if (!modal) return;
+            const overall = modal.querySelector('#pr-overall')?.value || '';
+            const professionalism = modal.querySelector('#pr-professionalism')?.value || '';
+            const communication = modal.querySelector('#pr-communication')?.value || '';
+            const timeliness = modal.querySelector('#pr-timeliness')?.value || '';
+            const strengths = (modal.querySelector('#pr-strengths')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+            const improvements = (modal.querySelector('#pr-improvements')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+            const goals = (modal.querySelector('#pr-goals')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+            const notes = modal.querySelector('#pr-notes')?.value.trim() || '';
+
+            if (!overall) { showNotification('Please select an overall rating', 'warning'); return; }
+
+            try {
+                // Save to Firestore under users/{userName}.performance
+                const userData = window.users[userName] || {};
+                const email = userData?.profile?.email || '';
+                const review = {
+                    status: 'completed',
+                    overallRating: Number(overall),
+                    professionalism,
+                    communication,
+                    timeliness,
+                    strengths,
+                    areasForImprovement: improvements,
+                    goals,
+                    notes,
+                    reviewer: (window.adminUser && window.adminUser.email) || 'Admin',
+                    reviewDate: new Date().toISOString()
+                };
+
+                const updatedUser = { ...userData, performance: review };
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    await window.FirestoreDataManager.setUser(userName, updatedUser);
+                }
+                window.users[userName] = updatedUser;
+
+                // Notify the creator immediately
+                try {
+                    await addNotification(
+                        'New Performance Review',
+                        `Your performance review is available.`,
+                        'info',
+                        {
+                            actionRequired: false,
+                            priority: 'high',
+                            userEmail: email,
+                            event: 'performance_review_created'
+                        }
+                    );
+                } catch(_) {}
+
+                showNotification(`✅ Performance review submitted for ${userName}`, 'success');
+                modal.remove();
+            } catch (e) {
+                console.error('❌ Failed to submit review:', e);
+                showNotification('❌ Failed to submit review', 'error');
             }
-            
-            // Here you would typically save the review to your backend
-            showNotification(`Performance review submitted for ${userName}`, 'success');
-            modal.remove();
         }
 
         // Download user contract - Prefer stored PDF from /contracts when available, fallback to PDF generation

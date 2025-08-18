@@ -38,6 +38,11 @@ const AuthManager = {
     // Setup Firebase auth state observer
     async setupAuthStateObserver() {
         try {
+            // Respect main dashboard control: avoid duplicate listeners in modular app
+            if (window.MAIN_DASHBOARD_AUTH_OVERRIDE === false) {
+                console.log('✅ Main dashboard has auth control; skipping modular auth observer');
+                return;
+            }
             if (window.FirebaseConfig && window.FirebaseConfig.auth) {
                 // Wait for Firebase to be initialized
                 await window.FirebaseConfig.waitForInit();
@@ -124,9 +129,8 @@ const AuthManager = {
                 { title: 'Access Denied', duration: 10000 }
             );
         }
-        
-        // Sign out the user
-        this.signOut();
+        // Do NOT sign out the global Firebase session here to avoid kicking other tabs/pages
+        // Let the main dashboard decide UI state; just emit event
         
         // Trigger access denied event
         this.triggerEvent('auth:access-denied', { user });
