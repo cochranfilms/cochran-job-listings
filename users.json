@@ -52,10 +52,15 @@
         "email": "codylcochran87@gmail.com",
         "location": "Atlanta Area",
         "role": "",
-        "projectType": ""
+        "projectType": "",
+        "approvedDate": "2025-08-18"
       },
       "contract": {
-        "contractStatus": "pending"
+        "contractStatus": "uploaded",
+        "contractSignedDate": "8/17/2025, 8:35:56 PM",
+        "contractUploadedDate": "2025-08-18T00:36:05.645Z",
+        "fileUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Cody%20Cochran.pdf",
+        "contractId": "CF-1755477356312-YBY3G"
       },
       "application": {
         "status": "pending",
@@ -434,5 +439,10 @@
   "system": {
     "totalReviews": 0,
     "lastUpdated": "2025-08-16"
+  },
+  "_metadata": {
+    "dataSource": "github",
+    "fetchedAt": "2025-08-18T00:36:05.586Z",
+    "totalUsers": 14
   }
 }
