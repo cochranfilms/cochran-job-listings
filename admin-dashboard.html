@@ -1411,10 +1411,8 @@
                 console.error('❌ activeJobs element not found');
             }
             
-            // Count pending reviews (active users who have a signed contract but no review data)
-            const pendingReviews = activeUsers.filter(user => {
-                return user?.contract?.contractStatus === 'signed' && !user?.performanceReview;
-            }).length;
+            // Count pending reviews using paid payment status (or top-level) and absence of Firestore-backed performance
+            const pendingReviews = activeUsers.filter(user => shouldShowPerformanceReview(user)).length;
             const pendingReviewsElement = document.getElementById('pendingReviews');
             if (pendingReviewsElement) {
                 pendingReviewsElement.textContent = pendingReviews;
