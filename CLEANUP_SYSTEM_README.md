@@ -895,6 +895,14 @@ curl http://localhost:8000/api/health
   - `../firestore-data-manager.js`
 - Admin strict mode (optional): add `window.STRICT_FIRESTORE_MODE = true;` before loading admin modules to disable JSON fallbacks in `admin-dashboard-modular/js/utils/realtime-data-manager.js`.
  
+## 2025-08-19 — Admin Init Overlay Removal & User Portal Theme Harmonization
+- Admin: Modular loader overlay is now suppressed when main dashboard controls display/loading via flags (`MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE === false`, `MAIN_DASHBOARD_LOADING_OVERRIDE === false`). This prevents flicker and preserves existing admin styling from first paint.
+- Files: `admin-dashboard-modular/js/app.js`
+- Cleanup note: Do not reintroduce any modal/overlay that blocks first paint in the admin. Any loading indicators should be inline and non-intrusive.
+- User Portal: Introduced `.ai-theme` overrides to harmonize legacy gold accents and heavy dark overlays with the AI theme (reference `index2.html`) without modifying the reference file itself.
+- Files: `user-portal.html`
+- Cleanup note: When adding new UI in the portal, avoid inline `#FFB200` or gold gradients; rely on CSS variables within `.ai-theme`.
+ 
 ## 2025-08-19 — Admin Dashboard Roles Removal
 - Removed the Roles block from Dropdown Management in `admin-dashboard.html`.
 - Role fields in Add User and Edit User are now free-text inputs; no central `roles` list is managed.

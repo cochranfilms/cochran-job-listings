@@ -54,6 +54,14 @@ This document describes the comprehensive testing system for the Cochran Films a
 - Auth observer is debounced and guarded to prevent transient sign-outs during initialization; UI no longer flips back to the login screen on brief nulls.
   - 2025-08-18 refinement: increased null-auth debounce from 3000ms to 5000ms in `user-portal.html` to further reduce spurious logout flicker during slow Firebase init.
 
+### 2025-08-19 — Admin init overlay removed; User Portal AI theme harmonized
+- Admin: The modular app no longer shows an "Initializing Admin Dashboard…" overlay when the main dashboard is in control. The modular loader respects `window.MAIN_DASHBOARD_LOADING_OVERRIDE === false` and skips layout injection if `window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE === false`.
+- Files: `admin-dashboard-modular/js/app.js`
+- Test: Open `admin-dashboard.html`. Verify there is no intermediate initializing banner; the existing dashboard styling appears immediately, stats load, and modular features remain functional.
+- User Portal: Applied AI theme overrides (referenced from `index2.html`) without editing `index2.html`. A `.ai-theme` layer standardizes buttons/accents and softens legacy dark overlays so the AI background is visible.
+- Files: `user-portal.html`
+- Test: Open `user-portal.html` and verify buttons adopt the AI gradient and remaining gold/yellow accents are replaced. Background visuals should not be obscured by heavy dark overlays.
+
 ### Admin Dashboard: Non-admin Handling (2025-08-18)
 ### Admin Dashboard: Roles Removed + Single Job Title Input (2025-08-19)
 - The Job Management "Add New Job" form now uses a single text input `#jobTitle` for the job name/title. It no longer uses a roles-driven dropdown.

@@ -75,6 +75,11 @@ const AdminDashboardApp = {
     // Build redesigned layout shell if not present
     buildLayout() {
         try {
+            // Respect main dashboard control: do not inject modular layout or styles
+            if (window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE === false) {
+                console.log('✅ Main dashboard controls display. Skipping modular layout build.');
+                return;
+            }
             // If layout already exists, wire route handlers and return
             if (document.getElementById('dashboard') && document.getElementById('appContent')) {
                 this.setupRouteHandlers();
@@ -870,6 +875,10 @@ const AdminDashboardApp = {
 
     // Show loading state
     showLoading(message = 'Loading...') {
+        // Respect main dashboard loading control to avoid UI flicker/overlay
+        if (window.MAIN_DASHBOARD_LOADING_OVERRIDE === false) {
+            return;
+        }
         this.state.isLoading = true;
         const loadingIndicator = document.getElementById('loadingIndicator');
         if (loadingIndicator) {
@@ -880,6 +889,10 @@ const AdminDashboardApp = {
 
     // Hide loading state
     hideLoading() {
+        // Respect main dashboard loading control
+        if (window.MAIN_DASHBOARD_LOADING_OVERRIDE === false) {
+            return;
+        }
         this.state.isLoading = false;
         const loadingIndicator = document.getElementById('loadingIndicator');
         if (loadingIndicator) {

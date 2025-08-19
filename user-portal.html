@@ -11061,5 +11061,62 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             init();
         })();
     </script>
+<style>
+    /* AI THEME OVERRIDES (reference: index2.html). Applied non-destructively via .ai-theme */
+    .ai-theme {
+        /* Override legacy gold palette */
+        --primary: #22d3ee;
+        --primary-light: #a78bfa;
+        --primary-dark: #0891b2;
+        --accent: #a78bfa;
+        --info: #6366f1;
+    }
+    /* Buttons */
+    .ai-theme .btn {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: #0b1020;
+        border: none;
+        box-shadow: 0 12px 30px rgba(99,102,241,0.25);
+        transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+    }
+    .ai-theme .btn:hover { transform: translateY(-1px) scale(1.01); box-shadow: 0 16px 36px rgba(99,102,241,0.35); }
+    .ai-theme .btn-primary { background: linear-gradient(135deg, #22d3ee, #a78bfa); color: #0b1020; }
+    .ai-theme .btn-secondary { background: rgba(99,102,241,0.14); color: #c7d2fe; border: 1px solid rgba(99,102,241,0.35); }
+    .ai-theme .btn-success { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+    .ai-theme .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+    .ai-theme .btn-small { padding: 0.5rem 1rem; font-size: 0.9rem; }
+    /* Replace legacy inline gold styles without touching markup */
+    .ai-theme [style*="#FFB200"] { color: var(--primary) !important; text-shadow: none !important; }
+    .ai-theme [style*="rgba(255,178,0"] { color: var(--primary) !important; background: rgba(99,102,241,0.10) !important; border-color: rgba(99,102,241,0.30) !important; }
+    .ai-theme [style*="linear-gradient(135deg, #FFB200"],
+    .ai-theme [style*="#FFD700"] {
+        background: linear-gradient(135deg, #22d3ee, #a78bfa) !important; color: #0b1020 !important;
+    }
+    /* Tone down legacy dark overlays so the AI background is visible */
+    .ai-theme [style*="background: rgba(0, 0, 0"] { background: rgba(15,23,42,0.45) !important; }
+    /* Accents previously using gold badges */
+    .ai-theme .status-icon,
+    .ai-theme .rating-number { color: var(--primary) !important; }
+    /* Inputs focus border */
+    .ai-theme input:focus, .ai-theme textarea:focus, .ai-theme select:focus {
+        border-color: var(--info) !important; box-shadow: 0 0 0 2px rgba(99,102,241,0.25) !important;
+    }
+</style>
+<script>
+    // Enable AI theme
+    (function(){
+        if (!document.documentElement.classList.contains('ai-theme')) {
+            document.documentElement.classList.add('ai-theme');
+        }
+        if (!document.body.classList.contains('ai-theme')) {
+            document.body.classList.add('ai-theme');
+        }
+    })();
+    // Ensure late-inserted elements with inline gold styles are visually harmonized
+    new MutationObserver(() => {
+        document.documentElement.classList.add('ai-theme');
+        document.body.classList.add('ai-theme');
+    }).observe(document.documentElement, { childList: true, subtree: true });
+</script>
 </body>
 </html>
