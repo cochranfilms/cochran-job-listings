@@ -907,3 +907,9 @@ curl http://localhost:8000/api/health
 - Removed the Roles block from Dropdown Management in `admin-dashboard.html`.
 - Role fields in Add User and Edit User are now free-text inputs; no central `roles` list is managed.
 - Any code that previously populated `dropdownOptions.roles` into UI has been neutralized; keep `locations`, `rates`, and `projectTypes` only.
+
+## 2025-08-19 — Project Start Date Resolution
+- Files: `user-portal.html`, `contract.html`
+- Change: Centralized start date resolution via `getEffectiveProjectStartDate()` and updated PDF generation to use broader fallbacks (`jobs[*].projectStart|date`, `profile.projectDate|projectStart`, `application.eventDate`).
+- Result: UI and generated PDFs show the actual date when available instead of "TBD".
+- Rollback: Remove the helper and revert fallbacks in `contract.html` if needed.

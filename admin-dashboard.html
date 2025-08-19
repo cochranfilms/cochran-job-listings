@@ -2407,7 +2407,14 @@
             // Persist to Firestore (single source of truth)
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                    await window.FirestoreDataManager.setUser(name, window.users[name]);
+                    // Map to existing document by email when present to avoid duplicates
+                    try {
+                        const existingId = await window.FirestoreDataManager.findUserIdByEmail(window.users[name]?.profile?.email || '');
+                        const targetId = existingId || name;
+                        await window.FirestoreDataManager.setUser(targetId, window.users[name]);
+                    } catch(_){
+                        await window.FirestoreDataManager.setUser(name, window.users[name]);
+                    }
                     showNotification(`✅ User "${name}" saved to Firestore`, 'success');
                     await loadUsers();
                 } else {
@@ -2584,7 +2591,13 @@
                 // Save to Firestore
                 try {
                     if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                        await window.FirestoreDataManager.setUser(newName, { ...user, ...updated });
+                        try {
+                            const existingId = await window.FirestoreDataManager.findUserIdByEmail((updated.profile||{}).email || (user.profile||{}).email || '');
+                            const targetId = existingId || newName;
+                            await window.FirestoreDataManager.setUser(targetId, { ...user, ...updated });
+                        } catch(_) {
+                            await window.FirestoreDataManager.setUser(newName, { ...user, ...updated });
+                        }
                         // Persist single assignment under assignments/{id}
                         try {
                             await window.FirestoreDataManager.setAssignment(newName, existingJobId, jobsCopy[existingJobId]);

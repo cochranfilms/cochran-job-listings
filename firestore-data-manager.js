@@ -251,6 +251,26 @@ const FirestoreDataManager = {
         }
     },
 
+    // Find a user document id by profile.email (case-insensitive)
+    async findUserIdByEmail(email) {
+        try {
+            if (!email) return null;
+            const target = String(email).toLowerCase();
+            const snap = await this.db
+                .collection(this.collections.users)
+                .where('profile.email', '==', target)
+                .get();
+            if (!snap.empty) {
+                // Return the first matching doc id
+                return snap.docs[0].id;
+            }
+            return null;
+        } catch (err) {
+            console.warn('⚠️ findUserIdByEmail failed:', err?.message || err);
+            return null;
+        }
+    },
+
     // Get user by ID with proper structure
     async getUser(userId) {
         try {
@@ -279,6 +299,21 @@ const FirestoreDataManager = {
     // Create or update user with proper structure validation
     async setUser(userId, userData) {
         try {
+            // Normalize the target doc id: prefer existing doc by profile.email to avoid duplicates
+            try {
+                const emailLower = (userData && userData.profile && userData.profile.email)
+                    ? String(userData.profile.email).toLowerCase() : '';
+                if (emailLower) {
+                    const existingId = await this.findUserIdByEmail(emailLower);
+                    if (existingId && existingId !== userId) {
+                        console.log(`🔁 Remapping userId '${userId}' → existing '${existingId}' by email ${emailLower}`);
+                        userId = existingId;
+                    }
+                    // Always store email in lowercase for deterministic queries
+                    userData = { ...(userData||{}), profile: { ...(userData?.profile||{}), email: emailLower } };
+                }
+            } catch (mapErr) { console.warn('⚠️ setUser email normalization warning:', mapErr?.message || mapErr); }
+
             // Ensure the user data has the proper structure
             const structuredUserData = {
                 profile: userData.profile || {},

@@ -1,3 +1,37 @@
+### Duplicate Firestore Users prevention (2025-08-19)
+
+Goal: Stop creation of two docs (e.g., `Cody Cochran` and `Codylcochran87`) for the same person.
+
+What changed:
+- `firestore-data-manager.js` now exposes `findUserIdByEmail(email)` and normalizes email to lowercase on write.
+- `setUser()` remaps the incoming `userId` to an existing doc id when one with the same email already exists.
+- `user-portal.html` auto-provision now calls `findUserIdByEmail()` and uses the existing id if present.
+- `admin-dashboard.html` save/edit paths also resolve by email before calling `setUser()`.
+
+How to test quickly:
+1. In Admin → Add New User, enter an email that already exists under a different name and click Save. Verify only one doc remains in Firestore (the existing id is updated; no new doc is created).
+2. In `apply.html`, submit with the same email multiple times using different name variants. Verify Firestore keeps a single doc keyed by the first id but updated with latest fields.
+3. In `user-portal.html`, sign in with an email not in Firestore; the portal should create exactly one doc. Sign out/in again; still one doc.
+
+### Start Date Resolution & PDF Verification (2025-08-19)
+
+Purpose: Ensure the project start date no longer shows as "TBD" in the portal and PDFs when a valid date exists.
+
+Scope:
+- `user-portal.html`: UI now uses a centralized `getEffectiveProjectStartDate()` with fallbacks and `formatDisplayDate()` for rendering.
+- `contract.html`: PDF data uses expanded fallbacks for `projectStart`.
+
+How to test (automated/browser):
+1. Open `user-portal.html` with a user having any of these populated: `jobs[primary].projectStart`, `jobs[primary].date`, `profile.projectDate`, or `application.eventDate`.
+2. Confirm the Job card and Job Details modal show the formatted date (not "TBD").
+3. Sign a contract on `contract.html` (or use preview button) and download the PDF.
+4. In the PDF header "PROJECT DETAILS", the `Start:` line should display the resolved date, not "TBD".
+5. Regression: If none of the sources are set, "TBD" is expected.
+
+Notes:
+- Date parsing is display-only; we do not mutate stored values.
+- If schemas change, update `getEffectiveProjectStartDate()` to include new sources.
+
 ## Firestore Single Source of Truth Integration (Apply + Contract)
 
 - apply.html now initializes Firebase/Firestore via `firebase-config.js` and writes applications to the `users` collection using `FirestoreDataManager.setUser(name, {...})`. It still performs a best-effort backup to `/api/apply` to keep GitHub JSON in sync, but Firestore is primary.
