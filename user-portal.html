@@ -3773,18 +3773,24 @@
         function getProjectProgress() {
             const timeline = getProjectTimeline();
             const completedSteps = timeline.filter(step => step.status === 'completed').length;
-            const currentSteps = timeline.filter(step => step.status === 'current').length;
-            
+
             // Each step is worth 20% (5 total steps: Application=20%, Contract=40%, Project Status=60%, Payment=80%, Performance=100%)
             const baseProgress = completedSteps * 20;
-            
-            // If there's a current step, add 50% of its value (10% for partial progress)
-            const partialProgress = currentSteps > 0 ? 10 : 0;
-            
-            // If project is cancelled, freeze progress at current completion (no partials)
-            const proj = getProjectTimeline();
-            const isCancelled = proj.find(s => s.id === 'project-status')?.status === 'cancelled';
-            if (isCancelled) return Math.min(100, baseProgress);
+
+            // Determine normalized project status to decide partial behavior
+            let normalizedProjectStatus = 'upcoming';
+            try {
+                const selectedJob = getSelectedJob();
+                const userJob = selectedJob ? (currentUser?.jobs?.[selectedJob.id] || null) : null;
+                const rawProj = userJob ? (userJob.projectStatus || userJob.status || currentUser?.profile?.projectStatus) : (currentUser?.profile?.projectStatus || 'upcoming');
+                normalizedProjectStatus = normalizeProjectStatus(rawProj);
+            } catch (_) {}
+
+            // Cancelled: freeze at base. On-hold & upcoming: no partial. In-progress: small partial. Completed: base already includes final step.
+            if (normalizedProjectStatus === 'cancelled') {
+                return Math.min(100, baseProgress);
+            }
+            const partialProgress = (normalizedProjectStatus === 'in-progress') ? 10 : 0;
             return Math.min(100, baseProgress + partialProgress);
         }
 
