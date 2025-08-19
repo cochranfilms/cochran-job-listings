@@ -71,10 +71,34 @@
       },
       "jobs": {},
       "primaryJob": null
+    },
+    "Erica Jackson": {
+      "profile": {
+        "email": "dedejackson727@gmail.com",
+        "location": "Atlanta Area",
+        "role": "",
+        "projectType": ""
+      },
+      "contract": {
+        "contractStatus": "pending"
+      },
+      "application": {
+        "status": "pending",
+        "submittedAt": "2025-08-19T04:44:36.969Z",
+        "jobTitle": "Firebase",
+        "eventDate": "2025-08-09",
+        "pay": "$300",
+        "description": "Firestore elements",
+        "phone": "4704202169",
+        "portfolio": "https://pitch.cochranfilms.com",
+        "source": "apply-html"
+      },
+      "jobs": {},
+      "primaryJob": null
     }
   },
   "statusOptions": {},
   "lastUpdated": "2025-08-19",
-  "totalUsers": 3,
+  "totalUsers": 4,
   "system": {}
 }
