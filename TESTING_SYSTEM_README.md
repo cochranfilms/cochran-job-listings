@@ -1,4 +1,17 @@
 ### Duplicate Firestore Users prevention (2025-08-19)
+### Admin Dashboard: Quick Actions removed (2025-08-19)
+
+What changed:
+- Removed the legacy Quick Actions UI and functions from `admin-dashboard.html`:
+  - Buttons: Generate All Contracts, Export Users, Download Users, Download Contracts, Force Refresh Users, Migrate to Firestore, Full Migration, Verify Migration.
+  - Functions removed: `generateAllContracts`, `exportUsersData`, `downloadUsersJSON`, `downloadContractFiles`, `forceRefreshUsers`, `migrateToFirestore`, `runFullMigration`, `verifyMigration`.
+  - Dropped the page include for `migrate-to-firestore.js` (no longer referenced).
+
+Verification steps:
+1. Open `admin-dashboard.html` and sign in.
+2. In the User & Contract Management card, confirm there is no “Quick Actions” section and no related buttons.
+3. Open DevTools Console and run any removed function name (e.g., `generateAllContracts`) and confirm `undefined` errors are not present because nothing binds them to UI; no references remain on the page.
+
 
 Goal: Stop creation of two docs (e.g., `Cody Cochran` and `Codylcochran87`) for the same person.
 

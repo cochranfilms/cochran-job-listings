@@ -34,7 +34,6 @@
     <script src="firebase-config.js"></script>
     <script src="firestore-data-manager.js"></script>
     <script src="firestore-integration.js"></script>
-    <script src="migrate-to-firestore.js"></script>
     
     <!-- Secure Bank Storage -->
     <script src="secure-bank-storage.js"></script>
@@ -639,20 +638,7 @@
                             </form>
                         </div>
                         
-                        <div class="form-section">
-                            <h3>Quick Actions</h3>
-                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <button class="btn" onclick="generateAllContracts()">📄 Generate All Contracts</button>
-                                <button class="btn btn-secondary" onclick="exportUsersData()">📊 Export Users</button>
-                                <button class="btn btn-secondary" onclick="downloadUsersJSON()" id="downloadUsersBtn" style="display: none;">📥 Download Users</button>
-                                <button class="btn btn-secondary" onclick="downloadContractFiles()" id="downloadContractsBtn" style="display: none;">📥 Download Contracts</button>
-                                <button class="btn" onclick="forceRefreshUsers()" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">🔄 Force Refresh Users</button>
-                                <button class="btn" onclick="migrateToFirestore()" style="background: linear-gradient(135deg, #10b981, #059669);">🔥 Migrate to Firestore</button>
-                                <button class="btn" onclick="runFullMigration()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">🚀 Full Migration</button>
-                                <button class="btn" onclick="verifyMigration()" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">🔍 Verify Migration</button>
-                            </div>
-                            <div id="contractGenerationStatus"></div>
-                        </div>
+                        
                         
                         <div class="form-section">
                             <h3>Current Users & Contracts</h3>
@@ -3014,35 +3000,7 @@
             delete document.getElementById('contractForm').dataset.editName;
         }
 
-        // Export users data
-        function exportUsersData() {
-            const data = {
-                users: window.users,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalUsers: Object.keys(window.users).length
-            };
-            
-            document.getElementById('downloadUsersBtn').style.display = 'block';
-        }
-
-        // Download users JSON
-        function downloadUsersJSON() {
-            const data = {
-                users: window.users,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalUsers: Object.keys(window.users).length
-            };
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'users.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
+        
 
         // Update users with Firestore integration
         async function updateUsersOnGitHub(action = 'update', userName = '') {
@@ -3602,108 +3560,13 @@
 
         // Manual refresh removed from UI; data is realtime via Firestore listeners
         
-        // Force refresh users function - bypasses all modular system interference
-        async function forceRefreshUsers() {
-            try {
-                console.log('🔄 Force refreshing users from Firestore...');
-                window.MAIN_DASHBOARD_USER_DISPLAY_OVERRIDE = false;
-                window.users = (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable())
-                    ? await window.FirestoreDataManager.getUsers()
-                    : {};
-                console.log('✅ Force loaded users (Firestore):', Object.keys(window.users || {}).length);
-                displayUsers();
-                displayArchivedUsers();
-                updateStats();
-                showNotification(`✅ Force refreshed users: ${Object.keys(window.users || {}).length} found`, 'success');
-            } catch (error) {
-                console.error('❌ Error force refreshing users:', error);
-                showNotification('❌ Error force refreshing users', 'error');
-            }
-        }
         
-        // Migrate data to Firestore
-        async function migrateToFirestore() {
-            try {
-                if (!confirm('This will migrate all your existing data to Firestore. Continue?')) {
-                    return;
-                }
-                
-                showNotification('🔄 Starting Firestore migration...', 'info');
-                
-                // Initialize Firebase if not already done
-                if (!auth || !firestore) {
-                    await initializeFirebase();
-                }
-                
-                // Check if Firestore is available
-                if (!window.FirestoreDataManager || !window.FirestoreDataManager.isAvailable()) {
-                    throw new Error('Firestore not available. Please check your Firebase configuration.');
-                }
-                
-                // Perform migration
-                await window.FirestoreDataManager.migrateDataToFirestore();
-                
-                showNotification('🎉 Data migration to Firestore complete!', 'success');
-                
-                // Refresh data from Firestore
-                await window.FirestoreDataManager.syncFromFirestore();
-                displayUsers();
-                displayJobs();
-                updateStats();
-                
-                showNotification('✅ Data refreshed from Firestore', 'success');
-                
-            } catch (error) {
-                console.error('❌ Error during Firestore migration:', error);
-                showNotification(`❌ Migration failed: ${error.message}`, 'error');
-            }
-        }
+        
+        
 
-        // Run full migration using the migration script
-        async function runFullMigration() {
-            try {
-                if (!confirm('This will run a complete migration of all data to Firestore. Continue?')) {
-                    return;
-                }
-                
-                showNotification('🚀 Starting full migration...', 'info');
-                
-                if (window.FirestoreMigration) {
-                    const results = await window.FirestoreMigration.runFullMigration();
-                    showNotification(`🎉 Full migration complete! Users: ${results.users.migratedCount}, Jobs: ${results.jobs.migratedCount}, Options: ${results.dropdownOptions.migratedCount}`, 'success');
-                } else {
-                    showNotification('❌ Migration script not available', 'error');
-                }
-                
-            } catch (error) {
-                console.error('❌ Full migration failed:', error);
-                showNotification(`❌ Full migration failed: ${error.message}`, 'error');
-            }
-        }
+        
 
-        // Verify migration
-        async function verifyMigration() {
-            try {
-                showNotification('🔍 Verifying migration...', 'info');
-                
-                if (window.FirestoreMigration) {
-                    const verification = await window.FirestoreMigration.verifyMigration();
-                    const allPassed = Object.values(verification).every(v => v === true);
-                    
-                    if (allPassed) {
-                        showNotification('✅ All data verified in Firestore!', 'success');
-                    } else {
-                        showNotification('⚠️ Some data verification failed. Check console for details.', 'warning');
-                    }
-                } else {
-                    showNotification('❌ Migration script not available', 'error');
-                }
-                
-            } catch (error) {
-                console.error('❌ Migration verification failed:', error);
-                showNotification(`❌ Verification failed: ${error.message}`, 'error');
-            }
-        }
+        
         
         // Check if performance review should be shown for a user
         function shouldShowPerformanceReview(userData) {
@@ -5532,76 +5395,7 @@
             }
         }
 
-        // Generate all contract files
-        function generateAllContracts() {
-            const statusDiv = document.getElementById('contractGenerationStatus');
-            statusDiv.innerHTML = '<p style="color: #FFB200;">🔄 Generating contract files...</p>';
-            
-            const contracts = {};
-            
-            Object.keys(window.users).forEach(userName => {
-                const userData = window.users[userName];
-                const fileName = userName.toLowerCase().replace(/\s+/g, '-') + '.html';
-                contracts[fileName] = generateContractHTML(userName, userData);
-            });
-            
-            window.generatedContracts = contracts;
-            
-            statusDiv.innerHTML = `
-                <p style="color: #22c55e;">✅ Generated ${Object.keys(contracts).length} contract files</p>
-            `;
-            
-            document.getElementById('downloadContractsBtn').style.display = 'block';
-        }
-
-        // Generate contract HTML
-        function generateContractHTML(userName, userData) {
-            return `<!DOCTYPE html>
-<html>
-<head>
-    <title>Contract - ${userName}</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .contract { max-width: 800px; margin: auto; }
-        h1 { color: #FFB200; }
-    </style>
-</head>
-<body>
-    <div class="contract">
-        <h1>Contract for ${userName}</h1>
-        <p>Role: ${userData.profile?.role || 'Contractor'}</p>
-        <p>Email: ${userData.profile?.email}</p>
-        <p>Contract URL: ${userData.contract?.contractUrl}</p>
-        <p>Approved Date: ${userData.profile?.approvedDate || 'TBD'}</p>
-    </div>
-</body>
-</html>`;
-        }
-
-        // Download all contract files as a zip
-        function downloadContractFiles() {
-            if (!window.generatedContracts) {
-                showNotification('Please generate contracts first.', 'warning');
-                return;
-            }
-            
-            const zip = new JSZip();
-            
-            Object.keys(window.generatedContracts).forEach(fileName => {
-                zip.file(fileName, window.generatedContracts[fileName]);
-            });
-            
-            zip.generateAsync({type: 'blob'}).then(function(content) {
-                const url = URL.createObjectURL(content);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'contracts.zip';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            });
-        }
+        
 
         // ==================== MODULAR SYSTEM INTEGRATION ====================
         

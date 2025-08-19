@@ -1,4 +1,15 @@
 ### Firestore Integration Notes
+### 2025-08-19 — Remove legacy Quick Actions (Admin)
+
+- The legacy Quick Actions UI and handlers have been removed from `admin-dashboard.html` to reduce surface area and eliminate deprecated flows.
+- Removed buttons: Generate All Contracts, Export Users, Download Users, Download Contracts, Force Refresh Users, Migrate to Firestore, Full Migration, Verify Migration.
+- Removed functions: `generateAllContracts`, `exportUsersData`, `downloadUsersJSON`, `downloadContractFiles`, `forceRefreshUsers`, `migrateToFirestore`, `runFullMigration`, `verifyMigration`.
+- Removed script include: `migrate-to-firestore.js` (no longer referenced in the page).
+
+Cleanup verification:
+- Open the admin dashboard and confirm the “Quick Actions” section is not present.
+- Search the repo for the removed function names to ensure no page-level references remain.
+
 
 - Canonical data source is Firestore. JSON files (`users.json`, `uploaded-contracts.json`) remain as backups to support existing APIs and GH Pages mirrors.
  - Canonical data source is Firestore. JSON files (`users.json`, `uploaded-contracts.json`) are deprecated for the user portal and remain only as archival backups.
