@@ -1397,7 +1397,12 @@
             if (!user && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                 try {
                     const nameFromEmail = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                    const userDocId = nameFromEmail || email;
+                    // Prefer existing doc by email if present, else use name as id
+                    let userDocId = nameFromEmail || email;
+                    try {
+                        const existingId = await window.FirestoreDataManager.findUserIdByEmail(email);
+                        if (existingId) userDocId = existingId;
+                    } catch(_) {}
                     await window.FirestoreDataManager.setUser(userDocId, {
                         profile: { email, name: nameFromEmail },
                         contract: {},
@@ -1866,7 +1871,7 @@
                                 </div>
                                 <div class="info-item">
                                     <span class="label">Start Date:</span>
-                                    <span class="value">${job.projectStart || job.date || 'N/A'}</span>
+                                    <span class="value">${formatDisplayDate(job.projectStart || job.date || getEffectiveProjectStartDate())}</span>
                                 </div>
                             </div>
                             <div class="job-timeline">
@@ -2488,6 +2493,29 @@
             // Return the selected job or the primary job
             const selectedJob = userJobs[selectedJobIndex] || userJobs[0];
             return selectedJob;
+        }
+        // Compute effective project start date using broad fallbacks
+        function getEffectiveProjectStartDate() {
+            if (!currentUser) return '';
+            const selectedJob = getSelectedJob();
+            const userJob = selectedJob ? (currentUser.jobs && currentUser.jobs[selectedJob.id]) : null;
+            return (
+                (userJob && (userJob.projectStart || userJob.date)) ||
+                (selectedJob && (selectedJob.projectStart || selectedJob.date)) ||
+                currentUser.profile?.projectDate ||
+                currentUser.profile?.projectStart ||
+                currentUser.application?.eventDate ||
+                ''
+            );
+        }
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return 'TBD';
+            try {
+                const d = new Date(dateStr);
+                return isNaN(d.getTime()) ? (dateStr || 'TBD') : d.toLocaleDateString();
+            } catch (_) {
+                return dateStr || 'TBD';
+            }
         }
         // Fix timezone issues with date strings
         function fixTimezone(dateString) {
@@ -3241,13 +3269,13 @@
 
             // Display the selected job's information
             const profileProjectDate = (currentUser.profile && currentUser.profile.projectDate) || '';
-            const effectiveProjectStart = (userJob && (userJob.projectStart || userJob.date)) || profileProjectDate || selectedJob.projectStart || selectedJob.date || '';
+            const effectiveProjectStart = getEffectiveProjectStartDate() || profileProjectDate;
             const effectiveProjectStatus = jobProjectStatus.projectStatus || 'upcoming';
 
             const jobInfo = {
                 role: selectedJob.title || selectedJob.role || 'Current Position',
                 location: selectedJob.location || 'Location TBD',
-                projectStart: effectiveProjectStart || 'Start Date TBD',
+                projectStart: formatDisplayDate(effectiveProjectStart) || 'Start Date TBD',
                 rate: selectedJob.rate || 'Rate TBD',
                 status: effectiveProjectStatus || getJobStatus(effectiveProjectStart),
                 paymentStatus: jobProjectStatus.paymentStatus || 'pending',
@@ -3296,7 +3324,7 @@
                             <i class="fas fa-clock"></i>
                             <div>
                                 <strong>Project Start</strong>
-                                <span>${jobInfo.projectStart}</span>
+                                <span>${formatDisplayDate(jobInfo.projectStart || getEffectiveProjectStartDate())}</span>
                             </div>
                         </div>
                         <div class="job-detail-item">
@@ -4482,7 +4510,7 @@
                         
                         <div>
                             <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Project Start</h3>
-                            <p style="color: rgba(255,255,255,0.9);">${data.projectStart || data.date || 'TBD'}</p>
+                            <p style="color: rgba(255,255,255,0.9);">${formatDisplayDate(data.projectStart || data.date || getEffectiveProjectStartDate())}</p>
                         </div>
                         
                         <div>
@@ -11147,11 +11175,36 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
     .ai-theme .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
     .ai-theme .btn-small { padding: 0.5rem 1rem; font-size: 0.9rem; }
     /* Replace legacy inline gold styles without touching markup */
-    .ai-theme [style*="#FFB200"] { color: var(--primary) !important; text-shadow: none !important; }
-    .ai-theme [style*="rgba(255,178,0"] { color: var(--primary) !important; background: rgba(99,102,241,0.10) !important; border-color: rgba(99,102,241,0.30) !important; }
-    .ai-theme [style*="linear-gradient(135deg, #FFB200"],
-    .ai-theme [style*="#FFD700"] {
-        background: linear-gradient(135deg, #22d3ee, #a78bfa) !important; color: #0b1020 !important;
+    .ai-theme [style*="#FFB200"],
+    .ai-theme [style*="#FFD700"],
+    .ai-theme [style*="#FF8C00"],
+    .ai-theme [style*="#FF6B00"] { color: var(--primary) !important; text-shadow: none !important; }
+    /* Borders and left accents */
+    .ai-theme [style*="border-color: #FFB200"],
+    .ai-theme [style*="border-color:#FFB200"],
+    .ai-theme [style*="border-left: 3px solid #FFB200"],
+    .ai-theme [style*="border-left:#FFB200"] {
+        border-color: rgba(99,102,241,0.35) !important;
+        border-left-color: rgba(99,102,241,0.55) !important;
+    }
+    /* Legacy gold backgrounds and ribbons */
+    .ai-theme [style*="rgba(255,178,0"] {
+        background: rgba(99,102,241,0.12) !important;
+        border-color: rgba(99,102,241,0.30) !important;
+        color: #c7d2fe !important;
+    }
+    /* Linear gradients using old gold palette */
+    .ai-theme [style*="linear-gradient"][style*="#FFB200"],
+    .ai-theme [style*="linear-gradient"][style*="#FFD700"],
+    .ai-theme [style*="linear-gradient"][style*="#FF8C00"],
+    .ai-theme [style*="linear-gradient"][style*="#FF6B00"] {
+        background: linear-gradient(135deg, #22d3ee, #a78bfa) !important;
+        color: #0b1020 !important;
+    }
+    /* Gold drop-shadows and glow */
+    .ai-theme [style*="drop-shadow"][style*="#FFB200"],
+    .ai-theme [style*="filter: drop-shadow"][style*="#FFB200"] {
+        filter: drop-shadow(0 0 12px rgba(99,102,241,0.35)) !important;
     }
     /* Tone down legacy dark overlays so the AI background is visible */
     .ai-theme [style*="background: rgba(0, 0, 0"] { background: rgba(15,23,42,0.45) !important; }
@@ -11161,6 +11214,12 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
     /* Inputs focus border */
     .ai-theme input:focus, .ai-theme textarea:focus, .ai-theme select:focus {
         border-color: var(--info) !important; box-shadow: 0 0 0 2px rgba(99,102,241,0.25) !important;
+    }
+    /* Overlapping decorative corner badges on cards → neutralize */
+    .ai-theme .card [class*="corner"],
+    .ai-theme .timeline-card [class*="corner"],
+    .ai-theme .timeline-card [class*="badge"] {
+        position: static !important;
     }
 </style>
 <script>
