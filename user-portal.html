@@ -3162,6 +3162,7 @@
             const s = String(status || '').toLowerCase();
             if (s === 'in progress') return 'in-progress';
             if (s === 'active') return 'in-progress';
+            if (s === 'complete') return 'completed';
             if (s === 'pending') return 'upcoming';
             if (['upcoming','in-progress','completed','cancelled','canceled','on-hold','on hold'].includes(s)) {
                 return s === 'canceled' ? 'cancelled' : (s === 'on hold' ? 'on-hold' : s);
@@ -3269,7 +3270,7 @@
                             <p class="job-type-info"><i class="fas fa-tag"></i> ${jobInfo.projectType}</p>
                         </div>
                         <div class="status-container">
-                            <span class="job-status ${jobInfo.status.toLowerCase()}">${jobInfo.status}</span>
+                            <span class="job-status ${jobInfo.status.toLowerCase().replace(/\s+/g,'-')}">${jobInfo.status}</span>
                             <span class="payment-status ${jobInfo.paymentStatus.toLowerCase()}">${jobInfo.paymentStatus}</span>
                         </div>
                     </div>
@@ -3423,9 +3424,10 @@
                 // Use project status from users.json
                 switch (userJob.projectStatus) {
                     case 'upcoming': return 'UPCOMING';
-                    case 'in-progress': return 'ACTIVE';
+                    case 'in-progress': return 'IN PROGRESS';
                     case 'completed': return 'COMPLETED';
                     case 'cancelled': return 'CANCELLED';
+                    case 'on-hold': return 'ON HOLD';
                     default: return 'PENDING';
                 }
             }
@@ -3608,6 +3610,7 @@
                             case 'upcoming': return 'Project scheduled ⏳';
                             case 'in-progress': return 'Project in progress 🔄';
                             case 'completed': return 'Project completed ✅';
+                            case 'on-hold': return 'Project on hold ⏸️';
                             case 'cancelled': return 'Project cancelled ❌';
                             default: return 'Project status pending';
                         }
@@ -3618,6 +3621,7 @@
                             case 'upcoming': return 'current';
                             case 'in-progress': return 'current';
                             case 'completed': return 'completed';
+                            case 'on-hold': return 'current';
                             case 'cancelled': return 'cancelled';
                             default: return 'pending';
                         }
@@ -3641,6 +3645,8 @@
                                 return `🔄 Your project is currently in progress. Please check in regularly for updates and complete all assigned tasks.`;
                             case 'completed': 
                                 return `✅ Your project has been completed successfully! Payment will be processed within 24 hours.`;
+                            case 'on-hold': 
+                                return `⏸️ This project is currently on hold while we await client updates. We’ll notify you as soon as it resumes.`;
                             case 'cancelled': 
                                 return `❌ This project has been cancelled. Please contact Cochran Films for more information about this cancellation.`;
                             default: 
@@ -3775,6 +3781,10 @@
             // If there's a current step, add 50% of its value (10% for partial progress)
             const partialProgress = currentSteps > 0 ? 10 : 0;
             
+            // If project is cancelled, freeze progress at current completion (no partials)
+            const proj = getProjectTimeline();
+            const isCancelled = proj.find(s => s.id === 'project-status')?.status === 'cancelled';
+            if (isCancelled) return Math.min(100, baseProgress);
             return Math.min(100, baseProgress + partialProgress);
         }
 
@@ -3821,6 +3831,10 @@
                         }
                     }
                     
+                    // Block progression when cancelled or on-hold
+                    if (job.projectStatus === 'cancelled' || job.projectStatus === 'on-hold') {
+                        continue; // do not auto-advance
+                    }
                     // Update the job status if needed
                     if (needsUpdate) {
                         job.projectStatus = newStatus;
@@ -6610,6 +6624,18 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             color: #22c55e;
             border: 1px solid rgba(34, 197, 94, 0.3);
         }
+
+        .status-on-hold {
+            background: rgba(148, 163, 184, 0.2);
+            color: #94a3b8;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .status-cancelled {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
         
         /* ==================== BUTTONS ==================== */
         .btn-primary {
@@ -8855,7 +8881,7 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             color: #FFB200;
         }
 
-        .job-status.active {
+        .job-status.in-progress {
             background: rgba(34, 197, 94, 0.1);
             color: #22c55e;
         }
@@ -8863,6 +8889,16 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .job-status.completed {
             background: rgba(34, 197, 94, 0.05);
             color: #22c55e;
+        }
+
+        .job-status.on-hold {
+            background: rgba(148, 163, 184, 0.1);
+            color: #94a3b8;
+        }
+
+        .job-status.cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
         }
 
         .job-status.pending {
