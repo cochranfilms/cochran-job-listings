@@ -6001,16 +6001,19 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .nav-link {
             display: flex;
             align-items: center;
-            gap: var(--space-md);
+            gap: 12px; /* ensure clear spacing between icon and label */
             padding: var(--space-md) var(--space-lg);
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.96) !important; /* enforce white text, not blue */
             text-decoration: none;
             border-radius: var(--radius-lg);
             transition: var(--transition-normal);
             position: relative;
             overflow: hidden;
-            font-weight: 500;
+            font-weight: 600;
+            letter-spacing: .2px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.35);
         }
+        .nav-link:visited { color: rgba(255,255,255,0.96) !important; }
         
         .nav-link::before {
             content: '';
@@ -6034,14 +6037,32 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .nav-link.active {
             color: #000 !important;
             transform: translateX(8px);
-            font-weight: 600;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            font-weight: 700;
+            text-shadow: none;
         }
         
         .nav-link i {
-            font-size: 1.2rem;
-            width: 24px;
-            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            color: var(--primary);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        .nav-link:hover i,
+        .nav-link.active i {
+            background: rgba(0,0,0,0.08);
+            color: #000;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+        }
+        .nav-link:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255,178,0,0.45), 0 0 0 4px rgba(255,178,0,0.18);
         }
         
         .sidebar-footer {
@@ -10813,25 +10834,25 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
                 <div class="nav-item">
                     <a href="#profile" class="nav-link active" onclick="showSection('profile')">
                         <i class="fas fa-user"></i>
-                        Profile
+                        <span>Profile</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="#jobs" class="nav-link" onclick="showSection('jobs')">
                         <i class="fas fa-briefcase"></i>
-                        Current Jobs
+                        <span>Current Jobs</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="#contracts" class="nav-link" onclick="showSection('contracts')">
-                        <i class="fas fa-file-contract"></i>
-                        Contracts
+                        <i class="fas fa-file-signature"></i>
+                        <span>Contracts</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="#performance" class="nav-link" onclick="showSection('performance')">
-                        <i class="fas fa-star"></i>
-                        Performance Reviews
+                        <i class="fas fa-award"></i>
+                        <span>Performance Reviews</span>
                     </a>
                 </div>
             </nav>
