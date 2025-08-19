@@ -2611,18 +2611,7 @@
                         displayUsers();
                         updateStats();
 
-                        // If payment has just been set to paid, raise a review-needed alert
-                        try {
-                            const justPaid = jobsCopy[existingJobId].paymentStatus === 'paid';
-                            if (justPaid) {
-                                await addNotification(
-                                    'Performance Review Needed',
-                                    `${newName} has a completed paid project and needs a performance review.`,
-                                    'warning',
-                                    { userEmail: window.users[newName]?.profile?.email, event: 'performance_review_needed', priority: 'high' }
-                                );
-                            }
-                        } catch(_) {}
+                        // Removed admin auto-notify on payment=paid to reduce confusion.
                     }
                 } catch (e) {
                     console.error(e);
