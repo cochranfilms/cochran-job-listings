@@ -11221,6 +11221,92 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
     .ai-theme .timeline-card [class*="badge"] {
         position: static !important;
     }
+
+    /* ===== AI THEME HARD RESET & REBRAND (visual only; no JS changed) ===== */
+    /* Ensure the main containers are always visible above decorative layers */
+    .ai-theme html, .ai-theme body, .ai-theme #loginScreen, .ai-theme #userPortal {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    .ai-theme #loginScreen, .ai-theme #userPortal {
+        position: relative;
+        z-index: 10;
+    }
+    /* Push canvases/overlays behind content */
+    .ai-theme canvas,
+    .ai-theme [class*="overlay"],
+    .ai-theme [class*="bg"],
+    .ai-theme [style*="position: absolute"][style*="z-index: 1000"] {
+        z-index: 0 !important;
+    }
+    /* Global typography and background */
+    .ai-theme body {
+        background: radial-gradient(1200px 800px at 10% 10%, rgba(34,211,238,0.08), transparent 40%),
+                    radial-gradient(900px 700px at 90% 20%, rgba(167,139,250,0.10), transparent 45%),
+                    linear-gradient(180deg, #0b1020 0%, #0a0f1e 100%);
+        color: #e5e7eb;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    .ai-theme h1, .ai-theme h2, .ai-theme h3, .ai-theme h4 { color: #e6eaff; letter-spacing: 0.2px; }
+    .ai-theme h1 { font-size: 2rem; font-weight: 800; }
+    .ai-theme h2 { font-size: 1.5rem; font-weight: 700; }
+    .ai-theme h3 { font-size: 1.125rem; font-weight: 700; }
+    .ai-theme h4 { font-size: 1rem; font-weight: 700; }
+
+    /* Card system */
+    .ai-theme .card, .ai-theme .job-card, .ai-theme .profile-card, .ai-theme .payment-card, .ai-theme .timeline-card {
+        background: rgba(17, 24, 39, 0.65) !important;
+        border: 1px solid rgba(99,102,241,0.25) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(99,102,241,0.10) inset !important;
+        backdrop-filter: blur(10px) !important;
+    }
+    .ai-theme .card-header, .ai-theme .job-header, .ai-theme .timeline-header {
+        background: linear-gradient(180deg, rgba(99,102,241,0.16), rgba(0,0,0,0)) !important;
+        border-bottom: 1px solid rgba(99,102,241,0.25) !important;
+    }
+    .ai-theme .status-badge, .ai-theme .payment-status {
+        background: rgba(99,102,241,0.16) !important;
+        color: #c7d2fe !important;
+        border: 1px solid rgba(99,102,241,0.35) !important;
+        border-radius: 999px !important;
+        padding: .25rem .6rem !important;
+        font-weight: 700 !important;
+    }
+
+    /* Timeline progress */
+    .ai-theme .progress-bar { background: rgba(99,102,241,0.18) !important; }
+    .ai-theme .progress-fill { background: linear-gradient(90deg, #22d3ee, #a78bfa) !important; }
+
+    /* Forms */
+    .ai-theme input, .ai-theme select, .ai-theme textarea {
+        background: rgba(17, 24, 39, 0.75) !important;
+        border: 1px solid rgba(99,102,241,0.25) !important;
+        color: #e5e7eb !important;
+        border-radius: 10px !important;
+    }
+    .ai-theme input::placeholder, .ai-theme textarea::placeholder { color: rgba(226,232,240,0.45) !important; }
+
+    /* Links and subtle accents */
+    .ai-theme a { color: #22d3ee; }
+    .ai-theme a:hover { color: #a78bfa; }
+
+    /* Modal surfaces */
+    .ai-theme .modal, .ai-theme [role="dialog"], .ai-theme .job-details-modal {
+        background: rgba(17, 24, 39, 0.88) !important;
+        border: 1px solid rgba(99,102,241,0.30) !important;
+        border-radius: 16px !important;
+    }
+
+    /* Utility: neutralize extreme opacity/pointer-events from legacy theme for core containers */
+    .ai-theme #userPortal *, .ai-theme #loginScreen * {
+        visibility: visible !important;
+    }
+    .ai-theme #userPortal, .ai-theme #loginScreen {
+        pointer-events: auto !important;
+    }
 </style>
 <script>
     // Enable AI theme
