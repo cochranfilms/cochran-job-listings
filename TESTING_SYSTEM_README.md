@@ -46,6 +46,27 @@ Notes:
 - If schemas change, update `getEffectiveProjectStartDate()` to include new sources.
 
 ## Firestore Single Source of Truth Integration (Apply + Contract)
+### Performance quick wins (2025-08-19)
+
+Scope:
+- `user-portal.html`, `admin-dashboard.html`, `index.html`
+
+Changes:
+- Added Google Fonts `preconnect` to `fonts.googleapis.com` and `fonts.gstatic.com` to speed up font loads.
+- Marked all third-party and local scripts as `defer` to avoid render blocking.
+- Removed unused `html2canvas` on `user-portal.html` and `admin-dashboard.html` (not referenced in code paths).
+- Marked logos with explicit `width`/`height`, `decoding="async"`, and `loading="lazy"` where non-critical.
+- Set `fetchpriority="high"` for the primary hero logo in `index.html`.
+
+Verification steps:
+1. Open DevTools → Performance → reload `index.html`; First Contentful Paint should improve and main thread idle during HTML parse.
+2. Network tab: verify `html2canvas.min.js` does not load on `user-portal.html` or `admin-dashboard.html`.
+3. Network tab waterfalls: Firebase and local scripts should be `Parser` initiated with `defer` and start downloading earlier but execute after parse.
+4. Check layout stability (CLS): images should no longer cause layout shift thanks to width/height on logos.
+
+Regression considerations:
+- `defer` preserves script execution order but runs after parse; if any inline code relied on immediate execution before DOMContentLoaded, verify those blocks still work. All Firebase init paths already run on `DOMContentLoaded`.
+
 ### Landing Password Gate (2025-08-19)
 
 - Added an AI-themed, password-protected modal to `index.html` that appears on first visit per session.

@@ -8,11 +8,13 @@
     <link rel="icon" href="https://static.wixstatic.com/media/aeef42_570164eee75f4394a4fc1cf9c62ceae0~mv2.png" type="image/png">
     
     <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" referrerpolicy="no-referrer">
     
 
     
@@ -20,22 +22,21 @@
 
     
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <!-- Firebase Configuration and Data Manager -->
-    <script src="firebase-config.js"></script>
-    <script src="firestore-data-manager.js"></script>
-    <script src="firestore-integration.js"></script>
+    <script defer src="firebase-config.js"></script>
+    <script defer src="firestore-data-manager.js"></script>
+    <script defer src="firestore-integration.js"></script>
     
     <!-- PDF Generation Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <!-- Secure Bank Storage -->
-    <script src="secure-bank-storage.js"></script>
-    <script src="bank-details-modal.js"></script>
+    <script defer src="secure-bank-storage.js"></script>
+    <script defer src="bank-details-modal.js"></script>
     
     <script>
         // Environment detection and API configuration
@@ -10785,7 +10786,7 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             <!-- Main Login Container (AI Theme) -->
             <div class="login-container ai-login-card">
                 <div class="ai-login-header">
-                    <img class="ai-login-logo" src="Logo.png" alt="Cochran Films" onerror="this.style.display='none'">
+                    <img class="ai-login-logo" src="Logo.png" alt="Cochran Films" width="140" height="140" decoding="async" onerror="this.style.display='none'">
                     <h1 class="ai-login-title">Creator Portal</h1>
                     <p class="ai-login-subtitle">Access your contracts and project information</p>
                 </div>
@@ -10826,7 +10827,7 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         <!-- Sophisticated Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <img src="Logo.png" alt="Cochran Films">
+                <img src="Logo.png" alt="Cochran Films" width="140" height="140" loading="lazy" decoding="async">
                 <span></span>
             </div>
             

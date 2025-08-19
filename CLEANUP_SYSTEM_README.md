@@ -20,6 +20,13 @@ Cleanup verification:
 - Admin approve/deny flows persist to Firestore via `FirestoreDataManager.setUser` in addition to current GitHub JSON update routines.
 
 ### 2025-08-19 — Deep Firebase-First Cleanup
+- Performance quick wins (2025-08-19)
+  - Added `preconnect` for Google Fonts across `user-portal.html`, `admin-dashboard.html`, and `index.html`.
+  - Marked external and local scripts as `defer` to eliminate render blocking.
+  - Removed unused `html2canvas` references from `user-portal.html` and `admin-dashboard.html`.
+  - Added `loading="lazy"`, `decoding="async"`, and explicit dimensions to logo images to reduce CLS and CPU.
+  - Minor: added `referrerpolicy="no-referrer"` to Font Awesome CSS link to avoid referrer leakage.
+
 
 - index.html
   - Removed unused PapaParse include.
