@@ -19,6 +19,25 @@ Cleanup verification:
  - Firestore auto-migration from JSON backups is disabled by default to avoid accidental repopulation. To run a one-time re-seed, temporarily set `window.FIRESTORE_AUTO_MIGRATION = true;` in the dashboard, reload once, then set it back to false.
 - Admin approve/deny flows persist to Firestore via `FirestoreDataManager.setUser` in addition to current GitHub JSON update routines.
 
+### 2025-08-19 — Deep Firebase-First Cleanup
+
+- index.html
+  - Removed unused PapaParse include.
+  - Removed JSON/API fallback paths and local hardcoded FALLBACK_JOBS. Jobs now render only from Firestore.
+  - Removed legacy Google Form field map and sticky-apply remnants.
+
+- user-portal.html
+  - Enforced Firestore-only sources for jobs/contracts; no JSON fallbacks.
+  - Reworded contract status helpers to reflect centralized Firestore instead of uploaded-contracts.json verbiage.
+  - Payment method updates now persist to Firestore only; removed GitHub/JSON mentions in logs and toasts.
+
+- admin-dashboard.html
+  - Already Firestore-first with optional GitHub archival behind SYNC_TO_GITHUB=false. No user-visible legacy paths remain.
+
+Verification
+- Open `index.html` → confirm no network calls to `/api/jobs-data`; jobs load from Firestore via `FirestoreDataManager`.
+- Open `user-portal.html` → change Payment Method, verify Firestore user doc updates and no `/api/update-users` or GitHub file calls are made.
+
 ### User Portal Cleanup: remove legacy JSON reads (2025-08-18)
 - `user-portal.html` no longer reads `/api/users` or merges from `users.json`. All data loads from Firestore (`users`, `contracts`, `jobs`).
 - The functions `loadUsersData()` and `loadUploadedContracts()` were updated to Firestore-only implementations.

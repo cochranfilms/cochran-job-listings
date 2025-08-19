@@ -924,12 +924,12 @@
         // Load jobs data from JSON file
         async function loadJobsData() {
             try {
-                // Use Firestore as source of truth via window.FirestoreDataManager if available
+                // Use Firestore as source of truth via window.FirestoreDataManager
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     jobsData = await window.FirestoreDataManager.getJobListings();
                     console.log('✅ Jobs data loaded from Firestore:', jobsData.length, 'jobs');
                 } else {
-                    // If Firestore unavailable, do not re-seed from JSON to avoid duplication
+                    // Firestore unavailable; do not fall back to legacy JSON
                     console.warn('⚠️ Firestore unavailable; jobsData set to empty');
                     jobsData = [];
                 }
@@ -2716,7 +2716,7 @@
             }
         }
 
-        // Display user contracts (integrated with uploaded-contracts.json)
+        // Display user contracts (integrated with Firestore contracts)
         function displayUserContracts() {
             const container = document.getElementById('contractsContent');
             if (!container) {
@@ -2734,7 +2734,7 @@
                 return;
             }
 
-            // Get contract status from uploaded-contracts.json (job-specific if available)
+            // Get contract status from centralized data (job-specific if available)
             const currentJobId = getSelectedJob() ? getSelectedJob().id : Object.keys(currentUser.jobs || {})[0];
             const userContract = getUserContractStatus(currentUser.email, currentJobId);
             const contractStatus = userContract ? 'uploaded' : currentUser.contractStatus || 'pending';
@@ -3490,14 +3490,14 @@
             if (startDate <= now) return 'ACTIVE';
             return 'COMPLETED';
         }
-        // Helper function to check if contract is signed (connected to uploaded-contracts.json)
+        // Helper function to check if contract is signed (centralized)
         function getContractSignedStatus() {
             if (!currentUser) {
                 console.log('📋 No current user for contract status check');
                 return 'current';
             }
             
-            // Check uploaded-contracts.json first (primary source)
+            // Check centralized contract structure first
             const userContract = getUserContractStatus(currentUser.email);
             if (userContract) {
                 console.log('📋 Contract found in uploaded-contracts.json:', userContract);
@@ -3525,14 +3525,14 @@
             
             return hasSignedContract ? 'completed' : 'current';
         }
-        // Get detailed project timeline with current status - FULLY CONNECTED TO JSON FILES
+        // Get detailed project timeline with current status - Firestore-first
         function getProjectTimeline() {
             if (!currentUser) return [];
             
             // Performance reviews should be loaded before this function is called
             // Don't load them here to avoid infinite loops
             
-            // Get contract status from uploaded-contracts.json
+            // Get contract status
             const userContract = getUserContractStatus(currentUser.email);
             const contractSigned = userContract ? true : (currentUser.contractStatus === 'uploaded');
             
@@ -3555,7 +3555,7 @@
                 sessionStorage.setItem('timelineDataLogged', 'true');
             }
             
-            // Get job data from jobs-data.json
+            // Job data from Firestore-loaded jobsData
             const jobData = jobsData.find(job => job.id === selectedJob?.id);
             
             // Parse project start date from selected job
@@ -4071,44 +4071,21 @@
                 // Save to session storage
                 sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(currentUser));
                 
-                // Update users.json on GitHub with retry logic
+                // Persist update to Firestore, then update UI
                 try {
-                    console.log('🔄 Starting payment method update to GitHub...');
                     await updateUserPaymentMethod(currentUser.email, paymentMethod);
-                    
-                    // Immediately update UI without heavy full-page re-render to avoid theme flicker
                     updatePaymentStatusDisplay();
                     updateTimelineDisplay();
-                    
                     console.log(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}`);
-                    
-                    // Add notification for user about payment method update
                     await addNotification(
                         'Payment Method Updated',
                         `Your payment method has been updated to ${paymentMethod.toUpperCase()}`,
                         'payment_method_updated',
-                        {
-                            userEmail: currentUser.email,
-                            paymentMethod: paymentMethod,
-                            actionRequired: false,
-                            priority: 'normal'
-                        }
+                        { userEmail: currentUser.email, paymentMethod, actionRequired: false, priority: 'normal' }
                     );
                 } catch (error) {
                     console.error('❌ Error updating payment method:', error);
-                    
-                    // Provide more specific error messages
-                    let errorMessage = '⚠️ Payment method saved locally but there was an issue updating the server.';
-                    
-                    if (error.message.includes('409')) {
-                        errorMessage = '⚠️ Server conflict detected. Your payment method was saved locally. Please try again in a moment.';
-                    } else if (error.message.includes('Failed to load users data')) {
-                        errorMessage = '⚠️ Unable to load user data. Your payment method was saved locally. Please refresh and try again.';
-                    } else if (error.message.includes('User not found')) {
-                        errorMessage = '⚠️ User account not found. Please contact the admin team.';
-                    }
-                    
-                    showNotification(errorMessage, 'warning');
+                    showNotification('⚠️ Unable to update server. Your choice was saved locally.', 'warning');
                 }
                 
                 // Targeted refresh only; avoid full reload to prevent visual flicker
@@ -4719,7 +4696,7 @@
             // Close modal
             closePaymentModal();
             
-            // Save to backend (GitHub)
+            // Save to backend (Firestore)
             updateUserPaymentMethod(currentUser.email, method).then(() => {
                 console.log('✅ Payment method saved to backend successfully');
                 showUserNotification(

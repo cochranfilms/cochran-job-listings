@@ -24,7 +24,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- External Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1780,47 +1779,9 @@
 
   <script>
     // Configuration - Firestore is single source of truth
-    const JOBS_DATA_URL = '/api/jobs-data'; // optional archival API
-    const FALLBACK_TO_JSON = false; // keep false to enforce Firestore-only source
-    
-    // Fallback job data if JSON file fails
-    const FALLBACK_JOBS = [
-      {
-        title: "Event Photographer",
-        date: "2024-08-15",
-        location: "Atlanta Area",
-        pay: "$150/day",
-        description: "Join our creative team for exciting photo shoots at events and celebrations. Experience with event photography preferred.",
-        status: "Active"
-      },
-      {
-        title: "Videographer",
-        date: "2024-08-20", 
-        location: "Atlanta Area",
-        pay: "$200/day",
-        description: "Capture amazing moments at events and celebrations. Experience with video editing and post-production a plus.",
-        status: "Active"
-      },
-      {
-        title: "Photo Editor",
-        date: "2024-08-25",
-        location: "Remote/Atlanta",
-        pay: "$100/day",
-        description: "Edit and retouch photos for our clients. Proficiency in Lightroom and Photoshop required.",
-        status: "Active"
-      }
-    ];
     const APPLY_URL = '/apply.html';
     
-    // Google Form Field IDs
-    const FORM_FIELDS = {
-      jobTitle: "entry.1541530783",
-      eventDate: "entry.1251840205",
-      location: "entry.2083708489", 
-      pay: "entry.1762838228",
-      description: "entry.1589869705",
-      status: "entry.304359007"
-    };
+    // (Legacy Google Form mapping removed)
     
     // Format date for Google Forms - try ISO format for date pickers
     function formatDateForForm(dateString) {
@@ -2047,7 +2008,7 @@
       jobsCache.timestamp = Date.now();
     }
     
-    // Enhanced Data Loader with Firestore Integration (single source of truth)
+    // Data Loader with Firestore Integration (single source of truth)
     async function loadJobsFromJSON(forceRefresh = false) {
       const loadingElement = document.getElementById('loading');
       const jobsGrid = document.getElementById('jobs-grid');
@@ -2071,8 +2032,8 @@
         console.log('🔄 Loading jobs data...');
         
         let jobs = [];
-        
-        // Try Firestore first if available (jobs collection)
+
+        // Load from Firestore (single source)
         if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
           console.log('🔥 Loading jobs from Firestore jobs collection...');
           try {
@@ -2081,32 +2042,16 @@
               console.log('✅ Jobs loaded from Firestore:', firestoreJobs.length);
               jobs = firestoreJobs;
             } else {
-              console.log('📁 No jobs found in Firestore. Will try API next.');
+              console.log('📁 No jobs found in Firestore.');
             }
           } catch (firestoreError) {
-            console.log('📁 Firestore error, will try API:', firestoreError?.message || firestoreError);
+            console.log('📁 Firestore error:', firestoreError?.message || firestoreError);
           }
         }
         
-        // Firestore unavailable OR returned nothing → handle fallback strategy
+        // If no jobs retrieved, indicate no postings available
         if (jobs.length === 0) {
-          const firestoreAvailable = !!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable());
-          if (!firestoreAvailable && FALLBACK_TO_JSON) {
-            console.log('📁 Loading jobs from JSON API (Firestore unavailable, fallback enabled)...');
-            const response = await fetch(JOBS_DATA_URL);
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            const data = await response.json();
-            console.log('📁 JSON data loaded:', data);
-            jobs = data.jobs || [];
-          } else if (!firestoreAvailable && !FALLBACK_TO_JSON) {
-            console.log('📦 Firestore unavailable; using local FALLBACK_JOBS');
-            jobs = FALLBACK_JOBS;
-          } else {
-            // Firestore available but empty → treat as no jobs currently open
-            throw new Error('NO_JOBS_AVAILABLE');
-          }
+          throw new Error('NO_JOBS_AVAILABLE');
         }
         
         // Filter jobs and exclude applicant submissions (now includes both active and inactive jobs)
@@ -2435,15 +2380,14 @@
     document.addEventListener('DOMContentLoaded', async function() {
       // Initialize Firebase first (ensures Firestore availability)
       await initializeFirebase();
-      
-      // Initial load from Firestore (or configured fallback)
+
+      // Initial load from Firestore
       try {
         await loadJobsFromJSON();
       } catch (error) {
-        console.log('Initial load failed, using fallback');
-        renderJobs(FALLBACK_JOBS);
+        console.log('Initial load: no jobs available');
       }
-      
+
       // Realtime updates: refresh when Firestore jobs change
       if (window.FirestoreIntegration) {
         window.FirestoreIntegration.setupListeners(async (evt) => {
@@ -2459,16 +2403,7 @@
           }
         });
       }
-      
 
-      
-      // Hide sticky button when clicking outside expanded jobs - REMOVED
-      // document.addEventListener('click', function(e) {
-      //   if (!e.target.closest('.job-card') && !e.target.closest('#sticky-apply')) {
-      //     setTimeout(checkStickyButtonVisibility, 100);
-      //   }
-      // });
-      
       // Smooth scroll behavior for internal links
       document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
@@ -2591,9 +2526,6 @@
 
     // Add some interactive polish
     document.addEventListener('DOMContentLoaded', async function() {
-      // Initialize Firebase first
-      await initializeFirebase();
-      
       // Initialize slideshow
       showSlide(slideIndex);
       

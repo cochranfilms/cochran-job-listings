@@ -600,8 +600,7 @@
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
                                     <select id="freelancerJob" name="jobSelection">
-                                        <option value="">Select Job (from jobs-data)...</option>
-                                        <!-- Populated with /api/jobs-data -->
+                                        <option value="">Select Job (from Firestore)...</option>
                                     </select>
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
@@ -1309,8 +1308,7 @@
                     }
 
                 } else {
-                    console.log('📁 Firestore not available, loading from JSON APIs...');
-                    await loadDataFromJSON();
+                    console.log('📁 Firestore not available; skipping legacy JSON fallbacks');
                 }
                 
                 console.log('🔄 Updating stats after data load...');
@@ -1327,17 +1325,7 @@
             }
         }
         
-        // Load data from JSON APIs (fallback)
-        async function loadDataFromJSON() {
-            console.log('🔄 Loading jobs from JSON API...');
-            await loadJobs();
-            
-            console.log('🔄 Loading users from JSON API...');
-            await loadUsers();
-            
-            console.log('🔄 Loading dropdown options from JSON API...');
-            await loadDropdownOptions();
-        }
+        // Legacy JSON fallback removed; Firestore is single source of truth
 
         // Update stats
         function updateStats() {
@@ -1813,38 +1801,10 @@
             });
         }
 
-        // Refresh jobs list
-        function refreshJobs() {
-            displayJobs();
-            showNotification('Jobs list refreshed', 'success');
-        }
+        // Refresh jobs list (kept minimal; Firestore realtime handles updates)
+        function refreshJobs() { displayJobs(); }
         
-        // Force refresh jobs with API reload
-        async function forceRefreshJobs() {
-            try {
-                console.log('🔄 Force refreshing jobs...');
-                showNotification('🔄 Force refreshing jobs...', 'info');
-                
-                // Clear any cached data
-                if (window.jobs) {
-                    console.log('🗑️ Clearing cached jobs data');
-                    window.jobs = [];
-                }
-                
-                // Force reload from API
-                await loadJobs();
-                
-                // Force display update
-                displayJobs();
-                updateStats();
-                
-                showNotification(`✅ Force refreshed jobs: ${window.jobs ? window.jobs.length : 0} found`, 'success');
-                
-            } catch (error) {
-                console.error('❌ Error force refreshing jobs:', error);
-                showNotification('❌ Error force refreshing jobs', 'error');
-            }
-        }
+        // Force refresh removed (Firestore realtime handles updates)
         
                 // Debug function to check current jobs state
         function debugJobsState() {
@@ -2120,35 +2080,9 @@
             }
         }
 
-        // Export job data
-        function exportJobData() {
-            const data = {
-                jobs: window.jobs,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalJobs: window.jobs.length
-            };
-            
-            document.getElementById('downloadJobBtn').style.display = 'block';
-        }
+        // Export job data (legacy download UI removed)
 
-        // Download job JSON
-        function downloadJobJSON() {
-            const data = {
-                jobs: window.jobs,
-                lastUpdated: new Date().toISOString().split('T')[0],
-                totalJobs: window.jobs.length
-            };
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'jobs-data.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
+        // Download job JSON (removed)
 
         // Load existing users with improved caching and persistence
         async function loadUsers() {
@@ -2729,96 +2663,7 @@
             document.body.appendChild(modal);
         }
 
-        // Assign jobs to user based on role and location
-        async function assignJobsToUser(role, location) {
-            try {
-                // Load jobs data
-                const jobsResponse = await fetch('/api/jobs-data');
-                const jobsData = await jobsResponse.json();
-                
-                const assignedJobs = {};
-                let primaryJob = null; // deprecated, will collapse to single job
-                
-                // Match jobs based on role and location
-                jobsData.jobs.forEach((job, idx) => {
-                    // Check if job matches user's role and location
-                    if (job.title.toLowerCase().includes(role.toLowerCase()) || 
-                        role.toLowerCase().includes(job.title.toLowerCase())) {
-                        
-                        // Create job ID
-                        const jobId = `job-${job.title.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
-                        
-                        assignedJobs[jobId] = {
-                            id: jobId,
-                            title: job.title,
-                            date: job.date,
-                            location: job.location,
-                            rate: job.pay,
-                            description: job.description,
-                            listingStatus: job.status,
-                            status: 'upcoming',
-                            projectStatus: 'upcoming',
-                            projectType: job.projectType || job.type || (document.getElementById('freelancerProjectType')?.value || ''),
-                            paymentStatus: 'pending',
-                            assignedDate: new Date().toISOString().split('T')[0],
-                            projectStart: document.getElementById('projectStart')?.value || 'TBD',
-                            jobRef: { source: 'jobs-data', index: idx, key: `${job.title}|${job.date}` }
-                        };
-                        
-                        // Set as primary job if it's the first match
-                        if (!primaryJob) { primaryJob = jobId; }
-                    }
-                });
-                
-                // If no specific job matches, create a default job based on role
-                if (Object.keys(assignedJobs).length === 0) {
-                    const defaultJobId = `job-${role.toLowerCase().replace(/\s+/g, '-')}-default`;
-                    
-                    assignedJobs[defaultJobId] = {
-                        id: defaultJobId,
-                        title: `${role} Position`,
-                        date: new Date().toISOString().split('T')[0],
-                        location: location,
-                        rate: document.getElementById('freelancerRate')?.value || '$200',
-                        description: `Professional ${role} position in ${location}. Details to be provided.`,
-                        status: 'upcoming',
-                        projectStatus: 'upcoming',
-                        paymentStatus: 'pending',
-                        assignedDate: new Date().toISOString().split('T')[0],
-                        projectStart: document.getElementById('projectStart')?.value || 'TBD'
-                    };
-                    
-                    primaryJob = defaultJobId;
-                }
-                
-                console.log('✅ Assigned jobs to user:', assignedJobs);
-                console.log('✅ Primary job:', primaryJob);
-                
-                return { jobs: assignedJobs };
-                
-            } catch (error) {
-                console.error('❌ Error assigning jobs to user:', error);
-                
-                // Fallback: create a default job
-                const defaultJobId = `job-${role.toLowerCase().replace(/\s+/g, '-')}-fallback`;
-                const defaultJob = {
-                    id: defaultJobId,
-                    title: `${role} Position`,
-                    date: new Date().toISOString().split('T')[0],
-                    location: location,
-                    rate: document.getElementById('freelancerRate')?.value || '$200',
-                    description: `Professional ${role} position in ${location}. Details to be provided.`,
-                    status: 'upcoming',
-                    projectStatus: 'upcoming',
-                    projectType: document.getElementById('freelancerProjectType')?.value || role || 'Assistant',
-                    paymentStatus: 'pending',
-                    assignedDate: new Date().toISOString().split('T')[0],
-                    projectStart: document.getElementById('projectStart')?.value || 'TBD'
-                };
-                
-                return { jobs: { [defaultJobId]: defaultJob } };
-            }
-        }
+        // Assign jobs helper (legacy /api/jobs-data dependency removed; prefer UI selection or Firestore listing pickers)
 
         // Process job assignments
         async function processJobAssignments() {
@@ -3151,51 +2996,7 @@
         
         // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
         
-        // Enhanced notification system with real-time updates
-        function showNotification(message, type = 'info', duration = 4000) {
-            const colors = {
-                success: '#22c55e',
-                error: '#ef4444',
-                warning: '#f59e0b',
-                info: '#3b82f6'
-            };
-            const background = colors[type] || colors.info;
-
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed; right: 20px; bottom: 20px;
-                background: ${background}; color: white;
-                padding: 12px 16px; border-radius: 8px; margin-top: 8px;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-                z-index: 10000; font-family: Inter, system-ui, -apple-system, sans-serif;
-                max-width: 360px; line-height: 1.4; font-size: 14px;
-                transform: translateY(20px); opacity: 0; transition: all .2s ease;
-            `;
-            toast.textContent = message;
-
-            // Container
-            let container = document.getElementById('toast-container');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'toast-container';
-                container.style.cssText = 'position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column-reverse; gap: 8px; z-index: 9999;';
-                document.body.appendChild(container);
-            }
-            container.appendChild(toast);
-
-            // Animate in
-            requestAnimationFrame(() => {
-                toast.style.transform = 'translateY(0)';
-                toast.style.opacity = '1';
-            });
-
-            // Auto remove
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(20px)';
-                setTimeout(() => toast.remove(), 200);
-            }, duration);
-        }
+        // (Duplicate showNotification implementation removed; primary version below)
         
         function getNotificationIcon(type) {
             const iconMap = {
@@ -5663,17 +5464,7 @@
             
             // Test 3: Check API endpoints
             console.log('\n📋 Test 3: API Endpoints');
-            try {
-                const jobsResponse = await fetch('/api/jobs-data');
-                if (jobsResponse.ok) {
-                    const jobsData = await jobsResponse.json();
-                    console.log(`✅ /api/jobs-data - Working (${jobsData.jobs?.length || 0} jobs)`);
-                } else {
-                    console.log(`❌ /api/jobs-data - Status: ${jobsResponse.status}`);
-                }
-            } catch (error) {
-                console.log('❌ /api/jobs-data - Error:', error.message);
-            }
+            // JSON API deprecated; Firestore is primary. Test is retained for reference only.
             
             try {
                 const usersResponse = await fetch(`${API_BASE}/api/users`);
