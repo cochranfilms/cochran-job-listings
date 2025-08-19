@@ -3223,6 +3223,22 @@
                 paymentStatus: 'pending'
             };
 
+            // If no explicit status exists, default to upcoming until event date
+            if ((!userJob || !userJob.projectStatus) && (!rawStatus || rawStatus === 'upcoming')) {
+                const start = (userJob && (userJob.projectStart || userJob.date)) || (currentUser.profile && currentUser.profile.projectDate) || selectedJob.projectStart || selectedJob.date;
+                if (start) {
+                    try {
+                        const startDate = new Date(start);
+                        const now = new Date();
+                        if (startDate > now) {
+                            jobProjectStatus.projectStatus = 'upcoming';
+                        } else if (startDate <= now && jobProjectStatus.projectStatus !== 'completed' && jobProjectStatus.projectStatus !== 'cancelled' && jobProjectStatus.projectStatus !== 'on-hold') {
+                            jobProjectStatus.projectStatus = 'in-progress';
+                        }
+                    } catch (_) {}
+                }
+            }
+
             // Display the selected job's information
             const profileProjectDate = (currentUser.profile && currentUser.profile.projectDate) || '';
             const effectiveProjectStart = (userJob && (userJob.projectStart || userJob.date)) || profileProjectDate || selectedJob.projectStart || selectedJob.date || '';
@@ -3786,7 +3802,10 @@
                 normalizedProjectStatus = normalizeProjectStatus(rawProj);
             } catch (_) {}
 
-            // Cancelled: freeze at base. On-hold & upcoming: no partial. In-progress: small partial. Completed: base already includes final step.
+            // Upcoming or On-hold → 0%. Cancelled → freeze at base. In-progress → small partial. Completed → base already reflects progress.
+            if (normalizedProjectStatus === 'upcoming' || normalizedProjectStatus === 'on-hold') {
+                return 0;
+            }
             if (normalizedProjectStatus === 'cancelled') {
                 return Math.min(100, baseProgress);
             }
