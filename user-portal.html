@@ -6779,10 +6779,13 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         }
 
         .logo img {
-            width: 40px;
-            height: 40px;
+            width: 180px;
+            height: auto;
             border-radius: var(--radius-sm);
+            object-fit: contain;
         }
+
+        .logo span { display: none; }
 
         .nav-menu {
             list-style: none;
