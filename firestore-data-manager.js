@@ -227,6 +227,8 @@ const FirestoreDataManager = {
                             primaryJob: current.primaryJob || normalized.primaryJob,
                             paymentMethod: current.paymentMethod || normalized.paymentMethod,
                             paymentStatus: current.paymentStatus || normalized.paymentStatus,
+                            // Preserve performance review if present on either doc
+                            performance: current.performance || normalized.performance || null,
                             bankData: current.bankData || normalized.bankData,
                             bankDetails: current.bankDetails || normalized.bankDetails,
                             paymentUpdatedAt: current.paymentUpdatedAt || normalized.paymentUpdatedAt,

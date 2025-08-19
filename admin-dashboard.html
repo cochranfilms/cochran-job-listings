@@ -1411,7 +1411,7 @@
                 console.error('❌ activeJobs element not found');
             }
             
-            // Count pending reviews using paid payment status (or top-level) and absence of Firestore-backed performance
+            // Count pending reviews using paid+completed condition and absence of Firestore-backed performance
             const pendingReviews = activeUsers.filter(user => shouldShowPerformanceReview(user)).length;
             const pendingReviewsElement = document.getElementById('pendingReviews');
             if (pendingReviewsElement) {
