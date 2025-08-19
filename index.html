@@ -1482,6 +1482,95 @@
         padding: 0.4rem 0.8rem;
       }
     }
+    
+    /* AI Gate (Password-Protected Modal) */
+    .ai-gate-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      padding: 16px;
+    }
+    .ai-gate-modal.show { display: flex; }
+    .ai-gate-panel {
+      width: min(760px, 94vw);
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(0,0,0,0.95), rgba(10,10,10,0.9));
+      border: 1px solid rgba(255,178,0,0.35);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+      color: #fff;
+      transform: translateY(10px);
+      animation: pop 320ms cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    @keyframes pop { to { transform: translateY(0); } }
+    .ai-gate-head {
+      padding: 22px 22px 0 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,178,0,0.2);
+      margin-bottom: 16px;
+    }
+    .ai-gate-title {
+      margin: 0;
+      font-size: clamp(20px, 3.6vw, 26px);
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffffff, #FFB200 85%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      flex: 1;
+    }
+    .ai-gate-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(99,102,241,0.18);
+      border: 1px solid rgba(99,102,241,0.35);
+      color: #c7d2fe;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .ai-gate-body { padding: 20px 22px 22px 22px; display: grid; gap: 14px; }
+    .ai-gate-sub { color: #cbd5e1; margin: 0; font-size: 15px; line-height: 1.6; }
+    .ai-gate-features { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ai-tag {
+      font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      padding: 6px 10px; border-radius: 999px; color: #e2e8f0;
+      background: rgba(15,23,42,0.55); border: 1px solid rgba(99,102,241,0.3);
+    }
+    .ai-gate-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+    .ai-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px 18px; border-radius: 10px; cursor: pointer; font-weight: 900;
+      letter-spacing: .02em; transition: all 180ms cubic-bezier(.4,0,.2,1); border: 2px solid transparent;
+    }
+    .ai-btn-primary { background: #FFB200; color: #0a0a0a; border-color: #FFB200; }
+    .ai-btn-primary:hover { transform: translateY(-1px); filter: brightness(1.05); }
+    .ai-btn-ghost { background: transparent; color: #e2e8f0; border-color: rgba(255,255,255,0.2); }
+    .ai-btn-ghost:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-1px); }
+    .ai-gate-pass {
+      display: none; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-top: 6px;
+    }
+    .ai-input {
+      width: 100%; padding: 14px 16px; border-radius: 10px; outline: none;
+      background: rgba(0,0,0,0.45); border: 1px solid rgba(255,178,0,0.35); color: #fff;
+      font-weight: 700; letter-spacing: .04em;
+    }
+    .ai-input:focus { border-color: #FFB200; box-shadow: 0 0 0 2px rgba(255,178,0,0.2); }
+    .ai-pass-error { color: #fca5a5; font-weight: 700; display: none; font-size: 13px; }
+    .ai-gate-footer { padding: 0 22px 22px 22px; color: #94a3b8; font-size: 12px; }
+    @media (max-width: 520px) { .ai-gate-pass { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -2544,6 +2633,72 @@
           e.target.closest('.job-card').style.transform = 'translateY(0)';
         }
       });
+
+      // AI Gate: show password-protected modal on first visit per session
+      try {
+        const UNLOCK_KEY = 'cf_index_gate_unlocked_v1';
+        if (sessionStorage.getItem(UNLOCK_KEY) !== '1') {
+          buildAIGate();
+          document.body.style.overflow = 'hidden';
+        }
+        function buildAIGate() {
+          const modal = document.createElement('div');
+          modal.className = 'ai-gate-modal show';
+          modal.innerHTML = `
+            <div class="ai-gate-panel" role="dialog" aria-modal="true" aria-labelledby="aiGateTitle">
+              <div class="ai-gate-head">
+                <h2 class="ai-gate-title" id="aiGateTitle">Cochran Films — Creator Platform</h2>
+                <span class="ai-gate-badge">Password&nbsp;Protected</span>
+              </div>
+              <div class="ai-gate-body">
+                <p class="ai-gate-sub">We're excited to work with you. This page is actively being refined. The new experience will include a personalized portal with your profile, job listings, assignments, payment details, and payout timelines — all in one place.</p>
+                <div class="ai-gate-features">
+                  <span class="ai-tag">Jobs & Assignments</span>
+                  <span class="ai-tag">Payment Tracking</span>
+                  <span class="ai-tag">Contract Access</span>
+                  <span class="ai-tag">Real‑Time Updates</span>
+                </div>
+                <div class="ai-gate-actions">
+                  <a class="ai-btn ai-btn-primary" href="https://landing.cochranfilms.com" target="_blank" rel="noopener">Visit Current Landing Page</a>
+                  <button type="button" class="ai-btn ai-btn-ghost" id="aiEnterBtn">Enter</button>
+                </div>
+                <div class="ai-gate-pass" id="aiPassRow">
+                  <input class="ai-input" id="aiPassInput" type="password" placeholder="Enter password" autocomplete="off" />
+                  <button type="button" class="ai-btn ai-btn-primary" id="aiUnlockBtn">Unlock</button>
+                  <div class="ai-pass-error" id="aiPassError">Incorrect password. Please try again.</div>
+                </div>
+              </div>
+              <div class="ai-gate-footer">Creators: you can explore opportunities below soon. For now, use the landing page to connect — we can’t wait to work with you.</div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+          const enterBtn = modal.querySelector('#aiEnterBtn');
+          const passRow = modal.querySelector('#aiPassRow');
+          const passInput = modal.querySelector('#aiPassInput');
+          const unlockBtn = modal.querySelector('#aiUnlockBtn');
+          const passError = modal.querySelector('#aiPassError');
+          function showPass() {
+            passRow.style.display = 'grid';
+            setTimeout(() => passInput && passInput.focus(), 0);
+          }
+          function tryUnlock() {
+            const val = (passInput?.value || '').trim();
+            if (val === 'USER1234') {
+              sessionStorage.setItem(UNLOCK_KEY, '1');
+              modal.classList.remove('show');
+              setTimeout(() => modal.remove(), 150);
+              document.body.style.overflow = '';
+            } else {
+              passError.style.display = 'block';
+              setTimeout(() => { passError.style.display = 'none'; }, 2000);
+              passInput?.select?.();
+            }
+          }
+          enterBtn?.addEventListener('click', showPass);
+          unlockBtn?.addEventListener('click', tryUnlock);
+          passInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+        }
+      } catch (_) {}
     });
   </script>
 </body>

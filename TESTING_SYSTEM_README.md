@@ -46,6 +46,31 @@ Notes:
 - If schemas change, update `getEffectiveProjectStartDate()` to include new sources.
 
 ## Firestore Single Source of Truth Integration (Apply + Contract)
+### Landing Password Gate (2025-08-19)
+
+- Added an AI-themed, password-protected modal to `index.html` that appears on first visit per session.
+- Purpose: Inform users the page is in development, provide a CTA to the current landing site, and allow admin access via a password without blocking the page globally.
+
+Details:
+- Modal class names: `.ai-gate-modal`, `.ai-gate-panel` (styles inline in `index.html`).
+- CTA: “Visit Current Landing Page” → `https://landing.cochranfilms.com` (opens in new tab).
+- Admin “Enter” shows a password row; unlocking hides the modal for the session.
+- Password (current): `USER1234`. Change by editing the comparison in the `tryUnlock()` function.
+- Session key used: `cf_index_gate_unlocked_v1`.
+
+Quick test:
+1. Open `index.html`. Verify the modal appears and body scroll is disabled.
+2. Click “Visit Current Landing Page” → confirm new tab opens to landing site.
+3. Click “Enter” → password input appears.
+4. Enter wrong password → error flashes; modal remains.
+5. Enter `USER1234` → modal closes; page usable; session persists until tab close.
+6. Reload page in same tab/session → modal does not reappear.
+7. Open in a new tab or after clearing sessionStorage → modal reappears.
+
+Notes:
+- The gate is visual only; underlying page loads normally once unlocked.
+- Uses the same AI/glass aesthetic as `popup.html` to maintain branding continuity.
+
 
 - apply.html now initializes Firebase/Firestore via `firebase-config.js` and writes applications to the `users` collection using `FirestoreDataManager.setUser(name, {...})`. It still performs a best-effort backup to `/api/apply` to keep GitHub JSON in sync, but Firestore is primary.
 - contract.html now loads users primarily from Firestore (`FirestoreDataManager.getUsers()`), falling back to `/api/users` only if Firestore is unavailable. When a contract is signed, it:

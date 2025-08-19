@@ -25,6 +25,7 @@ Cleanup verification:
   - Removed unused PapaParse include.
   - Removed JSON/API fallback paths and local hardcoded FALLBACK_JOBS. Jobs now render only from Firestore.
   - Removed legacy Google Form field map and sticky-apply remnants.
+  - Added AI-themed password gate modal (visual only) to inform users of in-progress status and route to the current landing page.
 
 - user-portal.html
   - Enforced Firestore-only sources for jobs/contracts; no JSON fallbacks.
@@ -36,6 +37,7 @@ Cleanup verification:
 
 Verification
 - Open `index.html` → confirm no network calls to `/api/jobs-data`; jobs load from Firestore via `FirestoreDataManager`.
+- Confirm the AI gate modal appears once per session and closes on correct password (default `USER1234`).
 - Open `user-portal.html` → change Payment Method, verify Firestore user doc updates and no `/api/update-users` or GitHub file calls are made.
 
 ### User Portal Cleanup: remove legacy JSON reads (2025-08-18)
