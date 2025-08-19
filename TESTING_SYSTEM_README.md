@@ -110,6 +110,19 @@ After applying cleanup, re-test the main flows:
 ## Overview
 This document describes the comprehensive testing system for the Cochran Films admin dashboard and user management system.
 
+### Read-Me AI Redesign Verification (2025-08-19)
+- What changed:
+  - `Read-Me.html` upgraded to AI-styled glass/neural design inspired by `popup.html` and `index2.html`.
+  - Added “What’s New in 2025” section; refined Hero with typewriter; subtle particles; Firestore added to Technology Stack.
+- Quick test:
+  1. Open `Read-Me.html` and confirm:
+     - Hero headline cycles through phrases (“Admin Dashboard”, “Creator Portal”, etc.).
+     - Navbar gains shadow after scrolling >100px.
+     - Particles are subtle (gold/indigo) and interactive.
+  2. Click “What’s New” → cards render with CTAs to `admin-dashboard.html`, `user-portal.html`, `popup.html`, `index2.html`.
+  3. “Technology” shows Firestore tile with Realtime/Scalable/Secure.
+  4. Run Lighthouse or PageSpeed: ensure no blocking errors, layout stable on mobile.
+
 ### Modular Managers Firestore-First Loading (2025-08-18)
 - User and Job managers in `admin-dashboard-modular/js/users/user-manager.js` and `admin-dashboard-modular/js/jobs/job-manager.js` now load from Firestore first and only attempt JSON API fallback if Firestore is unavailable.
 - The legacy endpoints `/api/users` and `/api/jobs-data` intentionally return 410 (Gone). Seeing 410s is expected only if Firestore is not available. In normal operation with Firebase initialized, managers should not hit these endpoints.

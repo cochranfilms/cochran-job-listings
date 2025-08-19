@@ -79,6 +79,12 @@ Notes
 ## Overview
 This document outlines the cleanup procedures and systems used in the Cochran Films Landing project, including the revolutionary AI-powered Premiere Pro automation system.
 
+### 2025-08-19 — Read-Me AI Design Alignment
+- Consolidated Read-Me visual language with the AI/glass aesthetic from `popup.html` and `index2.html`.
+- No legacy scripts removed elsewhere; this change is visual + UX copy only.
+- Keep the particles config subtle (gold/indigo) and avoid heavy CPU usage.
+- Links in “What’s New” must continue to point to production pages: `admin-dashboard.html`, `user-portal.html`.
+
 ## 🖼️ Landing Page Slideshow/Header Consolidation (2025-08-17)
 
 - The standalone hero header in `index.html` has been consolidated into slide 1 of the slideshow to create a single creator-focused entry experience.

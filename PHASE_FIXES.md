@@ -3,6 +3,12 @@
 ## Overview
 This document tracks the fixes for various issues in the Cochran Films landing page system.
 
+### Phases 4 — Read-Me AI Redesign (Round 1)
+- Added AI-styled hero with typewriter and subtle particles.
+- Introduced “What’s New in 2025” featuring Admin Dashboard, Creator Portal, and AI Design System.
+- Updated Technology Stack to include Firestore (Realtime/Scalable/Secure).
+- Navigation updated to include “What’s New”.
+
 ## Phase 3.12 Fix - Job Status Toggle System Implementation (Latest)
 
 **Issue**: The admin dashboard lacked the ability to easily change job status between Active and Inactive, requiring manual editing of the jobs-data.json file and causing workflow inefficiencies for job management.
