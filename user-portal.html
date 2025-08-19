@@ -84,6 +84,8 @@
         // Firebase Configuration - Now handled by firebase-config.js
         let auth = null;
         let firestore = null;
+        // Disable background auto-provision to prevent ghost users
+        window.ALLOW_PORTAL_AUTOPROVISION = false;
         
         // Initialize Firebase when config is ready
         async function initializeFirebase() {
@@ -1393,8 +1395,8 @@
                 return e1 === target || e2 === target;
             });
 
-            // If not found, auto-provision a minimal user record in Firestore
-            if (!user && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+            // If not found, optionally auto-provision (disabled by default to prevent ghost users)
+            if (!user && window.ALLOW_PORTAL_AUTOPROVISION === true && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                 try {
                     const nameFromEmail = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                     // Prefer existing doc by email if present, else use name as id
@@ -11308,6 +11310,51 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
     }
     .ai-theme #userPortal, .ai-theme #loginScreen {
         pointer-events: auto !important;
+    }
+
+    /* ===== Login Card: Proportional horizontal rectangle + centered layout ===== */
+    .ai-theme #loginScreen {
+        display: grid !important;
+        place-items: center !important;
+        min-height: 100vh !important;
+        padding: 4vh 4vw !important;
+    }
+    .ai-theme .login-container,
+    .ai-theme #loginScreen .login-container {
+        width: min(920px, 92vw) !important;
+        min-height: 420px !important;
+        padding: 48px !important;
+        border-radius: 20px !important;
+        background: rgba(17,24,39,0.78) !important;
+        border: 1px solid rgba(99,102,241,0.28) !important;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(99,102,241,0.10) inset !important;
+        display: grid !important;
+        grid-template-columns: 1.2fr 1fr !important;
+        gap: 36px !important;
+        align-items: center !important;
+    }
+    /* Left content (title/description) */
+    .ai-theme #loginScreen .login-meta {
+        color: #eaf0ff !important;
+    }
+    .ai-theme #loginScreen .login-meta h1 { font-size: 2.2rem !important; margin: 0 0 .5rem 0 !important; }
+    .ai-theme #loginScreen .login-meta p { opacity: .85 !important; }
+
+    /* Right column form */
+    .ai-theme #loginScreen form.login-form {
+        background: rgba(12, 18, 32, 0.55) !important;
+        border: 1px solid rgba(99,102,241,0.25) !important;
+        border-radius: 14px !important;
+        padding: 24px !important;
+    }
+    .ai-theme #loginScreen .form-group label { color: #c7d2fe !important; }
+    .ai-theme #loginScreen .form-group input { height: 48px !important; }
+    .ai-theme #loginScreen .login-btn {
+        height: 48px !important;
+        border-radius: 10px !important;
+        background: linear-gradient(135deg, #22d3ee, #a78bfa) !important;
+        color: #0b1020 !important;
+        font-weight: 800 !important;
     }
 </style>
 <script>
