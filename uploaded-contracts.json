@@ -383,8 +383,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-19",
       "signedDate": "2025-08-18"
+    },
+    {
+      "contractId": "CF-1755578755520-RZV1Q",
+      "freelancerName": "Erica Jackson",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Firebase",
+      "rate": "$300",
+      "location": "Atlanta Area",
+      "fileName": "Erica Jackson.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-19T04:46:12.337Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Erica Jackson.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-19",
+      "signedDate": "2025-08-19"
     }
   ],
-  "lastUpdated": "2025-08-19T03:16:17.774Z",
-  "totalContracts": 24
+  "lastUpdated": "2025-08-19T04:46:12.337Z",
+  "totalContracts": 25
 }
