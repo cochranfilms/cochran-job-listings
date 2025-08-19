@@ -1543,7 +1543,6 @@
                 showNotification('Error signing out. Please try again.', 'error');
             }
         }
-
         // Load user-specific data
         async function loadUserData() {
             // Snapshot the email to avoid race conditions during async awaits
@@ -3476,7 +3475,6 @@
             
             return hasSignedContract ? 'completed' : 'current';
         }
-
         // Get detailed project timeline with current status - FULLY CONNECTED TO JSON FILES
         function getProjectTimeline() {
             if (!currentUser) return [];
@@ -5539,7 +5537,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
             50% { transform: translateY(-5px) translateX(5px); opacity: 1; }
         }
-
         /* Quantum Login Button */
         .quantum-login-btn {
             width: 100%;
@@ -6318,7 +6315,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             /* Prevent any scrolling issues */
             overflow: hidden;
         }
-        
         #loginScreen .login-container {
             /* Dark, elegant container */
             background: rgba(0, 0, 0, 0.85);
@@ -7138,7 +7134,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             width: 100%;
             height: 100%;
         }
-
         .floating-icon {
             position: absolute;
             font-size: 2.5rem;
@@ -7915,7 +7910,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             background: var(--gradient-dark);
             padding: var(--spacing-lg);
         }
-
         .login-card {
             background: rgba(255,255,255,0.05);
             backdrop-filter: blur(20px);
@@ -7937,11 +7931,9 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             color: var(--primary);
             margin-bottom: var(--spacing-sm);
         }
-
         .login-header p {
             color: rgba(255,255,255,0.7);
         }
-
         .login-form {
             display: flex;
             flex-direction: column;
@@ -8715,7 +8707,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             flex-wrap: wrap;
             justify-content: center;
         }
-
         .tab-btn {
             background: rgba(255, 178, 0, 0.1);
             color: #fff;
@@ -8731,7 +8722,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             position: relative;
             overflow: hidden;
         }
-
         .tab-btn::before {
             content: '';
             position: absolute;
@@ -8742,7 +8732,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             background: linear-gradient(90deg, transparent, rgba(255,178,0,0.3), transparent);
             transition: left 0.6s ease;
         }
-
         .tab-btn:hover::before {
             left: 100%;
         }
@@ -9510,7 +9499,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             width: 16px;
             flex-shrink: 0;
         }
-
         .current-step-section {
             background: rgba(0, 0, 0, 0.6);
             padding: 1.5rem;
@@ -9531,7 +9519,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             line-height: 1.6;
             margin-bottom: 1rem;
         }
-
         .action-required {
             background: rgba(255, 178, 0, 0.1);
             padding: 1rem;
@@ -9542,7 +9529,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             gap: 0.75rem;
             flex-wrap: wrap;
         }
-
         .action-required i {
             color: #FFB200;
         }
@@ -10297,7 +10283,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .review-status i {
             font-size: 1.2rem;
         }
-
         @media (max-width: 768px) {
             .performance-review-card {
                 padding: 1.5rem;
@@ -10328,7 +10313,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             position: relative;
             margin-bottom: 1rem;
         }
-
         .notification-bell {
             position: relative;
             background: rgba(255, 178, 0, 0.08);
@@ -10344,7 +10328,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             width: 100%;
             backdrop-filter: blur(10px);
         }
-
         .notification-bell:hover {
             background: rgba(255, 178, 0, 0.15);
             border-color: rgba(255, 178, 0, 0.4);
@@ -10623,9 +10606,16 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         @media (max-width: 480px) {
             #loginScreen .ai-login-card { padding: 26px 20px; }
         }
+
+        /* AI site-wide background inspired by index2.html */
+        .ai-background { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
+        #neuralBg { width: 100%; height: 100%; display: block; }
     </style>
 </head>
 <body>
+    <!-- AI Neural Network Background (site-wide) -->
+    <div class="ai-background"><canvas id="neuralBg"></canvas></div>
+
     <!-- Premium Login Screen -->
     <div id="loginScreen" class="login-screen">
         <!-- Neural Network Background -->
@@ -10973,5 +10963,60 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         });
     </script>
 
+    <!-- Lightweight AI neural background (inspired by index2.html) -->
+    <script>
+        (function initAINeuralBg(){
+            const c = document.getElementById('neuralBg');
+            if (!c) return;
+            const ctx = c.getContext('2d');
+            const DPR = Math.min(window.devicePixelRatio || 1, 2);
+            let W, H, particles = [], links = [];
+            function resize(){
+                W = c.width = Math.floor(window.innerWidth * DPR);
+                H = c.height = Math.floor(window.innerHeight * DPR);
+            }
+            function rand(a,b){ return a + Math.random()*(b-a); }
+            function setup(){
+                particles = []; links = [];
+                const count = Math.min(120, Math.floor((W*H)/(14000*DPR)));
+                for (let i=0;i<count;i++){
+                    particles.push({
+                        x: rand(0,W), y: rand(0,H),
+                        vx: rand(-0.25,0.25)*DPR, vy: rand(-0.25,0.25)*DPR,
+                        r: rand(1,2)*DPR,
+                        col: ['rgba(6,182,212,.6)','rgba(20,184,166,.6)','rgba(124,58,237,.6)','rgba(99,102,241,.6)','rgba(255,178,0,.6)'][Math.floor(Math.random()*5)]
+                    });
+                }
+            }
+            function step(){
+                ctx.fillStyle = 'rgba(2,6,23,0.12)';
+                ctx.fillRect(0,0,W,H);
+                // links
+                const maxD = 140*DPR;
+                for (let i=0;i<particles.length;i++){
+                    const p = particles[i];
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x<0||p.x>W) p.vx*=-1;
+                    if (p.y<0||p.y>H) p.vy*=-1;
+                    for (let j=i+1;j<particles.length;j++){
+                        const q = particles[j];
+                        const dx=p.x-q.x, dy=p.y-q.y; const d=Math.hypot(dx,dy);
+                        if (d<maxD){
+                            const a = (1 - d/maxD) * 0.35;
+                            ctx.strokeStyle = `rgba(99,102,241,${a})`;
+                            ctx.lineWidth = 1*DPR*a;
+                            ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+                        }
+                    }
+                    ctx.fillStyle = p.col;
+                    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+                }
+                requestAnimationFrame(step);
+            }
+            function init(){ resize(); setup(); step(); }
+            window.addEventListener('resize', ()=>{ resize(); setup(); });
+            init();
+        })();
+    </script>
 </body>
-</html> 
+</html>
