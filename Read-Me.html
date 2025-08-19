@@ -633,10 +633,12 @@
             </a>
             <ul class="nav-menu">
                 <li><a href="#hero" class="nav-link">Home</a></li>
-                <li><a href="#whats-new" class="nav-link">What's New</a></li>
+                <li><a href="#whats-new" class="nav-link">What’s New</a></li>
                 <li><a href="#features" class="nav-link">Features</a></li>
-                <li><a href="#architecture" class="nav-link">Architecture</a></li>
                 <li><a href="#workflow" class="nav-link">Workflow</a></li>
+                <li><a href="#admin" class="nav-link">Admin</a></li>
+                <li><a href="#portal" class="nav-link">Portal</a></li>
+                <li><a href="#architecture" class="nav-link">Architecture</a></li>
                 <li><a href="#technology" class="nav-link">Technology</a></li>
                 <li><a href="#demo" class="nav-link">Demo</a></li>
             </ul>
@@ -699,6 +701,99 @@
         </div>
     </section>
 
+    <!-- Admin Dashboard Deep-Dive -->
+    <section id="admin" class="section-padding">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up" data-aos-duration="1000">
+                <h2><i class="fas fa-tachometer-alt"></i> Admin Dashboard — Firestore‑First Ops</h2>
+                <p>Approve creators, manage jobs, orchestrate contracts, and monitor system health — all in real time.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card card" data-aos="fade-up">
+                    <div class="feature-icon"><i class="fas fa-user-check"></i></div>
+                    <h3>Approval Engine</h3>
+                    <p>Single‑click approvals with instant notifications and Firestore persistence.</p>
+                    <ul class="feature-list" style="margin-top:1rem">
+                        <li>Email notifications on state change</li>
+                        <li>Role/status gating with audit trail</li>
+                        <li>Bulk operations and quick filters</li>
+                    </ul>
+                </div>
+                <div class="feature-card card" data-aos="fade-up" data-aos-delay="150">
+                    <div class="feature-icon"><i class="fas fa-briefcase"></i></div>
+                    <h3>Job Management</h3>
+                    <p>Create, pause, or fill roles with clear state labels that sync to the site instantly.</p>
+                    <ul class="feature-list" style="margin-top:1rem">
+                        <li>Active / Filled / Closed badging</li>
+                        <li>Real‑time sync to `index.html` listings</li>
+                        <li>Performance‑safe cache with live refresh</li>
+                    </ul>
+                </div>
+                <div class="feature-card card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-icon"><i class="fas fa-file-signature"></i></div>
+                    <h3>Contracts Hub</h3>
+                    <p>Automated PDF generation and status tracking with Firestore as source of truth.</p>
+                    <ul class="feature-list" style="margin-top:1rem">
+                        <li>Digital signing + legal audit trail</li>
+                        <li>Contract mirror to `contracts` collection</li>
+                        <li>Deletion safely clears records and files</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="showcase-cta">
+                <a class="btn btn-primary" href="admin-dashboard.html"><i class="fas fa-external-link-alt"></i> Launch Admin</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Creator Portal Deep-Dive -->
+    <section id="portal" class="section-padding">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up" data-aos-duration="1000">
+                <h2><i class="fas fa-users"></i> Creator Portal — Personal Command Center</h2>
+                <p>Creators get a clear, secure dashboard for jobs, contracts, performance, and payments.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card card" data-aos="fade-up">
+                    <div class="feature-icon"><i class="fas fa-lock"></i></div>
+                    <h3>Secure Access</h3>
+                    <p>Modern auth with clear states and resilient loaders to avoid flicker or race conditions.</p>
+                    <ul class="feature-list" style="margin-top:1rem">
+                        <li>Firebase auth + Firestore session recheck</li>
+                        <li>Real‑time contract visibility</li>
+                        <li>Mobile‑first, glass UI</li>
+                    </ul>
+                </div>
+                <div class="feature-card card" data-aos="fade-up" data-aos-delay="150">
+                    <div class="feature-icon"><i class="fas fa-calendar-check"></i></div>
+                    <h3>Jobs + Timeline</h3>
+                    <p>Assignments, dates, and status in one place — always up to date.</p>
+                    <ul class="feature-list" style="margin-top:1rem">
+                        <li>Effective date resolution with fallbacks</li>
+                        <li>Instant updates on admin actions</li>
+                        <li>Contextual CTAs for next steps</li>
+                    </ul>
+                </div>
+                <div class="feature-card card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-icon"><i class="fas fa-dollar-sign"></i></div>
+                    <h3>Payments</h3>
+                    <p>Clear, professional presentation of payment status and methods.</p>
+                    <ul class="feature-list" style="margin-top:1rem">
+                        <li>Firestore‑driven payment preferences</li>
+                        <li>Admin‑acknowledged status updates</li>
+                        <li>Branded notifications and receipts</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="showcase-cta">
+                <a class="btn btn-primary" href="user-portal.html"><i class="fas fa-external-link-alt"></i> Open Portal</a>
+            </div>
+        </div>
+    </section>
     <!-- What's New Section -->
     <section id="whats-new" class="section-padding">
         <div class="container">
@@ -849,16 +944,16 @@
                         <i class="fas fa-database"></i>
                     </div>
                     <h3>Revolutionary Data Management</h3>
-                    <p>Centralized GitHub-based data storage with unified structure eliminating fragmentation</p>
+                    <p>Firestore‑first real‑time data layer with unified structure eliminating fragmentation</p>
                     
                     <button class="expand-toggle" onclick="toggleFeatureDetails('data-details')">
                         <i class="fas fa-plus"></i> View Detailed Features
                     </button>
                     
                     <div id="data-details" class="expandable-content">
-                        <h4><i class="fas fa-github"></i> Revolutionary Centralized Architecture:</h4>
+                        <h4><i class="fas fa-database"></i> Revolutionary Centralized Architecture:</h4>
                         <ul class="feature-list">
-                            <li>Single source of truth in users.json</li>
+                            <li>Single source of truth in Firestore</li>
                             <li>Eliminated data fragmentation issues</li>
                             <li>Integrated performance reviews and contracts</li>
                             <li>Version-controlled data storage</li>
