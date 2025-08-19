@@ -598,6 +598,22 @@
                 </div>
             `).join('');
         }
+
+        // Delegate notification action clicks (mark-read/remove) so items disappear immediately
+        (function bindNotificationActionDelegation(){
+            if (window._UP_NOTIF_DELEGATE_BOUND) return;
+            document.addEventListener('click', (evt) => {
+                const btn = evt.target.closest && evt.target.closest('.notification-action');
+                if (!btn) return;
+                const id = btn.getAttribute('data-id');
+                const action = btn.getAttribute('data-action');
+                if (id && action) {
+                    evt.preventDefault();
+                    handleNotificationAction(id, action);
+                }
+            });
+            window._UP_NOTIF_DELEGATE_BOUND = true;
+        })();
         
         // Handle notification click
         async function handleNotificationClick(notificationId) {
