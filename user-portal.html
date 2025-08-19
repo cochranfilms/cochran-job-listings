@@ -107,11 +107,11 @@
         
         // Initialize Firebase on page load
         document.addEventListener('DOMContentLoaded', () => {
-            // Temporarily hide both views to prevent flicker during auth hydration
+            // Ensure both views start visible; AI theme handles flicker visually
             try {
                 const loginScreen = document.getElementById('loginScreen');
                 const userPortal = document.getElementById('userPortal');
-                if (loginScreen) loginScreen.style.display = 'none';
+                if (loginScreen) loginScreen.style.display = 'grid';
                 if (userPortal) userPortal.style.display = 'none';
             } catch(_) {}
             initializeFirebase();
@@ -1490,6 +1490,7 @@
             
             if (loginScreen && userPortal) {
                 console.log('🔍 Hiding login screen and showing user portal');
+                // Show portal when authenticated
                 loginScreen.style.display = 'none';
                 userPortal.style.display = 'block';
                 console.log('✅ Display properties updated');
@@ -1512,6 +1513,7 @@
             
             if (loginScreen && userPortal) {
                 console.log('🔍 Showing login screen and hiding user portal');
+                // Show login when unauthenticated
                 loginScreen.style.display = 'grid';
                 userPortal.style.display = 'none';
                 // Ensure AI card is visible

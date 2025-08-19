@@ -264,6 +264,15 @@ const FirestoreDataManager = {
                 // Return the first matching doc id
                 return snap.docs[0].id;
             }
+            // Fallback: scan case-insensitive if older docs stored mixed-case emails
+            const all = await this.db.collection(this.collections.users).get();
+            let found = null;
+            all.forEach(d => {
+                if (found) return;
+                const e = (d.data()?.profile?.email || '').toString().toLowerCase();
+                if (e && e === target) found = d.id;
+            });
+            if (found) return found;
             return null;
         } catch (err) {
             console.warn('⚠️ findUserIdByEmail failed:', err?.message || err);
