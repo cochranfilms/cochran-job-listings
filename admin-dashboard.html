@@ -593,10 +593,7 @@
                                     <input type="email" id="freelancerEmail" name="email" placeholder="Email Address" required>
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <select id="freelancerRole" name="role" required>
-                                        <option value="">Select Role...</option>
-                                        <!-- Populated with roles from dropdown-options.json -->
-                                    </select>
+                                    <input type="text" id="freelancerRole" name="role" placeholder="Role" required>
                                     <select id="freelancerLocation" name="location" required>
                                         <option value="">Select Location...</option>
                                         <!-- Populated with locations from dropdown-options.json -->
@@ -690,9 +687,7 @@
                             <h3>Add New Job</h3>
                             <form id="jobForm">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <select id="jobTitle" name="title" required>
-                                        <option value="">Select Role/Title…</option>
-                                    </select>
+                                    <input type="text" id="jobTitle" name="title" placeholder="Job Title…" required>
                                     <input type="date" id="jobDate" name="date" placeholder="Event Date">
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -774,17 +769,7 @@
                                 Add or remove options for roles, locations, rates, and project types used throughout the system.
                             </p>
                             
-                            <!-- Roles Management -->
-                            <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
-                                <h4 style="color: #FFB200; margin-bottom: 0.5rem;">🎭 Roles</h4>
-                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                    <input type="text" id="newRole" placeholder="Add new role" style="flex: 1;">
-                                    <button onclick="addDropdownOption('roles', 'newRole')" style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
-                                        <i class="fas fa-plus"></i> Add
-                                    </button>
-                                </div>
-                                <div id="rolesList" style="max-height: 150px; overflow-y: auto;"></div>
-                            </div>
+                            <!-- Roles Management removed by design: roles are free-text per user and not centrally managed -->
                             
                             <!-- Locations Management -->
                             <div style="background: rgba(255,178,0,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,178,0,0.3);">
@@ -2488,7 +2473,7 @@
                         </div>
                         <div>
                             <label>Role</label>
-                            <select id="ue-role"></select>
+                            <input id="ue-role" type="text" value="${user.profile?.role || ''}">
                         </div>
                         <div>
                             <label>Location</label>
@@ -2550,7 +2535,7 @@
             const projectTypeValue = user?.profile?.projectType || currentJob?.type || '';
             const currentProjectStatus = (currentJob && (currentJob.projectStatus || currentJob.status)) || user?.profile?.projectStatus || 'upcoming';
             const currentPaymentStatus = (currentJob && currentJob.paymentStatus) || user?.paymentStatus || 'pending';
-            fillSelect('#ue-role', (window.dropdownOptions?.roles)||[], roleValue, 'Select…');
+            // role is now a free-text input; no select population
             fillSelect('#ue-location', (window.dropdownOptions?.locations)||[], locationValue, 'Select…');
             fillSelect('#ue-rate', (window.dropdownOptions?.rates)||[], rateValue, 'Select…');
             fillSelect('#ue-projectType', (window.dropdownOptions?.projectTypes)||[], projectTypeValue, 'Select…');
@@ -4464,26 +4449,11 @@
         function populateUserCreationDropdowns() {
             if (!window.dropdownOptions) return;
             
-            // Populate role dropdown and also jobTitle select with roles
-            const roleSelect = document.getElementById('freelancerRole');
-            const jobTitleSelect = document.getElementById('jobTitle');
-            if (roleSelect) {
-                roleSelect.innerHTML = '<option value="">Select Role...</option>';
-                window.dropdownOptions.roles.forEach(role => {
-                    const option = document.createElement('option');
-                    option.value = role;
-                    option.textContent = role;
-                    roleSelect.appendChild(option);
-                });
-            }
-            if (jobTitleSelect) {
-                jobTitleSelect.innerHTML = '<option value="">Select Role/Title...</option>';
-                window.dropdownOptions.roles.forEach(role => {
-                    const option = document.createElement('option');
-                    option.value = role;
-                    option.textContent = role;
-                    jobTitleSelect.appendChild(option);
-                });
+            // Roles are now free-text; do not populate role or jobTitle as dropdowns
+            const jobTitleEl = document.getElementById('jobTitle');
+            if (jobTitleEl && jobTitleEl.tagName === 'SELECT') {
+                // Backward compatibility if an older layout is loaded
+                jobTitleEl.innerHTML = '<option value="">Select Title...</option>';
             }
             
             // Populate location dropdown

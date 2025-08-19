@@ -894,3 +894,8 @@ curl http://localhost:8000/api/health
   - `../firebase-config.js`
   - `../firestore-data-manager.js`
 - Admin strict mode (optional): add `window.STRICT_FIRESTORE_MODE = true;` before loading admin modules to disable JSON fallbacks in `admin-dashboard-modular/js/utils/realtime-data-manager.js`.
+ 
+## 2025-08-19 — Admin Dashboard Roles Removal
+- Removed the Roles block from Dropdown Management in `admin-dashboard.html`.
+- Role fields in Add User and Edit User are now free-text inputs; no central `roles` list is managed.
+- Any code that previously populated `dropdownOptions.roles` into UI has been neutralized; keep `locations`, `rates`, and `projectTypes` only.

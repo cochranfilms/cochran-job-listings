@@ -55,6 +55,18 @@ This document describes the comprehensive testing system for the Cochran Films a
   - 2025-08-18 refinement: increased null-auth debounce from 3000ms to 5000ms in `user-portal.html` to further reduce spurious logout flicker during slow Firebase init.
 
 ### Admin Dashboard: Non-admin Handling (2025-08-18)
+### Admin Dashboard: Roles Removed + Single Job Title Input (2025-08-19)
+- The Job Management "Add New Job" form now uses a single text input `#jobTitle` for the job name/title. It no longer uses a roles-driven dropdown.
+- The Dropdown Management "Roles" section has been removed from `admin-dashboard.html`. Roles are now free-text on a per-user basis only (entered in the Add/Edit User forms).
+- The Edit User modal now displays Role as a text input `#ue-role`. Any previous population from `dropdownOptions.roles` is skipped.
+- Backward compatibility: if an older layout renders `#jobTitle` as a `<select>`, it is left empty and harmless; data submission still reads `name="title"`.
+
+Quick test:
+1. Open `admin-dashboard.html` and sign in.
+2. In Job Management → Add New Job, type a new job title and submit. Verify job card appears with the exact title and stats update.
+3. In Dropdown Management, verify there is no Roles block and no errors in console.
+4. Edit a user → Role field is free-text. Save and verify Firestore `users/<name>.profile.role` updates.
+
 - During initialization, if a signed-in user lacks admin privileges, the app no longer calls `auth.signOut()`. Instead, it shows the login screen with an "Access denied" notification. This prevents kicking users out of other tabs.
 - File: `admin-dashboard.html` (init block around existing user check)
 
