@@ -8735,7 +8735,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .tab-btn:hover::before {
             left: 100%;
         }
-
         .tab-btn:hover {
             background: rgba(255, 178, 0, 0.2);
             border-color: rgba(255, 178, 0, 0.5);
@@ -9532,7 +9531,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .action-required i {
             color: #FFB200;
         }
-
         .modal-action-btn {
             background: linear-gradient(135deg, #FFB200, #FFD700);
             color: #000;
@@ -10610,6 +10608,51 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         /* AI site-wide background inspired by index2.html */
         .ai-background { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
         #neuralBg { width: 100%; height: 100%; display: block; }
+
+        /* Parity styles from index2 (buttons, typography, glass cards) */
+        :root {
+            --brand-indigo: #6366f1;
+            --brand-emerald: #10b981;
+            --brand-amber: #f59e0b;
+            --brand-gold: #FFB200;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --card-border: 1px solid rgba(99,102,241,0.20);
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --shadow-md: 0 18px 40px rgba(0,0,0,0.35);
+            --shadow-lg: 0 30px 80px rgba(0,0,0,0.45);
+            --backdrop: blur(12px);
+        }
+        body { color: var(--text-primary); }
+        h1, h2, h3 { font-family: 'Cinzel', serif; letter-spacing: -0.01em; }
+
+        /* Glass card utility that existing cards can adopt */
+        .glass-card { background: var(--card-bg); border: var(--card-border); border-radius: var(--radius-lg); backdrop-filter: var(--backdrop); box-shadow: var(--shadow-md); }
+        .card, .item-card, .profile-card, .payment-card { background: var(--card-bg) !important; border: var(--card-border) !important; border-radius: var(--radius-lg) !important; backdrop-filter: var(--backdrop) !important; box-shadow: var(--shadow-md) !important; }
+        .dashboard-header { border-bottom: 1px solid rgba(99,102,241,0.2) !important; }
+
+        /* Buttons */
+        .btn, .login-btn, .btn-small { border-radius: 14px !important; font-weight: 800 !important; letter-spacing: .02em; }
+        .btn { background: linear-gradient(135deg, var(--brand-gold), #ffd166) !important; color: #0a0a0a !important; box-shadow: 0 0 40px rgba(255,178,0,0.25) !important; border: 0 !important; }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .btn-secondary { background: rgba(15,23,42,0.55) !important; border: 1px solid rgba(99,102,241,0.22) !important; color: var(--text-secondary) !important; }
+        .btn-secondary:hover { border-color: rgba(99,102,241,0.45) !important; color: #e2e8f0 !important; }
+
+        /* Inputs */
+        input, select, textarea { background: rgba(15,23,42,0.6) !important; border: 1px solid rgba(99,102,241,0.3) !important; color: var(--text-primary) !important; border-radius: 12px !important; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand-gold) !important; box-shadow: 0 0 0 3px rgba(255,178,0,0.2) !important; }
+
+        /* Status badges */
+        .status-badge, .job-status { border-radius: 12px !important; }
+
+        /* Notification dropdown parity */
+        #notificationPanel, #notificationDropdown { background: rgba(15,23,42,0.95) !important; border: 1px solid rgba(99,102,241,0.2) !important; backdrop-filter: blur(20px) !important; }
+        .notification-item { background: rgba(15,23,42,0.7); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+
+        /* Lists */
+        .item-list { background: transparent !important; }
     </style>
 </head>
 <body>
