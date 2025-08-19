@@ -1980,7 +1980,11 @@
             if (!container) return;
             
             const userEmail = currentUser.email;
-            const performance = getUserPerformanceReview(userEmail);
+            let performance = getUserPerformanceReview(userEmail);
+            // fallback: if not found by email, try currentUser.performance directly when users API returns flattened doc
+            if (!performance && currentUser && currentUser.performance) {
+                performance = currentUser.performance;
+            }
             
             if (performance) {
                 container.innerHTML = `

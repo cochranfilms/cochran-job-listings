@@ -3720,19 +3720,21 @@
         
         // Check if performance review should be shown for a user
         function shouldShowPerformanceReview(userData) {
-            // Check if user has completed projects with paid status
-            if (userData.jobs && Object.keys(userData.jobs).length > 0) {
-                const completedJobs = Object.values(userData.jobs).filter(job => 
-                    job.projectStatus === 'completed' && job.paymentStatus === 'paid'
+            // consider either payment paid OR project completed
+            let hasCompletedOrPaid = false;
+            if (userData && userData.jobs && Object.keys(userData.jobs).length > 0) {
+                const jobsArr = Object.values(userData.jobs);
+                hasCompletedOrPaid = jobsArr.some(job => 
+                    String(job.paymentStatus || '').toLowerCase() === 'paid' ||
+                    String(job.projectStatus || '').toLowerCase() === 'completed'
                 );
-                
-                // Show if there are completed paid jobs and no performance review exists
-                if (completedJobs.length > 0) {
-                    const existingReview = (userData && userData.performance) || null;
-                    return !existingReview || existingReview.status === 'pending';
-                }
             }
-            return false;
+            // also consider top-level paymentStatus when present
+            if (!hasCompletedOrPaid && String(userData?.paymentStatus || '').toLowerCase() === 'paid') {
+                hasCompletedOrPaid = true;
+            }
+            const existingReview = userData?.performance || null;
+            return hasCompletedOrPaid && (!existingReview || existingReview.status === 'pending');
         }
         
         // Check for performance review alerts
@@ -4844,6 +4846,7 @@
                 showNotification('User not found', 'error');
                 return;
             }
+            const existing = user.performance || null;
 
             // Use the proper admin bank viewer system
             if (window.adminBankViewer) {
@@ -5063,15 +5066,15 @@
                         <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <strong>Review Status:</strong> 
-                                <span style="color: #f59e0b;">Pending</span>
+                                <span style="color: ${existing ? '#22c55e' : '#f59e0b'};">${existing ? 'Completed' : 'Pending'}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <strong>Last Review:</strong> 
-                                <span style="color: #FFB200;">Not yet reviewed</span>
+                                <span style="color: #FFB200;">${existing?.reviewDate ? new Date(existing.reviewDate).toLocaleDateString() : 'Not yet reviewed'}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <strong>Performance Level:</strong> 
-                                <span style="color: #22c55e;">New</span>
+                                <span style="color: #22c55e;">${existing ? 'Rated ' + (existing.overallRating || '-') + '/5' : 'New'}</span>
                             </div>
                         </div>
                     </div>
@@ -5080,6 +5083,20 @@
                         <h4 style="color: #3b82f6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             📝 Review Details
                         </h4>
+                        ${existing ? `
+                        <div style="background: rgba(0,0,0,0.35);border:1px solid rgba(255,178,0,.25);border-radius:8px;padding:12px;margin-bottom:12px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.95rem;">
+                                <div><strong>Overall:</strong> ${existing.overallRating || '-'}/5</div>
+                                <div><strong>Professionalism:</strong> ${existing.professionalism || '-'}</div>
+                                <div><strong>Communication:</strong> ${existing.communication || '-'}</div>
+                                <div><strong>Timeliness:</strong> ${existing.timeliness || '-'}</div>
+                            </div>
+                            ${Array.isArray(existing.strengths) && existing.strengths.length ? `<div style="margin-top:8px;"><strong>Strengths:</strong> ${existing.strengths.join(', ')}</div>` : ''}
+                            ${Array.isArray(existing.areasForImprovement) && existing.areasForImprovement.length ? `<div style="margin-top:8px;"><strong>Improvements:</strong> ${existing.areasForImprovement.join(', ')}</div>` : ''}
+                            ${Array.isArray(existing.goals) && existing.goals.length ? `<div style="margin-top:8px;"><strong>Goals:</strong> ${existing.goals.join(', ')}</div>` : ''}
+                            ${existing.notes ? `<div style="margin-top:8px;"><strong>Notes:</strong> ${existing.notes}</div>` : ''}
+                        </div>
+                        ` : ''}
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
                             <div>
                                 <label style="display:block;color:#9ca3af;font-size:.9rem;margin-bottom:6px;">Overall Rating</label>
@@ -5156,7 +5173,7 @@
                                     transition: all 0.3s ease;
                                     flex: 1;
                                 " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                            ✅ Submit Review
+                            ${existing ? '✅ Update Review' : '✅ Submit Review'}
                         </button>
                         <button onclick="this.closest('#performanceReviewModal').remove()" 
                                 style="
