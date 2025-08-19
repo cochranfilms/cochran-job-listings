@@ -5968,6 +5968,7 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .logo {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: var(--space-md);
             margin-bottom: var(--space-xl);
             padding-bottom: var(--space-lg);
@@ -5975,17 +5976,13 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         }
         
         .logo img {
-            width: 40px;
-            height: 40px;
+            width: 80px;
+            height: 80px;
             border-radius: var(--radius-md);
+            object-fit: contain;
         }
         
-        .logo span {
-            font-family: var(--font-display);
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
+        .logo span { display: none; }
         
         .nav-menu {
             flex: 1;
@@ -10826,8 +10823,8 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         <!-- Sophisticated Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <img src="https://static.wixstatic.com/media/aeef42_af70013becbb4aa2b08179f9eba48dbc~mv2.png" alt="Cochran Films">
-                <span>Cochran Films</span>
+                <img src="Logo.png" alt="Cochran Films">
+                <span></span>
             </div>
             
             <nav class="nav-menu">
