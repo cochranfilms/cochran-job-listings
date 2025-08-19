@@ -4993,6 +4993,7 @@
                 showNotification('User not found', 'error');
                 return;
             }
+            const existing = user.performance || null;
 
             // Create sophisticated performance review modal
             const modal = document.createElement('div');
