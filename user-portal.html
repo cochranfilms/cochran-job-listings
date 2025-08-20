@@ -96,6 +96,8 @@
                     await window.FirebaseConfig.waitForInit();
                     auth = window.FirebaseConfig.auth;
                     firestore = window.FirebaseConfig.getFirestore();
+                    // Proactively initialize FirestoreDataManager so data loads are ready post-login
+                    try { if (window.FirestoreDataManager) { await window.FirestoreDataManager.init(); } } catch(_) {}
                     console.log('✅ Firebase initialized in user portal');
                     
                     // Set up auth state observer after Firebase is ready
@@ -190,6 +192,10 @@
         async function loadPerformanceReviews() {
             try {
                 performanceReviews = {};
+                // Ensure Firestore is ready
+                if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                    try { await window.FirestoreDataManager.init(); } catch(_) {}
+                }
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     const fsUsersObj = await window.FirestoreDataManager.getUsers();
                     for (const userData of Object.values(fsUsersObj || {})) {
@@ -759,6 +765,10 @@
             try {
                 console.log('🔄 Loading users data...');
                 if (usersLoadInFlight) { return usersLoadInFlight; }
+                // Ensure Firestore is ready first
+                if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                    try { await window.FirestoreDataManager.init(); } catch(_) {}
+                }
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     usersLoadInFlight = (async () => {
                     const fsUsersObj = await window.FirestoreDataManager.getUsers();
@@ -803,12 +813,14 @@
                     })();
                     await usersLoadInFlight;
                 } else {
-                    users = [];
-                    console.warn('⚠️ Firestore unavailable; no JSON fallback (disabled)');
+                    // Keep existing users model if any to avoid wiping UI while Firestore warms up
+                    console.warn('⚠️ Firestore unavailable; no JSON fallback (disabled). Preserving current users snapshot.');
+                    return users;
                 }
             } catch (error) {
                 console.error('❌ Error loading users data:', error);
-                users = [];
+                // Preserve current users on error to avoid jarring UI resets
+                return users;
             } finally {
                 usersLoadInFlight = null;
             }
@@ -903,18 +915,24 @@
             try {
                 console.log('🔄 Loading uploaded contracts from Firestore (contracts collection)...');
                 if (contractsLoadInFlight) { return contractsLoadInFlight; }
+                // Ensure Firestore is ready
+                if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                    try { await window.FirestoreDataManager.init(); } catch(_) {}
+                }
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     contractsLoadInFlight = window.FirestoreDataManager.getContracts();
                     uploadedContracts = await contractsLoadInFlight;
                     contractsLoadInFlight = null;
                     console.log('✅ Uploaded contracts loaded from Firestore:', uploadedContracts.length, 'contracts');
                 } else {
-                    uploadedContracts = [];
-                    console.warn('⚠️ Firestore unavailable; contracts list empty (no JSON fallback)');
+                    // Preserve existing contracts list if any to avoid drops
+                    console.warn('⚠️ Firestore unavailable; leaving existing contracts list intact');
+                    return uploadedContracts;
                 }
             } catch (error) {
                 console.error('❌ Error loading contracts from Firestore:', error);
-                uploadedContracts = [];
+                // Preserve current list on error
+                return uploadedContracts;
             } finally {
                 contractsLoadInFlight = null;
             }
@@ -926,17 +944,21 @@
         async function loadJobsData() {
             try {
                 // Use Firestore as source of truth via window.FirestoreDataManager
+                if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                    try { await window.FirestoreDataManager.init(); } catch(_) {}
+                }
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     jobsData = await window.FirestoreDataManager.getJobListings();
                     console.log('✅ Jobs data loaded from Firestore:', jobsData.length, 'jobs');
                 } else {
                     // Firestore unavailable; do not fall back to legacy JSON
-                    console.warn('⚠️ Firestore unavailable; jobsData set to empty');
-                    jobsData = [];
+                    console.warn('⚠️ Firestore unavailable; preserving existing jobsData');
+                    return jobsData;
                 }
             } catch (error) {
                 console.error('❌ Error loading jobs data:', error);
-                jobsData = [];
+                // Preserve current jobs on error
+                return jobsData;
             }
         }
 
@@ -4211,6 +4233,9 @@
                 }
             });
             
+            // Ensure Firebase + Firestore are fully ready before first data loads
+            try { if (window.FirebaseConfig) { await window.FirebaseConfig.waitForInit(); } } catch(_) {}
+            try { if (window.FirestoreDataManager) { await window.FirestoreDataManager.init(); } } catch(_) {}
             await loadUploadedContracts();
             await loadUsersData();
             await loadJobsData();
