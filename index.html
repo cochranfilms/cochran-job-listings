@@ -2478,6 +2478,7 @@
     document.addEventListener('DOMContentLoaded', async function() {
       // Initialize Firebase first (ensures Firestore availability)
       await initializeFirebase();
+      await waitForFirestoreReady();
 
       // Initial load from Firestore
       try {
@@ -2622,6 +2623,24 @@
       }
     }
 
+    // Ensure FirestoreDataManager is ready before loading jobs (prevents empty first render)
+    async function waitForFirestoreReady(timeoutMs = 6000) {
+      const start = Date.now();
+      try {
+        if (window.FirestoreIntegration && typeof window.FirestoreIntegration.init === 'function') {
+          await window.FirestoreIntegration.init();
+        }
+        if (window.FirestoreDataManager && typeof window.FirestoreDataManager.init === 'function' && !window.FirestoreDataManager.isAvailable()) {
+          try { await window.FirestoreDataManager.init(); } catch (_) {}
+        }
+      } catch (_) {}
+      while (!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable())) {
+        if (Date.now() - start > timeoutMs) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      return !!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable());
+    }
+
     // Add some interactive polish
     document.addEventListener('DOMContentLoaded', async function() {
       // Initialize slideshow
@@ -2677,7 +2696,7 @@
                   <div class="ai-pass-error" id="aiPassError">Incorrect password. Please try again.</div>
                 </div>
               </div>
-              <div class="ai-gate-footer">Creators: you can explore opportunities below soon. For now, use the landing page to connect — we can’t wait to work with you.</div>
+              <div class="ai-gate-footer">Creators: you can explore opportunities below soon. For now, use the landing page to connect — we can't wait to work with you.</div>
             </div>
           `;
           document.body.appendChild(modal);
