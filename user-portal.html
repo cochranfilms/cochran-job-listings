@@ -792,10 +792,10 @@
                                 id: 'legacy-job',
                                 role: user.profile?.role,
                                 location: user.profile?.location,
-                                projectStart: user.application?.eventDate || user.profile?.projectStart,
+                                // Prefer approvedDate or application.eventDate as start if present
+                                projectStart: user.profile?.approvedDate || user.application?.eventDate || user.profile?.projectStart || '',
                                 rate: user.profile?.rate,
                                 status: 'upcoming',
-                                projectType: 'Legacy Job',
                                 description: `${user.profile?.role} position`
                             }
                         },
@@ -2311,7 +2311,6 @@
             };
             return icons[type] || 'info-circle';
         }
-
         // Initialize creative features
         function initializeCreativeFeatures() {
             // Animate welcome message
@@ -2482,16 +2481,9 @@
         // Global refresh function
         window.refreshUserData = refreshUserDataWithAnimation;
         
-        // Get appropriate icon for job type
-        function getJobIcon(projectType) {
-            const iconMap = {
-                'Corporate Video': 'video',
-                'Real Estate': 'home',
-                'Photography': 'camera',
-                'Legacy Job': 'briefcase',
-                'Drone': 'helicopter'
-            };
-            return iconMap[projectType] || 'briefcase';
+        // Get appropriate icon for a job; default to briefcase (no project type taxonomy)
+        function getJobIcon() {
+            return 'briefcase';
         }
 
         // Track selected job
@@ -2573,10 +2565,23 @@
         function formatDisplayDate(dateStr) {
             if (!dateStr) return 'TBD';
             try {
-                const d = new Date(dateStr);
-                return isNaN(d.getTime()) ? (dateStr || 'TBD') : d.toLocaleDateString();
+                // Accept common formats and numeric timestamps
+                let d;
+                if (typeof dateStr === 'number') {
+                    d = new Date(dateStr);
+                } else if (typeof dateStr === 'string') {
+                    // Remove ordinal suffixes 1st/2nd/3rd/4th
+                    const cleaned = dateStr.replace(/(\d+)(st|nd|rd|th)/gi, '$1');
+                    d = new Date(cleaned);
+                } else if (dateStr && dateStr.toDate) {
+                    // Firestore Timestamp
+                    d = dateStr.toDate();
+                } else {
+                    d = new Date(dateStr);
+                }
+                return isNaN(d.getTime()) ? 'TBD' : d.toLocaleDateString();
             } catch (_) {
-                return dateStr || 'TBD';
+                return 'TBD';
             }
         }
         // Fix timezone issues with date strings
@@ -3341,7 +3346,6 @@
                 rate: selectedJob.rate || 'Rate TBD',
                 status: effectiveProjectStatus || getJobStatus(effectiveProjectStart),
                 paymentStatus: jobProjectStatus.paymentStatus || 'pending',
-                projectType: selectedJob.projectType || 'Project',
                 description: selectedJob.description || 'Project details to be provided.'
             };
 
@@ -3358,7 +3362,7 @@
                         ${userJobsArray.map((job, index) => `
                             <button class="job-tab ${index === selectedJobIndex ? 'active' : ''}" 
                                     onclick="selectJob(${index}, '${job.id}')">
-                                <i class="fas fa-${getJobIcon(job.projectType)}"></i>
+                                <i class="fas fa-${getJobIcon()}"></i>
                                 ${job.title || job.role}
                             </button>
                         `).join('')}
@@ -3373,7 +3377,6 @@
                         <div>
                             <h3>${jobInfo.role}</h3>
                             <p class="job-location"><i class="fas fa-map-marker-alt"></i> ${jobInfo.location}</p>
-                            <p class="job-type-info"><i class="fas fa-tag"></i> ${jobInfo.projectType}</p>
                         </div>
                         <div class="status-container">
                             <span class="job-status ${jobInfo.status.toLowerCase().replace(/\s+/g,'-')}">${jobInfo.status}</span>
@@ -3752,7 +3755,7 @@
                             case 'completed': 
                                 return `✅ Your project has been completed successfully! Payment will be processed within 24 hours.`;
                             case 'on-hold': 
-                                return `⏸️ This project is currently on hold while we await client updates. We’ll notify you as soon as it resumes.`;
+                                return `⏸️ This project is currently on hold while we await client updates. We'll notify you as soon as it resumes.`;
                             case 'cancelled': 
                                 return `❌ This project has been cancelled. Please contact Cochran Films for more information about this cancellation.`;
                             default: 
@@ -4558,11 +4561,6 @@
                         <div>
                             <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Rate</h3>
                             <p style="color: rgba(255,255,255,0.9);">${data.pay || data.rate || '$75/hour'}</p>
-                        </div>
-                        
-                        <div>
-                            <h3 style="color: #FFB200; margin-bottom: 0.5rem;">Project Type</h3>
-                            <p style="color: rgba(255,255,255,0.9);">${data.projectType || 'Assistant'}</p>
                         </div>
                         
                         <div>
@@ -8042,7 +8040,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             display: block;
             animation: fadeIn 0.5s ease;
         }
-
         /* Login Screen Styles */
         .login-container {
             min-height: 100vh;
@@ -8838,7 +8835,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             color: rgba(255,255,255,0.9);
             margin-bottom: 1rem;
         }
-        
         /* Tab Navigation */
         .tab-navigation {
             display: flex;
@@ -9640,7 +9636,6 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
             gap: 0.75rem;
             font-size: 0.9rem;
         }
-
         .requirements-list li i {
             color: #FFB200;
             width: 16px;
