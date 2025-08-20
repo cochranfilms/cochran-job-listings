@@ -92,8 +92,8 @@
         async function initializeFirebase() {
             try {
                 if (window.FirebaseConfig) {
-                    // Initialize a dedicated app instance for portal to isolate auth from admin tabs
-                    await window.FirebaseConfig.init('user-portal');
+                    // Reuse the default app/session to avoid auth fragmentation across tabs/pages
+                    await window.FirebaseConfig.waitForInit();
                     auth = window.FirebaseConfig.auth;
                     firestore = window.FirebaseConfig.getFirestore();
                     console.log('✅ Firebase initialized in user portal');

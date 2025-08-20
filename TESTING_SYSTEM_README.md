@@ -1,6 +1,19 @@
 ### Duplicate Firestore Users prevention (2025-08-19)
 ### Landing Jobs Visibility Hotfix (2025-08-20)
 
+### User Portal Auth Session Unification (2025-08-20)
+
+What changed:
+- `user-portal.html` no longer initializes a separate named Firebase app (`'user-portal'`). It now waits for the existing app via `FirebaseConfig.waitForInit()` and reuses `FirebaseConfig.auth` and Firestore. This prevents a mismatch where users are signed into Firebase Auth but the portal UI doesn't see the session.
+
+How to verify quickly:
+1. Sign in or create an account so you appear in Firebase Auth.
+2. Open `/user-portal.html`; watch the console for:
+   - "✅ Firebase initialized in user portal"
+   - "✅ User authenticated: <email>"
+3. Confirm the login screen hides and the portal shows without needing to re-enter credentials.
+4. Reload the page; the session should persist and the portal should render directly.
+
 What changed:
 - In `index.html`, the job filtering step now derives a title from multiple fields (`title`, `Title`, `jobTitle`, `position`, `Job Title`, `Applying For Which Job`, `applying_for_which_job`) before deciding inclusion. This prevents valid Firestore job docs that use alternate field names from being filtered out.
 

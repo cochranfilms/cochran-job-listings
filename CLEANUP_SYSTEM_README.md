@@ -1,6 +1,8 @@
 ### Firestore Integration Notes
 - 2025-08-20 — `index.html` job filter derived-title fix: keep this logic when refactoring. The filter must derive a job title from multiple fields and only exclude rows that clearly look like applicant submissions. Do not revert to `job.title`-only checks.
 
+- 2025-08-20 — User portal should reuse the default Firebase app session. Do not spin up a separate named app (e.g., `'user-portal'`) in `user-portal.html`; call `FirebaseConfig.waitForInit()` and use `FirebaseConfig.auth`/`getFirestore()`. This avoids cross-tab/session fragmentation and ensures `onAuthStateChanged` reflects the existing login.
+
 ### 2025-08-19 — Remove legacy Quick Actions (Admin)
 
 - The legacy Quick Actions UI and handlers have been removed from `admin-dashboard.html` to reduce surface area and eliminate deprecated flows.
