@@ -85,8 +85,8 @@
         // Firebase Configuration - Now handled by firebase-config.js
         let auth = null;
         let firestore = null;
-        // Disable background auto-provision to prevent ghost users
-        window.ALLOW_PORTAL_AUTOPROVISION = false;
+        // Allow safe auto-provision after Firebase auth so new accounts can enter the portal
+        window.ALLOW_PORTAL_AUTOPROVISION = true;
         
         // Initialize Firebase when config is ready
         async function initializeFirebase() {
@@ -1440,7 +1440,7 @@
                 return e1 === target || e2 === target;
             });
 
-            // If not found, optionally auto-provision (disabled by default to prevent ghost users)
+            // If not found, optionally auto-provision
             if (!user && window.ALLOW_PORTAL_AUTOPROVISION === true && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                 try {
                     const nameFromEmail = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -1466,6 +1466,17 @@
                         const target = email.toLowerCase();
                         return e1 === target || e2 === target;
                     });
+                    // If still not found due to eventual consistency, wait briefly and try once more
+                    if (!user) {
+                        await new Promise(r => setTimeout(r, 600));
+                        await loadUsersData();
+                        user = users.find(u => {
+                            const e1 = (u && typeof u.email === 'string') ? u.email.toLowerCase() : '';
+                            const e2 = (u && u.profile && typeof u.profile.email === 'string') ? u.profile.email.toLowerCase() : '';
+                            const target = email.toLowerCase();
+                            return e1 === target || e2 === target;
+                        });
+                    }
                     console.log('✅ Auto-provisioned user in Firestore:', userDocId);
                 } catch (e) {
                     console.warn('⚠️ Auto-provision failed (continuing if purely auth-based access is acceptable):', e?.message || e);
@@ -1545,7 +1556,9 @@
                 console.error('❌ Elements not found:', { loginScreen: !!loginScreen, userPortal: !!userPortal });
             }
             
-            loadUserData();
+            // Ensure Firestore is ready, then load
+            try { if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) { await window.FirestoreDataManager.init(); } } catch(_) {}
+            await loadUserData();
             
             // Initialize creative features after portal is shown
             setTimeout(() => {
