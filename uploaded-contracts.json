@@ -463,8 +463,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-20",
       "signedDate": "2025-08-20"
+    },
+    {
+      "contractId": "CF-1755707173388-ETPJJ",
+      "freelancerName": "Cody Cochran",
+      "freelancerEmail": "codylcochran@icloud.com",
+      "role": "Backdrop Photographer Base",
+      "rate": "$400",
+      "location": "Douglasville, GA",
+      "fileName": "Cody Cochran.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-20T16:26:30.505Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Cody Cochran.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-20",
+      "signedDate": "2025-08-20"
     }
   ],
-  "lastUpdated": "2025-08-20T16:02:21.355Z",
-  "totalContracts": 29
+  "lastUpdated": "2025-08-20T16:26:30.505Z",
+  "totalContracts": 30
 }
