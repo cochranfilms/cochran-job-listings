@@ -1,4 +1,6 @@
 ### Firestore Integration Notes
+- 2025-08-20 — `index.html` job filter derived-title fix: keep this logic when refactoring. The filter must derive a job title from multiple fields and only exclude rows that clearly look like applicant submissions. Do not revert to `job.title`-only checks.
+
 ### 2025-08-19 — Remove legacy Quick Actions (Admin)
 
 - The legacy Quick Actions UI and handlers have been removed from `admin-dashboard.html` to reduce surface area and eliminate deprecated flows.

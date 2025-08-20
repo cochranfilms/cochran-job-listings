@@ -1,4 +1,15 @@
 ### Duplicate Firestore Users prevention (2025-08-19)
+### Landing Jobs Visibility Hotfix (2025-08-20)
+
+What changed:
+- In `index.html`, the job filtering step now derives a title from multiple fields (`title`, `Title`, `jobTitle`, `position`, `Job Title`, `Applying For Which Job`, `applying_for_which_job`) before deciding inclusion. This prevents valid Firestore job docs that use alternate field names from being filtered out.
+
+How to verify quickly:
+1. Open `index.html` with DevTools Console visible.
+2. Ensure Firebase initializes (look for "✅ Firebase initialized in index.html").
+3. Check the console for rows logged as "Row with title ..." and confirm jobs render below without the empty-state banner.
+4. Click “Refresh Jobs” and confirm listings persist and update without showing the "not hiring" message unless there truly are zero jobs in Firestore.
+
 ### Admin Dashboard: Quick Actions removed (2025-08-19)
 
 What changed:
