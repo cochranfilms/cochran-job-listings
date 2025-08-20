@@ -339,11 +339,10 @@
         let notifications = [];
         let notificationUpdateInterval;
         
-        // Initialize notification system
+        // Initialize notification system (user-scoped; no global polling)
         async function initializeNotificationSystem() {
             console.log('🔔 Initializing user-specific notification system...');
             await loadNotifications();
-            startNotificationPolling();
             startUserNotificationSystem();
             updateNotificationBadge();
             updateNotificationList();
@@ -356,31 +355,29 @@
             // No automatic JSON file monitoring for users
         }
         
-        // Load notifications from Firestore (fallback to localStorage)
+        // Load notifications (user-local only)
         async function loadNotifications() {
             try {
-                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                    // For now, use localStorage as we don't have a notifications collection implemented here
-                    notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-                    console.log('✅ Loaded notifications (local fallback)');
-                } else {
-                    notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-                    console.log('⚠️ Using localStorage fallback for notifications');
-                }
+                const key = currentUser && currentUser.email ? `notifications:${currentUser.email.toLowerCase()}` : 'notifications:anonymous';
+                notifications = JSON.parse(localStorage.getItem(key) || '[]');
+                console.log('✅ Loaded user-local notifications');
             } catch (error) {
                 console.error('❌ Error loading notifications:', error);
-                notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+                const key = currentUser && currentUser.email ? `notifications:${currentUser.email.toLowerCase()}` : 'notifications:anonymous';
+                notifications = JSON.parse(localStorage.getItem(key) || '[]');
             }
         }
         
         // Save notifications (localStorage placeholder)
         async function saveNotifications() {
             try {
-                localStorage.setItem('notifications', JSON.stringify(notifications));
-                console.log('✅ Notifications saved locally');
+                const key = currentUser && currentUser.email ? `notifications:${currentUser.email.toLowerCase()}` : 'notifications:anonymous';
+                localStorage.setItem(key, JSON.stringify(notifications));
+                console.log('✅ Notifications saved locally (user-scoped)');
             } catch (error) {
                 console.error('❌ Error saving notifications:', error);
-                localStorage.setItem('notifications', JSON.stringify(notifications));
+                const key = currentUser && currentUser.email ? `notifications:${currentUser.email.toLowerCase()}` : 'notifications:anonymous';
+                localStorage.setItem(key, JSON.stringify(notifications));
             }
         }
         
@@ -532,28 +529,11 @@
             }
         }
         
-        // Start notification polling
-        function startNotificationPolling() {
-            if (notificationUpdateInterval) {
-                clearInterval(notificationUpdateInterval);
-            }
-            
-            notificationUpdateInterval = setInterval(async () => {
-                await loadNotifications();
-                updateNotificationBadge();
-                updateNotificationList();
-            }, 30000); // Check every 30 seconds
-            
-            console.log('🔄 Started notification polling (30s interval)');
-        }
+        // Disable global polling to avoid duplicate/cross-user notifications in the user portal
+        function startNotificationPolling() { /* no-op: user portal uses local user-scoped notifications only */ }
         
-        // Stop notification polling
-        function stopNotificationPolling() {
-            if (notificationUpdateInterval) {
-                clearInterval(notificationUpdateInterval);
-                notificationUpdateInterval = null;
-            }
-        }
+        // Stop notification polling (kept for API parity; no-op)
+        function stopNotificationPolling() { notificationUpdateInterval = null; }
         
         // Update notification badge
         function updateNotificationBadge() {
