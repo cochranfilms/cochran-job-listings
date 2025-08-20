@@ -2100,6 +2100,24 @@
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     window.users = await window.FirestoreDataManager.getUsers();
                     console.log('✅ Users loaded from Firestore:', Object.keys(window.users || {}).length);
+
+                    // Merge per-user assignments subcollection into top-level jobs for display
+                    try {
+                        const userIds = Object.keys(window.users || {});
+                        await Promise.all(userIds.map(async (uid) => {
+                            if (!uid || uid === '_archived' || uid.startsWith('_')) return;
+                            try {
+                                const assignments = await window.FirestoreDataManager.getUserAssignments(uid);
+                                if (assignments && Object.keys(assignments).length > 0) {
+                                    const existingJobs = window.users[uid]?.jobs || {};
+                                    // Prefer existing top-level jobs, but include assignments as well
+                                    window.users[uid].jobs = { ...assignments, ...existingJobs };
+                                }
+                            } catch (_) {}
+                        }));
+                    } catch (_) {
+                        console.warn('⚠️ Failed to merge assignments into user jobs for display');
+                    }
                 } else {
                     console.warn('⚠️ Firestore not available; users set to empty');
                     window.users = {};
@@ -2168,7 +2186,7 @@
                         <span>📧 ${user.profile?.email || 'Email not specified'}</span>
                         <span>🎭 ${user.profile?.role || 'Role not set'}</span>
                         <span>📍 ${user.profile?.location || 'Location not specified'}</span>
-                        <span>💰 ${(user.jobs && Object.values(user.jobs)[0]?.rate) || 'Rate not specified'}</span>
+                        <span>💰 ${(user.jobs && Object.values(user.jobs)[0]?.rate) || user.application?.pay || 'Rate not specified'}</span>
                     </div>
                     <div class="item-description">
                         ${user.application?.jobTitle ? `<div><strong>Applied For:</strong> ${user.application.jobTitle}</div>` : ''}
@@ -2282,7 +2300,6 @@
                     role: formData.get('role'),
                     location: formData.get('location'),
                     rate: formData.get('rate'),
-                    projectType: formData.get('projectType') || '',
                     approvedDate: formData.get('approvedDate'),
                     projectDate: formData.get('projectDate')
                 },
@@ -2318,7 +2335,7 @@
                         listingStatus: job.status,
                         status: 'upcoming',
                         projectStatus: 'upcoming',
-                        projectType: job.type || userData.profile.projectType || '',
+                        projectType: job.type || '',
                         paymentStatus: 'pending',
                         assignedDate: new Date().toISOString().split('T')[0],
                         projectStart: job.date || 'TBD',
@@ -2488,7 +2505,6 @@
                         email: modal.querySelector('#ue-email').value.trim(),
                         role: modal.querySelector('#ue-role').value,
                         location: modal.querySelector('#ue-location').value,
-                        projectType: modal.querySelector('#ue-projectType').value,
                         approvedDate: modal.querySelector('#ue-approved').value,
                         projectDate: modal.querySelector('#ue-project').value,
                         projectStatus: selectedProjectStatus
@@ -3793,7 +3809,7 @@
                             userData.profile.location = jobPublic.location || userData.profile.location || 'Atlanta Area';
                             userData.profile.rate = jobPublic.pay || userData.profile.rate || '';
                             userData.profile.projectDate = jobPublic.date || userData.profile.projectDate || '';
-                            userData.profile.projectType = jobPublic.type || userData.profile.projectType || '';
+                            // no profile.projectType field anymore
                             try { await window.FirestoreDataManager.setUser(userName, userData); } catch(_) {}
                             try { jobPublic.status = 'Inactive'; await window.FirestoreDataManager.setJobListing(jobId, jobPublic); displayJobs(); } catch(_) {}
                         }
@@ -4184,16 +4200,7 @@
             }
             
             // Populate project type dropdown
-            const projectTypeSelect = document.getElementById('freelancerProjectType');
-            if (projectTypeSelect) {
-                projectTypeSelect.innerHTML = '<option value="">Select Project Type...</option>';
-                (window.dropdownOptions.projectTypes || []).forEach(type => {
-                    const option = document.createElement('option');
-                    option.value = type;
-                    option.textContent = type;
-                    projectTypeSelect.appendChild(option);
-                });
-            }
+            // Remove projectType from profile creation (no longer used)
             
             // Populate job selection dropdown from jobs-data
             const jobSelect = document.getElementById('freelancerJob');

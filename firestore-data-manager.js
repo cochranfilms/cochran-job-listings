@@ -44,6 +44,9 @@ const FirestoreDataManager = {
             
             // Set up real-time listeners
             this.setupRealtimeListeners();
+
+            // Purge deprecated user fields to simplify schema
+            try { await this.purgeDeprecatedUserFields(); } catch (e) { console.warn('⚠️ User schema purge skipped:', e?.message || e); }
             
         } catch (error) {
             console.error('❌ Firestore Data Manager initialization failed:', error);
@@ -181,12 +184,17 @@ const FirestoreDataManager = {
                     return;
                 }
 
+                // Remove deprecated fields from profile view
+                const profileClean = { ...(userData.profile || {}) };
+                if (profileClean && Object.prototype.hasOwnProperty.call(profileClean, 'projectType')) {
+                    delete profileClean.projectType;
+                }
+
                 const normalized = {
-                    profile: userData.profile || {},
+                    profile: profileClean,
                     contract: userData.contract || {},
                     application: userData.application || {},
                     jobs: userData.jobs || {},
-                    primaryJob: userData.primaryJob || '',
                     paymentMethod: userData.paymentMethod || '',
                     paymentStatus: userData.paymentStatus || '',
                     // Include performance reviews so admin and user portal can read them
@@ -224,7 +232,6 @@ const FirestoreDataManager = {
                             contract: mergedContract,
                             application: mergedApplication,
                             jobs: mergedJobs,
-                            primaryJob: current.primaryJob || normalized.primaryJob,
                             paymentMethod: current.paymentMethod || normalized.paymentMethod,
                             paymentStatus: current.paymentStatus || normalized.paymentStatus,
                             // Preserve performance review if present on either doc
@@ -356,12 +363,17 @@ const FirestoreDataManager = {
             } catch (mapErr) { console.warn('⚠️ setUser email normalization warning:', mapErr?.message || mapErr); }
 
             // Ensure the user data has the proper structure
+            // Strip deprecated fields before save
+            const profileClean = { ...(userData.profile || {}) };
+            if (Object.prototype.hasOwnProperty.call(profileClean, 'projectType')) {
+                delete profileClean.projectType;
+            }
+
             const structuredUserData = {
-                profile: userData.profile || {},
+                profile: profileClean,
                 contract: userData.contract || {},
                 application: userData.application || {},
                 jobs: userData.jobs || {},
-                primaryJob: userData.primaryJob || '',
                 paymentMethod: userData.paymentMethod || '',
                 paymentStatus: userData.paymentStatus || '',
                 // Persist performance reviews if provided
@@ -375,6 +387,34 @@ const FirestoreDataManager = {
         } catch (error) {
             console.error('❌ Error saving user:', error);
             throw error;
+        }
+    },
+
+    // Remove deprecated fields from all user docs in Firestore
+    async purgeDeprecatedUserFields() {
+        try {
+            if (!this.db) return false;
+            const snap = await this.db.collection(this.collections.users).get();
+            const batch = this.db.batch();
+            const FieldValue = (window.firebase && window.firebase.firestore && window.firebase.firestore.FieldValue) ? window.firebase.firestore.FieldValue : null;
+            if (!FieldValue || typeof FieldValue.delete !== 'function') {
+                console.warn('⚠️ FieldValue.delete unavailable; skip purge');
+                return false;
+            }
+            snap.forEach(doc => {
+                const ref = this.db.collection(this.collections.users).doc(doc.id);
+                const payload = {
+                    primaryJob: FieldValue.delete(),
+                    'profile.projectType': FieldValue.delete()
+                };
+                batch.set(ref, payload, { merge: true });
+            });
+            await batch.commit();
+            console.log('✅ Purged deprecated user fields (primaryJob, profile.projectType)');
+            return true;
+        } catch (e) {
+            console.warn('⚠️ purgeDeprecatedUserFields failed:', e?.message || e);
+            return false;
         }
     },
 
