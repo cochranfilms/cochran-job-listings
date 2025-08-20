@@ -847,7 +847,7 @@
         let firestore = null;
         
         // Initialize Firebase when config is ready
-        async function initializeFirebase() {
+        async function initializeAdminFirebase() {
             try {
                 if (window.FirebaseConfig) {
                     // Initialize default app for admin context
@@ -1154,6 +1154,10 @@
             }
             
             try {
+                // Ensure Firebase auth is ready
+                if (!auth || typeof auth.signInWithEmailAndPassword !== 'function') {
+                    try { await initializeAdminFirebase(); } catch (_) {}
+                }
                 // Firebase authentication
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 
@@ -1254,7 +1258,7 @@
             try {
                 // Initialize Firebase if not already done
                 if (!auth || !firestore) {
-                    await initializeFirebase();
+                    await initializeAdminFirebase();
                 }
                 
                 // Ensure Firestore is initialized, then load from Firestore only
@@ -5319,8 +5323,8 @@
             window.MAIN_DASHBOARD_LOGIN_FORM_OVERRIDE = false;
             window.MAIN_DASHBOARD_LOADING_OVERRIDE = false;
             
-            // Initialize Firebase
-            initializeFirebase().then(() => {
+            // Initialize Firebase (use admin-scoped initializer to avoid name collision with global helper)
+            initializeAdminFirebase().then(() => {
                 console.log('✅ Firebase initialized in admin dashboard');
             }).catch(error => {
                 console.error('❌ Firebase initialization failed:', error);
