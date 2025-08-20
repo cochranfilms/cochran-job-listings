@@ -1444,11 +1444,13 @@
             if (!user && window.ALLOW_PORTAL_AUTOPROVISION === true && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                 try {
                     const nameFromEmail = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                    // Prefer existing doc by email if present, else use name as id
-                    let userDocId = nameFromEmail || email;
+                    // Always resolve to an existing doc id by email across all shapes
+                    let userDocId = email;
                     try {
                         const existingId = await window.FirestoreDataManager.findUserIdByEmail(email);
-                        if (existingId) userDocId = existingId;
+                        if (existingId) {
+                            userDocId = existingId;
+                        }
                     } catch(_) {}
                     await window.FirestoreDataManager.setUser(userDocId, {
                         profile: { email, name: nameFromEmail },

@@ -251,26 +251,51 @@ const FirestoreDataManager = {
         }
     },
 
-    // Find a user document id by profile.email (case-insensitive)
+    // Find a user document id by any stored email field (case-insensitive)
     async findUserIdByEmail(email) {
         try {
             if (!email) return null;
             const target = String(email).toLowerCase();
-            const snap = await this.db
-                .collection(this.collections.users)
-                .where('profile.email', '==', target)
-                .get();
-            if (!snap.empty) {
-                // Return the first matching doc id
-                return snap.docs[0].id;
-            }
-            // Fallback: scan case-insensitive if older docs stored mixed-case emails
+            // First, try canonical field (profile.email) stored in lowercase
+            try {
+                const snap = await this.db
+                    .collection(this.collections.users)
+                    .where('profile.email', '==', target)
+                    .get();
+                if (!snap.empty) {
+                    return snap.docs[0].id;
+                }
+            } catch (_) {}
+
+            // Also try legacy top-level `email`
+            try {
+                const snap2 = await this.db
+                    .collection(this.collections.users)
+                    .where('email', '==', target)
+                    .get();
+                if (!snap2.empty) {
+                    return snap2.docs[0].id;
+                }
+            } catch (_) {}
+
+            // Fallback: scan all docs and check multiple shapes
             const all = await this.db.collection(this.collections.users).get();
             let found = null;
             all.forEach(d => {
                 if (found) return;
-                const e = (d.data()?.profile?.email || '').toString().toLowerCase();
-                if (e && e === target) found = d.id;
+                const data = d.data() || {};
+                const candidates = [
+                    (data.profile && data.profile.email) || '',
+                    data.email || '',
+                    (data.application && data.application.email) || '',
+                    (data.application && data.application.contactEmail) || ''
+                ];
+                for (const c of candidates) {
+                    if (c && String(c).toLowerCase() === target) {
+                        found = d.id;
+                        break;
+                    }
+                }
             });
             if (found) return found;
             return null;
@@ -308,7 +333,7 @@ const FirestoreDataManager = {
     // Create or update user with proper structure validation
     async setUser(userId, userData) {
         try {
-            // Normalize the target doc id: prefer existing doc by profile.email to avoid duplicates
+            // Normalize the target doc id: prefer existing doc by email to avoid duplicates
             try {
                 const emailLower = (userData && userData.profile && userData.profile.email)
                     ? String(userData.profile.email).toLowerCase() : '';
@@ -320,6 +345,13 @@ const FirestoreDataManager = {
                     }
                     // Always store email in lowercase for deterministic queries
                     userData = { ...(userData||{}), profile: { ...(userData?.profile||{}), email: emailLower } };
+                } else if (userId && userId.includes('@')) {
+                    // If caller passed email as id, map to existing id if found
+                    const existingId = await this.findUserIdByEmail(userId);
+                    if (existingId && existingId !== userId) {
+                        console.log(`🔁 Remapping email-id '${userId}' → existing '${existingId}'`);
+                        userId = existingId;
+                    }
                 }
             } catch (mapErr) { console.warn('⚠️ setUser email normalization warning:', mapErr?.message || mapErr); }
 
