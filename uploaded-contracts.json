@@ -399,8 +399,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-19",
       "signedDate": "2025-08-19"
+    },
+    {
+      "contractId": "CF-1755667319116-1NB1D",
+      "freelancerName": "Erica Cochran",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Backdrop Photographer Base",
+      "rate": "$400",
+      "location": "Douglasville, GA",
+      "fileName": "Erica Cochran.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-08-20T05:22:15.936Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Erica Cochran.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-08-20",
+      "signedDate": "2025-08-20"
     }
   ],
-  "lastUpdated": "2025-08-19T04:46:12.337Z",
-  "totalContracts": 25
+  "lastUpdated": "2025-08-20T05:22:15.936Z",
+  "totalContracts": 26
 }
