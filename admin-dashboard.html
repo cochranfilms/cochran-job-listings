@@ -2321,7 +2321,7 @@
                         projectType: job.type || userData.profile.projectType || '',
                         paymentStatus: 'pending',
                         assignedDate: new Date().toISOString().split('T')[0],
-                        projectStart: userData.profile.projectDate || 'TBD',
+                        projectStart: job.date || 'TBD',
                         jobRef: { source: 'jobs-data', index: idx, key: `${job.title}|${job.date}` }
                     };
                 }

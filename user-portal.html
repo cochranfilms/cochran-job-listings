@@ -1916,8 +1916,8 @@
                     <div class="card job-card">
                         <div class="card-header">
                             <h3 class="card-title">${job.title || job.role || 'Project'}</h3>
-                            <span class="status-badge status-${job.projectStatus || 'upcoming'}">
-                                ${job.projectStatus || 'upcoming'}
+                            <span class="status-badge status-${getJobStatus(job.projectStart || job.date || getEffectiveProjectStartDate())}">
+                                ${getJobStatus(job.projectStart || job.date || getEffectiveProjectStartDate())}
                             </span>
                         </div>
                         <div class="job-details">
@@ -1984,10 +1984,11 @@
 
         // Render timeline steps for jobs
         function renderTimelineSteps(job) {
+            const computedStatus = getJobStatus(job?.projectStart || job?.date || getEffectiveProjectStartDate());
             const steps = [
                 { title: 'Project Assigned', status: 'completed' },
-                { title: 'In Progress', status: job.projectStatus === 'in-progress' || job.projectStatus === 'completed' ? 'completed' : 'upcoming' },
-                { title: 'Completed', status: job.projectStatus === 'completed' ? 'completed' : 'upcoming' }
+                { title: 'In Progress', status: (computedStatus === 'in-progress' || computedStatus === 'completed') ? 'completed' : 'upcoming' },
+                { title: 'Completed', status: computedStatus === 'completed' ? 'completed' : 'upcoming' }
             ];
             
             return steps.map(step => `

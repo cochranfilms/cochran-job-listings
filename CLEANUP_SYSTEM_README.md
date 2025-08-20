@@ -1,3 +1,8 @@
+## 2025-08-20 — Align Start Date to Job Selection
+
+- Files: `user-portal.html`, `admin-dashboard.html`
+- Change: Use the selected job's start date as the single source of truth for project start across Current Jobs status/timeline and admin job assignment. This removes reliance on contract signed date or `profile.projectDate` for status transitions.
+- Follow-up: Ensure `contract.html` already uses `(application.eventDate || jobs[primary].date || profile.projectDate || profile.projectStart)` for displayed `projectStart`. No contract change required today.
 ### Firestore Integration Notes
 - 2025-08-20 — `index.html` job filter derived-title fix: keep this logic when refactoring. The filter must derive a job title from multiple fields and only exclude rows that clearly look like applicant submissions. Do not revert to `job.title`-only checks.
 

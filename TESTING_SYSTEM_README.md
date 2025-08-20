@@ -1,3 +1,16 @@
+### 2025-08-20 — Project Start Date Source & Current Jobs Status
+
+- Scope: `user-portal.html`, `admin-dashboard.html`
+- Change: Current Jobs status and timeline now compute from the job's start date (`jobs[*].projectStart|date`) instead of any contract signed date or profile date. Admin assigning a job sets `job.projectStart` from the job listing's `date` rather than `profile.projectDate`.
+- Expected: Before start date → status "upcoming"; on/after start date → "in-progress"; timeline remains consistent.
+
+Test steps:
+1. Create two jobs in data: one with a future `date`, one with a past `date`. Assign each to a test user.
+2. Open `user-portal.html` and switch between jobs if multiple; verify:
+   - "Start Date" displays the job's `date`.
+   - Status badge shows "upcoming" for the future job, "in-progress" for the past job.
+   - Timeline current step aligns with status (scheduled vs in progress).
+3. From `admin-dashboard.html`, add a user and attach a job; confirm the saved `job.projectStart` equals the attached job's `date`.
 ### Duplicate Firestore Users prevention (2025-08-19)
 ### Landing Jobs Visibility Hotfix (2025-08-20)
 
