@@ -1328,6 +1328,25 @@
             submitBtn.disabled = true;
             
             try {
+                // Ensure Firebase is fully initialized and auth is available
+                if ((!auth || !auth.signInWithEmailAndPassword) && window.FirebaseConfig) {
+                    try {
+                        await window.FirebaseConfig.waitForInit();
+                        auth = window.FirebaseConfig.auth;
+                        firestore = window.FirebaseConfig.getFirestore();
+                    } catch (e) {
+                        console.warn('Firebase waitForInit failed in handleLogin:', e?.message || e);
+                    }
+                }
+                // Last-resort fallback to global firebase if available
+                if ((!auth || !auth.signInWithEmailAndPassword) && window.firebase && typeof window.firebase.auth === 'function') {
+                    try { auth = window.firebase.auth(); } catch(_) {}
+                }
+
+                if (!auth || !auth.signInWithEmailAndPassword) {
+                    throw new Error('auth/not-ready');
+                }
+
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const fbUser = userCredential && userCredential.user;
                 if (!fbUser || !fbUser.email) {
@@ -1340,6 +1359,9 @@
                 let code = error && (error.code || error.message) || '';
                 let errorMessage = 'Login failed. Please try again.';
                 switch (code) {
+                    case 'auth/not-ready':
+                        errorMessage = 'Initializing secure sign-in. Please wait a moment and try again.';
+                        break;
                     case 'auth/user-not-found':
                         errorMessage = 'User not found. Please check your email.';
                         break;

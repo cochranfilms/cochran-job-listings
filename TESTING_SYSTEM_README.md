@@ -14,6 +14,9 @@ How to verify quickly:
 3. Confirm the login screen hides and the portal shows without needing to re-enter credentials.
 4. Reload the page; the session should persist and the portal should render directly.
 
+Edge case handled:
+- If a login is attempted before Firebase finishes initializing, the UI now waits and rehydrates `auth` via `FirebaseConfig.waitForInit()`; users will see a friendly "Initializing secure sign-in..." message rather than a JS error.
+
 What changed:
 - In `index.html`, the job filtering step now derives a title from multiple fields (`title`, `Title`, `jobTitle`, `position`, `Job Title`, `Applying For Which Job`, `applying_for_which_job`) before deciding inclusion. This prevents valid Firestore job docs that use alternate field names from being filtered out.
 
