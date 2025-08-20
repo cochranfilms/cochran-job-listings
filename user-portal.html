@@ -4164,11 +4164,20 @@
                 throw new Error('Firestore unavailable');
             }
             console.log('💳 Updating payment method in Firestore:', email, paymentMethod);
-            // Find a stable userId: prefer display name key mapping used by getUsers()
-            await loadUsersData();
-            const target = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase());
-            const userId = target ? (target.name || email) : email;
+            // Resolve canonical doc id by email first; fallback to currentUser.name
+            const emailLower = String(email).toLowerCase();
+            let userId = null;
+            try {
+                userId = await window.FirestoreDataManager.findUserIdByEmail(emailLower);
+            } catch (_) { userId = null; }
+            if (!userId && currentUser && currentUser.name) {
+                userId = currentUser.name;
+            }
+            if (!userId) {
+                userId = emailLower;
+            }
             await window.FirestoreDataManager.setUser(userId, {
+                profile: { email: emailLower },
                 paymentMethod: paymentMethod,
                 paymentStatus: 'configured'
             });
