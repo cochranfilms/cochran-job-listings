@@ -3897,9 +3897,9 @@
                 normalizedProjectStatus = normalizeProjectStatus(rawProj);
             } catch (_) {}
 
-            // Upcoming or On-hold → 0%. Cancelled → freeze at base. In-progress → small partial. Completed → base already reflects progress.
+            // Upcoming/On-hold → reflect completed steps (base). Cancelled → freeze at base. In-progress → small partial boost. Completed → base already reflects progress.
             if (normalizedProjectStatus === 'upcoming' || normalizedProjectStatus === 'on-hold') {
-                return 0;
+                return Math.min(100, baseProgress);
             }
             if (normalizedProjectStatus === 'cancelled') {
                 return Math.min(100, baseProgress);
