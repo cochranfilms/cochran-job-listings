@@ -29,6 +29,13 @@ Cleanup verification:
  - Firestore auto-migration from JSON backups is disabled by default to avoid accidental repopulation. To run a one-time re-seed, temporarily set `window.FIRESTORE_AUTO_MIGRATION = true;` in the dashboard, reload once, then set it back to false.
 - Admin approve/deny flows persist to Firestore via `FirestoreDataManager.setUser` in addition to current GitHub JSON update routines.
 
+### 2025-08-20 — Loading overlay control (admin modular vs main dashboard)
+
+- Context: Both the main dashboard and the modular system referenced a shared `#loadingIndicator`. In some cases the modular code could show it while the main dashboard controlled the UI, causing the overlay to remain visible.
+- Cleanup: Added guards in `admin-dashboard-modular/js/utils/loading-manager.js` and honored `window.MAIN_DASHBOARD_LOADING_OVERRIDE === false` in both modular LoadingManager and modular App show/hide calls. The modular layer now abstains from toggling the global overlay when the main dashboard owns the UI.
+- Safety: The modular LoadingManager already includes a 30s stuck-state check and a 60s global safety timeout plus `emergencyClear()`; these remain as fallbacks.
+- Action: When integrating additional modules, avoid calling `showGlobalLoading()` directly; prefer operation-scoped loaders or defer to the main dashboard’s built-in indicator.
+
 ### 2025-08-19 — Deep Firebase-First Cleanup
 - Performance quick wins (2025-08-19)
   - Added `preconnect` for Google Fonts across `user-portal.html`, `admin-dashboard.html`, and `index.html`.

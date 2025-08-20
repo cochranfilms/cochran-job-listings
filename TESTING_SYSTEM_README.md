@@ -53,6 +53,19 @@ Verification steps:
 3. Open DevTools Console and run any removed function name (e.g., `generateAllContracts`) and confirm `undefined` errors are not present because nothing binds them to UI; no references remain on the page.
 
 
+### 2025-08-20 — Prevent stuck global loading overlay in admin dashboard
+
+- Files: `admin-dashboard-modular/js/utils/loading-manager.js`, `admin-dashboard-modular/js/app.js`, `admin-dashboard.html`
+- Change: When the main dashboard controls the UI (`window.MAIN_DASHBOARD_LOADING_OVERRIDE === false`), the modular LoadingManager and modular App will not show the global `#loadingIndicator`. This avoids a race where the indicator could be shown by modular code and never hidden by the main dashboard, leaving the page in a constant loading state.
+
+How to test quickly:
+1. Open `admin-dashboard.html` on a fresh tab with DevTools Console visible.
+2. Ensure console shows: "✅ Main dashboard ADMIN_PASSWORD set:" and then "✅ Firebase initialized in admin dashboard".
+3. Verify the login screen appears (or the dashboard if session active) and the fullscreen Loading overlay does not persist.
+4. Wait ~2 seconds for the modular system to load; the overlay should still not stick.
+5. Stress test: call `window.LoadingManager.showGlobalLoading()` then after 35s confirm the safety timer auto-hides it; or call `window.LoadingManager.emergencyClear()` to force-hide.
+
+
 Goal: Stop creation of two docs (e.g., `Cody Cochran` and `Codylcochran87`) for the same person.
 
 What changed:

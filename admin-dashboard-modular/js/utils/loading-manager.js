@@ -12,6 +12,10 @@ const LoadingManager = {
     
     // Global loading methods (always available)
     showGlobalLoading() {
+        // Respect main dashboard control to avoid interfering with its UI overlay
+        if (typeof window !== 'undefined' && window.MAIN_DASHBOARD_LOADING_OVERRIDE === false) {
+            return;
+        }
         this.globalLoading = true;
         this.globalLoadingStartTime = Date.now();
         const indicator = document.getElementById('loadingIndicator');
@@ -292,6 +296,10 @@ const LoadingManager = {
     // Convenience methods for backward compatibility
     show(message = 'Loading...') {
         try {
+            // Respect main dashboard control to avoid interfering with its UI overlay
+            if (typeof window !== 'undefined' && window.MAIN_DASHBOARD_LOADING_OVERRIDE === false) {
+                return 'global';
+            }
             this.showGlobalLoading();
             return 'global';
         } catch (error) {
