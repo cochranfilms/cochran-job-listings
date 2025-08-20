@@ -873,6 +873,16 @@ curl http://localhost:8000/api/uploaded-contracts
 **Problem**: The `deleteUser`
 
 ### Modular Portal Firestore Conversion (2025-08-18)
+- User Portal Logout Hardening (2025-08-20)
+  - Files: `user-portal.html`
+  - Change: `logout()` now uses `FirebaseConfig.signOut()` when available with safe fallbacks to `auth.signOut()` and `firebase.auth().signOut()` and clears all session/local storage keys (`userPortalAuthenticated`, `USER_PORTAL_EMAIL_KEY`, `USER_PORTAL_SESSION_KEY`). Button updated to `type="button"` to prevent accidental form submissions.
+  - Test:
+    1. Sign in to `user-portal.html`.
+    2. Click Sign Out.
+    3. Expect: Notification "Successfully signed out!", login screen visible, portal hidden.
+    4. Storage: `sessionStorage.userPortalAuthenticated`, `sessionStorage.userPortalAuthEmail`, `localStorage.userPortalAuthEmail`, and `localStorage.userPortalSessionExpiry` are removed.
+    5. Refresh page: remains on login screen.
+
 - Modular portal managers now load from Firestore instead of `/api/users`:
   - `js/auth/auth-manager.js`: validates user by querying Firestore `users` with `profile.email`.
   - `js/users/user-manager.js`: looks up user via Firestore and transforms shape for UI.

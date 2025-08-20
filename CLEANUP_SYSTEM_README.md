@@ -954,6 +954,11 @@ curl http://localhost:8000/api/health
 - Cleanup note: When adding new UI in the portal, avoid inline `#FFB200` or gold gradients; rely on CSS variables within `.ai-theme`.
  
 ## 2025-08-19 — Admin Dashboard Roles Removal
+## 2025-08-20 — User Portal Logout Hardening
+- Files: `user-portal.html`
+- Change: Centralized logout via `FirebaseConfig.signOut()` with fallbacks, and full cleanup of session/local storage keys to prevent residual auto-login state. Converted the Sign Out button to `type="button"` to avoid unintended form submission.
+- Reason: Users could not reliably sign out due to auth/state races and lingering cached email/session values. This ensures UI flips to login and prevents cross-tab rehydration from stale storage.
+
 - Removed the Roles block from Dropdown Management in `admin-dashboard.html`.
 - Role fields in Add User and Edit User are now free-text inputs; no central `roles` list is managed.
 - Any code that previously populated `dropdownOptions.roles` into UI has been neutralized; keep `locations`, `rates`, and `projectTypes` only.

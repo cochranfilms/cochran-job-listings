@@ -1576,12 +1576,29 @@
             sessionStorage.removeItem('userPortalAuthenticated');
         }
 
-        // Logout with Firebase
+        // Logout with Firebase (robust with fallbacks and full session cleanup)
         async function logout() {
             try {
                 isManualSignOut = true;
-                await auth.signOut();
-                sessionStorage.removeItem('userPortalAuthenticated');
+                // Attempt sign-out via centralized config first, then fall back
+                try {
+                    if (window.FirebaseConfig && typeof window.FirebaseConfig.signOut === 'function') {
+                        await window.FirebaseConfig.signOut();
+                    } else if (auth && typeof auth.signOut === 'function') {
+                        await auth.signOut();
+                    } else if (window.firebase && typeof window.firebase.auth === 'function') {
+                        await window.firebase.auth().signOut();
+                    }
+                } catch (signOutErr) {
+                    console.warn('⚠️ Sign out fallback path encountered:', signOutErr?.message || signOutErr);
+                }
+
+                // Clear session and cached snapshots across stores
+                try { sessionStorage.removeItem('userPortalAuthenticated'); } catch(_) {}
+                try { sessionStorage.removeItem(USER_PORTAL_EMAIL_KEY); } catch(_) {}
+                try { localStorage.removeItem(USER_PORTAL_EMAIL_KEY); } catch(_) {}
+                try { localStorage.removeItem(USER_PORTAL_SESSION_KEY); } catch(_) {}
+
                 currentUser = null;
                 showLoginScreen();
                 const err = document.getElementById('loginError');
@@ -10912,7 +10929,7 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
                         <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
                     </button>
                 </div>
-                <button onclick="logout()" class="btn btn-secondary">
+                <button type="button" onclick="logout()" class="btn btn-secondary">
                     <i class="fas fa-sign-out-alt"></i>
                     Sign Out
                 </button>
