@@ -249,29 +249,194 @@
             return review;
         }
 
-        // ==================== PROFESSIONAL NOTIFICATION SYSTEM ====================
+        // ==================== PHASE 3: ADVANCED NOTIFICATION SYSTEM ====================
         
-        // Enhanced notification system with real-time updates
-        function showNotification(message, type = 'info', duration = 5000) {
-            const colors = {
-                success: '#22c55e',
-                error: '#ef4444',
-                warning: '#f59e0b',
-                info: '#3b82f6'
-            };
-            const background = colors[type] || colors.info;
+        // Enhanced notification system with Phase 3 features
+        let notificationPermission = 'default';
+        let notificationSettings = {
+            pushEnabled: false,
+            soundEnabled: true,
+            categories: {
+                payment: true,
+                contract: true,
+                job: true,
+                system: true,
+                performance: true
+            },
+            quietHours: {
+                enabled: false,
+                start: '22:00',
+                end: '08:00'
+            }
+        };
+
+        // Initialize advanced notification system
+        async function initializeAdvancedNotificationSystem() {
+            console.log('🔔 Initializing Phase 3 Advanced Notification System...');
+            
+            // Load notification settings
+            await loadNotificationSettings();
+            
+            // Request notification permission
+            await requestNotificationPermission();
+            
+            // Initialize push notification service worker
+            await initializePushNotifications();
+            
+            // Start enhanced notification polling
+            startEnhancedNotificationPolling();
+            
+            console.log('✅ Phase 3 Advanced Notification System initialized');
+        }
+
+        // Request notification permission
+        async function requestNotificationPermission() {
+            if ('Notification' in window) {
+                try {
+                    const permission = await Notification.requestPermission();
+                    notificationPermission = permission;
+                    notificationSettings.pushEnabled = permission === 'granted';
+                    console.log('🔔 Notification permission:', permission);
+                } catch (error) {
+                    console.error('❌ Error requesting notification permission:', error);
+                }
+            }
+        }
+
+        // Initialize push notifications with service worker
+        async function initializePushNotifications() {
+            if ('serviceWorker' in navigator && notificationSettings.pushEnabled) {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw-notifications.js');
+                    console.log('🔔 Service Worker registered for notifications');
+                } catch (error) {
+                    console.log('⚠️ Service Worker registration failed, using fallback notifications');
+                }
+            }
+        }
+
+        // Enhanced notification display with rich content
+        function showNotification(message, type = 'info', options = {}) {
+            const {
+                title = 'Cochran Films',
+                duration = 5000,
+                category = 'system',
+                actions = [],
+                persistent = false,
+                sound = true,
+                priority = 'normal'
+            } = options;
+
+            // Check if notification should be shown based on settings
+            if (!shouldShowNotification(category)) {
+                console.log(`🔔 Notification filtered by category: ${category}`);
+                return;
+            }
+
+            // Check quiet hours
+            if (isQuietHours() && !options.urgent) {
+                console.log('🔔 Notification suppressed during quiet hours');
+                return;
+            }
+
+            // Show browser notification if permission granted
+            if (notificationSettings.pushEnabled && !document.hasFocus()) {
+                showBrowserNotification(title, message, type, actions);
+            }
+
+            // Show in-app notification
+            showInAppNotification(message, type, { title, duration, actions, persistent, priority });
+
+            // Play sound if enabled
+            if (sound && notificationSettings.soundEnabled) {
+                playNotificationSound(type);
+            }
+
+            // Add to notification history
+            addNotificationToHistory(title, message, type, category, options);
+        }
+
+        // Show browser push notification
+        function showBrowserNotification(title, message, type, actions = []) {
+            if (notificationPermission === 'granted') {
+                const notification = new Notification(title, {
+                    body: message,
+                    icon: '/Favicon.png',
+                    badge: '/Favicon.png',
+                    tag: `cochran-${type}`,
+                    requireInteraction: false,
+                    actions: actions.map(action => ({
+                        action: action.id,
+                        title: action.title,
+                        icon: action.icon || '/Favicon.png'
+                    }))
+                });
+
+                notification.onclick = () => {
+                    window.focus();
+                    notification.close();
+                };
+
+                // Auto-close after 5 seconds
+                setTimeout(() => notification.close(), 5000);
+            }
+        }
+
+        // Show in-app notification with rich content
+        function showInAppNotification(message, type = 'info', options = {}) {
+            const {
+                title = 'Cochran Films',
+                duration = 5000,
+                actions = [],
+                persistent = false,
+                priority = 'normal'
+            } = options;
+
+            const colors = getNotificationColors(type);
+            const icon = getNotificationIcon(type);
 
             const toast = document.createElement('div');
+            toast.className = `notification-toast notification-${type} notification-${priority}`;
             toast.style.cssText = `
                 position: fixed; right: 20px; bottom: 20px;
-                background: ${background}; color: white;
-                padding: 12px 16px; border-radius: 8px; margin-top: 8px;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+                background: ${colors.background}; color: white;
+                padding: 16px; border-radius: 12px; margin-top: 8px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.35);
                 z-index: 10000; font-family: Inter, system-ui, -apple-system, sans-serif;
-                max-width: 360px; line-height: 1.4; font-size: 14px;
-                transform: translateY(20px); opacity: 0; transition: all .2s ease;
+                max-width: 400px; line-height: 1.4; font-size: 14px;
+                transform: translateY(20px); opacity: 0; transition: all .3s ease;
+                border-left: 4px solid ${colors.border};
+                backdrop-filter: blur(10px);
             `;
-            toast.textContent = message;
+
+            // Create notification content
+            toast.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <div style="font-size: 18px; margin-top: 2px;">${icon}</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 4px; font-size: 15px;">${title}</div>
+                        <div style="opacity: 0.9;">${message}</div>
+                        ${actions.length > 0 ? `
+                            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                                ${actions.map(action => `
+                                    <button onclick="${action.handler}" 
+                                            style="background: rgba(255,255,255,0.2); border: none; color: white; 
+                                                   padding: 6px 12px; border-radius: 6px; font-size: 12px; 
+                                                   cursor: pointer; transition: background 0.2s;">
+                                        ${action.icon ? `<i class="${action.icon}" style="margin-right: 4px;"></i>` : ''}
+                                        ${action.title}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="background: none; border: none; color: white; opacity: 0.7; 
+                                   cursor: pointer; padding: 4px; font-size: 16px; line-height: 1;">
+                        ×
+                    </button>
+                </div>
+            `;
 
             // Container
             let container = document.getElementById('toast-container');
@@ -289,12 +454,274 @@
                 toast.style.opacity = '1';
             });
 
-            // Auto remove
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(20px)';
-                setTimeout(() => toast.remove(), 200);
-            }, duration);
+            // Auto remove (unless persistent)
+            if (!persistent) {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(20px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+        }
+
+        // Check if notification should be shown based on category settings
+        function shouldShowNotification(category) {
+            return notificationSettings.categories[category] !== false;
+        }
+
+        // Check if current time is within quiet hours
+        function isQuietHours() {
+            if (!notificationSettings.quietHours.enabled) return false;
+            
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            const startTime = timeToMinutes(notificationSettings.quietHours.start);
+            const endTime = timeToMinutes(notificationSettings.quietHours.end);
+            
+            if (startTime <= endTime) {
+                return currentTime >= startTime && currentTime <= endTime;
+            } else {
+                // Quiet hours span midnight
+                return currentTime >= startTime || currentTime <= endTime;
+            }
+        }
+
+        // Convert time string to minutes
+        function timeToMinutes(timeString) {
+            const [hours, minutes] = timeString.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        // Play notification sound
+        function playNotificationSound(type) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Different frequencies for different types
+                const frequencies = {
+                    success: 800,
+                    error: 400,
+                    warning: 600,
+                    info: 500,
+                    payment: 700,
+                    contract: 750,
+                    job: 650
+                };
+                
+                oscillator.frequency.setValueAtTime(frequencies[type] || 500, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (error) {
+                console.log('🔔 Audio notification not available');
+            }
+        }
+
+        // Add notification to history for analytics
+        function addNotificationToHistory(title, message, type, category, options) {
+            const notification = {
+                id: Date.now() + Math.random(),
+                title,
+                message,
+                type,
+                category,
+                timestamp: new Date().toISOString(),
+                read: false,
+                priority: options.priority || 'normal',
+                actions: options.actions || [],
+                persistent: options.persistent || false
+            };
+            
+            // Add to notifications array
+            notifications.unshift(notification);
+            
+            // Keep only last 100 notifications
+            if (notifications.length > 100) {
+                notifications = notifications.slice(0, 100);
+            }
+            
+            // Save to localStorage
+            saveNotifications();
+            
+            // Update UI
+            updateNotificationBadge();
+            updateNotificationList();
+        }
+
+        // Load notification settings
+        async function loadNotificationSettings() {
+            try {
+                const saved = localStorage.getItem('notificationSettings');
+                if (saved) {
+                    notificationSettings = { ...notificationSettings, ...JSON.parse(saved) };
+                }
+            } catch (error) {
+                console.error('❌ Error loading notification settings:', error);
+            }
+        }
+
+        // Save notification settings
+        async function saveNotificationSettings() {
+            try {
+                localStorage.setItem('notificationSettings', JSON.stringify(notificationSettings));
+            } catch (error) {
+                console.error('❌ Error saving notification settings:', error);
+            }
+        }
+
+        // Start enhanced notification polling
+        function startEnhancedNotificationPolling() {
+            // Poll every 30 seconds for new notifications
+            setInterval(async () => {
+                if (currentUser) {
+                    await checkForNewNotifications();
+                }
+            }, 30000);
+        }
+
+        // Check for new notifications from server
+        async function checkForNewNotifications() {
+            try {
+                // This would typically check with a server endpoint
+                // For now, we'll use the existing smart notification triggers
+                await triggerSmartNotifications();
+            } catch (error) {
+                console.error('❌ Error checking for new notifications:', error);
+            }
+        }
+
+        // ==================== NOTIFICATION SETTINGS FUNCTIONS ====================
+
+        // Toggle notification settings panel
+        function toggleNotificationSettings() {
+            const panel = document.getElementById('notificationSettingsPanel');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                loadNotificationSettingsUI();
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        // Load notification settings into UI
+        function loadNotificationSettingsUI() {
+            // Push notifications
+            document.getElementById('pushNotifications').checked = notificationSettings.pushEnabled;
+            
+            // Sound notifications
+            document.getElementById('soundNotifications').checked = notificationSettings.soundEnabled;
+            
+            // Quiet hours
+            document.getElementById('quietHours').checked = notificationSettings.quietHours.enabled;
+            document.getElementById('quietStart').value = notificationSettings.quietHours.start;
+            document.getElementById('quietEnd').value = notificationSettings.quietHours.end;
+            
+            // Show/hide quiet hours controls
+            const controls = document.getElementById('quietHoursControls');
+            controls.style.display = notificationSettings.quietHours.enabled ? 'block' : 'none';
+            
+            // Categories
+            document.getElementById('catPayment').checked = notificationSettings.categories.payment;
+            document.getElementById('catContract').checked = notificationSettings.categories.contract;
+            document.getElementById('catJob').checked = notificationSettings.categories.job;
+            document.getElementById('catPerformance').checked = notificationSettings.categories.performance;
+            document.getElementById('catSystem').checked = notificationSettings.categories.system;
+        }
+
+        // Toggle push notifications
+        async function togglePushNotifications() {
+            const enabled = document.getElementById('pushNotifications').checked;
+            notificationSettings.pushEnabled = enabled;
+            
+            if (enabled) {
+                await requestNotificationPermission();
+            }
+            
+            await saveNotificationSettings();
+        }
+
+        // Toggle sound notifications
+        async function toggleSoundNotifications() {
+            notificationSettings.soundEnabled = document.getElementById('soundNotifications').checked;
+            await saveNotificationSettings();
+        }
+
+        // Toggle quiet hours
+        function toggleQuietHours() {
+            const enabled = document.getElementById('quietHours').checked;
+            notificationSettings.quietHours.enabled = enabled;
+            
+            const controls = document.getElementById('quietHoursControls');
+            controls.style.display = enabled ? 'block' : 'none';
+        }
+
+        // Update quiet hours
+        async function updateQuietHours() {
+            notificationSettings.quietHours.start = document.getElementById('quietStart').value;
+            notificationSettings.quietHours.end = document.getElementById('quietEnd').value;
+            await saveNotificationSettings();
+        }
+
+        // Update notification categories
+        async function updateNotificationCategories() {
+            notificationSettings.categories.payment = document.getElementById('catPayment').checked;
+            notificationSettings.categories.contract = document.getElementById('catContract').checked;
+            notificationSettings.categories.job = document.getElementById('catJob').checked;
+            notificationSettings.categories.performance = document.getElementById('catPerformance').checked;
+            notificationSettings.categories.system = document.getElementById('catSystem').checked;
+            await saveNotificationSettings();
+        }
+
+        // Save notification settings
+        async function saveNotificationSettings() {
+            try {
+                localStorage.setItem('notificationSettings', JSON.stringify(notificationSettings));
+                showNotification('Notification settings saved!', 'success', {
+                    category: 'system',
+                    duration: 3000
+                });
+            } catch (error) {
+                console.error('❌ Error saving notification settings:', error);
+            }
+        }
+
+        // Reset notification settings
+        async function resetNotificationSettings() {
+            if (confirm('Reset all notification settings to default?')) {
+                notificationSettings = {
+                    pushEnabled: false,
+                    soundEnabled: true,
+                    categories: {
+                        payment: true,
+                        contract: true,
+                        job: true,
+                        system: true,
+                        performance: true
+                    },
+                    quietHours: {
+                        enabled: false,
+                        start: '22:00',
+                        end: '08:00'
+                    }
+                };
+                
+                await saveNotificationSettings();
+                loadNotificationSettingsUI();
+                
+                showNotification('Notification settings reset to default!', 'info', {
+                    category: 'system',
+                    duration: 3000
+                });
+            }
         }
         
         function getNotificationIcon(type) {
@@ -346,6 +773,9 @@
             startUserNotificationSystem();
             updateNotificationBadge();
             updateNotificationList();
+            
+            // Initialize Phase 3 advanced notification system
+            await initializeAdvancedNotificationSystem();
         }
         
         // User-specific notification system (no JSON file monitoring)
@@ -4251,6 +4681,15 @@
             // Initialize sophisticated notification system
             await initializeNotificationSystem();
             
+            // Initialize Phase 3 advanced payment system
+            await initializeAdvancedPaymentSystem();
+            
+            // Initialize Phase 3 advanced analytics system
+            await initializeAdvancedAnalytics();
+            
+            // Initialize Phase 3 team collaboration system
+            await initializeTeamCollaboration();
+            
             // Initialize creative powerhouse features
             initializeCreativeFeatures();
             
@@ -4603,45 +5042,1514 @@
             }
         }
 
-        // Payment options configuration
+        // ==================== PHASE 3: ADVANCED PAYMENT SYSTEM ====================
+        
+        // Enhanced payment options configuration with validation
         const PAYMENT_OPTIONS = {
             paypal: {
                 name: 'PayPal',
                 icon: 'fab fa-paypal',
                 gradient: 'linear-gradient(135deg, #0070ba, #1546a0)',
-                description: 'PayPal transfer'
+                description: 'PayPal transfer',
+                requiresEmail: true,
+                processingTime: '1-3 business days',
+                fees: '2.9% + $0.30',
+                minAmount: 1.00,
+                maxAmount: 10000.00,
+                supported: true
             },
             bank: {
                 name: 'Bank Transfer',
                 icon: 'fas fa-university',
                 gradient: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                description: 'Direct bank transfer'
+                description: 'Direct bank transfer',
+                requiresAccount: true,
+                processingTime: '1-2 business days',
+                fees: 'Free',
+                minAmount: 1.00,
+                maxAmount: 50000.00,
+                supported: true
             },
             stripe: {
                 name: 'Stripe',
                 icon: 'fab fa-stripe',
                 gradient: 'linear-gradient(135deg, #6772e5, #5469d4)',
-                description: 'Stripe payment processing'
+                description: 'Stripe payment processing',
+                requiresCard: true,
+                processingTime: '2-5 business days',
+                fees: '2.9% + $0.30',
+                minAmount: 0.50,
+                maxAmount: 999999.99,
+                supported: true
             },
             zelle: {
                 name: 'Zelle',
                 icon: 'fas fa-mobile-alt',
                 gradient: 'linear-gradient(135deg, #6b46c1, #553c9a)',
-                description: 'Zelle transfer'
+                description: 'Zelle transfer',
+                requiresPhone: true,
+                processingTime: 'Instant',
+                fees: 'Free',
+                minAmount: 1.00,
+                maxAmount: 2500.00,
+                supported: true
             },
             cash: {
                 name: 'Cash',
                 icon: 'fas fa-money-bill-wave',
                 gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                description: 'Cash payment'
+                description: 'Cash payment',
+                requiresMeeting: true,
+                processingTime: 'On delivery',
+                fees: 'Free',
+                minAmount: 1.00,
+                maxAmount: 10000.00,
+                supported: true
             },
             invoice: {
                 name: 'Invoice',
                 icon: 'fas fa-file-invoice-dollar',
                 gradient: 'linear-gradient(135deg, #10b981, #059669)',
-                description: 'Invoice payment'
+                description: 'Invoice payment',
+                requiresDetails: true,
+                processingTime: 'Net 30 days',
+                fees: 'Free',
+                minAmount: 1.00,
+                maxAmount: 100000.00,
+                supported: true
+            },
+            venmo: {
+                name: 'Venmo',
+                icon: 'fab fa-vimeo',
+                gradient: 'linear-gradient(135deg, #3d95ce, #2e7d32)',
+                description: 'Venmo transfer',
+                requiresUsername: true,
+                processingTime: '1-3 business days',
+                fees: '3%',
+                minAmount: 1.00,
+                maxAmount: 5000.00,
+                supported: true
             }
         };
+
+        // Payment processing system
+        let paymentProcessing = {
+            isProcessing: false,
+            currentPayment: null,
+            paymentQueue: [],
+            retryAttempts: 3,
+            processingTimeout: 30000 // 30 seconds
+        };
+
+        // Payment analytics tracking
+        let paymentAnalytics = {
+            totalProcessed: 0,
+            totalAmount: 0,
+            averageAmount: 0,
+            successRate: 0,
+            failureRate: 0,
+            methodBreakdown: {},
+            monthlyTrends: [],
+            lastUpdated: null
+        };
+
+        // Initialize advanced payment system
+        async function initializeAdvancedPaymentSystem() {
+            console.log('💳 Initializing Phase 3 Advanced Payment System...');
+            
+            // Load payment analytics
+            await loadPaymentAnalytics();
+            
+            // Initialize payment processing queue
+            await initializePaymentQueue();
+            
+            // Start payment monitoring
+            startPaymentMonitoring();
+            
+            console.log('✅ Phase 3 Advanced Payment System initialized');
+        }
+
+        // Load payment analytics from storage
+        async function loadPaymentAnalytics() {
+            try {
+                const saved = localStorage.getItem('paymentAnalytics');
+                if (saved) {
+                    paymentAnalytics = { ...paymentAnalytics, ...JSON.parse(saved) };
+                }
+            } catch (error) {
+                console.error('❌ Error loading payment analytics:', error);
+            }
+        }
+
+        // Save payment analytics to storage
+        async function savePaymentAnalytics() {
+            try {
+                paymentAnalytics.lastUpdated = new Date().toISOString();
+                localStorage.setItem('paymentAnalytics', JSON.stringify(paymentAnalytics));
+            } catch (error) {
+                console.error('❌ Error saving payment analytics:', error);
+            }
+        }
+
+        // Initialize payment processing queue
+        async function initializePaymentQueue() {
+            try {
+                const saved = localStorage.getItem('paymentQueue');
+                if (saved) {
+                    paymentProcessing.paymentQueue = JSON.parse(saved);
+                }
+            } catch (error) {
+                console.error('❌ Error loading payment queue:', error);
+            }
+        }
+
+        // Save payment queue to storage
+        async function savePaymentQueue() {
+            try {
+                localStorage.setItem('paymentQueue', JSON.stringify(paymentProcessing.paymentQueue));
+            } catch (error) {
+                console.error('❌ Error saving payment queue:', error);
+            }
+        }
+
+        // Start payment monitoring
+        function startPaymentMonitoring() {
+            // Monitor payment status every 30 seconds
+            setInterval(async () => {
+                if (paymentProcessing.paymentQueue.length > 0 && !paymentProcessing.isProcessing) {
+                    await processNextPayment();
+                }
+            }, 30000);
+
+            // Update analytics every 5 minutes
+            setInterval(async () => {
+                await updatePaymentAnalytics();
+            }, 300000);
+        }
+
+        // Add payment to processing queue
+        async function addPaymentToQueue(amount, method, description = '') {
+            const payment = {
+                id: `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                amount: parseFloat(amount),
+                method: method,
+                description: description,
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                retryCount: 0
+            };
+            
+            paymentProcessing.paymentQueue.push(payment);
+            await savePaymentQueue();
+            
+            console.log('💳 Payment added to queue:', payment);
+            
+            // Process immediately if not currently processing
+            if (!paymentProcessing.isProcessing) {
+                await processNextPayment();
+            }
+        }
+
+        // Process next payment in queue
+        async function processNextPayment() {
+            if (paymentProcessing.isProcessing || paymentProcessing.paymentQueue.length === 0) {
+                return;
+            }
+
+            paymentProcessing.isProcessing = true;
+            const payment = paymentProcessing.paymentQueue.shift();
+            paymentProcessing.currentPayment = payment;
+
+            try {
+                console.log('🔄 Processing payment:', payment);
+                
+                // Show processing notification
+                showNotification(`Processing ${payment.method} payment of $${payment.amount}...`, 'info', {
+                    category: 'payment',
+                    persistent: true,
+                    actions: [
+                        {
+                            id: 'cancel',
+                            title: 'Cancel',
+                            icon: 'fas fa-times',
+                            handler: 'cancelPayment()'
+                        }
+                    ]
+                });
+
+                // Simulate payment processing (replace with actual payment gateway integration)
+                const result = await simulatePaymentProcessing(payment);
+                
+                if (result.success) {
+                    await handlePaymentSuccess(payment, result);
+                } else {
+                    await handlePaymentFailure(payment, result.error);
+                }
+
+            } catch (error) {
+                console.error('❌ Payment processing error:', error);
+                await handlePaymentFailure(payment, error.message);
+            } finally {
+                paymentProcessing.isProcessing = false;
+                paymentProcessing.currentPayment = null;
+                await savePaymentQueue();
+            }
+        }
+
+        // Simulate payment processing (replace with actual payment gateway)
+        async function simulatePaymentProcessing(payment) {
+            return new Promise((resolve) => {
+                // Simulate processing delay
+                setTimeout(() => {
+                    // Simulate 95% success rate
+                    const success = Math.random() > 0.05;
+                    resolve({
+                        success,
+                        transactionId: success ? `txn_${Date.now()}` : null,
+                        error: success ? null : 'Payment gateway timeout'
+                    });
+                }, 2000 + Math.random() * 3000); // 2-5 seconds
+            });
+        }
+
+        // Handle successful payment
+        async function handlePaymentSuccess(payment, result) {
+            console.log('✅ Payment successful:', result);
+            
+            // Update payment status
+            payment.status = 'completed';
+            payment.processedAt = new Date().toISOString();
+            payment.transactionId = result.transactionId;
+            
+            // Update user data
+            if (currentUser) {
+                if (!currentUser.paymentHistory) {
+                    currentUser.paymentHistory = [];
+                }
+                currentUser.paymentHistory.push(payment);
+                
+                // Update total earnings
+                if (!currentUser.totalEarnings) {
+                    currentUser.totalEarnings = 0;
+                }
+                currentUser.totalEarnings += payment.amount;
+                
+                // Save to Firestore
+                await saveUserData();
+            }
+            
+            // Update analytics
+            paymentAnalytics.totalProcessed++;
+            paymentAnalytics.totalAmount += payment.amount;
+            paymentAnalytics.averageAmount = paymentAnalytics.totalAmount / paymentAnalytics.totalProcessed;
+            
+            if (!paymentAnalytics.methodBreakdown[payment.method]) {
+                paymentAnalytics.methodBreakdown[payment.method] = { count: 0, amount: 0 };
+            }
+            paymentAnalytics.methodBreakdown[payment.method].count++;
+            paymentAnalytics.methodBreakdown[payment.method].amount += payment.amount;
+            
+            await savePaymentAnalytics();
+            
+            // Show success notification
+            showNotification(`Payment of $${payment.amount} completed successfully!`, 'success', {
+                category: 'payment',
+                duration: 5000,
+                actions: [
+                    {
+                        id: 'view',
+                        title: 'View Details',
+                        icon: 'fas fa-eye',
+                        handler: `viewPaymentDetails('${payment.id}')`
+                    }
+                ]
+            });
+            
+            // Update UI
+            updatePaymentDisplay();
+        }
+
+        // Handle failed payment
+        async function handlePaymentFailure(payment, error) {
+            console.log('❌ Payment failed:', error);
+            
+            // Update payment status
+            payment.status = 'failed';
+            payment.failureReason = error;
+            payment.retryCount = (payment.retryCount || 0) + 1;
+            
+            // Retry if under limit
+            if (payment.retryCount < paymentProcessing.retryAttempts) {
+                console.log(`🔄 Retrying payment (attempt ${payment.retryCount + 1})`);
+                paymentProcessing.paymentQueue.push(payment);
+                await savePaymentQueue();
+                
+                showNotification(`Payment failed, retrying... (${payment.retryCount}/${paymentProcessing.retryAttempts})`, 'warning', {
+                    category: 'payment',
+                    duration: 3000
+                });
+            } else {
+                // Final failure
+                payment.status = 'failed_final';
+                payment.finalFailureAt = new Date().toISOString();
+                
+                // Update analytics
+                paymentAnalytics.failureRate = (paymentAnalytics.failureRate || 0) + 1;
+                await savePaymentAnalytics();
+                
+                showNotification(`Payment failed after ${paymentProcessing.retryAttempts} attempts: ${error}`, 'error', {
+                    category: 'payment',
+                    duration: 8000,
+                    actions: [
+                        {
+                            id: 'retry',
+                            title: 'Retry Manually',
+                            icon: 'fas fa-redo',
+                            handler: `retryPayment('${payment.id}')`
+                        }
+                    ]
+                });
+            }
+            
+            // Update UI
+            updatePaymentDisplay();
+        }
+
+        // Update payment analytics
+        async function updatePaymentAnalytics() {
+            try {
+                if (currentUser && currentUser.paymentHistory) {
+                    const payments = currentUser.paymentHistory;
+                    const completedPayments = payments.filter(p => p.status === 'completed');
+                    
+                    paymentAnalytics.totalProcessed = completedPayments.length;
+                    paymentAnalytics.totalAmount = completedPayments.reduce((sum, p) => sum + p.amount, 0);
+                    paymentAnalytics.averageAmount = paymentAnalytics.totalProcessed > 0 ? 
+                        paymentAnalytics.totalAmount / paymentAnalytics.totalProcessed : 0;
+                    
+                    const failedPayments = payments.filter(p => p.status === 'failed_final');
+                    const totalPayments = payments.length;
+                    paymentAnalytics.successRate = totalPayments > 0 ? 
+                        (completedPayments.length / totalPayments) * 100 : 0;
+                    paymentAnalytics.failureRate = totalPayments > 0 ? 
+                        (failedPayments.length / totalPayments) * 100 : 0;
+                    
+                    await savePaymentAnalytics();
+                }
+            } catch (error) {
+                console.error('❌ Error updating payment analytics:', error);
+            }
+        }
+
+        // View payment details
+        function viewPaymentDetails(paymentId) {
+            if (!currentUser || !currentUser.paymentHistory) return;
+            
+            const payment = currentUser.paymentHistory.find(p => p.id === paymentId);
+            if (!payment) return;
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 10000; display: flex;
+                align-items: center; justify-content: center; padding: 20px;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a2e; border: 1px solid #FFB200; border-radius: 12px;
+                           padding: 2rem; max-width: 500px; width: 100%; color: white;">
+                    <h3 style="color: #FFB200; margin: 0 0 1rem 0; font-family: 'Cinzel', serif;">
+                        <i class="fas fa-credit-card"></i> Payment Details
+                    </h3>
+                    <div style="display: grid; gap: 1rem;">
+                        <div><strong>Amount:</strong> $${payment.amount}</div>
+                        <div><strong>Method:</strong> ${PAYMENT_OPTIONS[payment.method]?.name || payment.method}</div>
+                        <div><strong>Status:</strong> <span style="color: ${payment.status === 'completed' ? '#22c55e' : '#ef4444'}">${payment.status}</span></div>
+                        <div><strong>Created:</strong> ${new Date(payment.createdAt).toLocaleString()}</div>
+                        ${payment.processedAt ? `<div><strong>Processed:</strong> ${new Date(payment.processedAt).toLocaleString()}</div>` : ''}
+                        ${payment.transactionId ? `<div><strong>Transaction ID:</strong> ${payment.transactionId}</div>` : ''}
+                        ${payment.failureReason ? `<div><strong>Failure Reason:</strong> ${payment.failureReason}</div>` : ''}
+                        ${payment.description ? `<div><strong>Description:</strong> ${payment.description}</div>` : ''}
+                    </div>
+                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                style="background: #6b7280; color: white; border: none; padding: 0.5rem 1rem; 
+                                       border-radius: 6px; cursor: pointer;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Retry payment manually
+        async function retryPayment(paymentId) {
+            if (!currentUser || !currentUser.paymentHistory) return;
+            
+            const payment = currentUser.paymentHistory.find(p => p.id === paymentId);
+            if (!payment) return;
+            
+            // Reset payment for retry
+            payment.status = 'pending';
+            payment.retryCount = 0;
+            payment.failureReason = null;
+            
+            // Add to queue
+            paymentProcessing.paymentQueue.push(payment);
+            await savePaymentQueue();
+            
+            showNotification('Payment retry initiated...', 'info', {
+                category: 'payment',
+                duration: 3000
+            });
+            
+            // Process immediately if not currently processing
+            if (!paymentProcessing.isProcessing) {
+                await processNextPayment();
+            }
+        }
+
+        // Cancel current payment
+        function cancelPayment() {
+            if (paymentProcessing.currentPayment) {
+                paymentProcessing.currentPayment.status = 'cancelled';
+                paymentProcessing.isProcessing = false;
+                paymentProcessing.currentPayment = null;
+                
+                showNotification('Payment cancelled', 'info', {
+                    category: 'payment',
+                    duration: 3000
+                });
+            }
+        }
+
+        // Update payment display in UI
+        function updatePaymentDisplay() {
+            // This would update the payment section in the UI
+            // Implementation depends on the specific UI structure
+            console.log('💳 Updating payment display...');
+        }
+
+        // ==================== PHASE 3: ADVANCED REPORTING & ANALYTICS ====================
+        
+        // Advanced analytics system
+        let analyticsData = {
+            userMetrics: {
+                totalEarnings: 0,
+                totalJobs: 0,
+                successRate: 0,
+                averageRating: 0,
+                totalHours: 0,
+                completionRate: 0
+            },
+            performanceMetrics: {
+                monthlyEarnings: [],
+                jobCompletionTrends: [],
+                ratingHistory: [],
+                paymentMethodBreakdown: {},
+                timeTracking: {},
+                skillDevelopment: {}
+            },
+            businessIntelligence: {
+                marketInsights: {},
+                competitorAnalysis: {},
+                growthProjections: {},
+                riskAssessment: {}
+            },
+            lastUpdated: null
+        };
+
+        // Initialize advanced analytics system
+        async function initializeAdvancedAnalytics() {
+            console.log('📊 Initializing Phase 3 Advanced Analytics System...');
+            
+            // Load analytics data
+            await loadAnalyticsData();
+            
+            // Calculate user metrics
+            await calculateUserMetrics();
+            
+            // Generate performance insights
+            await generatePerformanceInsights();
+            
+            // Start real-time analytics updates
+            startAnalyticsMonitoring();
+            
+            console.log('✅ Phase 3 Advanced Analytics System initialized');
+        }
+
+        // Load analytics data from storage
+        async function loadAnalyticsData() {
+            try {
+                const saved = localStorage.getItem('analyticsData');
+                if (saved) {
+                    analyticsData = { ...analyticsData, ...JSON.parse(saved) };
+                }
+            } catch (error) {
+                console.error('❌ Error loading analytics data:', error);
+            }
+        }
+
+        // Save analytics data to storage
+        async function saveAnalyticsData() {
+            try {
+                analyticsData.lastUpdated = new Date().toISOString();
+                localStorage.setItem('analyticsData', JSON.stringify(analyticsData));
+            } catch (error) {
+                console.error('❌ Error saving analytics data:', error);
+            }
+        }
+
+        // Calculate comprehensive user metrics
+        async function calculateUserMetrics() {
+            if (!currentUser) return;
+
+            try {
+                // Basic metrics
+                analyticsData.userMetrics.totalEarnings = currentUser.totalEarnings || 0;
+                analyticsData.userMetrics.totalJobs = currentUser.jobs?.length || 0;
+                
+                // Calculate success rate
+                const completedJobs = currentUser.jobs?.filter(job => job.status === 'completed').length || 0;
+                analyticsData.userMetrics.successRate = analyticsData.userMetrics.totalJobs > 0 ? 
+                    (completedJobs / analyticsData.userMetrics.totalJobs) * 100 : 0;
+                
+                // Calculate average rating
+                const reviews = currentUser.performanceReviews || [];
+                if (reviews.length > 0) {
+                    const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+                    analyticsData.userMetrics.averageRating = totalRating / reviews.length;
+                }
+                
+                // Calculate completion rate
+                const totalAssignedJobs = currentUser.jobs?.length || 0;
+                analyticsData.userMetrics.completionRate = totalAssignedJobs > 0 ? 
+                    (completedJobs / totalAssignedJobs) * 100 : 0;
+                
+                // Calculate total hours (estimate based on job types)
+                const jobHours = currentUser.jobs?.reduce((total, job) => {
+                    const hours = getEstimatedHoursForJob(job.type || 'standard');
+                    return total + (job.status === 'completed' ? hours : 0);
+                }, 0) || 0;
+                analyticsData.userMetrics.totalHours = jobHours;
+                
+                await saveAnalyticsData();
+                
+            } catch (error) {
+                console.error('❌ Error calculating user metrics:', error);
+            }
+        }
+
+        // Get estimated hours for job type
+        function getEstimatedHoursForJob(jobType) {
+            const hourEstimates = {
+                'photography': 8,
+                'videography': 12,
+                'editing': 16,
+                'consulting': 4,
+                'standard': 6,
+                'premium': 10,
+                'rush': 4
+            };
+            return hourEstimates[jobType] || 6;
+        }
+
+        // Generate performance insights
+        async function generatePerformanceInsights() {
+            if (!currentUser) return;
+
+            try {
+                // Monthly earnings breakdown
+                analyticsData.performanceMetrics.monthlyEarnings = calculateMonthlyEarnings();
+                
+                // Job completion trends
+                analyticsData.performanceMetrics.jobCompletionTrends = calculateJobCompletionTrends();
+                
+                // Rating history
+                analyticsData.performanceMetrics.ratingHistory = calculateRatingHistory();
+                
+                // Payment method breakdown
+                analyticsData.performanceMetrics.paymentMethodBreakdown = calculatePaymentMethodBreakdown();
+                
+                // Time tracking analysis
+                analyticsData.performanceMetrics.timeTracking = calculateTimeTracking();
+                
+                // Skill development tracking
+                analyticsData.performanceMetrics.skillDevelopment = calculateSkillDevelopment();
+                
+                await saveAnalyticsData();
+                
+            } catch (error) {
+                console.error('❌ Error generating performance insights:', error);
+            }
+        }
+
+        // Calculate monthly earnings
+        function calculateMonthlyEarnings() {
+            const payments = currentUser.paymentHistory || [];
+            const monthlyData = {};
+            
+            payments.forEach(payment => {
+                if (payment.status === 'completed') {
+                    const month = new Date(payment.processedAt || payment.createdAt).toISOString().substr(0, 7);
+                    monthlyData[month] = (monthlyData[month] || 0) + payment.amount;
+                }
+            });
+            
+            return Object.entries(monthlyData).map(([month, amount]) => ({
+                month,
+                amount,
+                formatted: new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+            })).sort((a, b) => a.month.localeCompare(b.month));
+        }
+
+        // Calculate job completion trends
+        function calculateJobCompletionTrends() {
+            const jobs = currentUser.jobs || [];
+            const monthlyData = {};
+            
+            jobs.forEach(job => {
+                const month = new Date(job.assignedDate || job.createdAt).toISOString().substr(0, 7);
+                if (!monthlyData[month]) {
+                    monthlyData[month] = { total: 0, completed: 0 };
+                }
+                monthlyData[month].total++;
+                if (job.status === 'completed') {
+                    monthlyData[month].completed++;
+                }
+            });
+            
+            return Object.entries(monthlyData).map(([month, data]) => ({
+                month,
+                total: data.total,
+                completed: data.completed,
+                completionRate: data.total > 0 ? (data.completed / data.total) * 100 : 0,
+                formatted: new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+            })).sort((a, b) => a.month.localeCompare(b.month));
+        }
+
+        // Calculate rating history
+        function calculateRatingHistory() {
+            const reviews = currentUser.performanceReviews || [];
+            const monthlyData = {};
+            
+            reviews.forEach(review => {
+                const month = new Date(review.date || review.createdAt).toISOString().substr(0, 7);
+                if (!monthlyData[month]) {
+                    monthlyData[month] = { ratings: [], count: 0 };
+                }
+                monthlyData[month].ratings.push(review.rating || 0);
+                monthlyData[month].count++;
+            });
+            
+            return Object.entries(monthlyData).map(([month, data]) => ({
+                month,
+                averageRating: data.ratings.reduce((sum, rating) => sum + rating, 0) / data.ratings.length,
+                count: data.count,
+                formatted: new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+            })).sort((a, b) => a.month.localeCompare(b.month));
+        }
+
+        // Calculate payment method breakdown
+        function calculatePaymentMethodBreakdown() {
+            const payments = currentUser.paymentHistory || [];
+            const breakdown = {};
+            
+            payments.forEach(payment => {
+                if (payment.status === 'completed') {
+                    const method = payment.method || 'unknown';
+                    if (!breakdown[method]) {
+                        breakdown[method] = { count: 0, amount: 0 };
+                    }
+                    breakdown[method].count++;
+                    breakdown[method].amount += payment.amount;
+                }
+            });
+            
+            return breakdown;
+        }
+
+        // Calculate time tracking
+        function calculateTimeTracking() {
+            const jobs = currentUser.jobs || [];
+            const timeData = {
+                totalHours: 0,
+                averageHoursPerJob: 0,
+                mostProductiveHours: [],
+                timeDistribution: {}
+            };
+            
+            jobs.forEach(job => {
+                if (job.status === 'completed') {
+                    const hours = getEstimatedHoursForJob(job.type || 'standard');
+                    timeData.totalHours += hours;
+                    
+                    // Track by job type
+                    const jobType = job.type || 'standard';
+                    timeData.timeDistribution[jobType] = (timeData.timeDistribution[jobType] || 0) + hours;
+                }
+            });
+            
+            timeData.averageHoursPerJob = jobs.length > 0 ? timeData.totalHours / jobs.length : 0;
+            
+            return timeData;
+        }
+
+        // Calculate skill development
+        function calculateSkillDevelopment() {
+            const reviews = currentUser.performanceReviews || [];
+            const skills = {};
+            
+            reviews.forEach(review => {
+                if (review.skills) {
+                    review.skills.forEach(skill => {
+                        if (!skills[skill]) {
+                            skills[skill] = { count: 0, totalRating: 0 };
+                        }
+                        skills[skill].count++;
+                        skills[skill].totalRating += review.rating || 0;
+                    });
+                }
+            });
+            
+            return Object.entries(skills).map(([skill, data]) => ({
+                skill,
+                count: data.count,
+                averageRating: data.totalRating / data.count,
+                proficiency: Math.min(100, (data.count * 10) + (data.totalRating * 5))
+            })).sort((a, b) => b.proficiency - a.proficiency);
+        }
+
+        // Start analytics monitoring
+        function startAnalyticsMonitoring() {
+            // Update analytics every 5 minutes
+            setInterval(async () => {
+                await calculateUserMetrics();
+                await generatePerformanceInsights();
+            }, 300000);
+        }
+
+        // Show advanced analytics dashboard
+        function showAdvancedAnalyticsDashboard() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.9); z-index: 10000; display: flex;
+                align-items: center; justify-content: center; padding: 20px;
+                overflow-y: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a2e; border: 1px solid #FFB200; border-radius: 16px;
+                           padding: 2rem; max-width: 1200px; width: 100%; color: white;
+                           max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h2 style="color: #FFB200; margin: 0; font-family: 'Cinzel', serif;">
+                            <i class="fas fa-chart-line"></i> Advanced Analytics Dashboard
+                        </h2>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                style="background: #6b7280; color: white; border: none; padding: 0.5rem 1rem; 
+                                       border-radius: 6px; cursor: pointer; font-size: 1.2rem;">
+                            ×
+                        </button>
+                    </div>
+                    
+                    <!-- Key Metrics Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 12px; padding: 1.5rem; text-align: center;">
+                            <div style="font-size: 2rem; color: #22c55e; margin-bottom: 0.5rem;">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #22c55e;">
+                                $${analyticsData.userMetrics.totalEarnings.toLocaleString()}
+                            </div>
+                            <div style="color: #9ca3af; font-size: 0.9rem;">Total Earnings</div>
+                        </div>
+                        
+                        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; border-radius: 12px; padding: 1.5rem; text-align: center;">
+                            <div style="font-size: 2rem; color: #3b82f6; margin-bottom: 0.5rem;">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #3b82f6;">
+                                ${analyticsData.userMetrics.totalJobs}
+                            </div>
+                            <div style="color: #9ca3af; font-size: 0.9rem;">Total Jobs</div>
+                        </div>
+                        
+                        <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid #a855f7; border-radius: 12px; padding: 1.5rem; text-align: center;">
+                            <div style="font-size: 2rem; color: #a855f7; margin-bottom: 0.5rem;">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #a855f7;">
+                                ${analyticsData.userMetrics.averageRating.toFixed(1)}
+                            </div>
+                            <div style="color: #9ca3af; font-size: 0.9rem;">Average Rating</div>
+                        </div>
+                        
+                        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 12px; padding: 1.5rem; text-align: center;">
+                            <div style="font-size: 2rem; color: #f59e0b; margin-bottom: 0.5rem;">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #f59e0b;">
+                                ${analyticsData.userMetrics.successRate.toFixed(1)}%
+                            </div>
+                            <div style="color: #9ca3af; font-size: 0.9rem;">Success Rate</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Section -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                        <!-- Monthly Earnings Chart -->
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem;">
+                            <h3 style="color: #FFB200; margin: 0 0 1rem 0; font-family: 'Cinzel', serif;">
+                                <i class="fas fa-chart-bar"></i> Monthly Earnings
+                            </h3>
+                            <div id="earningsChart" style="height: 200px; display: flex; align-items: end; gap: 4px;">
+                                ${generateEarningsChart()}
+                            </div>
+                        </div>
+                        
+                        <!-- Job Completion Chart -->
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem;">
+                            <h3 style="color: #FFB200; margin: 0 0 1rem 0; font-family: 'Cinzel', serif;">
+                                <i class="fas fa-chart-pie"></i> Job Completion Rate
+                            </h3>
+                            <div id="completionChart" style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 3rem; color: #22c55e; margin-bottom: 0.5rem;">
+                                        ${analyticsData.userMetrics.completionRate.toFixed(1)}%
+                                    </div>
+                                    <div style="color: #9ca3af;">Completion Rate</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Analytics -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <!-- Payment Methods Breakdown -->
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem;">
+                            <h3 style="color: #FFB200; margin: 0 0 1rem 0; font-family: 'Cinzel', serif;">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                ${generatePaymentMethodBreakdown()}
+                            </div>
+                        </div>
+                        
+                        <!-- Skill Development -->
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem;">
+                            <h3 style="color: #FFB200; margin: 0 0 1rem 0; font-family: 'Cinzel', serif;">
+                                <i class="fas fa-graduation-cap"></i> Skill Development
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                ${generateSkillDevelopment()}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Options -->
+                    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 178, 0, 0.2);">
+                        <h3 style="color: #FFB200; margin: 0 0 1rem 0; font-family: 'Cinzel', serif;">
+                            <i class="fas fa-download"></i> Export Analytics
+                        </h3>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <button onclick="exportAnalytics('pdf')" 
+                                    style="background: #ef4444; color: white; border: none; padding: 0.75rem 1.5rem; 
+                                           border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-file-pdf"></i> Export PDF
+                            </button>
+                            <button onclick="exportAnalytics('csv')" 
+                                    style="background: #22c55e; color: white; border: none; padding: 0.75rem 1.5rem; 
+                                           border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-file-csv"></i> Export CSV
+                            </button>
+                            <button onclick="exportAnalytics('json')" 
+                                    style="background: #3b82f6; color: white; border: none; padding: 0.75rem 1.5rem; 
+                                           border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-file-code"></i> Export JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Generate earnings chart
+        function generateEarningsChart() {
+            const data = analyticsData.performanceMetrics.monthlyEarnings;
+            if (data.length === 0) {
+                return '<div style="color: #9ca3af; text-align: center; width: 100%;">No earnings data available</div>';
+            }
+            
+            const maxAmount = Math.max(...data.map(d => d.amount));
+            
+            return data.map(item => {
+                const height = (item.amount / maxAmount) * 150;
+                return `
+                    <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                        <div style="background: linear-gradient(to top, #FFB200, #f59e0b); width: 20px; height: ${height}px; 
+                                    border-radius: 4px 4px 0 0; margin-bottom: 0.5rem;"></div>
+                        <div style="font-size: 0.7rem; color: #9ca3af; transform: rotate(-45deg); white-space: nowrap;">
+                            ${item.formatted}
+                        </div>
+                        <div style="font-size: 0.6rem; color: #FFB200; margin-top: 0.25rem;">
+                            $${item.amount.toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Generate payment method breakdown
+        function generatePaymentMethodBreakdown() {
+            const breakdown = analyticsData.performanceMetrics.paymentMethodBreakdown;
+            const totalAmount = Object.values(breakdown).reduce((sum, method) => sum + method.amount, 0);
+            
+            if (totalAmount === 0) {
+                return '<div style="color: #9ca3af; text-align: center;">No payment data available</div>';
+            }
+            
+            return Object.entries(breakdown).map(([method, data]) => {
+                const percentage = (data.amount / totalAmount) * 100;
+                const methodInfo = PAYMENT_OPTIONS[method] || { name: method, icon: 'fas fa-credit-card' };
+                
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; 
+                                background: rgba(255,255,255,0.05); border-radius: 6px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="${methodInfo.icon}" style="color: #FFB200;"></i>
+                            <span>${methodInfo.name}</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: #e5e7eb; font-weight: bold;">$${data.amount.toLocaleString()}</div>
+                            <div style="color: #9ca3af; font-size: 0.8rem;">${percentage.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Generate skill development
+        function generateSkillDevelopment() {
+            const skills = analyticsData.performanceMetrics.skillDevelopment;
+            
+            if (skills.length === 0) {
+                return '<div style="color: #9ca3af; text-align: center;">No skill data available</div>';
+            }
+            
+            return skills.slice(0, 5).map(skill => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; 
+                            background: rgba(255,255,255,0.05); border-radius: 6px;">
+                    <div style="color: #e5e7eb;">${skill.skill}</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 60px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
+                            <div style="width: ${skill.proficiency}%; height: 100%; background: linear-gradient(90deg, #FFB200, #f59e0b);"></div>
+                        </div>
+                        <span style="color: #FFB200; font-size: 0.8rem; font-weight: bold;">${skill.proficiency}%</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Export analytics data
+        function exportAnalytics(format) {
+            const data = {
+                userMetrics: analyticsData.userMetrics,
+                performanceMetrics: analyticsData.performanceMetrics,
+                exportDate: new Date().toISOString(),
+                format: format
+            };
+            
+            let content, filename, mimeType;
+            
+            switch (format) {
+                case 'csv':
+                    content = convertToCSV(data);
+                    filename = `analytics_${new Date().toISOString().split('T')[0]}.csv`;
+                    mimeType = 'text/csv';
+                    break;
+                case 'json':
+                    content = JSON.stringify(data, null, 2);
+                    filename = `analytics_${new Date().toISOString().split('T')[0]}.json`;
+                    mimeType = 'application/json';
+                    break;
+                case 'pdf':
+                    // For PDF, we'd need a PDF library like jsPDF
+                    showNotification('PDF export requires additional setup', 'info', {
+                        category: 'system',
+                        duration: 3000
+                    });
+                    return;
+                default:
+                    return;
+            }
+            
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification(`Analytics exported as ${format.toUpperCase()}`, 'success', {
+                category: 'system',
+                duration: 3000
+            });
+        }
+
+        // Convert data to CSV format
+        function convertToCSV(data) {
+            const lines = [];
+            lines.push('Metric,Value');
+            lines.push(`Total Earnings,${data.userMetrics.totalEarnings}`);
+            lines.push(`Total Jobs,${data.userMetrics.totalJobs}`);
+            lines.push(`Success Rate,${data.userMetrics.successRate}%`);
+            lines.push(`Average Rating,${data.userMetrics.averageRating}`);
+            lines.push(`Completion Rate,${data.userMetrics.completionRate}%`);
+            lines.push(`Total Hours,${data.userMetrics.totalHours}`);
+            lines.push('');
+            lines.push('Payment Methods,Count,Amount');
+            
+            Object.entries(data.performanceMetrics.paymentMethodBreakdown).forEach(([method, info]) => {
+                lines.push(`${method},${info.count},${info.amount}`);
+            });
+            
+            return lines.join('\n');
+        }
+
+        // ==================== PHASE 3: TEAM COLLABORATION TOOLS ====================
+        
+        // Team collaboration system
+        let collaborationData = {
+            teamMembers: [],
+            activeProjects: [],
+            messages: [],
+            sharedFiles: [],
+            meetingSchedules: [],
+            taskAssignments: [],
+            lastUpdated: null
+        };
+
+        // Initialize team collaboration system
+        async function initializeTeamCollaboration() {
+            console.log('👥 Initializing Phase 3 Team Collaboration System...');
+            
+            // Load collaboration data
+            await loadCollaborationData();
+            
+            // Initialize real-time collaboration
+            await initializeRealTimeCollaboration();
+            
+            // Start collaboration monitoring
+            startCollaborationMonitoring();
+            
+            console.log('✅ Phase 3 Team Collaboration System initialized');
+        }
+
+        // Load collaboration data from storage
+        async function loadCollaborationData() {
+            try {
+                const saved = localStorage.getItem('collaborationData');
+                if (saved) {
+                    collaborationData = { ...collaborationData, ...JSON.parse(saved) };
+                }
+            } catch (error) {
+                console.error('❌ Error loading collaboration data:', error);
+            }
+        }
+
+        // Save collaboration data to storage
+        async function saveCollaborationData() {
+            try {
+                collaborationData.lastUpdated = new Date().toISOString();
+                localStorage.setItem('collaborationData', JSON.stringify(collaborationData));
+            } catch (error) {
+                console.error('❌ Error saving collaboration data:', error);
+            }
+        }
+
+        // Initialize real-time collaboration
+        async function initializeRealTimeCollaboration() {
+            // This would integrate with WebSocket or Firebase Realtime Database
+            // For now, we'll simulate real-time updates
+            console.log('🔄 Real-time collaboration initialized');
+        }
+
+        // Start collaboration monitoring
+        function startCollaborationMonitoring() {
+            // Monitor for new messages every 30 seconds
+            setInterval(async () => {
+                await checkForNewMessages();
+            }, 30000);
+        }
+
+        // Check for new messages
+        async function checkForNewMessages() {
+            // This would check with a server for new messages
+            // For now, we'll simulate
+            console.log('📨 Checking for new messages...');
+        }
+
+        // Show team collaboration dashboard
+        function showTeamCollaborationDashboard() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.9); z-index: 10000; display: flex;
+                align-items: center; justify-content: center; padding: 20px;
+                overflow-y: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a2e; border: 1px solid #FFB200; border-radius: 16px;
+                           padding: 2rem; max-width: 1200px; width: 100%; color: white;
+                           max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h2 style="color: #FFB200; margin: 0; font-family: 'Cinzel', serif;">
+                            <i class="fas fa-users"></i> Team Collaboration Hub
+                        </h2>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                style="background: #6b7280; color: white; border: none; padding: 0.5rem 1rem; 
+                                       border-radius: 6px; cursor: pointer; font-size: 1.2rem;">
+                            ×
+                        </button>
+                    </div>
+                    
+                    <!-- Collaboration Tabs -->
+                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255, 178, 0, 0.2);">
+                        <button onclick="showCollaborationTab('messages')" 
+                                class="collab-tab active" 
+                                style="background: rgba(255, 178, 0, 0.1); color: #FFB200; border: 1px solid #FFB200; 
+                                       padding: 0.75rem 1.5rem; border-radius: 8px 8px 0 0; cursor: pointer; 
+                                       font-weight: 600; transition: all 0.3s ease;">
+                            <i class="fas fa-comments"></i> Messages
+                        </button>
+                        <button onclick="showCollaborationTab('projects')" 
+                                class="collab-tab" 
+                                style="background: transparent; color: #9ca3af; border: 1px solid transparent; 
+                                       padding: 0.75rem 1.5rem; border-radius: 8px 8px 0 0; cursor: pointer; 
+                                       font-weight: 600; transition: all 0.3s ease;">
+                            <i class="fas fa-project-diagram"></i> Projects
+                        </button>
+                        <button onclick="showCollaborationTab('files')" 
+                                class="collab-tab" 
+                                style="background: transparent; color: #9ca3af; border: 1px solid transparent; 
+                                       padding: 0.75rem 1.5rem; border-radius: 8px 8px 0 0; cursor: pointer; 
+                                       font-weight: 600; transition: all 0.3s ease;">
+                            <i class="fas fa-folder"></i> Files
+                        </button>
+                        <button onclick="showCollaborationTab('meetings')" 
+                                class="collab-tab" 
+                                style="background: transparent; color: #9ca3af; border: 1px solid transparent; 
+                                       padding: 0.75rem 1.5rem; border-radius: 8px 8px 0 0; cursor: pointer; 
+                                       font-weight: 600; transition: all 0.3s ease;">
+                            <i class="fas fa-video"></i> Meetings
+                        </button>
+                    </div>
+                    
+                    <!-- Messages Tab -->
+                    <div id="messages-tab" class="collab-content">
+                        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; height: 500px;">
+                            <!-- Team Members List -->
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem;">
+                                <h3 style="color: #FFB200; margin: 0 0 1rem 0; font-family: 'Cinzel', serif;">
+                                    <i class="fas fa-users"></i> Team Members
+                                </h3>
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    ${generateTeamMembersList()}
+                                </div>
+                            </div>
+                            
+                            <!-- Chat Area -->
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column;">
+                                <div style="flex: 1; overflow-y: auto; margin-bottom: 1rem; padding: 1rem; 
+                                            background: rgba(0,0,0,0.2); border-radius: 8px;">
+                                    <div id="chat-messages">
+                                        ${generateChatMessages()}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <input type="text" id="message-input" placeholder="Type your message..." 
+                                           style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #FFB200; 
+                                                  color: white; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem;">
+                                    <button onclick="sendMessage()" 
+                                            style="background: #FFB200; color: #000; border: none; padding: 0.75rem 1.5rem; 
+                                                   border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Projects Tab -->
+                    <div id="projects-tab" class="collab-content" style="display: none;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                            ${generateActiveProjects()}
+                        </div>
+                    </div>
+                    
+                    <!-- Files Tab -->
+                    <div id="files-tab" class="collab-content" style="display: none;">
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem;">
+                            <h3 style="color: #FFB200; margin: 0 0 1rem 0; font-family: 'Cinzel', serif;">
+                                <i class="fas fa-folder"></i> Shared Files
+                            </h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                                ${generateSharedFiles()}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Meetings Tab -->
+                    <div id="meetings-tab" class="collab-content" style="display: none;">
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem;">
+                            <h3 style="color: #FFB200; margin: 0 0 1rem 0; font-family: 'Cinzel', serif;">
+                                <i class="fas fa-video"></i> Meeting Schedule
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                ${generateMeetingSchedule()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Generate team members list
+        function generateTeamMembersList() {
+            const members = [
+                { name: 'Cody Cochran', role: 'Creative Director', status: 'online', avatar: '👨‍💼' },
+                { name: 'Sarah Jackson', role: 'Project Manager', status: 'online', avatar: '👩‍💼' },
+                { name: 'Mike Chen', role: 'Lead Editor', status: 'away', avatar: '👨‍🎨' },
+                { name: 'Emma Wilson', role: 'Photographer', status: 'offline', avatar: '👩‍📷' },
+                { name: 'Alex Rodriguez', role: 'Sound Engineer', status: 'online', avatar: '👨‍🔧' }
+            ];
+            
+            return members.map(member => `
+                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; 
+                            background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;
+                            transition: background 0.2s ease;" 
+                     onmouseover="this.style.background='rgba(255,255,255,0.1)'" 
+                     onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                    <div style="font-size: 1.5rem;">${member.avatar}</div>
+                    <div style="flex: 1;">
+                        <div style="color: #e5e7eb; font-weight: 600; font-size: 0.9rem;">${member.name}</div>
+                        <div style="color: #9ca3af; font-size: 0.8rem;">${member.role}</div>
+                    </div>
+                    <div style="width: 8px; height: 8px; border-radius: 50%; 
+                                background: ${member.status === 'online' ? '#22c55e' : member.status === 'away' ? '#f59e0b' : '#6b7280'};"></div>
+                </div>
+            `).join('');
+        }
+
+        // Generate chat messages
+        function generateChatMessages() {
+            const messages = [
+                { sender: 'Cody Cochran', message: 'Welcome to the team collaboration hub!', time: '2:30 PM', avatar: '👨‍💼' },
+                { sender: 'Sarah Jackson', message: 'Thanks! Looking forward to working together.', time: '2:32 PM', avatar: '👩‍💼' },
+                { sender: 'Mike Chen', message: 'The new project looks exciting!', time: '2:35 PM', avatar: '👨‍🎨' },
+                { sender: 'You', message: 'Absolutely! Ready to create something amazing.', time: '2:37 PM', avatar: '👤' }
+            ];
+            
+            return messages.map(msg => `
+                <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; 
+                            ${msg.sender === 'You' ? 'flex-direction: row-reverse;' : ''}">
+                    <div style="font-size: 1.2rem;">${msg.avatar}</div>
+                    <div style="flex: 1; ${msg.sender === 'You' ? 'text-align: right;' : ''}">
+                        <div style="color: #FFB200; font-weight: 600; font-size: 0.8rem; margin-bottom: 0.25rem;">
+                            ${msg.sender} • ${msg.time}
+                        </div>
+                        <div style="background: ${msg.sender === 'You' ? 'rgba(255, 178, 0, 0.1)' : 'rgba(255,255,255,0.05)'}; 
+                                    padding: 0.75rem; border-radius: 12px; color: #e5e7eb;">
+                            ${msg.message}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Generate active projects
+        function generateActiveProjects() {
+            const projects = [
+                { name: 'Corporate Video Series', progress: 75, members: 4, deadline: '2025-01-15', status: 'active' },
+                { name: 'Wedding Photography Package', progress: 30, members: 2, deadline: '2025-01-20', status: 'active' },
+                { name: 'Product Launch Campaign', progress: 90, members: 6, deadline: '2025-01-10', status: 'active' },
+                { name: 'Documentary Film', progress: 45, members: 3, deadline: '2025-02-01', status: 'planning' }
+            ];
+            
+            return projects.map(project => `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255, 178, 0, 0.2); 
+                            border-radius: 12px; padding: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="color: #FFB200; margin: 0; font-family: 'Cinzel', serif;">${project.name}</h4>
+                        <span style="background: ${project.status === 'active' ? '#22c55e' : '#f59e0b'}; 
+                                     color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
+                            ${project.status}
+                        </span>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #9ca3af; font-size: 0.9rem;">Progress</span>
+                            <span style="color: #e5e7eb; font-weight: 600;">${project.progress}%</span>
+                        </div>
+                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                            <div style="width: ${project.progress}%; height: 100%; 
+                                        background: linear-gradient(90deg, #FFB200, #f59e0b);"></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #9ca3af; font-size: 0.8rem;">
+                        <span><i class="fas fa-users"></i> ${project.members} members</span>
+                        <span><i class="fas fa-calendar"></i> ${project.deadline}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Generate shared files
+        function generateSharedFiles() {
+            const files = [
+                { name: 'Project_Brief.pdf', size: '2.4 MB', type: 'pdf', uploadedBy: 'Cody Cochran', date: '2025-01-08' },
+                { name: 'Logo_Assets.zip', size: '15.2 MB', type: 'archive', uploadedBy: 'Sarah Jackson', date: '2025-01-07' },
+                { name: 'Script_Draft.docx', size: '856 KB', type: 'document', uploadedBy: 'Mike Chen', date: '2025-01-06' },
+                { name: 'Music_Track.mp3', size: '8.1 MB', type: 'audio', uploadedBy: 'Alex Rodriguez', date: '2025-01-05' }
+            ];
+            
+            return files.map(file => `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255, 178, 0, 0.2); 
+                            border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer;
+                            transition: all 0.2s ease;" 
+                     onmouseover="this.style.borderColor='#FFB200'; this.style.background='rgba(255, 178, 0, 0.05)'" 
+                     onmouseout="this.style.borderColor='rgba(255, 178, 0, 0.2)'; this.style.background='rgba(0,0,0,0.3)'">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                        ${getFileIcon(file.type)}
+                    </div>
+                    <div style="color: #e5e7eb; font-weight: 600; margin-bottom: 0.25rem; font-size: 0.9rem;">
+                        ${file.name}
+                    </div>
+                    <div style="color: #9ca3af; font-size: 0.8rem; margin-bottom: 0.5rem;">
+                        ${file.size} • ${file.date}
+                    </div>
+                    <div style="color: #FFB200; font-size: 0.8rem;">
+                        by ${file.uploadedBy}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Get file icon based on type
+        function getFileIcon(type) {
+            const icons = {
+                'pdf': '📄',
+                'document': '📝',
+                'archive': '📦',
+                'audio': '🎵',
+                'video': '🎬',
+                'image': '🖼️'
+            };
+            return icons[type] || '📁';
+        }
+
+        // Generate meeting schedule
+        function generateMeetingSchedule() {
+            const meetings = [
+                { title: 'Weekly Team Sync', time: '2025-01-09 10:00 AM', duration: '1 hour', attendees: 5, type: 'video' },
+                { title: 'Project Review', time: '2025-01-10 2:00 PM', duration: '2 hours', attendees: 3, type: 'in-person' },
+                { title: 'Creative Brainstorm', time: '2025-01-12 11:00 AM', duration: '1.5 hours', attendees: 4, type: 'video' }
+            ];
+            
+            return meetings.map(meeting => `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255, 178, 0, 0.2); 
+                            border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="color: #FFB200; font-weight: 600; margin-bottom: 0.25rem;">${meeting.title}</div>
+                        <div style="color: #9ca3af; font-size: 0.9rem;">
+                            <i class="fas fa-calendar"></i> ${meeting.time} • 
+                            <i class="fas fa-clock"></i> ${meeting.duration} • 
+                            <i class="fas fa-users"></i> ${meeting.attendees} attendees
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; 
+                                       border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+                            <i class="fas fa-video"></i> Join
+                        </button>
+                        <button style="background: #6b7280; color: white; border: none; padding: 0.5rem 1rem; 
+                                       border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Show collaboration tab
+        function showCollaborationTab(tabName) {
+            // Hide all content
+            document.querySelectorAll('.collab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.collab-tab').forEach(tab => {
+                tab.style.background = 'transparent';
+                tab.style.color = '#9ca3af';
+                tab.style.borderColor = 'transparent';
+            });
+            
+            // Show selected content
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+            
+            // Add active class to selected tab
+            event.target.style.background = 'rgba(255, 178, 0, 0.1)';
+            event.target.style.color = '#FFB200';
+            event.target.style.borderColor = '#FFB200';
+        }
+
+        // Send message
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                const messagesContainer = document.getElementById('chat-messages');
+                const newMessage = `
+                    <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-direction: row-reverse;">
+                        <div style="font-size: 1.2rem;">👤</div>
+                        <div style="flex: 1; text-align: right;">
+                            <div style="color: #FFB200; font-weight: 600; font-size: 0.8rem; margin-bottom: 0.25rem;">
+                                You • ${new Date().toLocaleTimeString()}
+                            </div>
+                            <div style="background: rgba(255, 178, 0, 0.1); padding: 0.75rem; 
+                                        border-radius: 12px; color: #e5e7eb;">
+                                ${message}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                messagesContainer.innerHTML += newMessage;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                input.value = '';
+                
+                // Show notification
+                showNotification('Message sent!', 'success', {
+                    category: 'system',
+                    duration: 2000
+                });
+            }
+        }
 
         // Payment modal functionality
         function showPaymentModal() {
@@ -11380,6 +13288,226 @@
             border-color: rgba(239, 68, 68, 0.5);
         }
 
+        /* ==================== NOTIFICATION SETTINGS PANEL ==================== */
+        .notification-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .settings-btn {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .notification-settings-panel {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 178, 0, 0.2);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .notification-settings-panel h4 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .setting-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-group h5 {
+            color: #e5e7eb;
+            font-size: 0.9rem;
+            margin: 0 0 0.75rem 0;
+            font-weight: 600;
+        }
+
+        .setting-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .setting-label:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-label input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 178, 0, 0.3);
+            border-radius: 4px;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .setting-label input[type="checkbox"]:checked + .checkmark {
+            background: #FFB200;
+            border-color: #FFB200;
+        }
+
+        .setting-label input[type="checkbox"]:checked + .checkmark::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #000;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-info strong {
+            color: #e5e7eb;
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .setting-info small {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+
+        .quiet-hours-controls {
+            margin-top: 0.75rem;
+            padding-left: 2rem;
+        }
+
+        .time-inputs {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .time-inputs input[type="time"] {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            color: #e5e7eb;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .time-inputs span {
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+
+        .category-settings {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .category-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: background 0.2s ease;
+        }
+
+        .category-label:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .category-label i {
+            color: #FFB200;
+            width: 16px;
+            text-align: center;
+        }
+
+        .category-label span {
+            color: #e5e7eb;
+            font-size: 0.85rem;
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .save-settings-btn, .reset-settings-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .save-settings-btn {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .save-settings-btn:hover {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .reset-settings-btn {
+            background: rgba(156, 163, 175, 0.1);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        .reset-settings-btn:hover {
+            background: rgba(156, 163, 175, 0.2);
+            border-color: rgba(156, 163, 175, 0.5);
+            transform: translateY(-1px);
+        }
+
         .notification-list {
             max-height: 400px;
             overflow-y: auto;
@@ -12747,6 +14875,35 @@
                             <!-- Payment method will be populated here -->
                         </div>
                     </div>
+                    
+                    <!-- Team Collaboration -->
+                    <div class="card collaboration-card">
+                        <div class="card-header">
+                            <h2 class="card-title">Team Collaboration</h2>
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="collaboration-info">
+                            <div class="info-item">
+                                <div class="info-label">Team Members</div>
+                                <div class="info-value">5 Active</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Active Projects</div>
+                                <div class="info-value">4 Projects</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Unread Messages</div>
+                                <div class="info-value">3 Messages</div>
+                            </div>
+                            <button onclick="showTeamCollaborationDashboard()" 
+                                    style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; border: none; 
+                                           padding: 1rem 1.5rem; border-radius: 12px; cursor: pointer; font-weight: 600; 
+                                           transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); 
+                                           width: 100%; margin-top: 1rem;">
+                                <i class="fas fa-users"></i> Open Collaboration Hub
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -13002,10 +15159,105 @@
     <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
         <div class="notification-header">
             <h3><i class="fas fa-bell"></i> Notifications</h3>
-            <button onclick="clearAllNotifications()" class="clear-all-btn">
-                <i class="fas fa-trash"></i> Clear All
-            </button>
+            <div class="notification-actions">
+                <button onclick="toggleNotificationSettings()" class="settings-btn" title="Notification Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button onclick="clearAllNotifications()" class="clear-all-btn">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
         </div>
+        
+        <!-- Notification Settings Panel -->
+        <div class="notification-settings-panel" id="notificationSettingsPanel" style="display: none;">
+            <h4><i class="fas fa-cog"></i> Notification Settings</h4>
+            
+            <!-- Push Notifications -->
+            <div class="setting-group">
+                <label class="setting-label">
+                    <input type="checkbox" id="pushNotifications" onchange="togglePushNotifications()">
+                    <span class="checkmark"></span>
+                    <div class="setting-info">
+                        <strong>Push Notifications</strong>
+                        <small>Receive notifications even when the page is not active</small>
+                    </div>
+                </label>
+            </div>
+            
+            <!-- Sound Notifications -->
+            <div class="setting-group">
+                <label class="setting-label">
+                    <input type="checkbox" id="soundNotifications" onchange="toggleSoundNotifications()">
+                    <span class="checkmark"></span>
+                    <div class="setting-info">
+                        <strong>Sound Notifications</strong>
+                        <small>Play sound when notifications arrive</small>
+                    </div>
+                </label>
+            </div>
+            
+            <!-- Quiet Hours -->
+            <div class="setting-group">
+                <label class="setting-label">
+                    <input type="checkbox" id="quietHours" onchange="toggleQuietHours()">
+                    <span class="checkmark"></span>
+                    <div class="setting-info">
+                        <strong>Quiet Hours</strong>
+                        <small>Suppress notifications during specified hours</small>
+                    </div>
+                </label>
+                <div class="quiet-hours-controls" id="quietHoursControls" style="display: none;">
+                    <div class="time-inputs">
+                        <input type="time" id="quietStart" value="22:00" onchange="updateQuietHours()">
+                        <span>to</span>
+                        <input type="time" id="quietEnd" value="08:00" onchange="updateQuietHours()">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notification Categories -->
+            <div class="setting-group">
+                <h5>Notification Categories</h5>
+                <div class="category-settings">
+                    <label class="category-label">
+                        <input type="checkbox" id="catPayment" onchange="updateNotificationCategories()">
+                        <span class="checkmark"></span>
+                        <i class="fas fa-dollar-sign"></i> Payment Updates
+                    </label>
+                    <label class="category-label">
+                        <input type="checkbox" id="catContract" onchange="updateNotificationCategories()">
+                        <span class="checkmark"></span>
+                        <i class="fas fa-file-contract"></i> Contract Updates
+                    </label>
+                    <label class="category-label">
+                        <input type="checkbox" id="catJob" onchange="updateNotificationCategories()">
+                        <span class="checkmark"></span>
+                        <i class="fas fa-briefcase"></i> Job Updates
+                    </label>
+                    <label class="category-label">
+                        <input type="checkbox" id="catPerformance" onchange="updateNotificationCategories()">
+                        <span class="checkmark"></span>
+                        <i class="fas fa-chart-line"></i> Performance Updates
+                    </label>
+                    <label class="category-label">
+                        <input type="checkbox" id="catSystem" onchange="updateNotificationCategories()">
+                        <span class="checkmark"></span>
+                        <i class="fas fa-cog"></i> System Updates
+                    </label>
+                </div>
+            </div>
+            
+            <div class="settings-actions">
+                <button onclick="saveNotificationSettings()" class="save-settings-btn">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+                <button onclick="resetNotificationSettings()" class="reset-settings-btn">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+            </div>
+        </div>
+        
         <div class="notification-list" id="notificationList">
             <div class="no-notifications">
                 <i class="fas fa-bell-slash"></i>
