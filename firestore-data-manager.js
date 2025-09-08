@@ -1199,7 +1199,7 @@ function initializeFirestoreDataManager() {
                 console.error('❌ Firestore Data Manager auto-initialization failed:', error);
             });
         }, 100);
-    },
+    }
 
     // ==================== COMMUNITY OPERATIONS ====================
 
