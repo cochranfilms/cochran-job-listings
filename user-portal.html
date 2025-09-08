@@ -8006,6 +8006,8 @@
             const img = document.getElementById('profileImage');
             const placeholder = document.getElementById('profilePicturePlaceholder');
             const removeBtn = document.getElementById('removePictureBtn');
+            const headerAvatar = document.getElementById('profileHeaderAvatar');
+            const headerIcon = document.getElementById('profileHeaderIcon');
             
             if (imageData) {
                 if (img) {
@@ -8014,6 +8016,8 @@
                 }
                 if (placeholder) placeholder.style.display = 'none';
                 if (removeBtn) removeBtn.style.display = 'inline-flex';
+                if (headerAvatar) { headerAvatar.src = imageData; headerAvatar.style.display = 'block'; }
+                if (headerIcon) { headerIcon.style.display = 'none'; }
                 
                 // Update other avatar targets across the page
                 try {
@@ -8039,6 +8043,8 @@
                 if (img) img.style.display = 'none';
                 if (placeholder) placeholder.style.display = 'flex';
                 if (removeBtn) removeBtn.style.display = 'none';
+                if (headerAvatar) headerAvatar.style.display = 'none';
+                if (headerIcon) headerIcon.style.display = 'inline-block';
             }
         }
         
@@ -17171,7 +17177,10 @@
                     <div class="card profile-card">
                         <div class="card-header">
                             <h2 class="card-title">Profile Information</h2>
-                            <i class="fas fa-user-circle"></i>
+                            <div class="profile-header-avatar" style="display:flex;align-items:center;gap:0.5rem;">
+                                <img id="profileHeaderAvatar" src="" alt="Profile" style="display:none;width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                                <i id="profileHeaderIcon" class="fas fa-user-circle"></i>
+                            </div>
                         </div>
                         <div class="profile-info" id="userInfo">
                             <!-- User info will be populated here -->
