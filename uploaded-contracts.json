@@ -495,8 +495,24 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-08-21",
       "signedDate": "2025-08-21"
+    },
+    {
+      "contractId": "CF-1757327809937-YOZ4B",
+      "freelancerName": "Will Smith",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Backdrop Photographer Base",
+      "rate": "$400",
+      "location": "Douglasville, GA",
+      "fileName": "Will Smith.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-09-08T10:37:09.944Z",
+      "status": "uploaded",
+      "githubUrl": "https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/Will Smith.pdf",
+      "notes": "Automatically uploaded via contract signing",
+      "contractDate": "2025-09-08",
+      "signedDate": "2025-09-08"
     }
   ],
-  "lastUpdated": "2025-08-21T16:06:55.947Z",
-  "totalContracts": 31
+  "lastUpdated": "2025-09-08T10:37:09.944Z",
+  "totalContracts": 32
 }
