@@ -924,7 +924,33 @@ const FirestoreDataManager = {
             // Check dropdown options collection
             if (!(await this.hasData(this.collections.dropdownOptions))) {
                 console.log('📋 Dropdown options collection empty (initializing defaults)');
-                const defaults = { roles: [], rates: [], locations: [], projectTypes: [] };
+                const defaults = {
+                    roles: [
+                        'Backdrop Photographer',
+                        'Photographer',
+                        'Videographer',
+                        'Editor',
+                        'On-Site Print Tech'
+                    ],
+                    rates: [
+                        '$400.00 USD (Flat)',
+                        '$450.00 USD (Flat)',
+                        '$500.00 USD (Flat)',
+                        '$750.00 USD (Flat)'
+                    ],
+                    locations: [
+                        'Atlanta, GA',
+                        'Douglasville, GA',
+                        'Sandy Springs, GA',
+                        'Atlanta Area'
+                    ],
+                    projectTypes: [
+                        'Photography',
+                        'Video',
+                        'Event Coverage',
+                        'Commercial'
+                    ]
+                };
                 await this.db.collection(this.collections.dropdownOptions).doc('default').set(defaults, { merge: true });
             }
             

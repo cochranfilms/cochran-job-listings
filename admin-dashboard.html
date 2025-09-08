@@ -2101,23 +2101,7 @@
                     window.users = await window.FirestoreDataManager.getUsers();
                     console.log('✅ Users loaded from Firestore:', Object.keys(window.users || {}).length);
 
-                    // Merge per-user assignments subcollection into top-level jobs for display
-                    try {
-                        const userIds = Object.keys(window.users || {});
-                        await Promise.all(userIds.map(async (uid) => {
-                            if (!uid || uid === '_archived' || uid.startsWith('_')) return;
-                            try {
-                                const assignments = await window.FirestoreDataManager.getUserAssignments(uid);
-                                if (assignments && Object.keys(assignments).length > 0) {
-                                    const existingJobs = window.users[uid]?.jobs || {};
-                                    // Prefer existing top-level jobs, but include assignments as well
-                                    window.users[uid].jobs = { ...assignments, ...existingJobs };
-                                }
-                            } catch (_) {}
-                        }));
-                    } catch (_) {
-                        console.warn('⚠️ Failed to merge assignments into user jobs for display');
-                    }
+                    // Assignments subcollection removed; rely solely on jobs stored on the user document
                 } else {
                     console.warn('⚠️ Firestore not available; users set to empty');
                     window.users = {};
@@ -2539,10 +2523,7 @@
                         } catch(_) {
                             await window.FirestoreDataManager.setUser(newName, { ...user, ...updated });
                         }
-                        // Persist single assignment under assignments/{id}
-                        try {
-                            await window.FirestoreDataManager.setAssignment(newName, existingJobId, jobsCopy[existingJobId]);
-                        } catch (_) {}
+                        // Assignments subcollection deprecated; do not write to a separate assignments path
                         // if name changed, remove old key in local state
                         if (newName !== name) { delete window.users[name]; }
                         window.users[newName] = { ...(user||{}), ...updated };

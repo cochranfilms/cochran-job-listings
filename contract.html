@@ -2527,7 +2527,7 @@
 
                 updateNotificationProgress('Securing your data...', 50);
                 
-                // Ensure Firebase account exists and set password
+                // Ensure Firebase account exists and set password (creates account via REST if needed)
                 const newPassword = document.getElementById('portalPassword').value;
                 const firebaseResult = await ensureFirebaseAccount(signatureData.freelancerEmail, newPassword);
                 

@@ -10,6 +10,7 @@ const notificationsRouter = require('./api/notifications');
 const deletePdfRouter = require('./api/delete-pdf');
 const contractsRouter = require('./api/contracts');
 const updateUsersRouter = require('./api/update-users');
+const contractsHealth = require('./api/contracts-health');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -310,6 +311,9 @@ app.use('/api/update-users', updateUsersRouter);
 // Contracts API routes
 app.get('/api/contracts', contractsRouter);
 app.post('/api/contracts', contractsRouter);
+
+// Contracts health (exposes config status for deployments)
+app.get('/api/contracts/health', contractsHealth);
 
 // Local file deletion endpoint for contracts
 app.post('/api/contracts/delete-local', async (req, res) => {
