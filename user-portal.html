@@ -1715,6 +1715,9 @@
             
             // Load Priority Jobs
             loadPriorityJobs();
+            
+            // Initialize Performance Analytics
+            initializePerformanceAnalytics();
         }
 
         // Refresh user data manually
@@ -5405,6 +5408,351 @@
             }
         }
 
+        // ==================== PERFORMANCE ANALYTICS FUNCTIONALITY ====================
+        
+        // Performance Analytics Data Management
+        let performanceData = {
+            earnings: [],
+            applications: [],
+            reviews: [],
+            activities: []
+        };
+
+        // Switch Performance Tab
+        function switchPerformanceTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.performance-tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab content
+            const selectedTab = document.getElementById(`performance-${tabName}`);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // Add active class to clicked button
+            const clickedButton = document.querySelector(`[onclick="switchPerformanceTab('${tabName}')"]`);
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+            
+            // Load tab-specific data
+            switch(tabName) {
+                case 'overview':
+                    loadPerformanceOverview();
+                    break;
+                case 'earnings':
+                    loadEarningsData();
+                    break;
+                case 'applications':
+                    loadApplicationsData();
+                    break;
+                case 'reviews':
+                    loadPerformanceReviews();
+                    break;
+            }
+        }
+
+        // Load Performance Overview
+        function loadPerformanceOverview() {
+            updatePerformanceStats();
+            loadRecentActivity();
+            // Note: Charts would be implemented with a charting library like Chart.js
+            // For now, we'll show placeholder content
+        }
+
+        // Update Performance Stats
+        function updatePerformanceStats() {
+            if (!currentUser) return;
+
+            // Calculate total earnings
+            const totalEarnings = calculateTotalEarnings();
+            const earningsElement = document.getElementById('totalEarnings');
+            if (earningsElement) {
+                earningsElement.textContent = `$${totalEarnings.toLocaleString()}`;
+            }
+
+            // Calculate success rate
+            const successRate = calculateSuccessRate();
+            const successElement = document.getElementById('successRate');
+            if (successElement) {
+                successElement.textContent = `${successRate}%`;
+            }
+
+            // Calculate average rating
+            const avgRating = calculateAverageRating();
+            const ratingElement = document.getElementById('averageRating');
+            if (ratingElement) {
+                ratingElement.textContent = avgRating.toFixed(1);
+            }
+
+            // Calculate jobs completed this month
+            const jobsCompleted = calculateJobsCompletedThisMonth();
+            const jobsElement = document.getElementById('jobsCompleted');
+            if (jobsElement) {
+                jobsElement.textContent = jobsCompleted;
+            }
+        }
+
+        // Calculate Total Earnings
+        function calculateTotalEarnings() {
+            if (!currentUser || !currentUser.jobs) return 0;
+            
+            let total = 0;
+            Object.values(currentUser.jobs).forEach(job => {
+                if (job.status === 'completed' && job.pay) {
+                    const payAmount = parseFloat(job.pay.replace(/[^0-9.-]/g, '')) || 0;
+                    total += payAmount;
+                }
+            });
+            return total;
+        }
+
+        // Calculate Success Rate
+        function calculateSuccessRate() {
+            if (!currentUser || !currentUser.jobs) return 0;
+            
+            const jobs = Object.values(currentUser.jobs);
+            if (jobs.length === 0) return 0;
+            
+            const completedJobs = jobs.filter(job => job.status === 'completed').length;
+            return Math.round((completedJobs / jobs.length) * 100);
+        }
+
+        // Calculate Average Rating
+        function calculateAverageRating() {
+            if (!currentUser || !currentUser.performanceReviews) return 0;
+            
+            const reviews = currentUser.performanceReviews;
+            if (!Array.isArray(reviews) || reviews.length === 0) return 0;
+            
+            const totalRating = reviews.reduce((sum, review) => {
+                return sum + (parseFloat(review.rating) || 0);
+            }, 0);
+            
+            return totalRating / reviews.length;
+        }
+
+        // Calculate Jobs Completed This Month
+        function calculateJobsCompletedThisMonth() {
+            if (!currentUser || !currentUser.jobs) return 0;
+            
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            return Object.values(currentUser.jobs).filter(job => {
+                if (job.status !== 'completed' || !job.completedDate) return false;
+                
+                const jobDate = new Date(job.completedDate);
+                return jobDate.getMonth() === currentMonth && jobDate.getFullYear() === currentYear;
+            }).length;
+        }
+
+        // Load Recent Activity
+        function loadRecentActivity() {
+            const timeline = document.getElementById('activityTimeline');
+            if (!timeline) return;
+
+            const activities = generateRecentActivities();
+            timeline.innerHTML = activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-icon">${activity.icon}</div>
+                    <div class="activity-content">
+                        <div class="activity-title">${activity.title}</div>
+                        <div class="activity-description">${activity.description}</div>
+                    </div>
+                    <div class="activity-time">${activity.time}</div>
+                </div>
+            `).join('');
+        }
+
+        // Generate Recent Activities
+        function generateRecentActivities() {
+            const activities = [];
+            
+            if (currentUser && currentUser.jobs) {
+                Object.values(currentUser.jobs).forEach(job => {
+                    if (job.status === 'completed') {
+                        activities.push({
+                            icon: '✅',
+                            title: 'Job Completed',
+                            description: `${job.title || 'Untitled Job'} - ${job.location || 'Location TBD'}`,
+                            time: formatTimeAgo(job.completedDate || new Date())
+                        });
+                    }
+                });
+            }
+
+            // Add application activities
+            if (performanceData.applications.length > 0) {
+                performanceData.applications.slice(0, 3).forEach(app => {
+                    activities.push({
+                        icon: '📝',
+                        title: 'Application Submitted',
+                        description: `Applied for ${app.jobTitle}`,
+                        time: formatTimeAgo(app.date)
+                    });
+                });
+            }
+
+            // Sort by date (most recent first)
+            return activities.sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
+        }
+
+        // Load Earnings Data
+        function loadEarningsData() {
+            loadEarningsTable();
+            // Note: Earnings chart would be implemented with Chart.js
+        }
+
+        // Load Earnings Table
+        function loadEarningsTable() {
+            const tbody = document.getElementById('earningsTableBody');
+            if (!tbody) return;
+
+            const earnings = generateEarningsData();
+            tbody.innerHTML = earnings.map(earning => `
+                <tr>
+                    <td>${earning.date}</td>
+                    <td>${earning.job}</td>
+                    <td>$${earning.amount.toLocaleString()}</td>
+                    <td><span class="status-${earning.status.toLowerCase()}">${earning.status}</span></td>
+                    <td>${earning.method}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Generate Earnings Data
+        function generateEarningsData() {
+            const earnings = [];
+            
+            if (currentUser && currentUser.jobs) {
+                Object.values(currentUser.jobs).forEach(job => {
+                    if (job.status === 'completed' && job.pay) {
+                        const payAmount = parseFloat(job.pay.replace(/[^0-9.-]/g, '')) || 0;
+                        earnings.push({
+                            date: formatDate(job.completedDate || new Date()),
+                            job: job.title || 'Untitled Job',
+                            amount: payAmount,
+                            status: 'Paid',
+                            method: 'Direct Deposit'
+                        });
+                    }
+                });
+            }
+
+            return earnings.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        // Load Applications Data
+        function loadApplicationsData() {
+            updateApplicationsStats();
+            loadApplicationsList();
+        }
+
+        // Update Applications Stats
+        function updateApplicationsStats() {
+            const stats = calculateApplicationStats();
+            
+            const totalEl = document.getElementById('totalApplications');
+            const pendingEl = document.getElementById('pendingApplications');
+            const acceptedEl = document.getElementById('acceptedApplications');
+            const rejectedEl = document.getElementById('rejectedApplications');
+
+            if (totalEl) totalEl.textContent = stats.total;
+            if (pendingEl) pendingEl.textContent = stats.pending;
+            if (acceptedEl) acceptedEl.textContent = stats.accepted;
+            if (rejectedEl) rejectedEl.textContent = stats.rejected;
+        }
+
+        // Calculate Application Stats
+        function calculateApplicationStats() {
+            const applications = performanceData.applications;
+            return {
+                total: applications.length,
+                pending: applications.filter(app => app.status === 'pending').length,
+                accepted: applications.filter(app => app.status === 'accepted').length,
+                rejected: applications.filter(app => app.status === 'rejected').length
+            };
+        }
+
+        // Load Applications List
+        function loadApplicationsList() {
+            const container = document.getElementById('applicationsList');
+            if (!container) return;
+
+            const applications = performanceData.applications;
+            container.innerHTML = applications.map(app => `
+                <div class="application-item">
+                    <div class="application-info">
+                        <h4>${app.jobTitle}</h4>
+                        <p>Applied on ${formatDate(app.date)}</p>
+                    </div>
+                    <div class="application-status status-${app.status}">
+                        ${app.status}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load Performance Reviews (existing function)
+        function loadPerformanceReviews() {
+            // This will use the existing displayUserPerformanceReviews function
+            displayUserPerformanceReviews();
+        }
+
+        // Utility Functions
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diff = now - new Date(date);
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) return 'Today';
+            if (days === 1) return 'Yesterday';
+            if (days < 7) return `${days} days ago`;
+            if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+            return `${Math.floor(days / 30)} months ago`;
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        // Initialize Performance Analytics
+        function initializePerformanceAnalytics() {
+            // Load sample data for demonstration
+            performanceData.applications = [
+                {
+                    jobTitle: 'Wedding Photography',
+                    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+                    status: 'pending'
+                },
+                {
+                    jobTitle: 'Corporate Event',
+                    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+                    status: 'accepted'
+                },
+                {
+                    jobTitle: 'Portrait Session',
+                    date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+                    status: 'rejected'
+                }
+            ];
+
+            // Load performance analytics when user data is loaded
+            if (currentUser) {
+                loadPerformanceOverview();
+            }
+        }
+
         // Make functions globally accessible
         window.downloadUserContract = downloadUserContract;
         window.viewContractDetails = viewContractDetails;
@@ -5415,6 +5763,8 @@
         window.refreshPriorityJobs = refreshPriorityJobs;
         window.quickApplyToJob = quickApplyToJob;
         window.showJobDetails = showJobDetails;
+        window.switchPerformanceTab = switchPerformanceTab;
+        window.initializePerformanceAnalytics = initializePerformanceAnalytics;
 
     </script>
 
@@ -11676,6 +12026,384 @@
                 justify-content: center;
             }
         }
+
+        /* ==================== PERFORMANCE ANALYTICS SECTION ==================== */
+        .performance-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .performance-stat {
+            background: linear-gradient(135deg, rgba(255, 178, 0, 0.1), rgba(255, 178, 0, 0.05));
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .performance-stat::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FFB200, #FFD700);
+        }
+
+        .performance-stat:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 178, 0, 0.2);
+            border-color: rgba(255, 178, 0, 0.4);
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.25rem;
+        }
+
+        .performance-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 0.5rem;
+            border: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 178, 0, 0.1);
+            color: #FFB200;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .performance-tab-content {
+            display: none;
+        }
+
+        .performance-tab-content.active {
+            display: block;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .chart-container h3 {
+            color: #FFB200;
+            margin-bottom: 1rem;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+        }
+
+        .chart-placeholder {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border: 2px dashed rgba(255, 178, 0, 0.3);
+        }
+
+        .chart-loading {
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+
+        .recent-activity {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .recent-activity h3 {
+            color: #FFB200;
+            margin-bottom: 1rem;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+        }
+
+        .activity-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border-left: 3px solid #FFB200;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .activity-time {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+        }
+
+        .earnings-breakdown {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .earnings-breakdown h3 {
+            color: #FFB200;
+            margin-bottom: 1rem;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+        }
+
+        .earnings-chart {
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border: 2px dashed rgba(255, 178, 0, 0.3);
+        }
+
+        .earnings-table {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .earnings-table h3 {
+            color: #FFB200;
+            margin-bottom: 1rem;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .earnings-table-content {
+            width: 100%;
+            border-collapse: collapse;
+            color: white;
+        }
+
+        .earnings-table-content th {
+            background: rgba(255, 178, 0, 0.2);
+            color: #FFB200;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 178, 0, 0.3);
+        }
+
+        .earnings-table-content td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .earnings-table-content tr:hover {
+            background: rgba(255, 178, 0, 0.05);
+        }
+
+        .applications-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-mini {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-mini-number {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+        }
+
+        .stat-mini-label {
+            display: block;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.25rem;
+        }
+
+        .applications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .application-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .application-info h4 {
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+
+        .application-info p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .application-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .status-accepted {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .status-rejected {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        /* Mobile Responsive for Performance Analytics */
+        @media (max-width: 768px) {
+            .performance-stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .performance-stat {
+                padding: 1rem;
+            }
+
+            .analytics-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .chart-placeholder {
+                height: 150px;
+            }
+
+            .performance-tabs {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .tab-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .applications-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .application-item {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .table-container {
+                font-size: 0.8rem;
+            }
+
+            .earnings-table-content th,
+            .earnings-table-content td {
+                padding: 0.5rem;
+            }
+        }
     </style>
     <!-- New premium theme stylesheet (loaded last to override older visuals) -->
     <!-- Removed legacy light theme to prevent white flash and enforce dark theme -->
@@ -12122,12 +12850,148 @@
             
             <div id="performance-section" class="content-section">
                 <div class="dashboard-header">
-                    <h1>Performance Reviews</h1>
-                    <p>Track your performance and receive feedback</p>
+                    <h1><i class="fas fa-chart-line"></i> Performance Analytics</h1>
+                    <p>Track your performance, earnings, and career growth</p>
                 </div>
                 
-                <div id="performanceContent">
-                    <!-- Performance reviews will be populated here -->
+                <!-- Performance Overview Stats -->
+                <div class="performance-stats-grid" id="performanceStatsGrid">
+                    <div class="stat-card performance-stat">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalEarnings">$0</div>
+                            <div class="stat-label">Total Earnings</div>
+                            <div class="stat-change" id="earningsChange">+0% this month</div>
+                        </div>
+                    </div>
+                    <div class="stat-card performance-stat">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="successRate">0%</div>
+                            <div class="stat-label">Success Rate</div>
+                            <div class="stat-change" id="successChange">Based on completed jobs</div>
+                        </div>
+                    </div>
+                    <div class="stat-card performance-stat">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="averageRating">0.0</div>
+                            <div class="stat-label">Average Rating</div>
+                            <div class="stat-change" id="ratingChange">Out of 5.0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card performance-stat">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="jobsCompleted">0</div>
+                            <div class="stat-label">Jobs Completed</div>
+                            <div class="stat-change" id="jobsChange">This month</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Tabs -->
+                <div class="performance-tabs">
+                    <button class="tab-btn active" onclick="switchPerformanceTab('overview')">
+                        <i class="fas fa-chart-pie"></i> Overview
+                    </button>
+                    <button class="tab-btn" onclick="switchPerformanceTab('earnings')">
+                        <i class="fas fa-dollar-sign"></i> Earnings
+                    </button>
+                    <button class="tab-btn" onclick="switchPerformanceTab('applications')">
+                        <i class="fas fa-paper-plane"></i> Applications
+                    </button>
+                    <button class="tab-btn" onclick="switchPerformanceTab('reviews')">
+                        <i class="fas fa-star"></i> Reviews
+                    </button>
+                </div>
+
+                <!-- Overview Tab -->
+                <div id="performance-overview" class="performance-tab-content active">
+                    <div class="analytics-grid">
+                        <div class="chart-container">
+                            <h3>Earnings Trend</h3>
+                            <div class="chart-placeholder" id="earningsChart">
+                                <div class="chart-loading">Loading earnings data...</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Job Completion Rate</h3>
+                            <div class="chart-placeholder" id="completionChart">
+                                <div class="chart-loading">Loading completion data...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-activity">
+                        <h3>Recent Activity</h3>
+                        <div class="activity-timeline" id="activityTimeline">
+                            <!-- Activity items will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Earnings Tab -->
+                <div id="performance-earnings" class="performance-tab-content">
+                    <div class="earnings-breakdown">
+                        <h3>Earnings Breakdown</h3>
+                        <div class="earnings-chart" id="earningsBreakdownChart">
+                            <div class="chart-loading">Loading earnings breakdown...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="earnings-table">
+                        <h3>Payment History</h3>
+                        <div class="table-container">
+                            <table class="earnings-table-content">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Job</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Method</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="earningsTableBody">
+                                    <!-- Earnings rows will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Applications Tab -->
+                <div id="performance-applications" class="performance-tab-content">
+                    <div class="applications-stats">
+                        <div class="stat-mini">
+                            <span class="stat-mini-number" id="totalApplications">0</span>
+                            <span class="stat-mini-label">Total Applications</span>
+                        </div>
+                        <div class="stat-mini">
+                            <span class="stat-mini-number" id="pendingApplications">0</span>
+                            <span class="stat-mini-label">Pending</span>
+                        </div>
+                        <div class="stat-mini">
+                            <span class="stat-mini-number" id="acceptedApplications">0</span>
+                            <span class="stat-mini-label">Accepted</span>
+                        </div>
+                        <div class="stat-mini">
+                            <span class="stat-mini-number" id="rejectedApplications">0</span>
+                            <span class="stat-mini-label">Rejected</span>
+                        </div>
+                    </div>
+                    
+                    <div class="applications-list" id="applicationsList">
+                        <!-- Application items will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
+                <div id="performance-reviews" class="performance-tab-content">
+                    <div id="performanceContent">
+                        <!-- Performance reviews will be populated here -->
+                    </div>
                 </div>
             </div>
         </main>

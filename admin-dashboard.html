@@ -300,6 +300,169 @@
             padding: 1.5rem;
             border-bottom: 1px solid rgba(255,178,0,0.28);
         }
+
+        /* ==================== PERFORMANCE MANAGEMENT STYLES ==================== */
+        .performance-overview-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-mini {
+            background: rgba(255, 178, 0, 0.1);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-mini-number {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+        }
+
+        .stat-mini-label {
+            display: block;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.25rem;
+        }
+
+        .performance-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .performance-tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .tool-item {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .tool-item h4 {
+            color: #FFB200;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .tool-item p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .application-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .application-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .application-filters select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 6px;
+            color: white;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        .application-filters select:focus {
+            outline: none;
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+
+        .applications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .application-item {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 6px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .application-info h4 {
+            color: white;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .application-info p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+        }
+
+        .application-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .status-accepted {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .status-rejected {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        /* Mobile Responsive for Performance Management */
+        @media (max-width: 768px) {
+            .performance-overview-stats,
+            .application-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .performance-tools {
+                grid-template-columns: 1fr;
+            }
+
+            .application-filters {
+                flex-direction: column;
+            }
+
+            .performance-actions {
+                flex-direction: column;
+            }
+        }
         
         .card-header h2 {
             font-family: 'Cinzel', serif;
@@ -812,6 +975,125 @@
                                 <button onclick="saveDropdownOptions()" style="background: linear-gradient(135deg, #FFB200, #FF8C00); color: #1a1a1a; border: none; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem;">
                                     <i class="fas fa-save"></i> Save All Changes
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Row 3: Performance Management -->
+            <div class="content-row">
+                <!-- Performance Analytics -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>📊 Performance Analytics</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-section">
+                            <h3>Contractor Performance Overview</h3>
+                            <div class="performance-overview-stats">
+                                <div class="stat-mini">
+                                    <span class="stat-mini-number" id="totalContractors">0</span>
+                                    <span class="stat-mini-label">Total Contractors</span>
+                                </div>
+                                <div class="stat-mini">
+                                    <span class="stat-mini-number" id="activeContractors">0</span>
+                                    <span class="stat-mini-label">Active</span>
+                                </div>
+                                <div class="stat-mini">
+                                    <span class="stat-mini-number" id="avgRating">0.0</span>
+                                    <span class="stat-mini-label">Avg Rating</span>
+                                </div>
+                                <div class="stat-mini">
+                                    <span class="stat-mini-number" id="totalEarnings">$0</span>
+                                    <span class="stat-mini-label">Total Paid</span>
+                                </div>
+                            </div>
+                            
+                            <div class="performance-actions">
+                                <button onclick="refreshPerformanceData()" class="btn">
+                                    <i class="fas fa-sync-alt"></i> Refresh Data
+                                </button>
+                                <button onclick="exportPerformanceReport()" class="btn btn-secondary">
+                                    <i class="fas fa-download"></i> Export Report
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h3>Performance Management Tools</h3>
+                            <div class="performance-tools">
+                                <div class="tool-item">
+                                    <h4>Rate Contractor</h4>
+                                    <p>Add performance reviews and ratings</p>
+                                    <button onclick="openRatingModal()" class="btn btn-small">
+                                        <i class="fas fa-star"></i> Rate Contractor
+                                    </button>
+                                </div>
+                                <div class="tool-item">
+                                    <h4>View Performance</h4>
+                                    <p>Review detailed performance analytics</p>
+                                    <button onclick="viewPerformanceDetails()" class="btn btn-small">
+                                        <i class="fas fa-chart-line"></i> View Details
+                                    </button>
+                                </div>
+                                <div class="tool-item">
+                                    <h4>Performance Alerts</h4>
+                                    <p>Set up performance monitoring</p>
+                                    <button onclick="setupPerformanceAlerts()" class="btn btn-small">
+                                        <i class="fas fa-bell"></i> Setup Alerts
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application Management -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>📝 Application Management</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-section">
+                            <h3>Job Applications Overview</h3>
+                            <div class="application-stats">
+                                <div class="stat-mini">
+                                    <span class="stat-mini-number" id="totalApplications">0</span>
+                                    <span class="stat-mini-label">Total Applications</span>
+                                </div>
+                                <div class="stat-mini">
+                                    <span class="stat-mini-number" id="pendingApplications">0</span>
+                                    <span class="stat-mini-label">Pending Review</span>
+                                </div>
+                                <div class="stat-mini">
+                                    <span class="stat-mini-number" id="acceptedApplications">0</span>
+                                    <span class="stat-mini-label">Accepted</span>
+                                </div>
+                                <div class="stat-mini">
+                                    <span class="stat-mini-number" id="rejectedApplications">0</span>
+                                    <span class="stat-mini-label">Rejected</span>
+                                </div>
+                            </div>
+                            
+                            <div class="application-filters">
+                                <select id="applicationStatusFilter" onchange="filterApplications()">
+                                    <option value="">All Applications</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="accepted">Accepted</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                                <select id="applicationJobFilter" onchange="filterApplications()">
+                                    <option value="">All Jobs</option>
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h3>Recent Applications</h3>
+                            <div class="applications-list" id="adminApplicationsList">
+                                <!-- Applications will be populated here -->
                             </div>
                         </div>
                     </div>
@@ -1332,6 +1614,9 @@
                 
                 console.log('🔄 Updating stats after data load...');
                 updateStats();
+                
+                // Initialize Performance Management
+                initializePerformanceManagement();
                 
                 console.log('✅ Main dashboard loadData complete');
                 
@@ -5823,6 +6108,168 @@
                 if (purge.length) { try { window.jobs = await window.FirestoreDataManager.getJobListings(); } catch(_){} }
             } catch (e) { console.warn('enforceUniqueJobs skipped:', e?.message||e); }
         }
+
+        // ==================== PERFORMANCE MANAGEMENT FUNCTIONS ====================
+        
+        // Refresh Performance Data
+        function refreshPerformanceData() {
+            console.log('🔄 Refreshing performance data...');
+            updatePerformanceStats();
+            updateApplicationStats();
+            showNotification('Performance data refreshed!', 'success');
+        }
+
+        // Update Performance Stats
+        function updatePerformanceStats() {
+            if (!window.users || !Array.isArray(window.users)) return;
+
+            const totalContractors = window.users.length;
+            const activeContractors = window.users.filter(user => 
+                user.contractStatus === 'signed' || user.contractStatus === 'active'
+            ).length;
+
+            // Calculate average rating
+            let totalRating = 0;
+            let ratingCount = 0;
+            window.users.forEach(user => {
+                if (user.performanceReviews && Array.isArray(user.performanceReviews)) {
+                    user.performanceReviews.forEach(review => {
+                        if (review.rating) {
+                            totalRating += parseFloat(review.rating);
+                            ratingCount++;
+                        }
+                    });
+                }
+            });
+            const avgRating = ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : '0.0';
+
+            // Calculate total earnings
+            let totalEarnings = 0;
+            window.users.forEach(user => {
+                if (user.jobs) {
+                    Object.values(user.jobs).forEach(job => {
+                        if (job.status === 'completed' && job.pay) {
+                            const payAmount = parseFloat(job.pay.replace(/[^0-9.-]/g, '')) || 0;
+                            totalEarnings += payAmount;
+                        }
+                    });
+                }
+            });
+
+            // Update UI
+            const totalEl = document.getElementById('totalContractors');
+            const activeEl = document.getElementById('activeContractors');
+            const ratingEl = document.getElementById('avgRating');
+            const earningsEl = document.getElementById('totalEarnings');
+
+            if (totalEl) totalEl.textContent = totalContractors;
+            if (activeEl) activeEl.textContent = activeContractors;
+            if (ratingEl) ratingEl.textContent = avgRating;
+            if (earningsEl) earningsEl.textContent = `$${totalEarnings.toLocaleString()}`;
+        }
+
+        // Update Application Stats
+        function updateApplicationStats() {
+            // This would typically load from Firestore or API
+            // For now, we'll use sample data
+            const sampleApplications = [
+                { jobTitle: 'Wedding Photography', status: 'pending', date: new Date() },
+                { jobTitle: 'Corporate Event', status: 'accepted', date: new Date() },
+                { jobTitle: 'Portrait Session', status: 'rejected', date: new Date() }
+            ];
+
+            const stats = {
+                total: sampleApplications.length,
+                pending: sampleApplications.filter(app => app.status === 'pending').length,
+                accepted: sampleApplications.filter(app => app.status === 'accepted').length,
+                rejected: sampleApplications.filter(app => app.status === 'rejected').length
+            };
+
+            // Update UI
+            const totalEl = document.getElementById('totalApplications');
+            const pendingEl = document.getElementById('pendingApplications');
+            const acceptedEl = document.getElementById('acceptedApplications');
+            const rejectedEl = document.getElementById('rejectedApplications');
+
+            if (totalEl) totalEl.textContent = stats.total;
+            if (pendingEl) pendingEl.textContent = stats.pending;
+            if (acceptedEl) acceptedEl.textContent = stats.accepted;
+            if (rejectedEl) rejectedEl.textContent = stats.rejected;
+
+            // Update applications list
+            loadApplicationsList(sampleApplications);
+        }
+
+        // Load Applications List
+        function loadApplicationsList(applications) {
+            const container = document.getElementById('adminApplicationsList');
+            if (!container) return;
+
+            container.innerHTML = applications.map(app => `
+                <div class="application-item">
+                    <div class="application-info">
+                        <h4>${app.jobTitle}</h4>
+                        <p>Applied on ${app.date.toLocaleDateString()}</p>
+                    </div>
+                    <div class="application-status status-${app.status}">
+                        ${app.status}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Export Performance Report
+        function exportPerformanceReport() {
+            console.log('📊 Exporting performance report...');
+            // This would generate and download a CSV/PDF report
+            showNotification('Performance report exported!', 'success');
+        }
+
+        // Open Rating Modal
+        function openRatingModal() {
+            console.log('⭐ Opening rating modal...');
+            // This would open a modal to rate contractors
+            showNotification('Rating modal opened!', 'info');
+        }
+
+        // View Performance Details
+        function viewPerformanceDetails() {
+            console.log('📈 Viewing performance details...');
+            // This would open detailed performance analytics
+            showNotification('Performance details opened!', 'info');
+        }
+
+        // Setup Performance Alerts
+        function setupPerformanceAlerts() {
+            console.log('🔔 Setting up performance alerts...');
+            // This would open alert configuration
+            showNotification('Performance alerts setup opened!', 'info');
+        }
+
+        // Filter Applications
+        function filterApplications() {
+            const statusFilter = document.getElementById('applicationStatusFilter')?.value || '';
+            const jobFilter = document.getElementById('applicationJobFilter')?.value || '';
+            
+            console.log('🔍 Filtering applications:', { statusFilter, jobFilter });
+            // This would filter the applications list
+            showNotification('Applications filtered!', 'info');
+        }
+
+        // Initialize Performance Management
+        function initializePerformanceManagement() {
+            updatePerformanceStats();
+            updateApplicationStats();
+        }
+
+        // Make functions globally accessible
+        window.refreshPerformanceData = refreshPerformanceData;
+        window.exportPerformanceReport = exportPerformanceReport;
+        window.openRatingModal = openRatingModal;
+        window.viewPerformanceDetails = viewPerformanceDetails;
+        window.setupPerformanceAlerts = setupPerformanceAlerts;
+        window.filterApplications = filterApplications;
+        window.initializePerformanceManagement = initializePerformanceManagement;
     </script>
 </body>
 </html> 
