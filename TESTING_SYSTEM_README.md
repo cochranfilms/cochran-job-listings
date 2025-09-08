@@ -922,3 +922,13 @@ curl http://localhost:8000/api/uploaded-contracts
 <script>window.STRICT_FIRESTORE_MODE = true;</script>
 ```
 - This prevents `/api/*` fallbacks in `admin-dashboard-modular/js/utils/realtime-data-manager.js`.
+
+### 2025-09-08 — Edit User modal is viewport-safe on small screens
+- Files: `admin-dashboard.html`
+- Change: The Edit User modal overlay now includes safe-area padding and vertical scrolling. The modal panel has `max-height: calc(100vh - 48px)` and the form body scrolls so the header/footer remain visible.
+- Quick test:
+  1. Open `admin-dashboard.html`, sign in, go to Users.
+  2. Click “✏️ Edit User” on any user.
+  3. In DevTools → Toggle device toolbar, select iPhone SE/8 or set height ≤ 600px.
+  4. Verify there is visible space above and below the panel and no content is clipped off-screen.
+  5. Scroll inside the form; header title and footer buttons remain accessible.

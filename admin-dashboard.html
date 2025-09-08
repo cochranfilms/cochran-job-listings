@@ -2388,14 +2388,15 @@
         // Lightweight modal for editing a user
         function openUserEditModal(name, user) {
             const modal = document.createElement('div');
-            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:12000;display:flex;align-items:center;justify-content:center;';
+            // Add safe-area padding and allow vertical scroll on the overlay to avoid clipping on small screens
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:12000;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top,16px) 12px env(safe-area-inset-bottom,16px);overflow:auto;';
             modal.innerHTML = `
-                <div style="background:#0f1115;border:1px solid rgba(255,178,0,0.25);border-radius:14px;width:min(560px,92%);box-shadow:0 24px 64px rgba(0,0,0,.5);">
+                <div style="background:#0f1115;border:1px solid rgba(255,178,0,0.25);border-radius:14px;width:min(560px,92%);max-height:calc(100vh - 48px);display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.5);">
                     <div style="padding:16px 18px;border-bottom:1px solid rgba(255,178,0,0.2);display:flex;justify-content:space-between;align-items:center;">
                         <h3 style="margin:0;color:#FFB200;font-family:Cinzel,serif;">Edit User</h3>
                         <button id="ue-close" class="btn btn-secondary" style="margin:0;">✖</button>
                     </div>
-                    <div style="padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow:auto;">
                         <div style="grid-column:span 2;">
                             <label>Name</label>
                             <input id="ue-name" type="text" value="${name}">

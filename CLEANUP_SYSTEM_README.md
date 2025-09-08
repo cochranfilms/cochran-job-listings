@@ -20,7 +20,7 @@ Cleanup verification:
 - Open the admin dashboard and confirm the “Quick Actions” section is not present.
 - Search the repo for the removed function names to ensure no page-level references remain.
 
-
+                                                                
 - Canonical data source is Firestore. JSON files (`users.json`, `uploaded-contracts.json`) remain as backups to support existing APIs and GH Pages mirrors.
  - Canonical data source is Firestore. JSON files (`users.json`, `uploaded-contracts.json`) are deprecated for the user portal and remain only as archival backups.
 - New writes from `apply.html` go to Firestore first, then attempt a backup write to `/api/apply`.
@@ -980,3 +980,7 @@ curl http://localhost:8000/api/health
 - Change: Centralized start date resolution via `getEffectiveProjectStartDate()` and updated PDF generation to use broader fallbacks (`jobs[*].projectStart|date`, `profile.projectDate|projectStart`, `application.eventDate`).
 - Result: UI and generated PDFs show the actual date when available instead of "TBD".
 - Rollback: Remove the helper and revert fallbacks in `contract.html` if needed.
+
+### 2025-09-08 — Modal padding/overflow policy (admin UI)
+- For all admin inline modals (including Edit User), the overlay must include safe-area padding and allow vertical scrolling. Modal panels should use a viewport-constrained max-height with the form body scrolling. This prevents headers/footers from being clipped on small screens.
+- Reference implementation: `admin-dashboard.html` Edit User modal uses overlay padding with `env(safe-area-inset-*)`, `overflow:auto` on the overlay, `max-height: calc(100vh - 48px)` on the panel, and `overflow:auto` on the content body.
