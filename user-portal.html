@@ -4833,34 +4833,206 @@
             if (!userContract) {
                 // If no uploaded contract, check if contract is signed but not uploaded
                 if (currentUser.contractStatus === 'signed') {
-                    alert('✅ Your contract has been signed and is being processed by admin. You will be able to view details once it\'s uploaded.');
+                    showContractDetailsModal({
+                        title: 'Contract Processing',
+                        message: 'Your contract has been signed and is being processed by admin. You will be able to view details once it\'s uploaded.',
+                        type: 'processing'
+                    });
                 } else {
-                    alert('❌ No contract found for your account. Please sign your contract first.');
+                    showContractDetailsModal({
+                        title: 'No Contract Found',
+                        message: 'No contract found for your account. Please sign your contract first.',
+                        type: 'error'
+                    });
                 }
                 return;
             }
             
-            const details = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎬 COCHRAN FILMS - CONTRACT DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 BASIC INFO:
-Contract ID: ${userContract.contractId}
-Freelancer: ${userContract.freelancerEmail}
-Email: ${userContract.freelancerEmail}
-Role: ${userContract.role}
-Rate: ${userContract.rate}
-Location: ${userContract.location}
-Contract Date: ${userContract.contractDate || 'Not specified'}
-📁 FILE INFO:
-File Name: ${userContract.fileName}
-File Size: ${(userContract.fileSize / 1024).toFixed(1)} KB
-Upload Date: ${new Date(userContract.uploadDate).toLocaleString()}
-Status: ${userContract.status}
-${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            `.trim();
+            // Show custom modal with contract details
+            showContractDetailsModal({
+                title: 'Contract Details',
+                contract: userContract,
+                type: 'details'
+            });
+        }
+
+        // Custom contract details modal
+        function showContractDetailsModal(data) {
+            // Remove existing modal if any
+            const existingModal = document.getElementById('contractDetailsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            const modal = document.createElement('div');
+            modal.id = 'contractDetailsModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(8px);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                animation: fadeIn 0.3s ease-out;
+            `;
+
+            let modalContent = '';
             
-            alert(details);
+            if (data.type === 'details' && data.contract) {
+                const contract = data.contract;
+                modalContent = `
+                    <div class="contract-modal-content">
+                        <div class="contract-modal-header">
+                            <div class="contract-modal-icon">
+                                <i class="fas fa-file-contract"></i>
+                            </div>
+                            <h2>COCHRAN FILMS - CONTRACT DETAILS</h2>
+                            <button class="contract-modal-close" onclick="closeContractModal()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="contract-modal-body">
+                            <div class="contract-section">
+                                <h3><i class="fas fa-clipboard-list"></i> BASIC INFO</h3>
+                                <div class="contract-info-grid">
+                                    <div class="info-item">
+                                        <span class="info-label">Contract ID:</span>
+                                        <span class="info-value">${contract.contractId || 'N/A'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Freelancer:</span>
+                                        <span class="info-value">${contract.freelancerEmail || 'N/A'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Role:</span>
+                                        <span class="info-value">${contract.role || 'N/A'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Rate:</span>
+                                        <span class="info-value">${contract.rate || 'N/A'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Location:</span>
+                                        <span class="info-value">${contract.location || 'N/A'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Contract Date:</span>
+                                        <span class="info-value">${contract.contractDate || 'Not specified'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="contract-section">
+                                <h3><i class="fas fa-file"></i> FILE INFO</h3>
+                                <div class="contract-info-grid">
+                                    <div class="info-item">
+                                        <span class="info-label">File Name:</span>
+                                        <span class="info-value">${contract.fileName || 'N/A'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">File Size:</span>
+                                        <span class="info-value">${contract.fileSize ? (contract.fileSize / 1024).toFixed(1) + ' KB' : 'N/A'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Upload Date:</span>
+                                        <span class="info-value">${contract.uploadDate ? new Date(contract.uploadDate).toLocaleString() : 'N/A'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Status:</span>
+                                        <span class="info-value status-${contract.status || 'unknown'}">${contract.status || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${contract.notes ? `
+                            <div class="contract-section">
+                                <h3><i class="fas fa-sticky-note"></i> NOTES</h3>
+                                <div class="contract-notes">
+                                    ${contract.notes}
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="contract-modal-footer">
+                            <button class="btn btn-primary" onclick="downloadUserContract()">
+                                <i class="fas fa-download"></i>
+                                Download PDF
+                            </button>
+                            <button class="btn btn-secondary" onclick="closeContractModal()">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Error or processing message
+                const iconClass = data.type === 'error' ? 'fa-exclamation-triangle' : 'fa-clock';
+                const iconColor = data.type === 'error' ? '#ff6b6b' : '#FFB200';
+                
+                modalContent = `
+                    <div class="contract-modal-content">
+                        <div class="contract-modal-header">
+                            <div class="contract-modal-icon" style="color: ${iconColor};">
+                                <i class="fas ${iconClass}"></i>
+                            </div>
+                            <h2>${data.title}</h2>
+                            <button class="contract-modal-close" onclick="closeContractModal()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="contract-modal-body">
+                            <div class="contract-message">
+                                <p>${data.message}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="contract-modal-footer">
+                            <button class="btn btn-primary" onclick="closeContractModal()">
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            modal.innerHTML = modalContent;
+            document.body.appendChild(modal);
+
+            // Close on backdrop click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeContractModal();
+                }
+            });
+
+            // Close on Escape key
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    closeContractModal();
+                    document.removeEventListener('keydown', handleEscape);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+        }
+
+        // Close contract modal
+        function closeContractModal() {
+            const modal = document.getElementById('contractDetailsModal');
+            if (modal) {
+                modal.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
         }
 
         // Download user contract with robust fallbacks (Firestore → local file → API stream)
@@ -4937,6 +5109,8 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         // Make functions globally accessible
         window.downloadUserContract = downloadUserContract;
         window.viewContractDetails = viewContractDetails;
+        window.showContractDetailsModal = showContractDetailsModal;
+        window.closeContractModal = closeContractModal;
 
     </script>
 
@@ -10640,6 +10814,251 @@ ${userContract.notes ? `📝 NOTES:\n${userContract.notes}\n\n` : ''}━━━�
         .no-notifications p {
             margin: 0;
             font-size: 0.9rem;
+        }
+
+        /* ==================== CONTRACT DETAILS MODAL ==================== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.9); }
+        }
+
+        .contract-modal-content {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .contract-modal-header {
+            background: linear-gradient(135deg, #FFB200 0%, #FFD700 100%);
+            color: #1a1a1a;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .contract-modal-icon {
+            font-size: 24px;
+            color: #1a1a1a;
+        }
+
+        .contract-modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            flex: 1;
+            font-family: 'Cinzel', serif;
+        }
+
+        .contract-modal-close {
+            background: rgba(26, 26, 26, 0.2);
+            border: none;
+            color: #1a1a1a;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .contract-modal-close:hover {
+            background: rgba(26, 26, 26, 0.3);
+            transform: scale(1.1);
+        }
+
+        .contract-modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+            color: #ffffff;
+        }
+
+        .contract-section {
+            margin-bottom: 24px;
+        }
+
+        .contract-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .contract-section h3 {
+            color: #FFB200;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Cinzel', serif;
+        }
+
+        .contract-section h3 i {
+            font-size: 14px;
+        }
+
+        .contract-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            color: #FFB200;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        .status-signed {
+            color: #22c55e !important;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            color: #f59e0b !important;
+            font-weight: 600;
+        }
+
+        .status-uploaded {
+            color: #3b82f6 !important;
+            font-weight: 600;
+        }
+
+        .status-unknown {
+            color: #6b7280 !important;
+            font-weight: 600;
+        }
+
+        .contract-notes {
+            background: rgba(255, 178, 0, 0.1);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .contract-message {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .contract-message p {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #ffffff;
+        }
+
+        .contract-modal-footer {
+            background: rgba(26, 26, 26, 0.5);
+            padding: 16px 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            border-top: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .contract-modal-footer .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+        }
+
+        .contract-modal-footer .btn-primary {
+            background: linear-gradient(135deg, #FFB200 0%, #FFD700 100%);
+            color: #1a1a1a;
+        }
+
+        .contract-modal-footer .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 178, 0, 0.3);
+        }
+
+        .contract-modal-footer .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .contract-modal-footer .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Responsive design for mobile */
+        @media (max-width: 768px) {
+            .contract-modal-content {
+                margin: 10px;
+                max-height: calc(100vh - 20px);
+            }
+
+            .contract-info-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .contract-modal-header {
+                padding: 16px 20px;
+            }
+
+            .contract-modal-header h2 {
+                font-size: 16px;
+            }
+
+            .contract-modal-body {
+                padding: 20px;
+            }
+
+            .contract-modal-footer {
+                padding: 12px 20px;
+                flex-direction: column;
+            }
+
+            .contract-modal-footer .btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
     <!-- New premium theme stylesheet (loaded last to override older visuals) -->

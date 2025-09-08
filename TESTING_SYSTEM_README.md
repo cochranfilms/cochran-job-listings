@@ -928,7 +928,24 @@ curl http://localhost:8000/api/uploaded-contracts
 - Change: The Edit User modal overlay now includes safe-area padding and vertical scrolling. The modal panel has `max-height: calc(100vh - 48px)` and the form body scrolls so the header/footer remain visible.
 - Quick test:
   1. Open `admin-dashboard.html`, sign in, go to Users.
-  2. Click “✏️ Edit User” on any user.
+  2. Click "✏️ Edit User" on any user.
   3. In DevTools → Toggle device toolbar, select iPhone SE/8 or set height ≤ 600px.
   4. Verify there is visible space above and below the panel and no content is clipped off-screen.
   5. Scroll inside the form; header title and footer buttons remain accessible.
+
+### 2025-09-08 — Custom Contract Details Modal in User Portal
+- Files: `user-portal.html`
+- Change: Replaced the basic `alert()` popup for contract details with a beautiful custom modal that matches the site's dark theme with golden accents. The modal displays all contract information in organized sections with proper styling and responsive design.
+- Features:
+  - Dark gradient background with golden border and accents
+  - Organized sections for Basic Info, File Info, and Notes
+  - Responsive grid layout that adapts to mobile screens
+  - Smooth animations and hover effects
+  - Close on backdrop click or Escape key
+  - Download PDF button integration
+- Quick test:
+  1. Open `user-portal.html` and sign in with a user who has a contract.
+  2. Go to the Contracts tab and click "View Details" on any contract.
+  3. Verify the custom modal appears with proper styling and all contract data.
+  4. Test on mobile by resizing browser or using DevTools device toolbar.
+  5. Test closing the modal via X button, backdrop click, and Escape key.
