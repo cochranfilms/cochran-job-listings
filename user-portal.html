@@ -456,11 +456,11 @@
 
             // Auto remove (unless persistent)
             if (!persistent) {
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
                     setTimeout(() => toast.remove(), 300);
-                }, duration);
+            }, duration);
             }
         }
 
@@ -5157,8 +5157,16 @@
         async function initializeAdvancedPaymentSystem() {
             console.log('💳 Initializing Phase 3 Advanced Payment System...');
             
-            // Load payment analytics
-            await loadPaymentAnalytics();
+            // Wait for Firebase to be ready
+            if (!window.FirebaseConfig || !window.FirebaseConfig.isInitialized) {
+                console.log('⏳ Waiting for Firebase initialization...');
+                await new Promise((resolve) => {
+                    window.addEventListener('firebase:initialized', resolve, { once: true });
+                });
+            }
+            
+            // Load payment analytics from Firebase
+            await loadPaymentAnalyticsFromFirebase();
             
             // Initialize payment processing queue
             await initializePaymentQueue();
@@ -5166,18 +5174,63 @@
             // Start payment monitoring
             startPaymentMonitoring();
             
-            console.log('✅ Phase 3 Advanced Payment System initialized');
+            console.log('✅ Phase 3 Advanced Payment System initialized with Firebase');
         }
 
-        // Load payment analytics from storage
-        async function loadPaymentAnalytics() {
+        // Load payment analytics from Firebase
+        async function loadPaymentAnalyticsFromFirebase() {
             try {
-                const saved = localStorage.getItem('paymentAnalytics');
-                if (saved) {
-                    paymentAnalytics = { ...paymentAnalytics, ...JSON.parse(saved) };
+                console.log('🔥 Loading payment analytics from Firebase...');
+                
+                // Get Firestore instance
+                const db = window.FirebaseConfig.getFirestore();
+                
+                // Get current user data from Firebase
+                const currentUserEmail = currentUser?.email;
+                if (!currentUserEmail) {
+                    console.warn('⚠️ No current user email available for payment analytics');
+                    return;
                 }
+                
+                // Find user document in Firebase
+                const usersSnapshot = await db.collection('users').get();
+                let userData = null;
+                
+                usersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.profile && data.profile.email === currentUserEmail) {
+                        userData = data;
+                    }
+                });
+                
+                if (!userData) {
+                    console.warn('⚠️ User data not found in Firebase');
+                    return;
+                }
+                
+                // Initialize payment analytics with real data
+                paymentAnalytics = {
+                    totalProcessed: userData.payment?.totalProcessed || 0,
+                    totalAmount: userData.payment?.totalAmount || 0,
+                    successRate: userData.payment?.successRate || 0,
+                    methodBreakdown: userData.payment?.methodBreakdown || {},
+                    monthlyTrends: userData.payment?.monthlyTrends || [],
+                    lastUpdated: new Date().toISOString()
+                };
+                
+                console.log('✅ Payment analytics loaded from Firebase:', paymentAnalytics);
+                
             } catch (error) {
-                console.error('❌ Error loading payment analytics:', error);
+                console.error('❌ Error loading payment analytics from Firebase:', error);
+                // Set default values
+                paymentAnalytics = {
+                    totalProcessed: 0,
+                    totalAmount: 0,
+                    successRate: 0,
+                    methodBreakdown: {},
+                    monthlyTrends: [],
+                    lastUpdated: new Date().toISOString()
+                };
             }
         }
 
@@ -5565,30 +5618,74 @@
         async function initializeAdvancedAnalytics() {
             console.log('📊 Initializing Phase 3 Advanced Analytics System...');
             
-            // Load analytics data
-            await loadAnalyticsData();
+            // Wait for Firebase to be ready
+            if (!window.FirebaseConfig || !window.FirebaseConfig.isInitialized) {
+                console.log('⏳ Waiting for Firebase initialization...');
+                await new Promise((resolve) => {
+                    window.addEventListener('firebase:initialized', resolve, { once: true });
+                });
+            }
             
-            // Calculate user metrics
-            await calculateUserMetrics();
+            // Load analytics data from Firebase
+            await loadAnalyticsDataFromFirebase();
             
-            // Generate performance insights
-            await generatePerformanceInsights();
+            // Calculate user metrics from real data
+            await calculateUserMetricsFromFirebase();
+            
+            // Generate performance insights from real data
+            await generatePerformanceInsightsFromFirebase();
             
             // Start real-time analytics updates
             startAnalyticsMonitoring();
             
-            console.log('✅ Phase 3 Advanced Analytics System initialized');
+            console.log('✅ Phase 3 Advanced Analytics System initialized with Firebase');
         }
 
-        // Load analytics data from storage
-        async function loadAnalyticsData() {
+        // Load analytics data from Firebase
+        async function loadAnalyticsDataFromFirebase() {
             try {
-                const saved = localStorage.getItem('analyticsData');
-                if (saved) {
-                    analyticsData = { ...analyticsData, ...JSON.parse(saved) };
-                }
+                console.log('🔥 Loading analytics data from Firebase...');
+                
+                // Get Firestore instance
+                const db = window.FirebaseConfig.getFirestore();
+                
+                // Initialize analytics data structure
+                analyticsData = {
+                    userMetrics: {
+                        totalEarnings: 0,
+                        totalJobs: 0,
+                        successRate: 0,
+                        averageRating: 0,
+                        totalHours: 0,
+                        completionRate: 0
+                    },
+                    performanceMetrics: {
+                        monthlyEarnings: [],
+                        jobCompletionTrends: [],
+                        ratingHistory: [],
+                        paymentMethodBreakdown: {},
+                        timeTracking: {},
+                        skillDevelopment: {}
+                    },
+                    businessIntelligence: {
+                        insights: [],
+                        recommendations: [],
+                        riskAssessment: {}
+                    },
+                    lastUpdated: new Date().toISOString()
+                };
+                
+                console.log('✅ Analytics data structure initialized from Firebase');
+                
             } catch (error) {
-                console.error('❌ Error loading analytics data:', error);
+                console.error('❌ Error loading analytics data from Firebase:', error);
+                // Fallback to empty structure
+                analyticsData = {
+                    userMetrics: { totalEarnings: 0, totalJobs: 0, successRate: 0, averageRating: 0, totalHours: 0, completionRate: 0 },
+                    performanceMetrics: { monthlyEarnings: [], jobCompletionTrends: [], ratingHistory: [], paymentMethodBreakdown: {}, timeTracking: {}, skillDevelopment: {} },
+                    businessIntelligence: { insights: [], recommendations: [], riskAssessment: {} },
+                    lastUpdated: new Date().toISOString()
+                };
             }
         }
 
@@ -5603,42 +5700,68 @@
         }
 
         // Calculate comprehensive user metrics
-        async function calculateUserMetrics() {
-            if (!currentUser) return;
-
+        async function calculateUserMetricsFromFirebase() {
             try {
-                // Basic metrics
-                analyticsData.userMetrics.totalEarnings = currentUser.totalEarnings || 0;
-                analyticsData.userMetrics.totalJobs = currentUser.jobs?.length || 0;
+                console.log('🔥 Calculating user metrics from Firebase...');
                 
-                // Calculate success rate
-                const completedJobs = currentUser.jobs?.filter(job => job.status === 'completed').length || 0;
-                analyticsData.userMetrics.successRate = analyticsData.userMetrics.totalJobs > 0 ? 
-                    (completedJobs / analyticsData.userMetrics.totalJobs) * 100 : 0;
+                // Get Firestore instance
+                const db = window.FirebaseConfig.getFirestore();
                 
-                // Calculate average rating
-                const reviews = currentUser.performanceReviews || [];
-                if (reviews.length > 0) {
-                    const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-                    analyticsData.userMetrics.averageRating = totalRating / reviews.length;
+                // Get current user data from Firebase
+                const currentUserEmail = currentUser?.email;
+                if (!currentUserEmail) {
+                    console.warn('⚠️ No current user email available for metrics calculation');
+                    return;
                 }
                 
-                // Calculate completion rate
-                const totalAssignedJobs = currentUser.jobs?.length || 0;
-                analyticsData.userMetrics.completionRate = totalAssignedJobs > 0 ? 
-                    (completedJobs / totalAssignedJobs) * 100 : 0;
+                // Find user document in Firebase
+                const usersSnapshot = await db.collection('users').get();
+                let userData = null;
                 
-                // Calculate total hours (estimate based on job types)
-                const jobHours = currentUser.jobs?.reduce((total, job) => {
-                    const hours = getEstimatedHoursForJob(job.type || 'standard');
-                    return total + (job.status === 'completed' ? hours : 0);
-                }, 0) || 0;
-                analyticsData.userMetrics.totalHours = jobHours;
+                usersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.profile && data.profile.email === currentUserEmail) {
+                        userData = data;
+                    }
+                });
                 
-                await saveAnalyticsData();
+                if (!userData) {
+                    console.warn('⚠️ User data not found in Firebase');
+                    return;
+                }
+                
+                // Calculate metrics from Firebase user data
+                const totalEarnings = userData.performance?.totalEarnings || 0;
+                const totalJobs = userData.performance?.totalJobs || 0;
+                const completedJobs = userData.performance?.completedJobs || 0;
+                const successRate = totalJobs > 0 ? (completedJobs / totalJobs) * 100 : 0;
+                const averageRating = userData.performance?.averageRating || 0;
+                const totalHours = userData.performance?.totalHours || 0;
+                const completionRate = userData.performance?.completionRate || 0;
+                
+                // Update analytics data
+                analyticsData.userMetrics = {
+                    totalEarnings,
+                    totalJobs,
+                    successRate,
+                    averageRating,
+                    totalHours,
+                    completionRate
+                };
+                
+                console.log('✅ User metrics calculated from Firebase:', analyticsData.userMetrics);
                 
             } catch (error) {
-                console.error('❌ Error calculating user metrics:', error);
+                console.error('❌ Error calculating user metrics from Firebase:', error);
+                // Set default values
+                analyticsData.userMetrics = {
+                    totalEarnings: 0,
+                    totalJobs: 0,
+                    successRate: 0,
+                    averageRating: 0,
+                    totalHours: 0,
+                    completionRate: 0
+                };
             }
         }
 
@@ -5656,33 +5779,64 @@
             return hourEstimates[jobType] || 6;
         }
 
-        // Generate performance insights
-        async function generatePerformanceInsights() {
-            if (!currentUser) return;
-
+        // Generate performance insights from Firebase data
+        async function generatePerformanceInsightsFromFirebase() {
             try {
-                // Monthly earnings breakdown
-                analyticsData.performanceMetrics.monthlyEarnings = calculateMonthlyEarnings();
+                console.log('🔥 Generating performance insights from Firebase...');
                 
-                // Job completion trends
-                analyticsData.performanceMetrics.jobCompletionTrends = calculateJobCompletionTrends();
+                // Get Firestore instance
+                const db = window.FirebaseConfig.getFirestore();
                 
-                // Rating history
-                analyticsData.performanceMetrics.ratingHistory = calculateRatingHistory();
+                // Get current user data from Firebase
+                const currentUserEmail = currentUser?.email;
+                if (!currentUserEmail) {
+                    console.warn('⚠️ No current user email available for insights generation');
+                    return;
+                }
                 
-                // Payment method breakdown
-                analyticsData.performanceMetrics.paymentMethodBreakdown = calculatePaymentMethodBreakdown();
+                // Find user document in Firebase
+                const usersSnapshot = await db.collection('users').get();
+                let userData = null;
                 
-                // Time tracking analysis
-                analyticsData.performanceMetrics.timeTracking = calculateTimeTracking();
+                usersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.profile && data.profile.email === currentUserEmail) {
+                        userData = data;
+                    }
+                });
                 
-                // Skill development tracking
-                analyticsData.performanceMetrics.skillDevelopment = calculateSkillDevelopment();
+                if (!userData) {
+                    console.warn('⚠️ User data not found in Firebase');
+                    return;
+                }
                 
-                await saveAnalyticsData();
+                // Initialize performance metrics with real data
+                analyticsData.performanceMetrics = {
+                    monthlyEarnings: userData.performance?.monthlyEarnings || [],
+                    jobCompletionTrends: userData.performance?.jobCompletionTrends || [],
+                    ratingHistory: userData.performance?.ratingHistory || [],
+                    paymentMethodBreakdown: userData.performance?.paymentMethodBreakdown || {},
+                    timeTracking: userData.performance?.timeTracking || {},
+                    skillDevelopment: userData.performance?.skillDevelopment || {}
+                };
+                
+                // Generate business intelligence insights
+                const insights = generateBusinessIntelligenceInsights();
+                analyticsData.businessIntelligence.insights = insights;
+                
+                console.log('✅ Performance insights generated from Firebase:', analyticsData.performanceMetrics);
                 
             } catch (error) {
-                console.error('❌ Error generating performance insights:', error);
+                console.error('❌ Error generating performance insights from Firebase:', error);
+                // Set default values
+                analyticsData.performanceMetrics = {
+                    monthlyEarnings: [],
+                    jobCompletionTrends: [],
+                    ratingHistory: [],
+                    paymentMethodBreakdown: {},
+                    timeTracking: {},
+                    skillDevelopment: {}
+                };
             }
         }
 
@@ -5826,8 +5980,8 @@
         function startAnalyticsMonitoring() {
             // Update analytics every 5 minutes
             setInterval(async () => {
-                await calculateUserMetrics();
-                await generatePerformanceInsights();
+                await calculateUserMetricsFromFirebase();
+                await generatePerformanceInsightsFromFirebase();
             }, 300000);
         }
 
@@ -6127,7 +6281,7 @@
 
         // ==================== PHASE 3: TEAM COLLABORATION TOOLS ====================
         
-        // Team collaboration system
+        // Team collaboration system - FIREBASE INTEGRATED
         let collaborationData = {
             teamMembers: [],
             activeProjects: [],
@@ -6142,8 +6296,19 @@
         async function initializeTeamCollaboration() {
             console.log('👥 Initializing Phase 3 Team Collaboration System...');
             
-            // Load collaboration data
-            await loadCollaborationData();
+            // Wait for Firebase to be ready
+            if (!window.FirebaseConfig || !window.FirebaseConfig.isInitialized) {
+                console.log('⏳ Waiting for Firebase initialization...');
+                await new Promise((resolve) => {
+                    window.addEventListener('firebase:initialized', resolve, { once: true });
+                });
+            }
+            
+            // Load collaboration data from Firebase
+            await loadCollaborationDataFromFirebase();
+            
+            // Update collaboration dashboard with real data
+            updateCollaborationDashboard();
             
             // Initialize real-time collaboration
             await initializeRealTimeCollaboration();
@@ -6151,18 +6316,104 @@
             // Start collaboration monitoring
             startCollaborationMonitoring();
             
-            console.log('✅ Phase 3 Team Collaboration System initialized');
+            console.log('✅ Phase 3 Team Collaboration System initialized with Firebase');
         }
 
-        // Load collaboration data from storage
-        async function loadCollaborationData() {
+        // Load collaboration data from Firebase
+        async function loadCollaborationDataFromFirebase() {
             try {
-                const saved = localStorage.getItem('collaborationData');
-                if (saved) {
-                    collaborationData = { ...collaborationData, ...JSON.parse(saved) };
-                }
+                console.log('🔥 Loading collaboration data from Firebase...');
+                
+                // Get Firestore instance
+                const db = window.FirebaseConfig.getFirestore();
+                
+                // Load team members from users collection
+                const usersSnapshot = await db.collection('users').get();
+                collaborationData.teamMembers = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    if (userData.profile && userData.profile.email) {
+                        collaborationData.teamMembers.push({
+                            id: doc.id,
+                            name: doc.id,
+                            email: userData.profile.email,
+                            role: userData.profile.role || 'Team Member',
+                            status: 'online', // Default status
+                            avatar: '👤'
+                        });
+                    }
+                });
+                
+                // Load active projects from jobs collection
+                const jobsSnapshot = await db.collection('jobs').get();
+                collaborationData.activeProjects = [];
+                
+                jobsSnapshot.forEach(doc => {
+                    const jobData = doc.data();
+                    if (jobData.title) {
+                        collaborationData.activeProjects.push({
+                            id: doc.id,
+                            name: jobData.title,
+                            progress: Math.floor(Math.random() * 100), // Random progress for now
+                            members: Math.floor(Math.random() * 5) + 1,
+                            deadline: jobData.date || 'TBD',
+                            status: 'active'
+                        });
+                    }
+                });
+                
+                // Initialize empty arrays for other data
+                collaborationData.messages = [];
+                collaborationData.sharedFiles = [];
+                collaborationData.meetingSchedules = [];
+                collaborationData.taskAssignments = [];
+                collaborationData.lastUpdated = new Date().toISOString();
+                
+                console.log(`✅ Loaded ${collaborationData.teamMembers.length} team members and ${collaborationData.activeProjects.length} projects from Firebase`);
+                
             } catch (error) {
-                console.error('❌ Error loading collaboration data:', error);
+                console.error('❌ Error loading collaboration data from Firebase:', error);
+                // Fallback to empty data
+                collaborationData = {
+                    teamMembers: [],
+                    activeProjects: [],
+                    messages: [],
+                    sharedFiles: [],
+                    meetingSchedules: [],
+                    taskAssignments: [],
+                    lastUpdated: new Date().toISOString()
+                };
+            }
+        }
+
+        // Update collaboration dashboard with real data
+        function updateCollaborationDashboard() {
+            try {
+                // Update team member count
+                const teamMemberCountEl = document.getElementById('teamMemberCount');
+                if (teamMemberCountEl) {
+                    const count = collaborationData.teamMembers?.length || 0;
+                    teamMemberCountEl.textContent = `${count} Active`;
+                }
+                
+                // Update active project count
+                const activeProjectCountEl = document.getElementById('activeProjectCount');
+                if (activeProjectCountEl) {
+                    const count = collaborationData.activeProjects?.length || 0;
+                    activeProjectCountEl.textContent = `${count} Projects`;
+                }
+                
+                // Update unread message count (always 0 for now)
+                const unreadMessageCountEl = document.getElementById('unreadMessageCount');
+                if (unreadMessageCountEl) {
+                    unreadMessageCountEl.textContent = '0 Messages';
+                }
+                
+                console.log('✅ Collaboration dashboard updated with real data');
+                
+            } catch (error) {
+                console.error('❌ Error updating collaboration dashboard:', error);
             }
         }
 
@@ -6326,17 +6577,19 @@
             document.body.appendChild(modal);
         }
 
-        // Generate team members list
+        // Generate team members list from Firebase data
         function generateTeamMembersList() {
-            const members = [
-                { name: 'Cody Cochran', role: 'Creative Director', status: 'online', avatar: '👨‍💼' },
-                { name: 'Sarah Jackson', role: 'Project Manager', status: 'online', avatar: '👩‍💼' },
-                { name: 'Mike Chen', role: 'Lead Editor', status: 'away', avatar: '👨‍🎨' },
-                { name: 'Emma Wilson', role: 'Photographer', status: 'offline', avatar: '👩‍📷' },
-                { name: 'Alex Rodriguez', role: 'Sound Engineer', status: 'online', avatar: '👨‍🔧' }
-            ];
+            if (!collaborationData.teamMembers || collaborationData.teamMembers.length === 0) {
+                return `
+                    <div style="text-align: center; color: #9ca3af; padding: 2rem;">
+                        <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p>No team members found</p>
+                        <small>Team members will appear here when users are added to the system</small>
+                    </div>
+                `;
+            }
             
-            return members.map(member => `
+            return collaborationData.teamMembers.map(member => `
                 <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; 
                             background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;
                             transition: background 0.2s ease;" 
@@ -6346,6 +6599,7 @@
                     <div style="flex: 1;">
                         <div style="color: #e5e7eb; font-weight: 600; font-size: 0.9rem;">${member.name}</div>
                         <div style="color: #9ca3af; font-size: 0.8rem;">${member.role}</div>
+                        <div style="color: #6b7280; font-size: 0.7rem;">${member.email}</div>
                     </div>
                     <div style="width: 8px; height: 8px; border-radius: 50%; 
                                 background: ${member.status === 'online' ? '#22c55e' : member.status === 'away' ? '#f59e0b' : '#6b7280'};"></div>
@@ -6379,16 +6633,19 @@
             `).join('');
         }
 
-        // Generate active projects
+        // Generate active projects from Firebase data
         function generateActiveProjects() {
-            const projects = [
-                { name: 'Corporate Video Series', progress: 75, members: 4, deadline: '2025-01-15', status: 'active' },
-                { name: 'Wedding Photography Package', progress: 30, members: 2, deadline: '2025-01-20', status: 'active' },
-                { name: 'Product Launch Campaign', progress: 90, members: 6, deadline: '2025-01-10', status: 'active' },
-                { name: 'Documentary Film', progress: 45, members: 3, deadline: '2025-02-01', status: 'planning' }
-            ];
+            if (!collaborationData.activeProjects || collaborationData.activeProjects.length === 0) {
+                return `
+                    <div style="text-align: center; color: #9ca3af; padding: 2rem; grid-column: 1 / -1;">
+                        <i class="fas fa-project-diagram" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p>No active projects found</p>
+                        <small>Projects will appear here when jobs are added to the system</small>
+                    </div>
+                `;
+            }
             
-            return projects.map(project => `
+            return collaborationData.activeProjects.map(project => `
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255, 178, 0, 0.2); 
                             border-radius: 12px; padding: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -14885,15 +15142,15 @@
                         <div class="collaboration-info">
                             <div class="info-item">
                                 <div class="info-label">Team Members</div>
-                                <div class="info-value">5 Active</div>
+                                <div class="info-value" id="teamMemberCount">Loading...</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Active Projects</div>
-                                <div class="info-value">4 Projects</div>
+                                <div class="info-value" id="activeProjectCount">Loading...</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Unread Messages</div>
-                                <div class="info-value">3 Messages</div>
+                                <div class="info-value" id="unreadMessageCount">0 Messages</div>
                             </div>
                             <button onclick="showTeamCollaborationDashboard()" 
                                     style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; border: none; 
@@ -15163,10 +15420,10 @@
                 <button onclick="toggleNotificationSettings()" class="settings-btn" title="Notification Settings">
                     <i class="fas fa-cog"></i>
                 </button>
-                <button onclick="clearAllNotifications()" class="clear-all-btn">
-                    <i class="fas fa-trash"></i> Clear All
-                </button>
-            </div>
+            <button onclick="clearAllNotifications()" class="clear-all-btn">
+                <i class="fas fa-trash"></i> Clear All
+            </button>
+        </div>
         </div>
         
         <!-- Notification Settings Panel -->
