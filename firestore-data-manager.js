@@ -1200,7 +1200,28 @@ function initializeFirestoreDataManager() {
             });
         }, 100);
     }
+}
 
+// Initialize Firestore Data Manager
+function initializeFirestoreDataManager() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            FirestoreDataManager.init().catch(error => {
+                console.error('❌ Firestore Data Manager auto-initialization failed:', error);
+            });
+        });
+    } else {
+        // DOM is already ready, but wait a bit for other elements
+        setTimeout(() => {
+            FirestoreDataManager.init().catch(error => {
+                console.error('❌ Firestore Data Manager auto-initialization failed:', error);
+            });
+        }, 100);
+    }
+}
+
+// Add community operations to FirestoreDataManager
+Object.assign(FirestoreDataManager, {
     // ==================== COMMUNITY OPERATIONS ====================
 
     // Messages Operations
@@ -1414,7 +1435,7 @@ function initializeFirestoreDataManager() {
             throw error;
         }
     }
-}
+});
 
 // Start initialization
 initializeFirestoreDataManager();
