@@ -7935,6 +7935,7 @@
         
         // Profile Picture Management
         let profilePictureData = null;
+        let avatarRealtimeWired = false;
         
         // Initialize profile picture functionality
         function initializeProfilePicture() {
@@ -7945,6 +7946,32 @@
             
             // Load existing profile picture
             loadProfilePicture();
+
+            // Wire real-time updates for current user's avatar once
+            if (!avatarRealtimeWired && window.FirestoreDataManager && window.FirestoreDataManager.db) {
+                avatarRealtimeWired = true;
+                window.addEventListener('firestore:dataChange', function(event) {
+                    try {
+                        if (event.detail.collection !== 'users') return;
+                        const data = event.detail.data || {};
+                        const eventEmail = (data.profile && data.profile.email) || data.email || '';
+                        if (!currentUser || !currentUser.email) return;
+                        if (!eventEmail || String(eventEmail).toLowerCase() !== String(currentUser.email).toLowerCase()) return;
+
+                        // Update current user avatar and refresh UI targets
+                        const newAvatar = (data.profilePicture !== undefined && data.profilePicture !== null)
+                            ? data.profilePicture
+                            : (data.profile && data.profile.profilePicture) ? data.profile.profilePicture : null;
+                        if (newAvatar !== undefined) {
+                            currentUser.profilePicture = newAvatar;
+                            displayProfilePicture(newAvatar);
+                            if (document.getElementById('community-section')?.classList.contains('active')) {
+                                displayContractorDirectory();
+                            }
+                        }
+                    } catch (_) {}
+                });
+            }
         }
         
         // Handle profile picture upload
@@ -7981,14 +8008,37 @@
             const removeBtn = document.getElementById('removePictureBtn');
             
             if (imageData) {
-                img.src = imageData;
-                img.style.display = 'block';
-                placeholder.style.display = 'none';
-                removeBtn.style.display = 'inline-flex';
+                if (img) {
+                    img.src = imageData;
+                    img.style.display = 'block';
+                }
+                if (placeholder) placeholder.style.display = 'none';
+                if (removeBtn) removeBtn.style.display = 'inline-flex';
+                
+                // Update other avatar targets across the page
+                try {
+                    document.querySelectorAll('.contractor-avatar img').forEach(el => {
+                        const card = el.closest('.contractor-card');
+                        const name = card?.dataset?.name || '';
+                        if (currentUser && (currentUser.name === name)) {
+                            el.src = imageData;
+                        }
+                    });
+                    document.querySelectorAll('.showcase-author-avatar img').forEach(el => {
+                        if (currentUser && el.alt && (el.alt === currentUser.name)) {
+                            el.src = imageData;
+                        }
+                    });
+                    document.querySelectorAll('.message-avatar img').forEach(el => {
+                        if (currentUser && el.alt && (el.alt === currentUser.name)) {
+                            el.src = imageData;
+                        }
+                    });
+                } catch (_) {}
             } else {
-                img.style.display = 'none';
-                placeholder.style.display = 'flex';
-                removeBtn.style.display = 'none';
+                if (img) img.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'flex';
+                if (removeBtn) removeBtn.style.display = 'none';
             }
         }
         
