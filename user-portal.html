@@ -7931,6 +7931,1040 @@
         window.switchPerformanceTab = switchPerformanceTab;
         window.initializePerformanceAnalytics = initializePerformanceAnalytics;
 
+        // ==================== COMMUNITY FEATURES FUNCTIONS ====================
+        
+        // Profile Picture Management
+        let profilePictureData = null;
+        
+        // Initialize profile picture functionality
+        function initializeProfilePicture() {
+            const input = document.getElementById('profilePictureInput');
+            if (input) {
+                input.addEventListener('change', handleProfilePictureUpload);
+            }
+            
+            // Load existing profile picture
+            loadProfilePicture();
+        }
+        
+        // Handle profile picture upload
+        function handleProfilePictureUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showNotification('Please select a valid image file', 'error');
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('Image size must be less than 5MB', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePictureData = e.target.result;
+                displayProfilePicture(profilePictureData);
+                saveProfilePicture(profilePictureData);
+                showNotification('Profile picture updated successfully!', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Display profile picture
+        function displayProfilePicture(imageData) {
+            const img = document.getElementById('profileImage');
+            const placeholder = document.getElementById('profilePicturePlaceholder');
+            const removeBtn = document.getElementById('removePictureBtn');
+            
+            if (imageData) {
+                img.src = imageData;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+                removeBtn.style.display = 'inline-flex';
+            } else {
+                img.style.display = 'none';
+                placeholder.style.display = 'flex';
+                removeBtn.style.display = 'none';
+            }
+        }
+        
+        // Save profile picture to user data
+        async function saveProfilePicture(imageData) {
+            if (!currentUser) return;
+            
+            try {
+                // Update user data in Firestore
+                const userDocId = currentUser.email.replace(/[^a-zA-Z0-9]/g, '');
+                await window.FirestoreDataManager.setUser(userDocId, {
+                    ...currentUser,
+                    profilePicture: imageData
+                });
+                
+                // Update current user object
+                currentUser.profilePicture = imageData;
+                
+                // Update contractor directory if visible
+                if (document.getElementById('community-section').classList.contains('active')) {
+                    displayContractorDirectory();
+                }
+            } catch (error) {
+                console.error('Error saving profile picture:', error);
+                showNotification('Failed to save profile picture', 'error');
+            }
+        }
+        
+        // Load existing profile picture
+        function loadProfilePicture() {
+            if (currentUser && currentUser.profilePicture) {
+                displayProfilePicture(currentUser.profilePicture);
+            }
+        }
+        
+        // Remove profile picture
+        function removeProfilePicture() {
+            profilePictureData = null;
+            displayProfilePicture(null);
+            saveProfilePicture(null);
+            showNotification('Profile picture removed', 'info');
+        }
+        
+        // Contractor Directory Management
+        function initializeContractorDirectory() {
+            const searchInput = document.getElementById('directorySearch');
+            const roleFilter = document.getElementById('roleFilter');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', filterContractors);
+            }
+            
+            if (roleFilter) {
+                roleFilter.addEventListener('change', filterContractors);
+            }
+            
+            displayContractorDirectory();
+        }
+        
+        // Messaging Board Management
+        let messages = [];
+        
+        function initializeMessagingBoard() {
+            const messageInput = document.getElementById('messageInput');
+            
+            if (messageInput) {
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+            
+            // Set up real-time listener for messages
+            if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
+                // Listen for Firestore data changes
+                window.addEventListener('firestore:dataChange', function(event) {
+                    if (event.detail.collection === 'messages') {
+                        loadMessages();
+                    }
+                });
+            }
+            
+            loadMessages();
+        }
+        
+        // Load messages from localStorage
+        async function loadMessages() {
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
+                    messages = await window.FirestoreDataManager.getMessages();
+                    if (messages.length === 0) {
+                        // Add sample messages if none exist
+                        await addSampleMessages();
+                    }
+                } else {
+                    // Fallback to localStorage
+                    const saved = localStorage.getItem('cochranMessages');
+                    if (saved) {
+                        messages = JSON.parse(saved);
+                    } else {
+                        messages = [];
+                        await addSampleMessages();
+                    }
+                }
+                displayMessages();
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                messages = [];
+            }
+        }
+
+        // Add sample messages
+        async function addSampleMessages() {
+            const sampleMessages = [
+                {
+                    author: 'Cody Cochran',
+                    authorEmail: 'codylcochran87@gmail.com',
+                    authorAvatar: null,
+                    text: 'Welcome to the team messaging board! This is where we can share updates, ask questions, and collaborate.',
+                    likes: 3,
+                    replies: []
+                },
+                {
+                    author: 'Erica Jackson',
+                    authorEmail: 'dedejackson727@gmail.com',
+                    authorAvatar: null,
+                    text: 'Great to be part of the team! Looking forward to working on some amazing projects together.',
+                    likes: 1,
+                    replies: []
+                }
+            ];
+
+            for (const message of sampleMessages) {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
+                    await window.FirestoreDataManager.addMessage(message);
+                } else {
+                    messages.push({ ...message, id: Date.now().toString(), timestamp: new Date().toISOString() });
+                }
+            }
+            
+            if (!window.FirestoreDataManager || !window.FirestoreDataManager.db) {
+                saveMessages();
+            }
+        }
+        
+        // Display messages
+        function displayMessages() {
+            const container = document.getElementById('messagesContainer');
+            if (!container) return;
+            
+            if (messages.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No messages yet. Start the conversation!</p></div>';
+                return;
+            }
+            
+            const sortedMessages = messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = sortedMessages.map(message => `
+                <div class="message-item">
+                    <div class="message-avatar">
+                        ${message.authorAvatar ? 
+                            `<img src="${message.authorAvatar}" alt="${message.author}">` : 
+                            `<div class="placeholder"><i class="fas fa-user"></i></div>`
+                        }
+                    </div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <div class="message-author">${message.author}</div>
+                            <div class="message-time">${formatMessageTime(message.timestamp)}</div>
+                        </div>
+                        <div class="message-text">${message.text}</div>
+                        <div class="message-actions">
+                            <button class="message-like-btn" onclick="toggleMessageLike(${message.id})">
+                                <i class="fas fa-heart"></i>
+                                <span>${message.likes}</span>
+                            </button>
+                            <button class="message-reply-btn" onclick="replyToMessage(${message.id})">
+                                <i class="fas fa-reply"></i>
+                                <span>Reply</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Auto-scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Format message time
+        function formatMessageTime(timestamp) {
+            const now = new Date();
+            const messageTime = new Date(timestamp);
+            const diffInMinutes = Math.floor((now - messageTime) / (1000 * 60));
+            
+            if (diffInMinutes < 1) return 'Just now';
+            if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+            if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+            return messageTime.toLocaleDateString();
+        }
+        
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            const message = {
+                author: currentUser.name || currentUser.email.split('@')[0],
+                authorEmail: currentUser.email,
+                authorAvatar: currentUser.profilePicture || null,
+                text: text,
+                likes: 0,
+                replies: []
+            };
+            
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
+                    await window.FirestoreDataManager.addMessage(message);
+                    // The real-time listener will update the UI automatically
+                } else {
+                    // Fallback to localStorage
+                    message.id = Date.now();
+                    message.timestamp = new Date().toISOString();
+                    messages.unshift(message);
+                    saveMessages();
+                    displayMessages();
+                }
+                
+                input.value = '';
+                showNotification('Message sent!', 'success');
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showNotification('Error sending message. Please try again.', 'error');
+            }
+        }
+        
+        // Toggle message like
+        function toggleMessageLike(messageId) {
+            const message = messages.find(m => m.id === messageId);
+            if (message) {
+                message.likes += 1;
+                saveMessages();
+                displayMessages();
+            }
+        }
+        
+        // Reply to message (placeholder)
+        function replyToMessage(messageId) {
+            showNotification('Reply feature coming soon!', 'info');
+        }
+        
+        // Show new message modal
+        function showNewMessageModal() {
+            const modal = document.createElement('div');
+            modal.className = 'new-message-modal';
+            modal.innerHTML = `
+                <div class="new-message-content">
+                    <div class="new-message-header">
+                        <h3>New Message</h3>
+                        <button class="close-modal" onclick="closeNewMessageModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <form class="new-message-form" onsubmit="handleNewMessage(event)">
+                        <textarea id="newMessageText" placeholder="What's on your mind?" required></textarea>
+                        <div class="new-message-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeNewMessageModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Send Message</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.getElementById('newMessageText').focus();
+        }
+        
+        // Close new message modal
+        function closeNewMessageModal() {
+            const modal = document.querySelector('.new-message-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Handle new message form submission
+        function handleNewMessage(event) {
+            event.preventDefault();
+            
+            const text = document.getElementById('newMessageText').value.trim();
+            if (!text) return;
+            
+            const message = {
+                id: Date.now(),
+                author: currentUser.name || currentUser.email.split('@')[0],
+                authorEmail: currentUser.email,
+                authorAvatar: currentUser.profilePicture || null,
+                text: text,
+                timestamp: new Date().toISOString(),
+                likes: 0,
+                replies: []
+            };
+            
+            messages.unshift(message);
+            saveMessages();
+            displayMessages();
+            
+            closeNewMessageModal();
+            showNotification('Message posted!', 'success');
+        }
+        
+        // Save messages to localStorage
+        function saveMessages() {
+            try {
+                localStorage.setItem('cochranMessages', JSON.stringify(messages));
+            } catch (error) {
+                console.error('Error saving messages:', error);
+            }
+        }
+        
+        // Success Stories Management
+        let successStories = [];
+        
+        function initializeSuccessStories() {
+            const filterSelect = document.getElementById('successFilter');
+            
+            if (filterSelect) {
+                filterSelect.addEventListener('change', filterSuccessStories);
+            }
+            
+            loadSuccessStories();
+        }
+        
+        // Load success stories from localStorage
+        function loadSuccessStories() {
+            try {
+                const saved = localStorage.getItem('cochranSuccessStories');
+                if (saved) {
+                    successStories = JSON.parse(saved);
+                } else {
+                    // Add some sample success stories
+                    successStories = [
+                        {
+                            id: 1,
+                            author: 'Cody Cochran',
+                            authorEmail: 'codylcochran87@gmail.com',
+                            authorAvatar: null,
+                            role: 'Photographer',
+                            achievement: 'Top Performer',
+                            title: 'Outstanding Project Delivery',
+                            description: 'Delivered exceptional photography work for the Stranger Things block party event, exceeding client expectations and receiving rave reviews.',
+                            stats: {
+                                projectsCompleted: 15,
+                                clientRating: 4.9,
+                                earnings: '$2,400'
+                            },
+                            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                            congratulations: 8
+                        },
+                        {
+                            id: 2,
+                            author: 'Erica Jackson',
+                            authorEmail: 'dedejackson727@gmail.com',
+                            authorAvatar: null,
+                            role: 'Photographer',
+                            achievement: 'Project Excellence',
+                            title: 'Innovative Photography Techniques',
+                            description: 'Introduced new lighting techniques that improved photo quality by 40% and reduced post-processing time significantly.',
+                            stats: {
+                                projectsCompleted: 12,
+                                clientRating: 4.8,
+                                earnings: '$1,800'
+                            },
+                            timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+                            congratulations: 5
+                        },
+                        {
+                            id: 3,
+                            author: 'Will Smith',
+                            authorEmail: 'codylcochran89@gmail.com',
+                            authorAvatar: null,
+                            role: 'Photographer',
+                            achievement: 'Team Player',
+                            title: 'Mentoring New Team Members',
+                            description: 'Took initiative to mentor 3 new photographers, helping them improve their skills and integrate into the team seamlessly.',
+                            stats: {
+                                projectsCompleted: 8,
+                                clientRating: 4.7,
+                                earnings: '$1,200'
+                            },
+                            timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+                            congratulations: 12
+                        }
+                    ];
+                    saveSuccessStories();
+                }
+                displaySuccessStories();
+            } catch (error) {
+                console.error('Error loading success stories:', error);
+                successStories = [];
+            }
+        }
+        
+        // Display success stories
+        function displaySuccessStories() {
+            const grid = document.getElementById('successStoriesGrid');
+            if (!grid) return;
+            
+            if (successStories.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><p>No success stories yet. Keep up the great work!</p></div>';
+                return;
+            }
+            
+            const sortedStories = successStories.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            grid.innerHTML = sortedStories.map(story => `
+                <div class="success-story-card" data-achievement="${story.achievement}">
+                    <div class="success-story-header">
+                        <div class="success-story-avatar">
+                            ${story.authorAvatar ? 
+                                `<img src="${story.authorAvatar}" alt="${story.author}">` : 
+                                `<div class="placeholder"><i class="fas fa-user"></i></div>`
+                            }
+                        </div>
+                        <div class="success-story-info">
+                            <h4>${story.author}</h4>
+                            <div class="success-story-role">${story.role}</div>
+                        </div>
+                    </div>
+                    <div class="success-story-achievement">${story.achievement}</div>
+                    <h3 class="success-story-title">${story.title}</h3>
+                    <p class="success-story-description">${story.description}</p>
+                    <div class="success-story-stats">
+                        <div class="success-stat">
+                            <span class="success-stat-number">${story.stats.projectsCompleted}</span>
+                            <span class="success-stat-label">Projects</span>
+                        </div>
+                        <div class="success-stat">
+                            <span class="success-stat-number">${story.stats.clientRating}</span>
+                            <span class="success-stat-label">Rating</span>
+                        </div>
+                        <div class="success-stat">
+                            <span class="success-stat-number">${story.stats.earnings}</span>
+                            <span class="success-stat-label">Earnings</span>
+                        </div>
+                    </div>
+                    <div class="success-story-actions">
+                        <button class="success-congratulate-btn" onclick="congratulateSuccess(${story.id})">
+                            <i class="fas fa-hands-clapping"></i>
+                            <span>${story.congratulations} Congratulations</span>
+                        </button>
+                        <button class="success-share-btn" onclick="shareSuccess(${story.id})">
+                            <i class="fas fa-share"></i>
+                            <span>Share</span>
+                        </button>
+                    </div>
+                    <div class="success-story-date">${new Date(story.timestamp).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Filter success stories
+        function filterSuccessStories() {
+            const filter = document.getElementById('successFilter').value;
+            const cards = document.querySelectorAll('.success-story-card');
+            
+            cards.forEach(card => {
+                const achievement = card.dataset.achievement;
+                card.style.display = (!filter || achievement === filter) ? 'block' : 'none';
+            });
+        }
+        
+        // Congratulate success story
+        function congratulateSuccess(storyId) {
+            const story = successStories.find(s => s.id === storyId);
+            if (story) {
+                story.congratulations += 1;
+                saveSuccessStories();
+                displaySuccessStories();
+                showNotification('Congratulations sent!', 'success');
+            }
+        }
+        
+        // Share success story (placeholder)
+        function shareSuccess(storyId) {
+            showNotification('Share feature coming soon!', 'info');
+        }
+        
+        // Save success stories to localStorage
+        function saveSuccessStories() {
+            try {
+                localStorage.setItem('cochranSuccessStories', JSON.stringify(successStories));
+            } catch (error) {
+                console.error('Error saving success stories:', error);
+            }
+        }
+        
+        // Display contractor directory
+        async function displayContractorDirectory() {
+            const grid = document.getElementById('contractorGrid');
+            if (!grid) return;
+            
+            try {
+                const fsUsersObj = await window.FirestoreDataManager.getUsers();
+                const contractors = Object.entries(fsUsersObj || {}).map(([name, userData]) => ({
+                    name: name,
+                    email: userData.profile?.email || '',
+                    role: userData.profile?.role || 'Team Member',
+                    location: userData.profile?.location || 'Not specified',
+                    profilePicture: userData.profilePicture || null,
+                    rate: userData.profile?.rate || 'N/A'
+                }));
+                
+                grid.innerHTML = contractors.map(contractor => `
+                    <div class="contractor-card" data-name="${contractor.name}" data-role="${contractor.role}">
+                        <div class="contractor-header">
+                            <div class="contractor-avatar">
+                                ${contractor.profilePicture ? 
+                                    `<img src="${contractor.profilePicture}" alt="${contractor.name}">` : 
+                                    `<div class="placeholder"><i class="fas fa-user"></i></div>`
+                                }
+                            </div>
+                            <div class="contractor-info">
+                                <h4>${contractor.name}</h4>
+                                <div class="contractor-role">${contractor.role}</div>
+                            </div>
+                        </div>
+                        <div class="contractor-details">
+                            <div class="contractor-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${contractor.location}</span>
+                            </div>
+                            <div style="margin-top: 0.5rem; color: var(--primary); font-weight: 500;">
+                                Rate: ${contractor.rate}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading contractor directory:', error);
+                grid.innerHTML = '<div class="empty-state"><p>Failed to load team directory</p></div>';
+            }
+        }
+        
+        // Filter contractors
+        function filterContractors() {
+            const searchTerm = document.getElementById('directorySearch').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const cards = document.querySelectorAll('.contractor-card');
+            
+            cards.forEach(card => {
+                const name = card.dataset.name.toLowerCase();
+                const role = card.dataset.role;
+                
+                const matchesSearch = name.includes(searchTerm);
+                const matchesRole = !roleFilter || role === roleFilter;
+                
+                card.style.display = (matchesSearch && matchesRole) ? 'block' : 'none';
+            });
+        }
+        
+        // Project Showcases Management
+        let showcases = [];
+        
+        function initializeShowcases() {
+            const form = document.getElementById('showcaseForm');
+            const imageInput = document.getElementById('showcaseImages');
+            const filterSelect = document.getElementById('showcaseFilter');
+            
+            if (form) {
+                form.addEventListener('submit', handleShowcaseSubmit);
+            }
+            
+            if (imageInput) {
+                imageInput.addEventListener('change', handleImagePreview);
+            }
+            
+            if (filterSelect) {
+                filterSelect.addEventListener('change', filterShowcases);
+            }
+            
+            loadShowcases();
+        }
+        
+        // Handle showcase form submission
+        function handleShowcaseSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const title = formData.get('title');
+            const description = formData.get('description');
+            const category = formData.get('category');
+            const images = Array.from(document.getElementById('showcaseImages').files);
+            
+            if (!title.trim()) {
+                showNotification('Please enter a project title', 'error');
+                return;
+            }
+            
+            if (images.length === 0) {
+                showNotification('Please upload at least one image', 'error');
+                return;
+            }
+            
+            // Convert images to base64
+            const imagePromises = images.map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+            });
+            
+            Promise.all(imagePromises).then(imageData => {
+                const showcase = {
+                    id: Date.now(),
+                    title: title.trim(),
+                    description: description.trim(),
+                    category: category,
+                    images: imageData,
+                    author: currentUser.name || currentUser.email.split('@')[0],
+                    authorEmail: currentUser.email,
+                    authorAvatar: currentUser.profilePicture || null,
+                    createdAt: new Date().toISOString(),
+                    likes: 0,
+                    comments: []
+                };
+                
+                showcases.unshift(showcase);
+                saveShowcases();
+                displayShowcases();
+                
+                // Reset form
+                event.target.reset();
+                document.getElementById('imagePreviewContainer').innerHTML = '';
+                
+                showNotification('Showcase shared successfully!', 'success');
+            });
+        }
+        
+        // Handle image preview
+        function handleImagePreview(event) {
+            const files = Array.from(event.target.files);
+            const container = document.getElementById('imagePreviewContainer');
+            
+            container.innerHTML = '';
+            
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'image-preview';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview ${index + 1}">
+                        <button type="button" class="remove-btn" onclick="removeImagePreview(${index})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    container.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // Remove image preview
+        function removeImagePreview(index) {
+            const input = document.getElementById('showcaseImages');
+            const dt = new DataTransfer();
+            const files = Array.from(input.files);
+            
+            files.splice(index, 1);
+            files.forEach(file => dt.items.add(file));
+            input.files = dt.files;
+            
+            handleImagePreview({ target: input });
+        }
+        
+        // Display showcases
+        function displayShowcases() {
+            const grid = document.getElementById('showcasesGrid');
+            if (!grid) return;
+            
+            if (showcases.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><p>No showcases yet. Be the first to share your work!</p></div>';
+                return;
+            }
+            
+            grid.innerHTML = showcases.map(showcase => `
+                <div class="showcase-card" data-category="${showcase.category}">
+                    <div class="showcase-images">
+                        ${showcase.images.slice(0, 4).map(img => `
+                            <div class="showcase-image">
+                                <img src="${img}" alt="${showcase.title}">
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="showcase-content">
+                        <div class="showcase-header">
+                            <div>
+                                <h3 class="showcase-title">${showcase.title}</h3>
+                                <span class="showcase-category">${showcase.category}</span>
+                            </div>
+                        </div>
+                        <p class="showcase-description">${showcase.description}</p>
+                        <div class="showcase-author">
+                            <div class="showcase-author-avatar">
+                                ${showcase.authorAvatar ? 
+                                    `<img src="${showcase.authorAvatar}" alt="${showcase.author}">` : 
+                                    `<i class="fas fa-user"></i>`
+                                }
+                            </div>
+                            <div class="showcase-author-info">
+                                <h5>${showcase.author}</h5>
+                                <p>${new Date(showcase.createdAt).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <div class="showcase-actions">
+                            <button class="showcase-like-btn" onclick="toggleLike(${showcase.id})">
+                                <i class="fas fa-heart"></i>
+                                <span>${showcase.likes}</span>
+                            </button>
+                            <button class="showcase-comment-btn" onclick="showComments(${showcase.id})">
+                                <i class="fas fa-comment"></i>
+                                <span>${showcase.comments.length}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Filter showcases
+        function filterShowcases() {
+            const filter = document.getElementById('showcaseFilter').value;
+            const cards = document.querySelectorAll('.showcase-card');
+            
+            cards.forEach(card => {
+                const category = card.dataset.category;
+                card.style.display = (!filter || category === filter) ? 'block' : 'none';
+            });
+        }
+        
+        // Toggle like
+        function toggleLike(showcaseId) {
+            const showcase = showcases.find(s => s.id === showcaseId);
+            if (showcase) {
+                showcase.likes += 1;
+                saveShowcases();
+                displayShowcases();
+            }
+        }
+        
+        // Show comments (placeholder)
+        function showComments(showcaseId) {
+            showNotification('Comments feature coming soon!', 'info');
+        }
+        
+        // Save showcases to localStorage (in a real app, this would be saved to a database)
+        function saveShowcases() {
+            try {
+                localStorage.setItem('cochranShowcases', JSON.stringify(showcases));
+            } catch (error) {
+                console.error('Error saving showcases:', error);
+            }
+        }
+        
+        // Load showcases from localStorage
+        function loadShowcases() {
+            try {
+                const saved = localStorage.getItem('cochranShowcases');
+                if (saved) {
+                    showcases = JSON.parse(saved);
+                }
+                displayShowcases();
+            } catch (error) {
+                console.error('Error loading showcases:', error);
+                showcases = [];
+            }
+        }
+        
+        // Events Calendar Management
+        let currentDate = new Date();
+        let events = [];
+        
+        function initializeCalendar() {
+            loadEvents();
+            renderCalendar();
+            displayEventsList();
+        }
+        
+        // Render calendar
+        function renderCalendar() {
+            const container = document.getElementById('calendarContainer');
+            if (!container) return;
+            
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Update month/year display
+            const monthYear = document.getElementById('currentMonthYear');
+            if (monthYear) {
+                monthYear.textContent = currentDate.toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+            }
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const days = [];
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            // Add day headers
+            days.push(`<div class="calendar-header">${dayNames.join('</div><div class="calendar-header">')}</div>`);
+            
+            // Add calendar days
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                const isCurrentMonth = date.getMonth() === month;
+                const isToday = date.toDateString() === new Date().toDateString();
+                const dayEvents = events.filter(event => 
+                    new Date(event.date).toDateString() === date.toDateString()
+                );
+                
+                const dayClass = [
+                    'calendar-day',
+                    isCurrentMonth ? '' : 'other-month',
+                    isToday ? 'today' : '',
+                    dayEvents.length > 0 ? 'has-event' : ''
+                ].filter(Boolean).join(' ');
+                
+                const dayEventsHTML = dayEvents.map(event => 
+                    `<div class="calendar-event" title="${event.title}">${event.title}</div>`
+                ).join('');
+                
+                days.push(`
+                    <div class="${dayClass}">
+                        <div class="calendar-day-number">${date.getDate()}</div>
+                        ${dayEventsHTML}
+                    </div>
+                `);
+            }
+            
+            container.innerHTML = `<div class="calendar-grid">${days.join('')}</div>`;
+        }
+        
+        // Display events list
+        function displayEventsList() {
+            const container = document.getElementById('eventsList');
+            if (!container) return;
+            
+            if (events.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No events scheduled</p></div>';
+                return;
+            }
+            
+            const sortedEvents = events.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            container.innerHTML = sortedEvents.map(event => `
+                <div class="event-item">
+                    <div class="event-header">
+                        <div>
+                            <h4 class="event-title">${event.title}</h4>
+                            <div class="event-date">${new Date(event.date).toLocaleDateString()}</div>
+                        </div>
+                        <span class="event-type">${event.type}</span>
+                    </div>
+                    <p class="event-description">${event.description}</p>
+                    ${event.location ? `
+                        <div class="event-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${event.location}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+        
+        // Load events (in a real app, this would come from a database)
+        function loadEvents() {
+            try {
+                const saved = localStorage.getItem('cochranEvents');
+                if (saved) {
+                    events = JSON.parse(saved);
+                } else {
+                    // Add some sample events
+                    events = [
+                        {
+                            id: 1,
+                            title: 'Team Meeting',
+                            description: 'Weekly team sync and project updates',
+                            date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                            type: 'Meeting',
+                            location: 'Conference Room A'
+                        },
+                        {
+                            id: 2,
+                            title: 'Photography Workshop',
+                            description: 'Advanced lighting techniques and composition',
+                            date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+                            type: 'Training',
+                            location: 'Studio 1'
+                        },
+                        {
+                            id: 3,
+                            title: 'Client Presentation',
+                            description: 'Presenting Q4 project proposals',
+                            date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+                            type: 'Presentation',
+                            location: 'Main Conference Room'
+                        }
+                    ];
+                    saveEvents();
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                events = [];
+            }
+        }
+        
+        // Save events
+        function saveEvents() {
+            try {
+                localStorage.setItem('cochranEvents', JSON.stringify(events));
+            } catch (error) {
+                console.error('Error saving events:', error);
+            }
+        }
+        
+        // Calendar navigation
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+        
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+        
+        // Initialize all community features when section is shown
+        function initializeCommunityFeatures() {
+            if (document.getElementById('community-section').classList.contains('active')) {
+                initializeProfilePicture();
+                initializeContractorDirectory();
+                initializeMessagingBoard();
+                initializeSuccessStories();
+            }
+            if (document.getElementById('showcases-section').classList.contains('active')) {
+                initializeShowcases();
+            }
+            if (document.getElementById('calendar-section').classList.contains('active')) {
+                initializeCalendar();
+            }
+        }
+        
+        // Override the existing switchPortalTab function to initialize community features
+        const originalSwitchPortalTab = switchPortalTab;
+        switchPortalTab = function(tabName) {
+            originalSwitchPortalTab(tabName);
+            
+            // Initialize community features when switching to those sections
+            setTimeout(() => {
+                initializeCommunityFeatures();
+            }, 100);
+        };
+
     </script>
 
     <style>
@@ -14954,6 +15988,974 @@
 
         /* Lists */
         .item-list { background: transparent !important; }
+        
+        /* ==================== COMMUNITY FEATURES STYLES ==================== */
+        
+        /* Profile Picture Upload */
+        .profile-picture-card {
+            margin-bottom: 2rem;
+        }
+        
+        .profile-picture-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .profile-picture-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid var(--primary);
+            position: relative;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .profile-picture-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-picture-placeholder {
+            font-size: 3rem;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .profile-picture-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        /* Contractor Directory */
+        .contractor-directory-card {
+            margin-bottom: 2rem;
+        }
+        
+        .directory-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .search-input, .filter-select {
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .contractor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .contractor-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .contractor-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(255,178,0,0.2);
+        }
+        
+        .contractor-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .contractor-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary);
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .contractor-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .contractor-avatar .placeholder {
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .contractor-info h4 {
+            margin: 0 0 0.25rem 0;
+            color: white;
+            font-size: 1.1rem;
+        }
+        
+        .contractor-role {
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .contractor-details {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .contractor-location {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Messaging Board */
+        .messaging-board-card {
+            margin-bottom: 2rem;
+        }
+        
+        .messaging-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .messages-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .message-item {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .message-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary);
+            flex-shrink: 0;
+        }
+        
+        .message-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .message-avatar .placeholder {
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .message-content {
+            flex: 1;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .message-author {
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .message-time {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+        }
+        
+        .message-text {
+            color: rgba(255,255,255,0.9);
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+        
+        .message-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .message-like-btn,
+        .message-reply-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+        
+        .message-like-btn:hover,
+        .message-reply-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .message-like-btn.liked {
+            background: var(--primary);
+            color: #0b0b10;
+            border-color: var(--primary);
+        }
+        
+        .message-input-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .message-input {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .message-input input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .message-input input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255,178,0,0.2);
+        }
+        
+        .message-input input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .message-input button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+        }
+        
+        /* New Message Modal */
+        .new-message-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .new-message-content {
+            background: rgba(15,23,42,0.95);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid rgba(255,178,0,0.2);
+        }
+        
+        .new-message-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .new-message-header h3 {
+            color: white;
+            margin: 0;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .new-message-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .new-message-form textarea {
+            padding: 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .new-message-form textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255,178,0,0.2);
+        }
+        
+        .new-message-form textarea::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .new-message-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        /* Success Stories */
+        .success-stories-card {
+            margin-bottom: 2rem;
+        }
+        
+        .success-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .success-stories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .success-story-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .success-story-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(255,178,0,0.2);
+        }
+        
+        .success-story-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+        
+        .success-story-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .success-story-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid var(--primary);
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .success-story-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .success-story-avatar .placeholder {
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .success-story-info h4 {
+            margin: 0 0 0.25rem 0;
+            color: white;
+            font-size: 1.1rem;
+        }
+        
+        .success-story-role {
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .success-story-achievement {
+            background: rgba(255,178,0,0.2);
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .success-story-title {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        .success-story-description {
+            color: rgba(255,255,255,0.8);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        
+        .success-story-stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .success-stat {
+            text-align: center;
+        }
+        
+        .success-stat-number {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: block;
+        }
+        
+        .success-stat-label {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .success-story-date {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            text-align: right;
+        }
+        
+        .success-story-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        
+        .success-congratulate-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .success-congratulate-btn:hover {
+            background: var(--primary);
+            color: #0b0b10;
+        }
+        
+        .success-share-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .success-share-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        /* Project Showcases */
+        .showcase-upload-card {
+            margin-bottom: 2rem;
+        }
+        
+        .showcase-form {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group label {
+            color: white;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255,178,0,0.2);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .image-preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .image-preview {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .image-preview .remove-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255,0,0,0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .showcase-filters {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .showcases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+        
+        .showcase-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .showcase-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(255,178,0,0.2);
+        }
+        
+        .showcase-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .showcase-image {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .showcase-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .showcase-content {
+            padding: 1.5rem;
+        }
+        
+        .showcase-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .showcase-title {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .showcase-category {
+            background: var(--primary);
+            color: #0b0b10;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .showcase-description {
+            color: rgba(255,255,255,0.8);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        
+        .showcase-author {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .showcase-author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary);
+        }
+        
+        .showcase-author-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .showcase-author-info h5 {
+            margin: 0;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .showcase-author-info p {
+            margin: 0;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+        }
+        
+        .showcase-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .showcase-like-btn,
+        .showcase-comment-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            background: transparent;
+            color: rgba(255,255,255,0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .showcase-like-btn:hover,
+        .showcase-comment-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .showcase-like-btn.liked {
+            background: var(--primary);
+            color: #0b0b10;
+            border-color: var(--primary);
+        }
+        
+        /* Events Calendar */
+        .calendar-card {
+            margin-bottom: 2rem;
+        }
+        
+        .calendar-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .calendar-controls span {
+            color: white;
+            font-weight: 600;
+            min-width: 150px;
+            text-align: center;
+        }
+        
+        .calendar-container {
+            margin-top: 1.5rem;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .calendar-header {
+            background: var(--primary);
+            color: #0b0b10;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .calendar-day {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            min-height: 80px;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        
+        .calendar-day:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .calendar-day.today {
+            background: rgba(255,178,0,0.2);
+            border-color: var(--primary);
+        }
+        
+        .calendar-day.has-event {
+            background: rgba(255,178,0,0.1);
+        }
+        
+        .calendar-day-number {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .calendar-event {
+            background: var(--primary);
+            color: #0b0b10;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+        }
+        
+        .events-list-card {
+            margin-bottom: 2rem;
+        }
+        
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .event-item {
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .event-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .event-title {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .event-date {
+            color: var(--primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .event-type {
+            background: rgba(255,178,0,0.2);
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .event-description {
+            color: rgba(255,255,255,0.8);
+            line-height: 1.5;
+        }
+        
+        .event-location {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive Design for Community Features */
+        @media (max-width: 768px) {
+            .profile-picture-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .directory-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .contractor-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .showcases-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .calendar-grid {
+                font-size: 0.8rem;
+            }
+            
+            .calendar-day {
+                min-height: 60px;
+                padding: 0.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -15073,6 +17075,24 @@
                     <a href="#performance" class="nav-link" onclick="showSection('performance')">
                         <i class="fas fa-award"></i>
                         <span>Performance Reviews</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#community" class="nav-link" onclick="showSection('community')">
+                        <i class="fas fa-users"></i>
+                        <span>Community</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#showcases" class="nav-link" onclick="showSection('showcases')">
+                        <i class="fas fa-images"></i>
+                        <span>Project Showcases</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#calendar" class="nav-link" onclick="showSection('calendar')">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Events</span>
                     </a>
                 </div>
             </nav>
@@ -15405,6 +17425,218 @@
                 <div id="performance-reviews" class="performance-tab-content">
                     <div id="performanceContent">
                         <!-- Performance reviews will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Community Section -->
+            <div id="community-section" class="content-section">
+                <div class="dashboard-header">
+                    <h1><i class="fas fa-users"></i> Community</h1>
+                    <p>Connect with your team members and build professional relationships</p>
+                </div>
+                
+                <!-- Profile Picture Upload -->
+                <div class="card profile-picture-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-camera"></i> Profile Picture</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="profile-picture-container">
+                            <div class="profile-picture-preview" id="profilePicturePreview">
+                                <img id="profileImage" src="" alt="Profile Picture" style="display: none;">
+                                <div class="profile-picture-placeholder" id="profilePicturePlaceholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                            <div class="profile-picture-actions">
+                                <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+                                <button class="btn btn-primary" onclick="document.getElementById('profilePictureInput').click()">
+                                    <i class="fas fa-upload"></i> Upload Photo
+                                </button>
+                                <button class="btn btn-secondary" onclick="removeProfilePicture()" id="removePictureBtn" style="display: none;">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contractor Directory -->
+                <div class="card contractor-directory-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-address-book"></i> Team Directory</h3>
+                        <div class="directory-controls">
+                            <input type="text" id="directorySearch" placeholder="Search team members..." class="search-input">
+                            <select id="roleFilter" class="filter-select">
+                                <option value="">All Roles</option>
+                                <option value="Photographer">Photographer</option>
+                                <option value="Videographer">Videographer</option>
+                                <option value="Editor">Editor</option>
+                                <option value="Assistant">Assistant</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="contractor-grid" id="contractorGrid">
+                            <!-- Contractor cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Messaging Board -->
+                <div class="card messaging-board-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-comments"></i> Team Messaging</h3>
+                        <div class="messaging-controls">
+                            <button class="btn btn-primary" onclick="showNewMessageModal()">
+                                <i class="fas fa-plus"></i> New Message
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="messages-container" id="messagesContainer">
+                            <!-- Messages will be populated here -->
+                        </div>
+                        <div class="message-input-container">
+                            <div class="message-input">
+                                <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
+                                <button class="btn btn-primary" onclick="sendMessage()">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Success Stories -->
+                <div class="card success-stories-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-trophy"></i> Success Stories</h3>
+                        <div class="success-controls">
+                            <select id="successFilter" class="filter-select">
+                                <option value="">All Achievements</option>
+                                <option value="Top Performer">Top Performer</option>
+                                <option value="Project Excellence">Project Excellence</option>
+                                <option value="Team Player">Team Player</option>
+                                <option value="Innovation">Innovation</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="success-stories-grid" id="successStoriesGrid">
+                            <!-- Success stories will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Project Showcases Section -->
+            <div id="showcases-section" class="content-section">
+                <div class="dashboard-header">
+                    <h1><i class="fas fa-images"></i> Project Showcases</h1>
+                    <p>Share your completed work and get feedback from the community</p>
+                </div>
+                
+                <!-- Add New Showcase -->
+                <div class="card showcase-upload-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-plus-circle"></i> Share Your Work</h3>
+                    </div>
+                    <div class="card-content">
+                        <form id="showcaseForm" class="showcase-form">
+                            <div class="form-group">
+                                <label for="showcaseTitle">Project Title</label>
+                                <input type="text" id="showcaseTitle" name="title" placeholder="Enter project title..." required>
+                            </div>
+                            <div class="form-group">
+                                <label for="showcaseDescription">Description</label>
+                                <textarea id="showcaseDescription" name="description" placeholder="Describe your project, techniques used, challenges overcome..." rows="4"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="showcaseImages">Upload Images</label>
+                                <input type="file" id="showcaseImages" name="images" accept="image/*" multiple>
+                                <div class="image-preview-container" id="imagePreviewContainer"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="showcaseCategory">Category</label>
+                                <select id="showcaseCategory" name="category">
+                                    <option value="Photography">Photography</option>
+                                    <option value="Videography">Videography</option>
+                                    <option value="Event Coverage">Event Coverage</option>
+                                    <option value="Commercial">Commercial</option>
+                                    <option value="Portrait">Portrait</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-share"></i> Share Showcase
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Showcases Feed -->
+                <div class="card showcases-feed-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-images"></i> Community Showcases</h3>
+                        <div class="showcase-filters">
+                            <select id="showcaseFilter" class="filter-select">
+                                <option value="">All Categories</option>
+                                <option value="Photography">Photography</option>
+                                <option value="Videography">Videography</option>
+                                <option value="Event Coverage">Event Coverage</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Portrait">Portrait</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="showcases-grid" id="showcasesGrid">
+                            <!-- Showcase cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Events Calendar Section -->
+            <div id="calendar-section" class="content-section">
+                <div class="dashboard-header">
+                    <h1><i class="fas fa-calendar-alt"></i> Events & Calendar</h1>
+                    <p>Stay updated with company events, training sessions, and meetups</p>
+                </div>
+                
+                <!-- Calendar View -->
+                <div class="card calendar-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-calendar"></i> Upcoming Events</h3>
+                        <div class="calendar-controls">
+                            <button class="btn btn-secondary" onclick="previousMonth()">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <span id="currentMonthYear">January 2024</span>
+                            <button class="btn btn-secondary" onclick="nextMonth()">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="calendar-container" id="calendarContainer">
+                            <!-- Calendar will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Event List -->
+                <div class="card events-list-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list"></i> All Events</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="events-list" id="eventsList">
+                            <!-- Events will be populated here -->
+                        </div>
                     </div>
                 </div>
             </div>

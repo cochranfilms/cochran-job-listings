@@ -12,7 +12,11 @@ const FirestoreDataManager = {
         users: 'users',
         jobs: 'jobs', // job listings live here
         dropdownOptions: 'dropdownOptions', // centralized dropdowns
-        contracts: 'contracts'
+        contracts: 'contracts',
+        messages: 'messages', // team messaging board
+        showcases: 'showcases', // project showcases
+        events: 'events', // company events and calendar
+        successStories: 'successStories' // success stories and achievements
     },
 
     // Initialize the data manager
@@ -86,6 +90,46 @@ const FirestoreDataManager = {
                     console.error('❌ Dropdown options listener error:', error);
                 });
             
+            // Listen for messages changes
+            this.db.collection(this.collections.messages)
+                .orderBy('timestamp', 'desc')
+                .onSnapshot((snapshot) => {
+                    console.log('💬 Messages collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleMessagesUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Messages listener error:', error);
+                });
+            
+            // Listen for showcases changes
+            this.db.collection(this.collections.showcases)
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    console.log('🖼️ Showcases collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleShowcasesUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Showcases listener error:', error);
+                });
+            
+            // Listen for events changes
+            this.db.collection(this.collections.events)
+                .orderBy('date', 'asc')
+                .onSnapshot((snapshot) => {
+                    console.log('📅 Events collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleEventsUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Events listener error:', error);
+                });
+            
+            // Listen for success stories changes
+            this.db.collection(this.collections.successStories)
+                .orderBy('timestamp', 'desc')
+                .onSnapshot((snapshot) => {
+                    console.log('🏆 Success stories collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleSuccessStoriesUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Success stories listener error:', error);
+                });
+            
             console.log('✅ Real-time listeners set up successfully');
             
         } catch (error) {
@@ -139,6 +183,74 @@ const FirestoreDataManager = {
             } else if (change.type === 'removed') {
                 console.log('📋 Dropdown option removed:', change.doc.id);
                 this.notifyDataChange('dropdownOptions', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle messages collection updates
+    handleMessagesUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('💬 New message added:', change.doc.id);
+                this.notifyDataChange('messages', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('💬 Message modified:', change.doc.id);
+                this.notifyDataChange('messages', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('💬 Message removed:', change.doc.id);
+                this.notifyDataChange('messages', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle showcases collection updates
+    handleShowcasesUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('🖼️ New showcase added:', change.doc.id);
+                this.notifyDataChange('showcases', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('🖼️ Showcase modified:', change.doc.id);
+                this.notifyDataChange('showcases', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('🖼️ Showcase removed:', change.doc.id);
+                this.notifyDataChange('showcases', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle events collection updates
+    handleEventsUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('📅 New event added:', change.doc.id);
+                this.notifyDataChange('events', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('📅 Event modified:', change.doc.id);
+                this.notifyDataChange('events', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('📅 Event removed:', change.doc.id);
+                this.notifyDataChange('events', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle success stories collection updates
+    handleSuccessStoriesUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('🏆 New success story added:', change.doc.id);
+                this.notifyDataChange('successStories', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('🏆 Success story modified:', change.doc.id);
+                this.notifyDataChange('successStories', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('🏆 Success story removed:', change.doc.id);
+                this.notifyDataChange('successStories', 'removed', change.doc.id, change.doc.data());
             }
         });
     },
@@ -1087,6 +1199,220 @@ function initializeFirestoreDataManager() {
                 console.error('❌ Firestore Data Manager auto-initialization failed:', error);
             });
         }, 100);
+    },
+
+    // ==================== COMMUNITY OPERATIONS ====================
+
+    // Messages Operations
+    async getMessages() {
+        try {
+            const snapshot = await this.db.collection(this.collections.messages)
+                .orderBy('timestamp', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting messages:', error);
+            return [];
+        }
+    },
+
+    async addMessage(messageData) {
+        try {
+            const docRef = await this.db.collection(this.collections.messages).add({
+                ...messageData,
+                timestamp: new Date().toISOString(),
+                createdAt: new Date()
+            });
+            console.log('✅ Message added with ID:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('❌ Error adding message:', error);
+            throw error;
+        }
+    },
+
+    async updateMessage(messageId, updateData) {
+        try {
+            await this.db.collection(this.collections.messages).doc(messageId).update({
+                ...updateData,
+                updatedAt: new Date()
+            });
+            console.log('✅ Message updated:', messageId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating message:', error);
+            throw error;
+        }
+    },
+
+    async deleteMessage(messageId) {
+        try {
+            await this.db.collection(this.collections.messages).doc(messageId).delete();
+            console.log('✅ Message deleted:', messageId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting message:', error);
+            throw error;
+        }
+    },
+
+    // Showcases Operations
+    async getShowcases() {
+        try {
+            const snapshot = await this.db.collection(this.collections.showcases)
+                .orderBy('createdAt', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting showcases:', error);
+            return [];
+        }
+    },
+
+    async addShowcase(showcaseData) {
+        try {
+            const docRef = await this.db.collection(this.collections.showcases).add({
+                ...showcaseData,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date()
+            });
+            console.log('✅ Showcase added with ID:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('❌ Error adding showcase:', error);
+            throw error;
+        }
+    },
+
+    async updateShowcase(showcaseId, updateData) {
+        try {
+            await this.db.collection(this.collections.showcases).doc(showcaseId).update({
+                ...updateData,
+                updatedAt: new Date()
+            });
+            console.log('✅ Showcase updated:', showcaseId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating showcase:', error);
+            throw error;
+        }
+    },
+
+    async deleteShowcase(showcaseId) {
+        try {
+            await this.db.collection(this.collections.showcases).doc(showcaseId).delete();
+            console.log('✅ Showcase deleted:', showcaseId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting showcase:', error);
+            throw error;
+        }
+    },
+
+    // Events Operations
+    async getEvents() {
+        try {
+            const snapshot = await this.db.collection(this.collections.events)
+                .orderBy('date', 'asc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting events:', error);
+            return [];
+        }
+    },
+
+    async addEvent(eventData) {
+        try {
+            const docRef = await this.db.collection(this.collections.events).add({
+                ...eventData,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date()
+            });
+            console.log('✅ Event added with ID:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('❌ Error adding event:', error);
+            throw error;
+        }
+    },
+
+    async updateEvent(eventId, updateData) {
+        try {
+            await this.db.collection(this.collections.events).doc(eventId).update({
+                ...updateData,
+                updatedAt: new Date()
+            });
+            console.log('✅ Event updated:', eventId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating event:', error);
+            throw error;
+        }
+    },
+
+    async deleteEvent(eventId) {
+        try {
+            await this.db.collection(this.collections.events).doc(eventId).delete();
+            console.log('✅ Event deleted:', eventId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting event:', error);
+            throw error;
+        }
+    },
+
+    // Success Stories Operations
+    async getSuccessStories() {
+        try {
+            const snapshot = await this.db.collection(this.collections.successStories)
+                .orderBy('timestamp', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting success stories:', error);
+            return [];
+        }
+    },
+
+    async addSuccessStory(storyData) {
+        try {
+            const docRef = await this.db.collection(this.collections.successStories).add({
+                ...storyData,
+                timestamp: new Date().toISOString(),
+                createdAt: new Date()
+            });
+            console.log('✅ Success story added with ID:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('❌ Error adding success story:', error);
+            throw error;
+        }
+    },
+
+    async updateSuccessStory(storyId, updateData) {
+        try {
+            await this.db.collection(this.collections.successStories).doc(storyId).update({
+                ...updateData,
+                updatedAt: new Date()
+            });
+            console.log('✅ Success story updated:', storyId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating success story:', error);
+            throw error;
+        }
+    },
+
+    async deleteSuccessStory(storyId) {
+        try {
+            await this.db.collection(this.collections.successStories).doc(storyId).delete();
+            console.log('✅ Success story deleted:', storyId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting success story:', error);
+            throw error;
+        }
     }
 }
 
