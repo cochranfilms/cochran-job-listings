@@ -6987,6 +6987,13 @@
             if (currentUser && currentUser.profilePicture) {
                 displayProfilePicture(currentUser.profilePicture);
             }
+            
+            // Initialize equipment center when switching to equipment section
+            if (tabName === 'equipment') {
+                setTimeout(() => {
+                    try { initializeEquipmentCenter(); } catch(e) { console.warn('equipment init skipped', e); }
+                }, 100);
+            }
         }
 
         function showSection(sectionName) {
@@ -7035,9 +7042,19 @@
             }
         }
         async function loadEquipmentRequests() {
-            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-                const email = (currentUser && currentUser.email) ? currentUser.email : (auth && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : '';
-                _equipmentRequests = await window.FirestoreDataManager.getEquipmentRequests({ userEmail: email });
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const email = (currentUser && currentUser.email) ? currentUser.email : (auth && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : '';
+                    console.log('🔄 Loading equipment requests for user:', email);
+                    _equipmentRequests = await window.FirestoreDataManager.getEquipmentRequests({ userEmail: email });
+                    console.log('✅ Loaded equipment requests:', _equipmentRequests);
+                } else {
+                    console.warn('⚠️ FirestoreDataManager not available for loading equipment requests');
+                    _equipmentRequests = [];
+                }
+            } catch (e) {
+                console.error('❌ Error loading equipment requests:', e);
+                _equipmentRequests = [];
             }
         }
         async function loadMaintenance() {
@@ -7111,15 +7128,63 @@
             `).join('');
         }
 
-        function prefillRequest(equipmentId, equipmentName) {
+        async function prefillRequest(equipmentId, equipmentName) {
             try {
-                const input = document.getElementById('requestItems');
-                if (!input) return;
-                const list = input.value ? input.value.split(',').map(s => s.trim()).filter(Boolean) : [];
-                if (!list.includes(equipmentName)) list.push(equipmentName);
-                input.value = list.join(', ');
+                // First switch to the requests tab
                 switchEquipmentTab('requests');
-            } catch(_) {}
+                
+                // Create a quick request for this specific equipment
+                await createQuickEquipmentRequest(equipmentId, equipmentName);
+                
+                // Also prefill the form for additional items
+                const input = document.getElementById('requestItems');
+                if (input) {
+                    const list = input.value ? input.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+                    if (!list.includes(equipmentName)) list.push(equipmentName);
+                    input.value = list.join(', ');
+                }
+            } catch(e) {
+                console.error('Error in prefillRequest:', e);
+                showNotification('Failed to create request', 'error');
+            }
+        }
+        
+        async function createQuickEquipmentRequest(equipmentId, equipmentName) {
+            try {
+                const email = (currentUser && currentUser.email) ? currentUser.email : (auth && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : '';
+                const name = currentUser?.name || currentUser?.profile?.name || '';
+                
+                if (!email) {
+                    showNotification('Please log in to request equipment', 'error');
+                    return;
+                }
+                
+                await ensureFirestoreReady();
+                
+                const requestData = {
+                    equipmentId: equipmentId,
+                    equipmentName: equipmentName,
+                    items: [equipmentName],
+                    neededFrom: null,
+                    neededTo: null,
+                    notes: `Quick request for ${equipmentName}`,
+                    status: 'pending',
+                    requestedBy: email,
+                    requestedByName: name,
+                    createdAt: new Date().toISOString()
+                };
+                
+                await window.FirestoreDataManager.createEquipmentRequest(requestData);
+                showNotification(`Request created for ${equipmentName}`, 'success');
+                
+                // Reload and display the requests
+                await loadEquipmentRequests();
+                renderEquipmentRequests();
+                
+            } catch(e) {
+                console.error('Error creating quick equipment request:', e);
+                showNotification('Failed to create request', 'error');
+            }
         }
 
         async function submitEquipmentRequest(event) {
@@ -7153,22 +7218,42 @@
 
         function renderEquipmentRequests() {
             const container = document.getElementById('equipmentRequestList');
-            if (!container) return;
+            if (!container) {
+                console.warn('⚠️ equipmentRequestList container not found');
+                return;
+            }
+            
+            console.log('🔄 Rendering equipment requests:', _equipmentRequests);
+            
+            if (!_equipmentRequests || _equipmentRequests.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #9ca3af; padding: 2rem;">
+                        <i class="fas fa-list" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p>No equipment requests found</p>
+                        <small>Click "Request" on any equipment to create a request</small>
+                    </div>
+                `;
+                return;
+            }
+            
             container.innerHTML = _equipmentRequests.map(req => `
                 <div class="card">
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
                         <div>
                             <div style="font-weight:700; color:#FFB200;">${(req.items||[]).join(', ')}</div>
                             <div class="equipment-meta">
-                                <span>${req.status || 'pending'}</span>
+                                <span class="status-${req.status || 'pending'}">${req.status || 'pending'}</span>
                                 ${req.neededFrom ? `<span>From: ${req.neededFrom}</span>` : ''}
                                 ${req.neededTo ? `<span>To: ${req.neededTo}</span>` : ''}
                             </div>
+                            ${req.notes ? `<div style="color:#9ca3af; font-size:0.85rem; margin-top:4px;">${req.notes}</div>` : ''}
                         </div>
                         <div style="color:#9ca3af; font-size:0.85rem;">${new Date(req.createdAt||Date.now()).toLocaleString()}</div>
                     </div>
                 </div>
             `).join('');
+            
+            console.log('✅ Equipment requests rendered successfully');
         }
 
         function renderMaintenanceList() {
@@ -16095,6 +16180,21 @@
         .status-pending {
             background: rgba(245, 158, 11, 0.2);
             color: #f59e0b;
+        }
+
+        .status-approved {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .status-denied {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-conflict {
+            background: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
         }
 
         .status-accepted {
