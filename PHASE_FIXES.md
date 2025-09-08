@@ -1,3 +1,13 @@
+### 2025-09-08 — Portfolio Builder (Phase: Creator Experience)
+- Added Firestore `portfolios` collection with CRUD and realtime listeners in `firestore-data-manager.js`.
+- Implemented `portfolio-builder.html` with:
+  - Profile (name, slug, bio, links)
+  - AI Theme Generator (calls `/api/portfolio-theme`)
+  - Uploads to Firebase Storage via `storage-utils.js`
+  - Live preview and Publish flow → Firestore `portfolios/<slug>`
+- New API: `api/portfolio-theme.js` uses `OPENAI_API_KEY` (server-side) to return strict theme JSON.
+- Admin: Added a card link to open the Portfolio Builder in `admin-dashboard.html`.
+- Docs updated: `TESTING_SYSTEM_README.md` (smoke test + env vars), `CLEANUP_SYSTEM_README.md` (integration notes).
 # Phase Fixes Documentation
 
 ## Overview
@@ -3656,7 +3666,7 @@ async function deleteUser(userName, isArchived = false) {
 
 **Result**: User deletions now properly persist to both local storage and GitHub, with comprehensive error handling and user feedback.
 
----
+                                                                                                                                                                                                                                                                                                                                                                                 ---
 
 ## Phase 3: Advanced User Experience Features ✅ COMPLETED
 

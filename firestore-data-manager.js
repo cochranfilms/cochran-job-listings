@@ -15,6 +15,7 @@ const FirestoreDataManager = {
         contracts: 'contracts',
         messages: 'messages', // team messaging board
         showcases: 'showcases', // project showcases
+        portfolios: 'portfolios', // user-owned portfolio profiles and galleries
         events: 'events', // company events and calendar
         successStories: 'successStories', // success stories and achievements
         // Equipment & Resource Center
@@ -103,6 +104,15 @@ const FirestoreDataManager = {
                     this.handleMessagesUpdate(snapshot);
                 }, (error) => {
                     console.error('❌ Messages listener error:', error);
+                });
+
+            // Listen for portfolios changes
+            this.db.collection(this.collections.portfolios)
+                .onSnapshot((snapshot) => {
+                    console.log('🗂️ Portfolios collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handlePortfoliosUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Portfolios listener error:', error);
                 });
             
             // Listen for showcases changes
@@ -243,6 +253,23 @@ const FirestoreDataManager = {
             } else if (change.type === 'removed') {
                 console.log('💬 Message removed:', change.doc.id);
                 this.notifyDataChange('messages', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle portfolios collection updates
+    handlePortfoliosUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('🗂️ New portfolio added:', change.doc.id);
+                this.notifyDataChange('portfolios', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('🗂️ Portfolio modified:', change.doc.id);
+                this.notifyDataChange('portfolios', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('🗂️ Portfolio removed:', change.doc.id);
+                this.notifyDataChange('portfolios', 'removed', change.doc.id, change.doc.data());
             }
         });
     },
@@ -1208,6 +1235,11 @@ const FirestoreDataManager = {
                 };
                 await this.db.collection(this.collections.dropdownOptions).doc('default').set(defaults, { merge: true });
             }
+
+            // Portfolios collection (no defaults required)
+            if (!(await this.hasData(this.collections.portfolios))) {
+                console.log('🗂️ Portfolios collection empty (ok)');
+            }
             
             console.log('✅ Collections initialization check complete');
         } catch (error) {
@@ -1249,6 +1281,72 @@ const FirestoreDataManager = {
             return true;
         } catch (error) {
             console.error('❌ Error in batch write:', error);
+            throw error;
+        }
+    },
+
+    // ==================== PORTFOLIOS OPERATIONS ====================
+
+    // List portfolios; optionally filter by owner email
+    async getPortfolios(options = {}) {
+        try {
+            let ref = this.db.collection(this.collections.portfolios).orderBy('updatedAt', 'desc');
+            if (options.ownerEmail) {
+                ref = this.db.collection(this.collections.portfolios).where('owner.email', '==', String(options.ownerEmail).toLowerCase());
+            }
+            const snapshot = await ref.get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting portfolios:', error);
+            return [];
+        }
+    },
+
+    // Read single portfolio by id
+    async getPortfolio(portfolioId) {
+        try {
+            const doc = await this.db.collection(this.collections.portfolios).doc(portfolioId).get();
+            return doc.exists ? { id: doc.id, ...doc.data() } : null;
+        } catch (error) {
+            console.error('❌ Error getting portfolio:', error);
+            throw error;
+        }
+    },
+
+    // Create or update portfolio
+    async setPortfolio(portfolioId, data) {
+        try {
+            const ref = this.db.collection(this.collections.portfolios).doc(portfolioId);
+            const payload = {
+                owner: {
+                    email: (data.owner?.email || '').toLowerCase(),
+                    name: data.owner?.name || ''
+                },
+                slug: data.slug || portfolioId,
+                profile: data.profile || { bio: '', avatarUrl: null, links: {} },
+                theme: data.theme || { tokens: {}, cssVariables: {}, layout: {}, components: {} },
+                gallery: Array.isArray(data.gallery) ? data.gallery : [],
+                visibility: data.visibility || 'private', // private | unlisted | public
+                createdAt: data.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            await ref.set(payload, { merge: true });
+            console.log('✅ Portfolio saved:', portfolioId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error saving portfolio:', error);
+            throw error;
+        }
+    },
+
+    // Delete portfolio
+    async deletePortfolio(portfolioId) {
+        try {
+            await this.db.collection(this.collections.portfolios).doc(portfolioId).delete();
+            console.log('✅ Portfolio deleted:', portfolioId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting portfolio:', error);
             throw error;
         }
     },

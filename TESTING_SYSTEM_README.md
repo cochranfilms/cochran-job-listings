@@ -331,6 +331,34 @@ Smoke test:
 4. Verify no console errors; Firestore presence is optional.
 
 ## Test Scripts
+### 11. Portfolio Builder Smoke Test (2025-09-08)
+Purpose: Validate Portfolio Builder core UI wiring, preview updates, and page load.
+
+Commands:
+```bash
+# Local dev server must be running (node server.js)
+npm test
+
+# or with custom URL / headful
+TEST_URL=http://collaborate.cochranfilms.com/portfolio-builder HEADLESS=false npm test
+```
+
+OpenAI configuration:
+- Add the following environment variables in Vercel Project Settings → Environment Variables:
+  - `OPENAI_API_KEY`: Your OpenAI API key (required)
+  - `OPENAI_MODEL`: Optional (default `gpt-4o-mini`). Recommended: `gpt-4o` for higher quality.
+
+How it works:
+- The page posts brand colors and style keywords to `/api/portfolio-theme`.
+- The API asks OpenAI for a strict JSON theme (tokens, cssVariables, layout, components, meta).
+- Returned `cssVariables` are applied live to the document, updating the preview.
+
+Firebase Storage uploads:
+- `storage-utils.js` wraps `firebase.storage()` uploads with progress callbacks and returns `{ downloadURL, path, size, contentType }`.
+- The builder uses this to upload selected files to `portfolios/{ownerEmail}/{timestamp-filename}`.
+
+Publishing:
+- Clicking Publish saves a Firestore document under `portfolios/<slug>` using `FirestoreDataManager.setPortfolio()`.
 ### 10. Firestore Job Assignments Alignment
 **Purpose**: Validate the Firestore-aligned model (global job listings + per-user assignments) and UI wiring.
 

@@ -1,4 +1,18 @@
 ## 2025-08-20 — Align Start Date to Job Selection
+### 2025-09-08 — Portfolio Builder Integration Notes
+- New files: `portfolio-builder.html`, `storage-utils.js`, `api/portfolio-theme.js`.
+- Data ownership: Firestore `portfolios` collection is canonical for portfolio profiles/galleries. No JSON backups.
+- Cleanup guidance:
+  - To disable the feature, remove the admin dashboard card link and delete `portfolios/*` docs from Firestore.
+  - Remove `storage-utils.js` include from any pages if no longer needed.
+  - Delete `api/portfolio-theme.js` if OpenAI theming is no longer desired.
+- Security:
+  - Keep `OPENAI_API_KEY` in Vercel environment variables only; never expose client-side.
+  - Firebase Storage paths are namespaced under `portfolios/{ownerEmail}`; adjust rules if needed.
+- Verification checklist:
+  - `/portfolio-builder.html` opens, uploads work to Storage, applies AI theme, and publishes a Firestore doc.
+  - Admin dashboard link opens the builder in a new tab.
+
 
 ## 2025-01-10 — Equipment & Resource Center Cleanup Plan
 
