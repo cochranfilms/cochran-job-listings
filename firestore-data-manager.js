@@ -309,6 +309,10 @@ const FirestoreDataManager = {
                     jobs: userData.jobs || {},
                     paymentMethod: userData.paymentMethod || '',
                     paymentStatus: userData.paymentStatus || '',
+                    // Surface profile picture for UI consumers
+                    profilePicture: (userData.profilePicture !== undefined && userData.profilePicture !== null)
+                        ? userData.profilePicture
+                        : (userData.profile && userData.profile.profilePicture) ? userData.profile.profilePicture : null,
                     // Include performance reviews so admin and user portal can read them
                     performance: userData.performance || null,
                     // Include secure payment/bank fields so admin can view them
@@ -439,6 +443,9 @@ const FirestoreDataManager = {
                     primaryJob: userData.primaryJob || '',
                     paymentMethod: userData.paymentMethod || '',
                     paymentStatus: userData.paymentStatus || '',
+                    profilePicture: (userData.profilePicture !== undefined && userData.profilePicture !== null)
+                        ? userData.profilePicture
+                        : (userData.profile && userData.profile.profilePicture) ? userData.profile.profilePicture : null,
                     performance: userData.performance || null
                 };
             }
@@ -456,6 +463,9 @@ const FirestoreDataManager = {
             try {
                 const emailLower = (userData && userData.profile && userData.profile.email)
                     ? String(userData.profile.email).toLowerCase() : '';
+                // Also look for a top-level email, which some callers provide
+                const topLevelEmailLower = (!emailLower && userData && userData.email)
+                    ? String(userData.email).toLowerCase() : '';
                 if (emailLower) {
                     const existingId = await this.findUserIdByEmail(emailLower);
                     if (existingId && existingId !== userId) {
@@ -464,6 +474,13 @@ const FirestoreDataManager = {
                     }
                     // Always store email in lowercase for deterministic queries
                     userData = { ...(userData||{}), profile: { ...(userData?.profile||{}), email: emailLower } };
+                } else if (topLevelEmailLower) {
+                    const existingId = await this.findUserIdByEmail(topLevelEmailLower);
+                    if (existingId && existingId !== userId) {
+                        console.log(`🔁 Remapping userId '${userId}' → existing '${existingId}' by top-level email ${topLevelEmailLower}`);
+                        userId = existingId;
+                    }
+                    userData = { ...(userData||{}), profile: { ...(userData?.profile||{}), email: topLevelEmailLower } };
                 } else if (userId && userId.includes('@')) {
                     // If caller passed email as id, map to existing id if found
                     const existingId = await this.findUserIdByEmail(userId);
@@ -480,6 +497,13 @@ const FirestoreDataManager = {
             if (Object.prototype.hasOwnProperty.call(profileClean, 'projectType')) {
                 delete profileClean.projectType;
             }
+            // Accept top-level name/email if provided by callers and not already set
+            if (!profileClean.email && userData && userData.email) {
+                profileClean.email = String(userData.email).toLowerCase();
+            }
+            if (!profileClean.name && userData && userData.name) {
+                profileClean.name = userData.name;
+            }
 
             const structuredUserData = {
                 profile: profileClean,
@@ -492,6 +516,14 @@ const FirestoreDataManager = {
                 performance: userData.performance || null,
                 lastUpdated: new Date().toISOString()
             };
+            // Keep a legacy top-level email field for easier querying and backwards compatibility
+            if (structuredUserData.profile && structuredUserData.profile.email) {
+                structuredUserData.email = structuredUserData.profile.email;
+            }
+            // Only include profilePicture when explicitly provided to avoid writing undefined
+            if (Object.prototype.hasOwnProperty.call(userData, 'profilePicture')) {
+                structuredUserData.profilePicture = userData.profilePicture;
+            }
             
             await this.db.collection(this.collections.users).doc(userId).set(structuredUserData, { merge: true });
             console.log('✅ User saved to Firestore:', userId);
@@ -1239,11 +1271,17 @@ Object.assign(FirestoreDataManager, {
 
     async addMessage(messageData) {
         try {
-            const docRef = await this.db.collection(this.collections.messages).add({
-                ...messageData,
+            const payload = {
+                author: messageData.author || 'Unknown',
+                authorEmail: (messageData.authorEmail || '').toLowerCase(),
+                authorAvatar: messageData.authorAvatar || null,
+                text: messageData.text || '',
+                likes: Number(messageData.likes || 0),
+                replies: Array.isArray(messageData.replies) ? messageData.replies : [],
                 timestamp: new Date().toISOString(),
                 createdAt: new Date()
-            });
+            };
+            const docRef = await this.db.collection(this.collections.messages).add(payload);
             console.log('✅ Message added with ID:', docRef.id);
             return docRef.id;
         } catch (error) {

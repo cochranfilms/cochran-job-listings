@@ -7994,20 +7994,17 @@
         
         // Save profile picture to user data
         async function saveProfilePicture(imageData) {
-            if (!currentUser) return;
-            
+            if (!currentUser || !currentUser.email) return;
             try {
-                // Update user data in Firestore
                 const userDocId = currentUser.email.replace(/[^a-zA-Z0-9]/g, '');
+                // Persist minimal update with top-level email and profilePicture
                 await window.FirestoreDataManager.setUser(userDocId, {
-                    ...currentUser,
+                    email: currentUser.email,
+                    name: currentUser.name || '',
+                    profile: { ...(currentUser.profile || {}), email: currentUser.email },
                     profilePicture: imageData
                 });
-                
-                // Update current user object
                 currentUser.profilePicture = imageData;
-                
-                // Update contractor directory if visible
                 if (document.getElementById('community-section').classList.contains('active')) {
                     displayContractorDirectory();
                 }
@@ -8199,9 +8196,9 @@
             if (!text) return;
             
             const message = {
-                author: currentUser.name || currentUser.email.split('@')[0],
-                authorEmail: currentUser.email,
-                authorAvatar: currentUser.profilePicture || null,
+                author: (currentUser && (currentUser.name || (currentUser.email && currentUser.email.split('@')[0]))) || 'Unknown',
+                authorEmail: (currentUser && currentUser.email) || '',
+                authorAvatar: (currentUser && currentUser.profilePicture) || null,
                 text: text,
                 likes: 0,
                 replies: []
