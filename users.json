@@ -2,24 +2,23 @@
   "users": {
     "Cody Cochran": {
       "profile": {
-        "email": "codylcochran87@gmail.com",
+        "email": "dedejackson727@gmail.com",
         "location": "Douglasville, GA",
         "role": "Photographer",
         "projectType": ""
       },
-      "profilePicture": null,
       "contract": {
         "contractStatus": "pending"
       },
       "application": {
         "status": "pending",
-        "submittedAt": "2025-08-21T16:05:28.722Z",
-        "jobTitle": "Backdrop Photographer Base",
-        "eventDate": "2025-11-08",
-        "pay": "$400",
-        "description": "You will be taking pictures for on-site printing at the 2nd annual Stranger Things block party from 4-9pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+        "submittedAt": "2025-09-08T22:55:50.777Z",
+        "jobTitle": "Backdrop Photographer Spotlight",
+        "eventDate": "2025-10-24",
+        "pay": "$300 + Tip",
+        "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
         "phone": "4704202169",
-        "portfolio": "https://www.cochranfilms.com",
+        "portfolio": "https://landing.cochranfilms.com",
         "source": "apply-html"
       },
       "jobs": {},
