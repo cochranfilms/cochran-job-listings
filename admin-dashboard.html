@@ -1160,6 +1160,122 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Row 4: Equipment & Resource Center (Admin) -->
+            <div class="content-row">
+                <!-- Equipment Inventory -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>🎒 Equipment Inventory</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-section">
+                            <h3>Add / Update Equipment</h3>
+                            <form id="adminEquipmentForm" onsubmit="return adminSaveEquipment(event)">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                                    <input type="text" id="equipName" placeholder="Name" required>
+                                    <input type="text" id="equipCategory" placeholder="Category (Camera, Light, etc.)">
+                                </div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                                    <input type="text" id="equipSerial" placeholder="Serial Number">
+                                    <select id="equipStatus">
+                                        <option value="available">Available</option>
+                                        <option value="checked_out">Checked Out</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="retired">Retired</option>
+                                    </select>
+                                </div>
+                                <input type="text" id="equipTags" placeholder="Tags (comma separated)">
+                                <input type="text" id="equipLocation" placeholder="Location (e.g., Warehouse)">
+                                <textarea id="equipNotes" rows="2" placeholder="Notes"></textarea>
+                                <input type="hidden" id="equipId">
+                                <div class="form-actions">
+                                    <button type="submit" class="btn">💾 Save</button>
+                                    <button type="button" class="btn btn-secondary" onclick="adminClearEquipmentForm()">🔄 Clear</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="form-section">
+                            <h3>Inventory</h3>
+                            <div class="item-list" id="adminEquipmentList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resource Downloads -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>📚 Resource Downloads</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-section">
+                            <h3>Add Resource</h3>
+                            <form id="adminResourceForm" onsubmit="return adminSaveResource(event)">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                                    <input type="text" id="resourceTitle" placeholder="Title" required>
+                                    <input type="text" id="resourceType" placeholder="Type (template, style guide, etc.)">
+                                </div>
+                                <input type="url" id="resourceUrl" placeholder="URL (https://...)" required>
+                                <input type="text" id="resourceTags" placeholder="Tags (comma separated)">
+                                <input type="text" id="resourceVersion" placeholder="Version (e.g., 1.0.0)">
+                                <input type="hidden" id="resourceId">
+                                <div class="form-actions">
+                                    <button type="submit" class="btn">➕ Add / Save</button>
+                                    <button type="button" class="btn btn-secondary" onclick="adminClearResourceForm()">🔄 Clear</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="form-section">
+                            <h3>Resources</h3>
+                            <div class="item-list" id="adminResourceList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-row">
+                <!-- Equipment Requests -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>📝 Equipment Requests</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-section">
+                            <h3>Pending / Recent Requests</h3>
+                            <div class="item-list" id="adminEquipmentRequests"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maintenance Schedule -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>🛠️ Maintenance</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-section">
+                            <h3>Schedule Maintenance</h3>
+                            <form id="adminMaintenanceForm" onsubmit="return adminScheduleMaintenance(event)">
+                                <input type="text" id="maintTitle" placeholder="Title" required>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                                    <input type="date" id="maintDate" required>
+                                    <input type="text" id="maintEquipmentId" placeholder="Equipment ID (optional)">
+                                </div>
+                                <input type="text" id="maintAssignee" placeholder="Assignee Email (optional)">
+                                <textarea id="maintNotes" rows="2" placeholder="Notes"></textarea>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn">📅 Schedule</button>
+                                    <button type="button" class="btn btn-secondary" onclick="adminClearMaintenanceForm()">🔄 Clear</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="form-section">
+                            <h3>Upcoming / Recent</h3>
+                            <div class="item-list" id="adminMaintenanceList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- Row 4: Community Management -->
             <div class="content-row">
@@ -1673,6 +1789,13 @@
             }, 1200);
             
             console.log('✅ Main dashboard displayed successfully');
+            // Initialize Equipment & Resource Center admin views
+            setTimeout(() => {
+                try { adminLoadEquipment(); } catch(_) {}
+                try { adminLoadResources(); } catch(_) {}
+                try { adminLoadEquipmentRequests(); } catch(_) {}
+                try { adminLoadMaintenance(); } catch(_) {}
+            }, 250);
         }
 
         // Handle login with Firebase
@@ -6707,6 +6830,229 @@
         window.clearOldMessages = clearOldMessages;
         window.resetCommunitySettings = resetCommunitySettings;
         window.initializeCommunityManagement = initializeCommunityManagement;
+    </script>
+
+    <script>
+        // ============ Equipment & Resource Center (Admin) Scripts ============
+        async function ensureFirestoreReady() {
+            if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                try { await window.FirestoreDataManager.init(); } catch(_) {}
+            }
+        }
+
+        // Equipment
+        async function adminLoadEquipment() {
+            try {
+                await ensureFirestoreReady();
+                const list = await window.FirestoreDataManager.getEquipment();
+                const container = document.getElementById('adminEquipmentList');
+                if (!container) return;
+                container.innerHTML = (list||[]).map(item => `
+                    <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div>
+                            <div style="font-weight:700; color:#FFB200;">${item.name||'Unnamed'}</div>
+                            <div style="color:#9ca3af; font-size:.9rem;">${item.category||'General'} • ${item.status||'available'} ${item.serialNumber?`• SN: ${item.serialNumber}`:''}</div>
+                            ${item.reservation ? `<div style='color:#9ca3af; font-size:.85rem;'>Reserved for ${item.reservation.userEmail||''} ${item.reservation.neededFrom?`from ${item.reservation.neededFrom}`:''} ${item.reservation.neededTo?`to ${item.reservation.neededTo}`:''}</div>` : ''}
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-secondary" onclick="adminEditEquipment('${item.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="adminDeleteEquipment('${item.id}')">Delete</button>
+                            ${item.status==='reserved'?`<button class='btn btn-secondary' onclick=\"adminCheckOutEquipment('${item.id}')\">Check Out</button>`:''}
+                            ${item.status==='checked_out'?`<button class='btn btn-secondary' onclick=\"adminCheckInEquipment('${item.id}')\">Check In</button>`:''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { console.warn('adminLoadEquipment error', e); }
+        }
+        function adminClearEquipmentForm(){ try { document.getElementById('adminEquipmentForm').reset(); document.getElementById('equipId').value=''; } catch(_) {} }
+        function adminEditEquipment(id){
+            try {
+                document.getElementById('equipId').value = id;
+            } catch(_) {}
+        }
+        async function adminDeleteEquipment(id){
+            try { await ensureFirestoreReady(); await window.FirestoreDataManager.deleteEquipment(id); await adminLoadEquipment(); showAdminNotification('Deleted','Equipment removed','success'); } catch(e){ console.error(e); showAdminNotification('Error','Failed to delete','error'); }
+        }
+        async function adminSaveEquipment(e){
+            e.preventDefault();
+            try {
+                await ensureFirestoreReady();
+                const payload = {
+                    name: document.getElementById('equipName').value.trim(),
+                    category: document.getElementById('equipCategory').value.trim(),
+                    status: document.getElementById('equipStatus').value,
+                    serialNumber: document.getElementById('equipSerial').value.trim(),
+                    tags: (document.getElementById('equipTags').value||'').split(',').map(s=>s.trim()).filter(Boolean),
+                    location: document.getElementById('equipLocation').value.trim(),
+                    notes: document.getElementById('equipNotes').value.trim()
+                };
+                const id = document.getElementById('equipId').value.trim();
+                if (id) await window.FirestoreDataManager.updateEquipment(id, payload);
+                else await window.FirestoreDataManager.addEquipment(payload);
+                adminClearEquipmentForm();
+                await adminLoadEquipment();
+                showAdminNotification('Saved','Equipment saved','success');
+            } catch(e){ console.error(e); showAdminNotification('Error','Failed to save equipment','error'); }
+            return false;
+        }
+
+        // Resources
+        async function adminLoadResources(){
+            try { await ensureFirestoreReady(); const list = await window.FirestoreDataManager.getResources(); const container = document.getElementById('adminResourceList'); if(!container) return; container.innerHTML = (list||[]).map(r=>`
+                <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                    <div>
+                        <div style=\"font-weight:700; color:#FFB200;\">${r.title||'Untitled'}</div>
+                        <div style=\"color:#9ca3af; font-size:.9rem;\">${r.type||'document'} ${r.version?`• v${r.version}`:''}</div>
+                    </div>
+                    <div style=\"display:flex; gap:8px;\">
+                        ${r.url?`<a class='btn btn-secondary' href='${r.url}' target='_blank' rel='noopener'>Open</a>`:''}
+                        <button class="btn btn-danger" onclick="adminDeleteResource('${r.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join(''); } catch(e){ console.warn('adminLoadResources error', e); }
+        }
+        function adminClearResourceForm(){ try { document.getElementById('adminResourceForm').reset(); document.getElementById('resourceId').value=''; } catch(_) {} }
+        async function adminDeleteResource(id){ try { await ensureFirestoreReady(); await window.FirestoreDataManager.deleteResource(id); await adminLoadResources(); showAdminNotification('Deleted','Resource removed','success'); } catch(e){ console.error(e); showAdminNotification('Error','Failed to delete resource','error'); } }
+        async function adminSaveResource(e){
+            e.preventDefault();
+            try {
+                await ensureFirestoreReady();
+                const payload = {
+                    title: document.getElementById('resourceTitle').value.trim(),
+                    type: document.getElementById('resourceType').value.trim(),
+                    url: document.getElementById('resourceUrl').value.trim(),
+                    tags: (document.getElementById('resourceTags').value||'').split(',').map(s=>s.trim()).filter(Boolean),
+                    version: document.getElementById('resourceVersion').value.trim()
+                };
+                const id = document.getElementById('resourceId').value.trim();
+                if (id) await window.FirestoreDataManager.updateResource(id, payload);
+                else await window.FirestoreDataManager.addResource(payload);
+                adminClearResourceForm();
+                await adminLoadResources();
+                showAdminNotification('Saved','Resource saved','success');
+            } catch(e){ console.error(e); showAdminNotification('Error','Failed to save resource','error'); }
+            return false;
+        }
+
+        // Equipment Requests
+        async function adminLoadEquipmentRequests(){
+            try { await ensureFirestoreReady(); const list = await window.FirestoreDataManager.getEquipmentRequests(); const container = document.getElementById('adminEquipmentRequests'); if(!container) return; container.innerHTML = (list||[]).map(req=>`
+                <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                    <div>
+                        <div style=\"font-weight:700; color:#FFB200;\">${(req.items||[]).join(', ')}</div>
+                        <div style=\"color:#9ca3af; font-size:.9rem;\">${req.userEmail||''} • ${req.status||'pending'} ${req.neededFrom?`• From ${req.neededFrom}`:''} ${req.neededTo?`• To ${req.neededTo}`:''}</div>
+                    </div>
+                    <div style=\"display:flex; gap:8px;\">
+                        <button class=\"btn btn-secondary\" onclick=\"adminUpdateRequestStatus('${req.id}','approved')\">Approve</button>
+                        <button class=\"btn btn-danger\" onclick=\"adminUpdateRequestStatus('${req.id}','denied')\">Deny</button>
+                    </div>
+                </div>
+            `).join(''); } catch(e){ console.warn('adminLoadEquipmentRequests error', e); }
+        }
+        async function adminUpdateRequestStatus(id, status){
+            try {
+                await ensureFirestoreReady();
+                if (status === 'approved') {
+                    await adminApproveRequest(id);
+                } else {
+                    await window.FirestoreDataManager.updateEquipmentRequest(id, { status });
+                }
+                await Promise.all([adminLoadEquipmentRequests(), adminLoadEquipment()]);
+                showAdminNotification('Updated',`Request ${status}`,'success');
+            } catch(e){ console.error(e); showAdminNotification('Error','Failed to update request','error'); }
+        }
+
+        function datesOverlap(aStart, aEnd, bStart, bEnd){
+            if (!aStart || !aEnd || !bStart || !bEnd) return true;
+            const A1 = new Date(aStart).getTime();
+            const A2 = new Date(aEnd).getTime();
+            const B1 = new Date(bStart).getTime();
+            const B2 = new Date(bEnd).getTime();
+            return Math.max(A1,B1) <= Math.min(A2,B2);
+        }
+
+        async function adminApproveRequest(requestId){
+            const [requests, equipment] = await Promise.all([
+                window.FirestoreDataManager.getEquipmentRequests(),
+                window.FirestoreDataManager.getEquipment()
+            ]);
+            const req = (requests||[]).find(r => r.id === requestId);
+            if (!req) throw new Error('Request not found');
+            const neededFrom = req.neededFrom || null;
+            const neededTo = req.neededTo || null;
+            const items = Array.isArray(req.items) ? req.items : [];
+            const reservedIds = [];
+            const conflicts = [];
+
+            for (const name of items){
+                const match = (equipment||[]).find(e =>
+                    (e.name||'').toLowerCase() === String(name).toLowerCase() ||
+                    (e.name||'').toLowerCase().includes(String(name).toLowerCase())
+                );
+                if (!match){ conflicts.push({ item:name, reason:'not_found' }); continue; }
+                const hasConflict = (match.status==='checked_out') ||
+                    (match.status==='reserved' && match.reservation && datesOverlap(neededFrom, neededTo, match.reservation.neededFrom, match.reservation.neededTo));
+                if (hasConflict){
+                    conflicts.push({ item:name, reason:'unavailable', equipmentId: match.id, status: match.status });
+                    continue;
+                }
+                const reservation = { requestId, userEmail: req.userEmail||'', neededFrom, neededTo, createdAt: new Date().toISOString() };
+                await window.FirestoreDataManager.updateEquipment(match.id, { status:'reserved', reservation });
+                reservedIds.push(match.id);
+            }
+
+            if (conflicts.length){
+                await window.FirestoreDataManager.updateEquipmentRequest(requestId, { status:'conflict', conflicts, reservedItems: reservedIds });
+            } else {
+                await window.FirestoreDataManager.updateEquipmentRequest(requestId, { status:'approved', reservedItems: reservedIds });
+            }
+        }
+
+        async function adminCheckOutEquipment(equipmentId){
+            try { await ensureFirestoreReady(); await window.FirestoreDataManager.updateEquipment(equipmentId, { status:'checked_out', checkedOutAt: new Date().toISOString() }); await adminLoadEquipment(); showAdminNotification('Checked Out','Equipment marked as checked out','success'); } catch(e){ console.error(e); showAdminNotification('Error','Failed to check out','error'); }
+        }
+        async function adminCheckInEquipment(equipmentId){
+            try { await ensureFirestoreReady(); await window.FirestoreDataManager.updateEquipment(equipmentId, { status:'available', reservation: null, checkedOutAt: null, checkedInAt: new Date().toISOString() }); await adminLoadEquipment(); showAdminNotification('Checked In','Equipment returned and available','success'); } catch(e){ console.error(e); showAdminNotification('Error','Failed to check in','error'); }
+        }
+
+        // Maintenance
+        async function adminLoadMaintenance(){
+            try { await ensureFirestoreReady(); const list = await window.FirestoreDataManager.getMaintenance(); const container = document.getElementById('adminMaintenanceList'); if(!container) return; container.innerHTML = (list||[]).map(m=>`
+                <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                    <div>
+                        <div style=\"font-weight:700; color:#FFB200;\">${m.title||'Maintenance'}</div>
+                        <div style=\"color:#9ca3af; font-size:.9rem;\">${m.scheduledDate?new Date(m.scheduledDate).toLocaleDateString():''} • ${m.status||'scheduled'} ${m.equipmentId?`• Item ${m.equipmentId}`:''}</div>
+                    </div>
+                    <div style=\"display:flex; gap:8px;\">
+                        <button class=\"btn btn-secondary\" onclick=\"adminUpdateMaintenanceStatus('${m.id}','completed')\">Mark Completed</button>
+                        <button class=\"btn btn-danger\" onclick=\"adminDeleteMaintenance('${m.id}')\">Delete</button>
+                    </div>
+                </div>
+            `).join(''); } catch(e){ console.warn('adminLoadMaintenance error', e); }
+        }
+        async function adminScheduleMaintenance(e){
+            e.preventDefault();
+            try { await ensureFirestoreReady(); const payload = { title: document.getElementById('maintTitle').value.trim(), scheduledDate: document.getElementById('maintDate').value, equipmentId: document.getElementById('maintEquipmentId').value.trim()||null, assignee: document.getElementById('maintAssignee').value.trim()||null, notes: document.getElementById('maintNotes').value.trim()||'' }; await window.FirestoreDataManager.scheduleMaintenance(payload); adminClearMaintenanceForm(); await adminLoadMaintenance(); showAdminNotification('Scheduled','Maintenance added','success'); } catch(e){ console.error(e); showAdminNotification('Error','Failed to schedule maintenance','error'); }
+            return false;
+        }
+        async function adminUpdateMaintenanceStatus(id, status){ try { await ensureFirestoreReady(); await window.FirestoreDataManager.updateMaintenance(id, { status }); await adminLoadMaintenance(); showAdminNotification('Updated','Maintenance updated','success'); } catch(e){ console.error(e); showAdminNotification('Error','Failed to update maintenance','error'); } }
+        async function adminDeleteMaintenance(id){ try { await ensureFirestoreReady(); await window.FirestoreDataManager.deleteMaintenance(id); await adminLoadMaintenance(); showAdminNotification('Deleted','Maintenance removed','success'); } catch(e){ console.error(e); showAdminNotification('Error','Failed to delete maintenance','error'); } }
+        function adminClearMaintenanceForm(){ try { document.getElementById('adminMaintenanceForm').reset(); } catch(_) {} }
+
+        // Expose to window
+        window.adminLoadEquipment = adminLoadEquipment;
+        window.adminSaveEquipment = adminSaveEquipment;
+        window.adminEditEquipment = adminEditEquipment;
+        window.adminDeleteEquipment = adminDeleteEquipment;
+        window.adminLoadResources = adminLoadResources;
+        window.adminSaveResource = adminSaveResource;
+        window.adminDeleteResource = adminDeleteResource;
+        window.adminLoadEquipmentRequests = adminLoadEquipmentRequests;
+        window.adminUpdateRequestStatus = adminUpdateRequestStatus;
+        window.adminLoadMaintenance = adminLoadMaintenance;
+        window.adminScheduleMaintenance = adminScheduleMaintenance;
+        window.adminUpdateMaintenanceStatus = adminUpdateMaintenanceStatus;
+        window.adminDeleteMaintenance = adminDeleteMaintenance;
     </script>
 </body>
 </html> 

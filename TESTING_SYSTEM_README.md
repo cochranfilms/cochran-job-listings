@@ -41,6 +41,36 @@ How to verify quickly:
 
 ### Admin Dashboard: Quick Actions removed (2025-08-19)
 
+### Equipment & Resource Center Testing (2025-01-10)
+
+Scope: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`
+
+Automated test script suggestion: integrate into `phase3-comprehensive-test.js`.
+
+Test matrix:
+1) Equipment CRUD (Admin)
+   - Add equipment with name, category, serial, tags.
+   - Update status; delete item. Verify realtime list updates.
+2) Resources CRUD (Admin)
+   - Add resource (title, type, url, version). Open link. Delete.
+3) Requests workflow (User → Admin)
+   - As a user, submit request with items and date range.
+   - As admin, approve request → equipment reserves; deny request → status `denied`.
+   - Conflict: create overlapping reservation and approve; request should become `conflict` with details.
+4) Check-out / Check-in
+   - After approval, check-out reserved item; status → `checked_out`.
+   - Check-in → status → `available`, reservation cleared.
+
+Browser steps (old automatic testing system):
+1. Open `admin-dashboard.html`, sign in. Add a test equipment item and a resource.
+2. Open `user-portal.html`, sign in as a test user. Go to Equipment Center → Requests. Submit a request for the test item with a date range.
+3. Back in admin: open Equipment Requests and click Approve. Confirm inventory shows the item as reserved with reservation details.
+4. Click Check Out on the item; then Check In. Confirm states transition and reservation clears.
+5. Create a second request overlapping the same dates and approve; confirm conflict state on the request and that the original reservation remains intact.
+
+Expected logs:
+- Admin console: load messages for equipment/resources/requests/maintenance; action confirmations on save/update/delete.
+- User console: initializeEquipmentCenter success and render counts.
 What changed:
 - Removed the legacy Quick Actions UI and functions from `admin-dashboard.html`:
   - Buttons: Generate All Contracts, Export Users, Download Users, Download Contracts, Force Refresh Users, Migrate to Firestore, Full Migration, Verify Migration.

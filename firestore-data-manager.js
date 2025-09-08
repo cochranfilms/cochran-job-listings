@@ -16,7 +16,12 @@ const FirestoreDataManager = {
         messages: 'messages', // team messaging board
         showcases: 'showcases', // project showcases
         events: 'events', // company events and calendar
-        successStories: 'successStories' // success stories and achievements
+        successStories: 'successStories', // success stories and achievements
+        // Equipment & Resource Center
+        equipment: 'equipment', // inventory of gear
+        resources: 'resources', // brand guidelines, templates, style guides
+        equipmentRequests: 'equipmentRequests', // user requests for gear
+        maintenance: 'maintenance' // maintenance schedule & repairs
     },
 
     // Initialize the data manager
@@ -128,6 +133,44 @@ const FirestoreDataManager = {
                     this.handleSuccessStoriesUpdate(snapshot);
                 }, (error) => {
                     console.error('❌ Success stories listener error:', error);
+                });
+
+            // Listen for equipment inventory changes
+            this.db.collection(this.collections.equipment)
+                .onSnapshot((snapshot) => {
+                    console.log('🎒 Equipment collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleEquipmentUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Equipment listener error:', error);
+                });
+
+            // Listen for resources changes
+            this.db.collection(this.collections.resources)
+                .onSnapshot((snapshot) => {
+                    console.log('📚 Resources collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleResourcesUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Resources listener error:', error);
+                });
+
+            // Listen for equipment requests changes
+            this.db.collection(this.collections.equipmentRequests)
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    console.log('📝 Equipment requests updated:', snapshot.docChanges().length, 'changes');
+                    this.handleEquipmentRequestsUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Equipment requests listener error:', error);
+                });
+
+            // Listen for maintenance schedule changes
+            this.db.collection(this.collections.maintenance)
+                .orderBy('scheduledDate', 'asc')
+                .onSnapshot((snapshot) => {
+                    console.log('🛠️ Maintenance collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleMaintenanceUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Maintenance listener error:', error);
                 });
             
             console.log('✅ Real-time listeners set up successfully');
@@ -251,6 +294,74 @@ const FirestoreDataManager = {
             } else if (change.type === 'removed') {
                 console.log('🏆 Success story removed:', change.doc.id);
                 this.notifyDataChange('successStories', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle equipment collection updates
+    handleEquipmentUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('🎒 New equipment added:', change.doc.id);
+                this.notifyDataChange('equipment', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('🎒 Equipment modified:', change.doc.id);
+                this.notifyDataChange('equipment', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('🎒 Equipment removed:', change.doc.id);
+                this.notifyDataChange('equipment', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle resources collection updates
+    handleResourcesUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('📚 New resource added:', change.doc.id);
+                this.notifyDataChange('resources', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('📚 Resource modified:', change.doc.id);
+                this.notifyDataChange('resources', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('📚 Resource removed:', change.doc.id);
+                this.notifyDataChange('resources', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle equipment requests updates
+    handleEquipmentRequestsUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('📝 New equipment request added:', change.doc.id);
+                this.notifyDataChange('equipmentRequests', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('📝 Equipment request modified:', change.doc.id);
+                this.notifyDataChange('equipmentRequests', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('📝 Equipment request removed:', change.doc.id);
+                this.notifyDataChange('equipmentRequests', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle maintenance updates
+    handleMaintenanceUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('🛠️ New maintenance added:', change.doc.id);
+                this.notifyDataChange('maintenance', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('🛠️ Maintenance modified:', change.doc.id);
+                this.notifyDataChange('maintenance', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('🛠️ Maintenance removed:', change.doc.id);
+                this.notifyDataChange('maintenance', 'removed', change.doc.id, change.doc.data());
             }
         });
     },
@@ -1470,6 +1581,247 @@ Object.assign(FirestoreDataManager, {
             return true;
         } catch (error) {
             console.error('❌ Error deleting success story:', error);
+            throw error;
+        }
+    },
+
+    // ==================== EQUIPMENT & RESOURCE CENTER ====================
+
+    // Equipment Inventory
+    async getEquipment() {
+        try {
+            const snapshot = await this.db.collection(this.collections.equipment).get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting equipment:', error);
+            return [];
+        }
+    },
+
+    async addEquipment(equipmentData) {
+        try {
+            const payload = {
+                name: equipmentData.name || 'Unnamed Item',
+                category: equipmentData.category || 'General',
+                status: equipmentData.status || 'available', // available | checked_out | maintenance | retired
+                condition: equipmentData.condition || 'good',
+                location: equipmentData.location || 'warehouse',
+                tags: Array.isArray(equipmentData.tags) ? equipmentData.tags : [],
+                serialNumber: equipmentData.serialNumber || null,
+                notes: equipmentData.notes || '',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            const ref = await this.db.collection(this.collections.equipment).add(payload);
+            console.log('✅ Equipment added with ID:', ref.id);
+            return ref.id;
+        } catch (error) {
+            console.error('❌ Error adding equipment:', error);
+            throw error;
+        }
+    },
+
+    async updateEquipment(equipmentId, updateData) {
+        try {
+            await this.db.collection(this.collections.equipment).doc(equipmentId).set({
+                ...updateData,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+            console.log('✅ Equipment updated:', equipmentId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating equipment:', error);
+            throw error;
+        }
+    },
+
+    async deleteEquipment(equipmentId) {
+        try {
+            await this.db.collection(this.collections.equipment).doc(equipmentId).delete();
+            console.log('✅ Equipment deleted:', equipmentId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting equipment:', error);
+            throw error;
+        }
+    },
+
+    // Resource Downloads
+    async getResources() {
+        try {
+            const snapshot = await this.db.collection(this.collections.resources).get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting resources:', error);
+            return [];
+        }
+    },
+
+    async addResource(resourceData) {
+        try {
+            const payload = {
+                title: resourceData.title || 'Untitled',
+                type: resourceData.type || 'document', // document | template | style_guide | other
+                url: resourceData.url || '',
+                description: resourceData.description || '',
+                tags: Array.isArray(resourceData.tags) ? resourceData.tags : [],
+                version: resourceData.version || '1.0.0',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            const ref = await this.db.collection(this.collections.resources).add(payload);
+            console.log('✅ Resource added with ID:', ref.id);
+            return ref.id;
+        } catch (error) {
+            console.error('❌ Error adding resource:', error);
+            throw error;
+        }
+    },
+
+    async updateResource(resourceId, updateData) {
+        try {
+            await this.db.collection(this.collections.resources).doc(resourceId).set({
+                ...updateData,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+            console.log('✅ Resource updated:', resourceId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating resource:', error);
+            throw error;
+        }
+    },
+
+    async deleteResource(resourceId) {
+        try {
+            await this.db.collection(this.collections.resources).doc(resourceId).delete();
+            console.log('✅ Resource deleted:', resourceId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting resource:', error);
+            throw error;
+        }
+    },
+
+    // Equipment Requests
+    async getEquipmentRequests(options = {}) {
+        try {
+            let ref = this.db.collection(this.collections.equipmentRequests).orderBy('createdAt', 'desc');
+            if (options.userEmail) {
+                ref = this.db.collection(this.collections.equipmentRequests).where('userEmail', '==', String(options.userEmail).toLowerCase());
+            }
+            const snapshot = await ref.get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting equipment requests:', error);
+            return [];
+        }
+    },
+
+    async createEquipmentRequest(requestData) {
+        try {
+            const payload = {
+                userEmail: (requestData.userEmail || '').toLowerCase(),
+                userName: requestData.userName || '',
+                items: Array.isArray(requestData.items) ? requestData.items : [], // array of equipment ids or names
+                jobId: requestData.jobId || null,
+                jobTitle: requestData.jobTitle || '',
+                neededFrom: requestData.neededFrom || null,
+                neededTo: requestData.neededTo || null,
+                notes: requestData.notes || '',
+                status: requestData.status || 'pending', // pending | approved | denied | fulfilled
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            const ref = await this.db.collection(this.collections.equipmentRequests).add(payload);
+            console.log('✅ Equipment request created with ID:', ref.id);
+            return ref.id;
+        } catch (error) {
+            console.error('❌ Error creating equipment request:', error);
+            throw error;
+        }
+    },
+
+    async updateEquipmentRequest(requestId, updateData) {
+        try {
+            await this.db.collection(this.collections.equipmentRequests).doc(requestId).set({
+                ...updateData,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+            console.log('✅ Equipment request updated:', requestId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating equipment request:', error);
+            throw error;
+        }
+    },
+
+    async deleteEquipmentRequest(requestId) {
+        try {
+            await this.db.collection(this.collections.equipmentRequests).doc(requestId).delete();
+            console.log('✅ Equipment request deleted:', requestId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting equipment request:', error);
+            throw error;
+        }
+    },
+
+    // Maintenance
+    async getMaintenance() {
+        try {
+            const snapshot = await this.db.collection(this.collections.maintenance)
+                .orderBy('scheduledDate', 'asc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting maintenance:', error);
+            return [];
+        }
+    },
+
+    async scheduleMaintenance(maintenanceData) {
+        try {
+            const payload = {
+                equipmentId: maintenanceData.equipmentId || null,
+                title: maintenanceData.title || 'Maintenance',
+                scheduledDate: maintenanceData.scheduledDate || null, // ISO date string
+                assignee: (maintenanceData.assignee || '').toLowerCase() || null,
+                status: maintenanceData.status || 'scheduled', // scheduled | in_progress | completed | cancelled
+                notes: maintenanceData.notes || '',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            const ref = await this.db.collection(this.collections.maintenance).add(payload);
+            console.log('✅ Maintenance scheduled with ID:', ref.id);
+            return ref.id;
+        } catch (error) {
+            console.error('❌ Error scheduling maintenance:', error);
+            throw error;
+        }
+    },
+
+    async updateMaintenance(maintenanceId, updateData) {
+        try {
+            await this.db.collection(this.collections.maintenance).doc(maintenanceId).set({
+                ...updateData,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+            console.log('✅ Maintenance updated:', maintenanceId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating maintenance:', error);
+            throw error;
+        }
+    },
+
+    async deleteMaintenance(maintenanceId) {
+        try {
+            await this.db.collection(this.collections.maintenance).doc(maintenanceId).delete();
+            console.log('✅ Maintenance deleted:', maintenanceId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting maintenance:', error);
             throw error;
         }
     }

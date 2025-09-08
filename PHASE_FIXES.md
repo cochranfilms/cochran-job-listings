@@ -3749,3 +3749,39 @@ All Phase 3 advanced user experience features have been successfully implemented
 - ✅ Documentation and maintenance guides
 
 **Phase 3 Status**: 🎉 **COMPLETE AND PRODUCTION READY**
+
+## Equipment & Resource Center (Phased Implementation)
+
+Date: 2025-01-10
+
+Overview: Introduced a full Equipment & Resource Center across the Creator Portal and Admin Dashboard, implemented in three phases.
+
+Phase 1 – Data layer + User Portal UI
+- Added Firestore collections: `equipment`, `resources`, `equipmentRequests`, `maintenance`.
+- Extended `firestore-data-manager.js` with CRUD methods and realtime listeners for the new collections.
+- Added `equipment-section` to `user-portal.html` with tabs:
+  - Gear Library (browse, filter, request)
+  - Resource Downloads (brand guidelines, templates, style guides)
+  - Equipment Requests (submit/view own requests)
+  - Maintenance Tracking (read-only view)
+
+Phase 2 – Admin Dashboard management UI
+- Added four cards to `admin-dashboard.html`:
+  - Equipment Inventory: add/edit/delete equipment.
+  - Resource Downloads: add/delete resources with URL/version.
+  - Equipment Requests: list and approve/deny.
+  - Maintenance: schedule/update/delete maintenance items.
+
+Phase 3 – Workflow automation
+- Approval workflow reserves equipment for request dates; detects conflicts.
+- Added check-out/check-in actions to inventory; returns gear to available and clears reservation.
+- Requests update status: `approved`, `denied`, or `conflict` (with details).
+
+Files touched
+- `firestore-data-manager.js`: collections, listeners, CRUD for equipment/resources/requests/maintenance.
+- `user-portal.html`: new Equipment Center nav + section and render/submit logic.
+- `admin-dashboard.html`: admin UI for inventory/resources/requests/maintenance and workflow actions.
+
+Notes
+- All admin actions leverage existing Firebase initialization and notification UI.
+- Realtime listeners emit `firestore:dataChange` events for future live UI updates.

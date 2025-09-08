@@ -6988,6 +6988,203 @@
             switchPortalTab(sectionName);
         }
 
+        // Equipment Center scripts
+        async function initializeEquipmentCenter() {
+            try {
+                await ensureFirestoreReady();
+                await Promise.all([
+                    loadEquipment(),
+                    loadResources(),
+                    loadEquipmentRequests(),
+                    loadMaintenance()
+                ]);
+                renderEquipmentList();
+                renderResourceList();
+                renderEquipmentRequests();
+                renderMaintenanceList();
+            } catch (e) {
+                console.warn('⚠️ initializeEquipmentCenter error:', e?.message || e);
+            }
+        }
+
+        async function ensureFirestoreReady() {
+            if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                try { await window.FirestoreDataManager.init(); } catch(_) {}
+            }
+        }
+
+        // Data caches
+        let _equipment = [];
+        let _resources = [];
+        let _equipmentRequests = [];
+        let _maintenance = [];
+
+        async function loadEquipment() {
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                _equipment = await window.FirestoreDataManager.getEquipment();
+            }
+        }
+        async function loadResources() {
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                _resources = await window.FirestoreDataManager.getResources();
+            }
+        }
+        async function loadEquipmentRequests() {
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                const email = (currentUser && currentUser.email) ? currentUser.email : (auth && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : '';
+                _equipmentRequests = await window.FirestoreDataManager.getEquipmentRequests({ userEmail: email });
+            }
+        }
+        async function loadMaintenance() {
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                _maintenance = await window.FirestoreDataManager.getMaintenance();
+            }
+        }
+
+        function switchEquipmentTab(tabName) {
+            const tabs = ['library','resources','requests','maintenance'];
+            tabs.forEach(name => {
+                const el = document.getElementById(`equipment-${name}`);
+                if (el) el.style.display = (name === tabName) ? '' : 'none';
+            });
+            document.querySelectorAll('.performance-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+            const btn = document.querySelector(`.performance-tabs .tab-btn[onclick="switchEquipmentTab('${tabName}')"]`);
+            if (btn) btn.classList.add('active');
+        }
+
+        function renderEquipmentList() {
+            const container = document.getElementById('equipmentList');
+            if (!container) return;
+            const q = (document.getElementById('equipmentSearch')?.value || '').toLowerCase();
+            const status = document.getElementById('equipmentStatusFilter')?.value || '';
+            const filtered = _equipment.filter(item => {
+                const matchesText = !q || [item.name, item.category, ...(item.tags||[])].filter(Boolean).join(' ').toLowerCase().includes(q);
+                const matchesStatus = !status || (item.status === status);
+                return matchesText && matchesStatus;
+            });
+            container.innerHTML = filtered.map(item => {
+                const tags = (item.tags||[]).map(t => `<span class="chip">${t}</span>`).join(' ');
+                return `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div>
+                            <div style="font-weight:700; color:#FFB200;">${item.name || 'Unnamed'}</div>
+                            <div class="equipment-meta">
+                                <span>${item.category || 'General'}</span>
+                                <span class="status-${item.status||'available'}">${item.status || 'available'}</span>
+                                ${item.serialNumber ? `<span>SN: ${item.serialNumber}</span>` : ''}
+                                ${tags}
+                            </div>
+                        </div>
+                        <div>
+                            ${item.status === 'available' ? `<button class="btn btn-secondary" onclick="prefillRequest('${item.id}','${(item.name||'').replace(/'/g, "\'")}')">Request</button>` : ''}
+                        </div>
+                    </div>
+                </div>`
+            }).join('');
+        }
+
+        function renderResourceList() {
+            const container = document.getElementById('resourceList');
+            if (!container) return;
+            container.innerHTML = _resources.map(r => `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div>
+                            <div style="font-weight:700; color:#FFB200;">${r.title || 'Untitled'}</div>
+                            <div class="equipment-meta">
+                                <span>${r.type || 'document'}</span>
+                                ${r.version ? `<span>v${r.version}</span>` : ''}
+                                ${(r.tags||[]).map(t => `<span class='chip'>${t}</span>`).join(' ')}
+                            </div>
+                        </div>
+                        <div>
+                            ${r.url ? `<a class="btn btn-secondary" href="${r.url}" target="_blank" rel="noopener">Download</a>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function prefillRequest(equipmentId, equipmentName) {
+            try {
+                const input = document.getElementById('requestItems');
+                if (!input) return;
+                const list = input.value ? input.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+                if (!list.includes(equipmentName)) list.push(equipmentName);
+                input.value = list.join(', ');
+                switchEquipmentTab('requests');
+            } catch(_) {}
+        }
+
+        async function submitEquipmentRequest(event) {
+            event.preventDefault();
+            try {
+                const items = (document.getElementById('requestItems')?.value || '').split(',').map(s => s.trim()).filter(Boolean);
+                const neededFrom = document.getElementById('requestFrom')?.value || null;
+                const neededTo = document.getElementById('requestTo')?.value || null;
+                const notes = document.getElementById('requestNotes')?.value || '';
+                const email = (currentUser && currentUser.email) ? currentUser.email : (auth && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : '';
+                const name = currentUser?.name || currentUser?.profile?.name || '';
+                if (!items.length) { toast('Add at least one item', 'error'); return; }
+                await ensureFirestoreReady();
+                const id = await window.FirestoreDataManager.createEquipmentRequest({
+                    userEmail: email,
+                    userName: name,
+                    items,
+                    neededFrom,
+                    neededTo,
+                    notes
+                });
+                toast('Request submitted', 'success');
+                await loadEquipmentRequests();
+                renderEquipmentRequests();
+                try { document.getElementById('equipmentRequestForm').reset(); } catch(_) {}
+            } catch (e) {
+                console.error('submitEquipmentRequest error', e);
+                toast('Failed to submit request', 'error');
+            }
+        }
+
+        function renderEquipmentRequests() {
+            const container = document.getElementById('equipmentRequestList');
+            if (!container) return;
+            container.innerHTML = _equipmentRequests.map(req => `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div>
+                            <div style="font-weight:700; color:#FFB200;">${(req.items||[]).join(', ')}</div>
+                            <div class="equipment-meta">
+                                <span>${req.status || 'pending'}</span>
+                                ${req.neededFrom ? `<span>From: ${req.neededFrom}</span>` : ''}
+                                ${req.neededTo ? `<span>To: ${req.neededTo}</span>` : ''}
+                            </div>
+                        </div>
+                        <div style="color:#9ca3af; font-size:0.85rem;">${new Date(req.createdAt||Date.now()).toLocaleString()}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMaintenanceList() {
+            const container = document.getElementById('maintenanceList');
+            if (!container) return;
+            container.innerHTML = _maintenance.map(m => `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div>
+                            <div style="font-weight:700; color:#FFB200;">${m.title || 'Maintenance'}</div>
+                            <div class="equipment-meta">
+                                ${m.scheduledDate ? `<span>${new Date(m.scheduledDate).toLocaleDateString()}</span>` : ''}
+                                ${m.status ? `<span>${m.status}</span>` : ''}
+                            </div>
+                        </div>
+                        <div style="color:#9ca3af; font-size:0.85rem;">${m.equipmentId ? `Item: ${m.equipmentId}` : ''}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         // View contract details
         function viewContractDetails() {
             console.log('👁️ View details button clicked');
@@ -9015,12 +9212,34 @@
             // Initialize community features when switching to those sections
             setTimeout(() => {
                 initializeCommunityFeatures();
+                // Initialize equipment center when needed
+                if (document.getElementById('equipment-section') && document.getElementById('equipment-section').classList.contains('active')) {
+                    try { initializeEquipmentCenter(); } catch(e) { console.warn('equipment init skipped', e); }
+                }
             }, 100);
         };
 
     </script>
 
     <style>
+        /* Equipment Center lightweight styles reuse existing classes */
+        #equipmentList .card,
+        #resourceList .card,
+        #equipmentRequestList .card,
+        #maintenanceList .card {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,178,0,0.25);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        .equipment-meta {
+            display: flex; gap: 8px; flex-wrap: wrap; color: #9ca3af; font-size: 0.9rem;
+        }
+        .chip { border: 1px solid rgba(255,178,0,0.35); border-radius: 999px; padding: 2px 10px; color: #FFB200; }
+        .status-available { color: #22c55e; }
+        .status-checked_out { color: #f59e0b; }
+        .status-maintenance { color: #ef4444; }
+        .status-retired { color: #6b7280; }
         /* ==================== ELEGANT DESIGN SYSTEM ==================== */
         :root {
             /* Premium Color Palette */
@@ -17143,6 +17362,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="#equipment" class="nav-link" onclick="showSection('equipment')">
+                        <i class="fas fa-toolbox"></i>
+                        <span>Equipment Center</span>
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="#calendar" class="nav-link" onclick="showSection('calendar')">
                         <i class="fas fa-calendar-alt"></i>
                         <span>Events</span>
@@ -17651,6 +17876,105 @@
                     <div class="card-content">
                         <div class="showcases-grid" id="showcasesGrid">
                             <!-- Showcase cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Equipment & Resource Center Section -->
+            <div id="equipment-section" class="content-section">
+                <div class="dashboard-header">
+                    <h1><i class="fas fa-toolbox"></i> Equipment & Resource Center</h1>
+                    <p>Browse gear, download resources, request equipment, and track maintenance</p>
+                </div>
+
+                <div class="performance-tabs" style="margin-top: 1rem;">
+                    <button class="tab-btn active" onclick="switchEquipmentTab('library')">Gear Library</button>
+                    <button class="tab-btn" onclick="switchEquipmentTab('resources')">Resource Downloads</button>
+                    <button class="tab-btn" onclick="switchEquipmentTab('requests')">Equipment Requests</button>
+                    <button class="tab-btn" onclick="switchEquipmentTab('maintenance')">Maintenance Tracking</button>
+                </div>
+
+                <!-- Gear Library Tab -->
+                <div id="equipment-library" class="performance-tab-content active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-camera"></i> Gear Library</h3>
+                            <div class="filters">
+                                <input type="text" id="equipmentSearch" placeholder="Search gear by name, tag, or category..." oninput="renderEquipmentList()">
+                                <select id="equipmentStatusFilter" onchange="renderEquipmentList()">
+                                    <option value="">All Statuses</option>
+                                    <option value="available">Available</option>
+                                    <option value="checked_out">Checked Out</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="retired">Retired</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div id="equipmentList" class="showcases-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resource Downloads Tab -->
+                <div id="equipment-resources" class="performance-tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-download"></i> Resource Downloads</h3>
+                        </div>
+                        <div class="card-content">
+                            <div id="resourceList" class="showcases-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equipment Requests Tab -->
+                <div id="equipment-requests" class="performance-tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-list"></i> Request Equipment</h3>
+                        </div>
+                        <div class="card-content">
+                            <form id="equipmentRequestForm" onsubmit="submitEquipmentRequest(event)">
+                                <div class="form-group">
+                                    <label for="requestItems">Items (comma separated)</label>
+                                    <input id="requestItems" type="text" placeholder="Camera A, Light Kit, C-Stand">
+                                </div>
+                                <div class="form-group">
+                                    <label for="requestDates">Dates</label>
+                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                        <input id="requestFrom" type="date">
+                                        <input id="requestTo" type="date">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="requestNotes">Notes</label>
+                                    <textarea id="requestNotes" rows="3" placeholder="Any special needs or job context..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Request</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top:1rem;">
+                        <div class="card-header">
+                            <h3><i class="fas fa-inbox"></i> Your Requests</h3>
+                        </div>
+                        <div class="card-content">
+                            <div id="equipmentRequestList" class="showcases-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maintenance Tracking Tab -->
+                <div id="equipment-maintenance" class="performance-tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-tools"></i> Maintenance Tracking</h3>
+                        </div>
+                        <div class="card-content">
+                            <div id="maintenanceList" class="showcases-grid"></div>
                         </div>
                     </div>
                 </div>

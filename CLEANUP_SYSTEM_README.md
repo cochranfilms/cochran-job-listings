@@ -1,5 +1,26 @@
 ## 2025-08-20 — Align Start Date to Job Selection
 
+## 2025-01-10 — Equipment & Resource Center Cleanup Plan
+
+Data ownership
+- Canonical: Firestore collections `equipment`, `resources`, `equipmentRequests`, `maintenance`.
+- No JSON backups are maintained for these; avoid adding them to `uploaded-contracts.json` or `users.json`.
+
+Safe removal guidance
+- If reverting the feature, remove the Equipment Center nav/section in `user-portal.html` and admin cards in `admin-dashboard.html`.
+- Remove the added methods and listeners in `firestore-data-manager.js` for the four new collections.
+
+Orphaned data cleanup
+- To purge test data, delete documents from the four collections via Firebase Console or an admin-only batch tool.
+- For requests in `conflict` state older than 60 days, it is safe to delete after manual review.
+
+Cross-feature interactions
+- Approval sets `equipment.status = reserved` with a `reservation` payload. Check-in resets to `available` and clears `reservation`.
+- Maintenance updates should not overwrite an active reservation field; prefer partial updates.
+
+Verification checklist
+- User portal Equipment Center loads without errors and renders empty states when collections are empty.
+- Admin inventory/resources/requests/maintenance lists load and allow CRUD without console errors.
 - Files: `user-portal.html`, `admin-dashboard.html`
 - Change: Use the selected job's start date as the single source of truth for project start across Current Jobs status/timeline and admin job assignment. This removes reliance on contract signed date or `profile.projectDate` for status transitions.
 - Follow-up: Ensure `contract.html` already uses `(application.eventDate || jobs[primary].date || profile.projectDate || profile.projectStart)` for displayed `projectStart`. No contract change required today.
