@@ -7008,11 +7008,13 @@
                     loadEquipment(),
                     loadResources(),
                     loadEquipmentRequests(),
+                    loadRentedEquipment(),
                     loadMaintenance()
                 ]);
                 renderEquipmentList();
                 renderResourceList();
                 renderEquipmentRequests();
+                renderRentedEquipment();
                 renderMaintenanceList();
             } catch (e) {
                 console.warn('⚠️ initializeEquipmentCenter error:', e?.message || e);
@@ -7029,6 +7031,7 @@
         let _equipment = [];
         let _resources = [];
         let _equipmentRequests = [];
+        let _rentedEquipment = [];
         let _maintenance = [];
 
         async function loadEquipment() {
@@ -7062,9 +7065,83 @@
                 _maintenance = await window.FirestoreDataManager.getMaintenance();
             }
         }
+        
+        async function loadRentedEquipment() {
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const email = (currentUser && currentUser.email) ? currentUser.email : (auth && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : '';
+                    console.log('🔄 Loading rented equipment for user:', email);
+                    const allEquipment = await window.FirestoreDataManager.getEquipment();
+                    _rentedEquipment = allEquipment.filter(item => 
+                        item.rental && 
+                        item.rental.userEmail && 
+                        item.rental.userEmail.toLowerCase() === email.toLowerCase()
+                    );
+                    console.log('✅ Loaded rented equipment:', _rentedEquipment);
+                    renderRentedEquipment();
+                } else {
+                    console.warn('⚠️ FirestoreDataManager not available for loading rented equipment');
+                    _rentedEquipment = [];
+                }
+            } catch (e) {
+                console.error('❌ Error loading rented equipment:', e);
+                _rentedEquipment = [];
+            }
+        }
+        
+        function renderRentedEquipment() {
+            const container = document.getElementById('rentedEquipmentList');
+            if (!container) {
+                console.warn('⚠️ rentedEquipmentList container not found');
+                return;
+            }
+            
+            console.log('🔄 Rendering rented equipment:', _rentedEquipment);
+            
+            if (!_rentedEquipment || _rentedEquipment.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #9ca3af; padding: 2rem;">
+                        <i class="fas fa-hand-holding" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p>No rented equipment found</p>
+                        <small>Your approved equipment requests will appear here</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = _rentedEquipment.map(item => `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight:700; color:#FFB200;">${item.name || 'Unnamed'}</div>
+                            <div class="equipment-meta">
+                                <span>${item.category || 'General'}</span>
+                                <span class="status-${item.status || 'checked_out'}">${item.status || 'checked_out'}</span>
+                                ${item.serialNumber ? `<span>SN: ${item.serialNumber}</span>` : ''}
+                            </div>
+                            
+                            ${item.rental ? `
+                                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 6px; padding: 8px; margin-top: 8px;">
+                                    <div style="color: #22c55e; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px;">
+                                        <i class="fas fa-check-circle"></i> RENTED TO YOU
+                                    </div>
+                                    <div style="color: #9ca3af; font-size: 0.8rem;">
+                                        <div><strong>Checked out:</strong> ${new Date(item.rental.checkedOutAt).toLocaleString()}</div>
+                                        <div><strong>Due back:</strong> ${new Date(item.rental.dueBackAt).toLocaleString()}</div>
+                                        ${item.rental.notes ? `<div><strong>Notes:</strong> ${item.rental.notes}</div>` : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            console.log('✅ Rented equipment rendered successfully');
+        }
 
         function switchEquipmentTab(tabName) {
-            const tabs = ['library','resources','requests','maintenance'];
+            const tabs = ['library','resources','requests','rented','maintenance'];
             tabs.forEach(name => {
                 const el = document.getElementById(`equipment-${name}-tab`);
                 if (el) el.style.display = (name === tabName) ? '' : 'none';
@@ -7072,6 +7149,11 @@
             document.querySelectorAll('.performance-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
             const btn = document.querySelector(`.performance-tabs .tab-btn[onclick="switchEquipmentTab('${tabName}')"]`);
             if (btn) btn.classList.add('active');
+            
+            // Load rented equipment when switching to that tab
+            if (tabName === 'rented') {
+                loadRentedEquipment();
+            }
         }
 
         function renderEquipmentList() {
@@ -18059,6 +18141,7 @@
                     <button class="tab-btn active" onclick="switchEquipmentTab('library')">Gear Library</button>
                     <button class="tab-btn" onclick="switchEquipmentTab('resources')">Resource Downloads</button>
                     <button class="tab-btn" onclick="switchEquipmentTab('requests')">Equipment Requests</button>
+                    <button class="tab-btn" onclick="switchEquipmentTab('rented')">My Rented Equipment</button>
                     <button class="tab-btn" onclick="switchEquipmentTab('maintenance')">Maintenance Tracking</button>
                 </div>
 
@@ -18130,6 +18213,18 @@
                         </div>
                         <div class="card-content">
                             <div id="equipmentRequestList" class="showcases-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Rented Equipment Tab -->
+                <div id="equipment-rented-tab" class="performance-tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-hand-holding"></i> My Rented Equipment</h3>
+                        </div>
+                        <div class="card-content">
+                            <div id="rentedEquipmentList" class="showcases-grid"></div>
                         </div>
                     </div>
                 </div>

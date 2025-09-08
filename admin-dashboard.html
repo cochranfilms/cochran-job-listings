@@ -6874,17 +6874,49 @@
                 const container = document.getElementById('adminEquipmentList');
                 if (!container) return;
                 container.innerHTML = (list||[]).map(item => `
-                    <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                        <div>
+                    <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding: 1rem; border: 1px solid rgba(255,178,0,0.2); border-radius: 8px; margin-bottom: 0.5rem;">
+                        <div style="flex: 1;">
                             <div style="font-weight:700; color:#FFB200;">${item.name||'Unnamed'}</div>
-                            <div style="color:#9ca3af; font-size:.9rem;">${item.category||'General'} • ${item.status||'available'} ${item.serialNumber?`• SN: ${item.serialNumber}`:''}</div>
-                            ${item.reservation ? `<div style='color:#9ca3af; font-size:.85rem;'>Reserved for ${item.reservation.userEmail||''} ${item.reservation.neededFrom?`from ${item.reservation.neededFrom}`:''} ${item.reservation.neededTo?`to ${item.reservation.neededTo}`:''}</div>` : ''}
+                            <div style="color:#9ca3af; font-size:.9rem;">
+                                ${item.category||'General'} • 
+                                <span class="status-${item.status||'available'}">${item.status||'available'}</span>
+                                ${item.serialNumber?`• SN: ${item.serialNumber}`:''}
+                            </div>
+                            
+                            ${item.reservation ? `
+                                <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 8px; margin-top: 8px;">
+                                    <div style="color: #f59e0b; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px;">
+                                        <i class="fas fa-clock"></i> RESERVED
+                                    </div>
+                                    <div style="color: #9ca3af; font-size: 0.8rem;">
+                                        <div>Reserved for: ${item.reservation.userEmail||''}</div>
+                                        ${item.reservation.neededFrom?`<div>From: ${item.reservation.neededFrom}</div>`:''}
+                                        ${item.reservation.neededTo?`<div>To: ${item.reservation.neededTo}</div>`:''}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${item.rental ? `
+                                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 6px; padding: 8px; margin-top: 8px;">
+                                    <div style="color: #22c55e; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px;">
+                                        <i class="fas fa-user"></i> RENTED TO: ${item.rental.userName || item.rental.userEmail || 'Unknown'}
+                                    </div>
+                                    <div style="color: #9ca3af; font-size: 0.8rem;">
+                                        <div>Checked out: ${new Date(item.rental.checkedOutAt).toLocaleString()}</div>
+                                        <div>Due back: ${new Date(item.rental.dueBackAt).toLocaleString()}</div>
+                                        ${item.rental.notes ? `<div>Notes: ${item.rental.notes}</div>` : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn btn-secondary" onclick="adminEditEquipment('${item.id}')">Edit</button>
-                            <button class="btn btn-danger" onclick="adminDeleteEquipment('${item.id}')">Delete</button>
-                            ${item.status==='reserved'?`<button class='btn btn-secondary' onclick=\"adminCheckOutEquipment('${item.id}')\">Check Out</button>`:''}
-                            ${item.status==='checked_out'?`<button class='btn btn-secondary' onclick=\"adminCheckInEquipment('${item.id}')\">Check In</button>`:''}
+                        
+                        <div style="display:flex; gap:8px; flex-direction: column;">
+                            <div style="display:flex; gap:4px;">
+                                <button class="btn btn-secondary" onclick="adminEditEquipment('${item.id}')" style="font-size: 0.8rem; padding: 4px 8px;">Edit</button>
+                                <button class="btn btn-danger" onclick="adminDeleteEquipment('${item.id}')" style="font-size: 0.8rem; padding: 4px 8px;">Delete</button>
+                            </div>
+                            ${item.status==='reserved'?`<button class='btn btn-secondary' onclick=\"adminCheckOutEquipment('${item.id}')\" style="font-size: 0.8rem; padding: 4px 8px;">Check Out</button>`:''}
+                            ${item.status==='checked_out'?`<button class='btn btn-secondary' onclick=\"adminCheckInEquipment('${item.id}')\" style="font-size: 0.8rem; padding: 4px 8px;">Check In</button>`:''}
                         </div>
                     </div>
                 `).join('');
@@ -6984,24 +7016,67 @@
                     return;
                 }
                 
-                container.innerHTML = (list||[]).map(req=>`
-                    <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding: 1rem; border: 1px solid rgba(255,178,0,0.2); border-radius: 8px; margin-bottom: 0.5rem;">
-                        <div>
-                            <div style="font-weight:700; color:#FFB200;">${(req.items||[]).join(', ')}</div>
-                            <div style="color:#9ca3af; font-size:.9rem;">
-                                ${req.userEmail||req.requestedBy||''} • 
-                                <span class="status-${req.status||'pending'}">${req.status||'pending'}</span>
-                                ${req.neededFrom?`• From ${req.neededFrom}`:''} 
-                                ${req.neededTo?`• To ${req.neededTo}`:''}
+                container.innerHTML = (list||[]).map(req=>{
+                    const isApproved = req.status === 'approved';
+                    const isDenied = req.status === 'denied';
+                    const isConflict = req.status === 'conflict';
+                    
+                    return `
+                        <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding: 1rem; border: 1px solid rgba(255,178,0,0.2); border-radius: 8px; margin-bottom: 0.5rem;">
+                            <div style="flex: 1;">
+                                <div style="font-weight:700; color:#FFB200;">${(req.items||[]).join(', ')}</div>
+                                <div style="color:#9ca3af; font-size:.9rem;">
+                                    ${req.userEmail||req.requestedBy||''} • 
+                                    <span class="status-${req.status||'pending'}">${req.status||'pending'}</span>
+                                    ${req.neededFrom?`• From ${req.neededFrom}`:''} 
+                                    ${req.neededTo?`• To ${req.neededTo}`:''}
+                                </div>
+                                ${req.notes ? `<div style="color:#9ca3af; font-size:0.8rem; margin-top:4px;">${req.notes}</div>` : ''}
+                                
+                                ${isApproved && req.rentalDetails ? `
+                                    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 6px; padding: 8px; margin-top: 8px;">
+                                        <div style="color: #22c55e; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px;">
+                                            <i class="fas fa-check-circle"></i> CHECKED OUT
+                                        </div>
+                                        <div style="color: #9ca3af; font-size: 0.8rem;">
+                                            <div>Checked out: ${new Date(req.rentalDetails.checkedOutAt).toLocaleString()}</div>
+                                            <div>Due back: ${new Date(req.rentalDetails.dueBackAt).toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                
+                                ${isDenied ? `
+                                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 8px; margin-top: 8px;">
+                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem;">
+                                            <i class="fas fa-times-circle"></i> REQUEST DENIED
+                                        </div>
+                                        <div style="color: #9ca3af; font-size: 0.8rem;">
+                                            Processed: ${req.processedAt ? new Date(req.processedAt).toLocaleString() : 'Unknown'}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                
+                                ${isConflict ? `
+                                    <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 6px; padding: 8px; margin-top: 8px;">
+                                        <div style="color: #a855f7; font-weight: 600; font-size: 0.85rem;">
+                                            <i class="fas fa-exclamation-triangle"></i> CONFLICT
+                                        </div>
+                                        <div style="color: #9ca3af; font-size: 0.8rem;">
+                                            Some items unavailable or not found
+                                        </div>
+                                    </div>
+                                ` : ''}
                             </div>
-                            ${req.notes ? `<div style="color:#9ca3af; font-size:0.8rem; margin-top:4px;">${req.notes}</div>` : ''}
+                            
+                            ${!isApproved && !isDenied && !isConflict ? `
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn btn-secondary" onclick="adminUpdateRequestStatus('${req.id}','approved')">Approve</button>
+                                    <button class="btn btn-danger" onclick="adminUpdateRequestStatus('${req.id}','denied')">Deny</button>
+                                </div>
+                            ` : ''}
                         </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn btn-secondary" onclick="adminUpdateRequestStatus('${req.id}','approved')">Approve</button>
-                            <button class="btn btn-danger" onclick="adminUpdateRequestStatus('${req.id}','denied')">Deny</button>
-                        </div>
-                    </div>
-                `).join(''); 
+                    `;
+                }).join(''); 
                 console.log('✅ Admin equipment requests rendered successfully');
             } catch(e){ 
                 console.error('❌ adminLoadEquipmentRequests error', e); 
@@ -7023,7 +7098,11 @@
                 if (status === 'approved') {
                     await adminApproveRequest(id);
                 } else {
-                    await window.FirestoreDataManager.updateEquipmentRequest(id, { status });
+                    await window.FirestoreDataManager.updateEquipmentRequest(id, { 
+                        status,
+                        processedAt: new Date().toISOString(),
+                        processedBy: 'admin'
+                    });
                 }
                 await Promise.all([adminLoadEquipmentRequests(), adminLoadEquipment()]);
                 showAdminNotification('Updated',`Request ${status}`,'success');
@@ -7040,39 +7119,82 @@
         }
 
         async function adminApproveRequest(requestId){
+            console.log('🔄 Admin approving request:', requestId);
             const [requests, equipment] = await Promise.all([
                 window.FirestoreDataManager.getEquipmentRequests(),
                 window.FirestoreDataManager.getEquipment()
             ]);
             const req = (requests||[]).find(r => r.id === requestId);
             if (!req) throw new Error('Request not found');
-            const neededFrom = req.neededFrom || null;
-            const neededTo = req.neededTo || null;
+            
+            const neededFrom = req.neededFrom || new Date().toISOString().split('T')[0];
+            const neededTo = req.neededTo || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Default 7 days
             const items = Array.isArray(req.items) ? req.items : [];
-            const reservedIds = [];
+            const checkedOutIds = [];
             const conflicts = [];
+
+            console.log('📋 Processing approval for items:', items);
 
             for (const name of items){
                 const match = (equipment||[]).find(e =>
                     (e.name||'').toLowerCase() === String(name).toLowerCase() ||
                     (e.name||'').toLowerCase().includes(String(name).toLowerCase())
                 );
-                if (!match){ conflicts.push({ item:name, reason:'not_found' }); continue; }
+                if (!match){ 
+                    conflicts.push({ item:name, reason:'not_found' }); 
+                    continue; 
+                }
+                
                 const hasConflict = (match.status==='checked_out') ||
                     (match.status==='reserved' && match.reservation && datesOverlap(neededFrom, neededTo, match.reservation.neededFrom, match.reservation.neededTo));
                 if (hasConflict){
                     conflicts.push({ item:name, reason:'unavailable', equipmentId: match.id, status: match.status });
                     continue;
                 }
-                const reservation = { requestId, userEmail: req.userEmail||'', neededFrom, neededTo, createdAt: new Date().toISOString() };
-                await window.FirestoreDataManager.updateEquipment(match.id, { status:'reserved', reservation });
-                reservedIds.push(match.id);
+                
+                // Check out the equipment with rental details
+                const rentalDetails = {
+                    requestId,
+                    userEmail: req.userEmail || req.requestedBy || '',
+                    userName: req.userName || req.requestedByName || '',
+                    checkedOutAt: new Date().toISOString(),
+                    dueBackAt: neededTo,
+                    neededFrom: neededFrom,
+                    neededTo: neededTo,
+                    notes: req.notes || `Approved request for ${name}`
+                };
+                
+                await window.FirestoreDataManager.updateEquipment(match.id, { 
+                    status: 'checked_out', 
+                    rental: rentalDetails,
+                    reservation: null // Clear any previous reservation
+                });
+                checkedOutIds.push(match.id);
+                console.log('✅ Checked out equipment:', match.name, 'to:', rentalDetails.userEmail);
             }
 
             if (conflicts.length){
-                await window.FirestoreDataManager.updateEquipmentRequest(requestId, { status:'conflict', conflicts, reservedItems: reservedIds });
+                await window.FirestoreDataManager.updateEquipmentRequest(requestId, { 
+                    status: 'conflict', 
+                    conflicts, 
+                    checkedOutItems: checkedOutIds,
+                    processedAt: new Date().toISOString(),
+                    processedBy: 'admin'
+                });
+                console.log('⚠️ Request has conflicts:', conflicts);
             } else {
-                await window.FirestoreDataManager.updateEquipmentRequest(requestId, { status:'approved', reservedItems: reservedIds });
+                await window.FirestoreDataManager.updateEquipmentRequest(requestId, { 
+                    status: 'approved', 
+                    checkedOutItems: checkedOutIds,
+                    processedAt: new Date().toISOString(),
+                    processedBy: 'admin',
+                    rentalDetails: {
+                        checkedOutAt: new Date().toISOString(),
+                        dueBackAt: neededTo,
+                        items: items
+                    }
+                });
+                console.log('✅ Request approved and equipment checked out');
             }
         }
 
