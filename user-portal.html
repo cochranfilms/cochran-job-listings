@@ -1712,6 +1712,9 @@
             displayUserContracts();
             displayUserJobs();
             displayUserPerformanceReviews();
+            
+            // Load Priority Jobs
+            loadPriorityJobs();
         }
 
         // Refresh user data manually
@@ -5106,11 +5109,312 @@
             }
         }
 
+        // ==================== PRIORITY JOBS FUNCTIONALITY ====================
+        
+        // Priority Jobs Data Management
+        let priorityJobsData = [];
+        let filteredPriorityJobs = [];
+        let quickApplyCount = 0;
+
+        // Load Priority Jobs from Firestore
+        async function loadPriorityJobs() {
+            try {
+                console.log('🔄 Loading priority jobs...');
+                
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const jobs = await window.FirestoreDataManager.getJobListings();
+                    if (Array.isArray(jobs) && jobs.length > 0) {
+                        // Filter out inactive jobs and applicant submissions
+                        priorityJobsData = jobs.filter(job => {
+                            const cleanStatus = String(job.status || '').toLowerCase().trim();
+                            const isActive = cleanStatus === 'active';
+                            
+                            // Derive title from multiple fields
+                            const derivedTitle = (
+                                job.title || job.Title || job.jobTitle || 
+                                job.position || job['Job Title'] || 
+                                job['Applying For Which Job'] || 
+                                job['applying_for_which_job'] || ''
+                            );
+                            
+                            // Check for applicant info
+                            const hasApplicantInfo = job.email || job.Email || job.phone || 
+                                                   job.Phone || job['Full Name'] || 
+                                                   job.full_name || job.name;
+                            
+                            return isActive && derivedTitle.trim().length > 0 && !hasApplicantInfo;
+                        });
+                        
+                        console.log('✅ Priority jobs loaded:', priorityJobsData.length);
+                        filteredPriorityJobs = [...priorityJobsData];
+                        renderPriorityJobs();
+                        updatePriorityStats();
+                    } else {
+                        console.log('📁 No jobs found in Firestore');
+                        priorityJobsData = [];
+                        filteredPriorityJobs = [];
+                        renderPriorityJobs();
+                    }
+                } else {
+                    console.log('❌ Firestore not available');
+                    priorityJobsData = [];
+                    filteredPriorityJobs = [];
+                    renderPriorityJobs();
+                }
+            } catch (error) {
+                console.error('❌ Error loading priority jobs:', error);
+                priorityJobsData = [];
+                filteredPriorityJobs = [];
+                renderPriorityJobs();
+            }
+        }
+
+        // Render Priority Jobs
+        function renderPriorityJobs() {
+            const container = document.getElementById('priorityJobsContent');
+            if (!container) return;
+
+            if (filteredPriorityJobs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <h3>No Priority Jobs Available</h3>
+                        <p>Check back soon for new opportunities or contact admin for exclusive access.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const jobsHTML = filteredPriorityJobs.map(job => createPriorityJobCard(job)).join('');
+            container.innerHTML = jobsHTML;
+        }
+
+        // Create Priority Job Card
+        function createPriorityJobCard(job) {
+            const jobTitle = job.title || job.Title || job.jobTitle || 'Position';
+            const eventDate = job.date || job.Date || job['Date of Event'] || '';
+            const jobLocation = job.location || job.Location || 'Atlanta Area';
+            const jobPay = job.pay || job.Pay || job.salary || 'Competitive Pay';
+            const jobDescription = job.description || job.Description || 'Full details will be provided upon application.';
+            
+            // Determine if this is an exclusive job (future feature)
+            const isExclusive = job.exclusive || false;
+            const badgeClass = isExclusive ? 'exclusive-badge' : 'priority-badge';
+            const badgeText = isExclusive ? 'Exclusive' : 'Priority';
+            
+            // Format date
+            const formattedDate = eventDate ? new Date(eventDate).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }) : 'Date TBD';
+            
+            // Format pay
+            const formattedPay = jobPay && jobPay !== 'Competitive Pay' ? 
+                (jobPay.startsWith('$') ? jobPay : `$${jobPay}`) : 'Competitive Pay';
+
+            return `
+                <div class="priority-job-card" data-job-id="${job.id || jobTitle.replace(/\s+/g, '-').toLowerCase()}">
+                    <div class="${badgeClass}">${badgeText}</div>
+                    
+                    <div class="job-card-header">
+                        <h3 class="job-title">${jobTitle}</h3>
+                        <div class="job-meta">
+                            <div class="job-meta-item">
+                                <span class="job-meta-icon">📅</span>
+                                <span>${formattedDate}</span>
+                            </div>
+                            <div class="job-meta-item">
+                                <span class="job-meta-icon">📍</span>
+                                <span>${jobLocation}</span>
+                            </div>
+                            <div class="job-pay">${formattedPay}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="job-description">
+                        <p>${jobDescription}</p>
+                    </div>
+                    
+                    <div class="job-actions">
+                        <button class="btn-quick-apply" onclick="quickApplyToJob('${jobTitle}', '${eventDate}', '${jobLocation}', '${jobPay}', '${jobDescription}')">
+                            <i class="fas fa-bolt"></i>
+                            Quick Apply
+                        </button>
+                        <button class="btn-details" onclick="showJobDetails('${jobTitle}', '${eventDate}', '${jobLocation}', '${jobPay}', '${jobDescription}')">
+                            <i class="fas fa-info-circle"></i>
+                            Details
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Quick Apply to Job
+        function quickApplyToJob(jobTitle, eventDate, location, pay, description) {
+            if (!currentUser) {
+                showNotification('Please log in to apply for jobs', 'error');
+                return;
+            }
+
+            // Pre-fill apply form with user data and job details
+            const applyUrl = generateQuickApplyUrl(jobTitle, eventDate, location, pay, description);
+            
+            // Open in new tab
+            window.open(applyUrl, '_blank');
+            
+            // Track quick apply
+            quickApplyCount++;
+            updatePriorityStats();
+            
+            showNotification('Quick apply opened! Your profile will be pre-filled.', 'success');
+        }
+
+        // Generate Quick Apply URL
+        function generateQuickApplyUrl(jobTitle, eventDate, location, pay, description) {
+            const params = new URLSearchParams();
+            params.append('applyingFor', jobTitle);
+            params.append('eventDate', eventDate);
+            params.append('location', location);
+            params.append('pay', pay);
+            params.append('description', description);
+            
+            // Add user data for pre-filling
+            if (currentUser) {
+                if (currentUser.profile?.email) params.append('email', currentUser.profile.email);
+                if (currentUser.profile?.location) params.append('location', currentUser.profile.location);
+                if (currentUser.profile?.phone) params.append('phone', currentUser.profile.phone);
+            }
+            
+            return `/apply.html?${params.toString()}`;
+        }
+
+        // Show Job Details Modal
+        function showJobDetails(jobTitle, eventDate, location, pay, description) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(8px);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            `;
+
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); border: 1px solid rgba(255, 178, 0, 0.3); border-radius: 16px; max-width: 500px; width: 100%; padding: 2rem; color: white;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="color: #FFB200; margin: 0; font-family: 'Cinzel', serif;">Job Details</h2>
+                        <button onclick="this.closest('div').parentElement.remove()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <h3 style="color: white; margin-bottom: 0.5rem;">${jobTitle}</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: rgba(255, 255, 255, 0.8);">
+                                <span style="color: #FFB200;">📅</span>
+                                <span>${eventDate ? new Date(eventDate).toLocaleDateString() : 'Date TBD'}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: rgba(255, 255, 255, 0.8);">
+                                <span style="color: #FFB200;">📍</span>
+                                <span>${location}</span>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #FFB200, #FFD700); color: #1a1a1a; padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                                ${pay.startsWith('$') ? pay : `$${pay}`}
+                            </div>
+                        </div>
+                        <p style="color: rgba(255, 255, 255, 0.8); line-height: 1.6;">${description}</p>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button onclick="quickApplyToJob('${jobTitle}', '${eventDate}', '${location}', '${pay}', '${description}'); this.closest('div').parentElement.remove();" 
+                                style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1;">
+                            <i class="fas fa-bolt"></i> Quick Apply
+                        </button>
+                        <button onclick="this.closest('div').parentElement.remove()" 
+                                style="background: transparent; color: #FFB200; border: 1px solid #FFB200; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        // Filter Priority Jobs
+        function filterPriorityJobs() {
+            const typeFilter = document.getElementById('jobTypeFilter')?.value || '';
+            const locationFilter = document.getElementById('locationFilter')?.value || '';
+
+            filteredPriorityJobs = priorityJobsData.filter(job => {
+                const jobTitle = (job.title || job.Title || '').toLowerCase();
+                const jobLocation = (job.location || job.Location || '').toLowerCase();
+                
+                let typeMatch = true;
+                let locationMatch = true;
+
+                if (typeFilter) {
+                    typeMatch = jobTitle.includes(typeFilter.toLowerCase());
+                }
+
+                if (locationFilter) {
+                    if (locationFilter === 'atlanta') {
+                        locationMatch = jobLocation.includes('atlanta') || jobLocation.includes('georgia');
+                    } else if (locationFilter === 'remote') {
+                        locationMatch = jobLocation.includes('remote') || jobLocation.includes('virtual');
+                    } else if (locationFilter === 'travel') {
+                        locationMatch = jobLocation.includes('travel') || jobLocation.includes('multiple');
+                    }
+                }
+
+                return typeMatch && locationMatch;
+            });
+
+            renderPriorityJobs();
+            updatePriorityStats();
+        }
+
+        // Refresh Priority Jobs
+        function refreshPriorityJobs() {
+            loadPriorityJobs();
+            showNotification('Priority jobs refreshed!', 'success');
+        }
+
+        // Update Priority Stats
+        function updatePriorityStats() {
+            const priorityJobCountEl = document.getElementById('priorityJobCount');
+            const quickApplyCountEl = document.getElementById('quickApplyCount');
+            const exclusiveJobCountEl = document.getElementById('exclusiveJobCount');
+
+            if (priorityJobCountEl) {
+                priorityJobCountEl.textContent = filteredPriorityJobs.length;
+            }
+            if (quickApplyCountEl) {
+                quickApplyCountEl.textContent = quickApplyCount;
+            }
+            if (exclusiveJobCountEl) {
+                const exclusiveCount = filteredPriorityJobs.filter(job => job.exclusive).length;
+                exclusiveJobCountEl.textContent = exclusiveCount;
+            }
+        }
+
         // Make functions globally accessible
         window.downloadUserContract = downloadUserContract;
         window.viewContractDetails = viewContractDetails;
         window.showContractDetailsModal = showContractDetailsModal;
         window.closeContractModal = closeContractModal;
+        window.loadPriorityJobs = loadPriorityJobs;
+        window.filterPriorityJobs = filterPriorityJobs;
+        window.refreshPriorityJobs = refreshPriorityJobs;
+        window.quickApplyToJob = quickApplyToJob;
+        window.showJobDetails = showJobDetails;
 
     </script>
 
@@ -11060,6 +11364,318 @@
                 justify-content: center;
             }
         }
+
+        /* ==================== PRIORITY JOBS SECTION ==================== */
+        .priority-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 178, 0, 0.1), rgba(255, 178, 0, 0.05));
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 178, 0, 0.15);
+            border-color: rgba(255, 178, 0, 0.3);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .job-filters {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 178, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 2rem;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            color: #FFB200;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .filter-group select {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 8px;
+            color: white;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+        }
+
+        .priority-jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .priority-job-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .priority-job-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FFB200, #FFD700);
+        }
+
+        .priority-job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 178, 0, 0.2);
+            border-color: rgba(255, 178, 0, 0.5);
+        }
+
+        .priority-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #1a1a1a;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .exclusive-badge {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+        }
+
+        .job-card-header {
+            margin-bottom: 1rem;
+        }
+
+        .job-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-family: 'Cinzel', serif;
+        }
+
+        .job-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .job-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .job-meta-icon {
+            color: #FFB200;
+            font-size: 1rem;
+        }
+
+        .job-pay {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #1a1a1a;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .job-description {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-quick-apply {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-quick-apply:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-details {
+            background: transparent;
+            color: #FFB200;
+            border: 1px solid #FFB200;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-details:hover {
+            background: #FFB200;
+            color: #1a1a1a;
+        }
+
+        .exclusive-jobs-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 178, 0, 0.2);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            color: #FFB200;
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+        }
+
+        .exclusive-jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Mobile Responsive for Priority Jobs */
+        @media (max-width: 768px) {
+            .priority-stats {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-icon {
+                font-size: 1.5rem;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .job-filters {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .filter-group {
+                min-width: 100%;
+            }
+
+            .priority-jobs-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .priority-job-card {
+                padding: 1rem;
+            }
+
+            .job-actions {
+                flex-direction: column;
+            }
+
+            .btn-quick-apply,
+            .btn-details {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
     <!-- New premium theme stylesheet (loaded last to override older visuals) -->
     <!-- Removed legacy light theme to prevent white flash and enforce dark theme -->
@@ -11329,6 +11945,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="#priority-jobs" class="nav-link" onclick="showSection('priority-jobs')">
+                        <i class="fas fa-star"></i>
+                        <span>Priority Jobs</span>
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="#contracts" class="nav-link" onclick="showSection('contracts')">
                         <i class="fas fa-file-signature"></i>
                         <span>Contracts</span>
@@ -11408,6 +12030,82 @@
                 
                 <div class="jobs-grid" id="jobsContent">
                     <!-- Jobs will be populated here -->
+                </div>
+            </div>
+            
+            <div id="priority-jobs-section" class="content-section">
+                <div class="dashboard-header">
+                    <h1><i class="fas fa-star"></i> Priority Jobs</h1>
+                    <p>Exclusive access to current job opportunities - apply quickly with your saved profile</p>
+                </div>
+                
+                <!-- Priority Jobs Stats -->
+                <div class="priority-stats" id="priorityStats">
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="priorityJobCount">0</div>
+                            <div class="stat-label">Priority Jobs Available</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="quickApplyCount">0</div>
+                            <div class="stat-label">Quick Applications</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔒</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="exclusiveJobCount">0</div>
+                            <div class="stat-label">Exclusive Jobs</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Job Filter Controls -->
+                <div class="job-filters">
+                    <div class="filter-group">
+                        <label for="jobTypeFilter">Job Type:</label>
+                        <select id="jobTypeFilter" onchange="filterPriorityJobs()">
+                            <option value="">All Types</option>
+                            <option value="photography">Photography</option>
+                            <option value="videography">Videography</option>
+                            <option value="editing">Editing</option>
+                            <option value="event">Event Coverage</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="locationFilter">Location:</label>
+                        <select id="locationFilter" onchange="filterPriorityJobs()">
+                            <option value="">All Locations</option>
+                            <option value="atlanta">Atlanta Area</option>
+                            <option value="remote">Remote</option>
+                            <option value="travel">Travel Required</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button class="btn btn-primary" onclick="refreshPriorityJobs()">
+                            <i class="fas fa-sync-alt"></i> Refresh Jobs
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Priority Jobs Grid -->
+                <div class="priority-jobs-grid" id="priorityJobsContent">
+                    <!-- Priority jobs will be populated here -->
+                </div>
+                
+                <!-- Exclusive Jobs Section (Future Feature) -->
+                <div class="exclusive-jobs-section" id="exclusiveJobsSection" style="display: none;">
+                    <div class="section-header">
+                        <h2><i class="fas fa-crown"></i> Exclusive Jobs</h2>
+                        <p>Special opportunities available only to priority contractors</p>
+                    </div>
+                    <div class="exclusive-jobs-grid" id="exclusiveJobsContent">
+                        <!-- Exclusive jobs will be populated here -->
+                    </div>
                 </div>
             </div>
             

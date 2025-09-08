@@ -702,6 +702,20 @@
                                         <option value="Inactive">Inactive</option>
                                     </select>
                                 </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" id="jobExclusive" name="exclusive" style="transform: scale(1.2);">
+                                        <label for="jobExclusive" style="color: #FFB200; font-weight: 600; cursor: pointer;">
+                                            <i class="fas fa-crown"></i> Exclusive Job (Priority Contractors Only)
+                                        </label>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" id="jobPriority" name="priority" checked style="transform: scale(1.2);">
+                                        <label for="jobPriority" style="color: #FFB200; font-weight: 600; cursor: pointer;">
+                                            <i class="fas fa-star"></i> Priority Job (Show in User Portal)
+                                        </label>
+                                    </div>
+                                </div>
                                 <textarea id="jobDescription" name="description" placeholder="Job Description" rows="3"></textarea>
                                 <div class="form-actions">
                                     <button type="submit" class="btn">➕ Add Job</button>
@@ -1633,6 +1647,16 @@
                             <span class="job-status" style="background: ${statusColors[job.status] || '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
                                 ${job.status || 'Active'}
                             </span>
+                            ${job.exclusive ? `
+                                <span style="background: linear-gradient(135deg, #8B5CF6, #A855F7); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                                    <i class="fas fa-crown"></i> Exclusive
+                                </span>
+                            ` : ''}
+                            ${job.priority ? `
+                                <span style="background: linear-gradient(135deg, #FFB200, #FFD700); color: #1a1a1a; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                                    <i class="fas fa-star"></i> Priority
+                                </span>
+                            ` : ''}
                             ${job.type ? `
                                 <span style="background: rgba(255, 178, 0, 0.2); color: #FFB200; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
                                     ${job.type}
@@ -1673,7 +1697,9 @@
                 pay: formData.get('pay'),
                 type: formData.get('type'),
                 description: formData.get('description'),
-                status: formData.get('status')
+                status: formData.get('status'),
+                exclusive: formData.get('exclusive') === 'on',
+                priority: formData.get('priority') === 'on'
             };
 
             const editIndex = e.target.dataset.editIndex;
@@ -5740,6 +5766,16 @@
                             <span class="job-status" style="background: ${statusColors[job.status] || '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
                                 ${job.status || 'Active'}
                             </span>
+                            ${job.exclusive ? `
+                                <span style="background: linear-gradient(135deg, #8B5CF6, #A855F7); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                                    <i class="fas fa-crown"></i> Exclusive
+                                </span>
+                            ` : ''}
+                            ${job.priority ? `
+                                <span style="background: linear-gradient(135deg, #FFB200, #FFD700); color: #1a1a1a; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                                    <i class="fas fa-star"></i> Priority
+                                </span>
+                            ` : ''}
                             ${job.type ? `
                                 <span style="background: rgba(255, 178, 0, 0.2); color: #FFB200; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
                                     ${job.type}
