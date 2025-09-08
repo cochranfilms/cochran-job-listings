@@ -6982,6 +6982,11 @@
             }
             
             console.log('📑 Switched to section:', tabName);
+            
+            // Refresh profile pictures when switching tabs
+            if (currentUser && currentUser.profilePicture) {
+                displayProfilePicture(currentUser.profilePicture);
+            }
         }
 
         function showSection(sectionName) {
@@ -7044,7 +7049,7 @@
         function switchEquipmentTab(tabName) {
             const tabs = ['library','resources','requests','maintenance'];
             tabs.forEach(name => {
-                const el = document.getElementById(`equipment-${name}`);
+                const el = document.getElementById(`equipment-${name}-tab`);
                 if (el) el.style.display = (name === tabName) ? '' : 'none';
             });
             document.querySelectorAll('.performance-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -8218,21 +8223,56 @@
                 
                 // Update other avatar targets across the page
                 try {
+                    // Update contractor directory avatars
                     document.querySelectorAll('.contractor-avatar img').forEach(el => {
                         const card = el.closest('.contractor-card');
                         const name = card?.dataset?.name || '';
                         if (currentUser && (currentUser.name === name)) {
                             el.src = imageData;
+                            el.style.display = 'block';
+                            const placeholder = el.parentElement.querySelector('.placeholder');
+                            if (placeholder) placeholder.style.display = 'none';
                         }
                     });
+                    
+                    // Update showcase author avatars
                     document.querySelectorAll('.showcase-author-avatar img').forEach(el => {
                         if (currentUser && el.alt && (el.alt === currentUser.name)) {
                             el.src = imageData;
+                            el.style.display = 'block';
+                            const placeholder = el.parentElement.querySelector('.placeholder');
+                            if (placeholder) placeholder.style.display = 'none';
                         }
                     });
+                    
+                    // Update message avatars
                     document.querySelectorAll('.message-avatar img').forEach(el => {
                         if (currentUser && el.alt && (el.alt === currentUser.name)) {
                             el.src = imageData;
+                            el.style.display = 'block';
+                            const placeholder = el.parentElement.querySelector('.placeholder');
+                            if (placeholder) placeholder.style.display = 'none';
+                        }
+                    });
+                    
+                    // Update success story avatars
+                    document.querySelectorAll('.success-story-avatar img').forEach(el => {
+                        if (currentUser && el.alt && (el.alt === currentUser.name)) {
+                            el.src = imageData;
+                            el.style.display = 'block';
+                            const placeholder = el.parentElement.querySelector('.placeholder');
+                            if (placeholder) placeholder.style.display = 'none';
+                        }
+                    });
+                    
+                    // Update any other profile picture placeholders
+                    document.querySelectorAll('.profile-picture-placeholder, .placeholder').forEach(placeholder => {
+                        const parent = placeholder.parentElement;
+                        const img = parent.querySelector('img');
+                        if (img && currentUser && (img.alt === currentUser.name || parent.dataset.name === currentUser.name)) {
+                            img.src = imageData;
+                            img.style.display = 'block';
+                            placeholder.style.display = 'none';
                         }
                     });
                 } catch (_) {}
@@ -8242,6 +8282,27 @@
                 if (removeBtn) removeBtn.style.display = 'none';
                 if (headerAvatar) headerAvatar.style.display = 'none';
                 if (headerIcon) headerIcon.style.display = 'inline-block';
+                
+                // Hide all user's avatars and show placeholders
+                try {
+                    document.querySelectorAll('.contractor-avatar img, .showcase-author-avatar img, .message-avatar img, .success-story-avatar img').forEach(el => {
+                        if (currentUser && (el.alt === currentUser.name || el.closest('.contractor-card')?.dataset?.name === currentUser.name)) {
+                            el.style.display = 'none';
+                            const placeholder = el.parentElement.querySelector('.placeholder');
+                            if (placeholder) placeholder.style.display = 'flex';
+                        }
+                    });
+                    
+                    // Show placeholders for current user
+                    document.querySelectorAll('.profile-picture-placeholder, .placeholder').forEach(placeholder => {
+                        const parent = placeholder.parentElement;
+                        const img = parent.querySelector('img');
+                        if (img && currentUser && (img.alt === currentUser.name || parent.dataset.name === currentUser.name)) {
+                            img.style.display = 'none';
+                            placeholder.style.display = 'flex';
+                        }
+                    });
+                } catch (_) {}
             }
         }
         
@@ -17896,7 +17957,7 @@
                 </div>
 
                 <!-- Gear Library Tab -->
-                <div id="equipment-library" class="performance-tab-content active">
+                <div id="equipment-library-tab" class="performance-tab-content active">
                     <div class="card">
                         <div class="card-header">
                             <h3><i class="fas fa-camera"></i> Gear Library</h3>
@@ -17918,7 +17979,7 @@
                 </div>
 
                 <!-- Resource Downloads Tab -->
-                <div id="equipment-resources" class="performance-tab-content" style="display: none;">
+                <div id="equipment-resources-tab" class="performance-tab-content" style="display: none;">
                     <div class="card">
                         <div class="card-header">
                             <h3><i class="fas fa-download"></i> Resource Downloads</h3>
@@ -17930,7 +17991,7 @@
                 </div>
 
                 <!-- Equipment Requests Tab -->
-                <div id="equipment-requests" class="performance-tab-content" style="display: none;">
+                <div id="equipment-requests-tab" class="performance-tab-content" style="display: none;">
                     <div class="card">
                         <div class="card-header">
                             <h3><i class="fas fa-list"></i> Request Equipment</h3>
@@ -17968,7 +18029,7 @@
                 </div>
 
                 <!-- Maintenance Tracking Tab -->
-                <div id="equipment-maintenance" class="performance-tab-content" style="display: none;">
+                <div id="equipment-maintenance-tab" class="performance-tab-content" style="display: none;">
                     <div class="card">
                         <div class="card-header">
                             <h3><i class="fas fa-tools"></i> Maintenance Tracking</h3>
