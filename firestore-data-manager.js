@@ -1706,12 +1706,18 @@ Object.assign(FirestoreDataManager, {
     // Equipment Requests
     async getEquipmentRequests(options = {}) {
         try {
+            console.log('🔄 FirestoreDataManager.getEquipmentRequests called with options:', options);
             let ref = this.db.collection(this.collections.equipmentRequests).orderBy('createdAt', 'desc');
             if (options.userEmail) {
+                console.log('🔍 Filtering by userEmail:', options.userEmail);
                 ref = this.db.collection(this.collections.equipmentRequests).where('userEmail', '==', String(options.userEmail).toLowerCase());
+            } else {
+                console.log('🔍 Loading all equipment requests (admin view)');
             }
             const snapshot = await ref.get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log('✅ FirestoreDataManager.getEquipmentRequests returning:', requests);
+            return requests;
         } catch (error) {
             console.error('❌ Error getting equipment requests:', error);
             return [];

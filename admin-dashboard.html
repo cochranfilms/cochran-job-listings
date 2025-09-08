@@ -6962,18 +6962,60 @@
 
         // Equipment Requests
         async function adminLoadEquipmentRequests(){
-            try { await ensureFirestoreReady(); const list = await window.FirestoreDataManager.getEquipmentRequests(); const container = document.getElementById('adminEquipmentRequests'); if(!container) return; container.innerHTML = (list||[]).map(req=>`
-                <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                    <div>
-                        <div style=\"font-weight:700; color:#FFB200;\">${(req.items||[]).join(', ')}</div>
-                        <div style=\"color:#9ca3af; font-size:.9rem;\">${req.userEmail||''} • ${req.status||'pending'} ${req.neededFrom?`• From ${req.neededFrom}`:''} ${req.neededTo?`• To ${req.neededTo}`:''}</div>
+            try { 
+                console.log('🔄 Admin loading equipment requests...');
+                await ensureFirestoreReady(); 
+                const list = await window.FirestoreDataManager.getEquipmentRequests(); 
+                console.log('📋 Admin loaded equipment requests:', list);
+                const container = document.getElementById('adminEquipmentRequests'); 
+                if(!container) {
+                    console.warn('⚠️ adminEquipmentRequests container not found');
+                    return;
+                }
+                
+                if (!list || list.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: #9ca3af; padding: 2rem;">
+                            <i class="fas fa-list" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                            <p>No equipment requests found</p>
+                            <small>Requests will appear here when users submit them</small>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = (list||[]).map(req=>`
+                    <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding: 1rem; border: 1px solid rgba(255,178,0,0.2); border-radius: 8px; margin-bottom: 0.5rem;">
+                        <div>
+                            <div style="font-weight:700; color:#FFB200;">${(req.items||[]).join(', ')}</div>
+                            <div style="color:#9ca3af; font-size:.9rem;">
+                                ${req.userEmail||req.requestedBy||''} • 
+                                <span class="status-${req.status||'pending'}">${req.status||'pending'}</span>
+                                ${req.neededFrom?`• From ${req.neededFrom}`:''} 
+                                ${req.neededTo?`• To ${req.neededTo}`:''}
+                            </div>
+                            ${req.notes ? `<div style="color:#9ca3af; font-size:0.8rem; margin-top:4px;">${req.notes}</div>` : ''}
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-secondary" onclick="adminUpdateRequestStatus('${req.id}','approved')">Approve</button>
+                            <button class="btn btn-danger" onclick="adminUpdateRequestStatus('${req.id}','denied')">Deny</button>
+                        </div>
                     </div>
-                    <div style=\"display:flex; gap:8px;\">
-                        <button class=\"btn btn-secondary\" onclick=\"adminUpdateRequestStatus('${req.id}','approved')\">Approve</button>
-                        <button class=\"btn btn-danger\" onclick=\"adminUpdateRequestStatus('${req.id}','denied')\">Deny</button>
-                    </div>
-                </div>
-            `).join(''); } catch(e){ console.warn('adminLoadEquipmentRequests error', e); }
+                `).join(''); 
+                console.log('✅ Admin equipment requests rendered successfully');
+            } catch(e){ 
+                console.error('❌ adminLoadEquipmentRequests error', e); 
+                const container = document.getElementById('adminEquipmentRequests');
+                if (container) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: #ef4444; padding: 2rem;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                            <p>Error loading equipment requests</p>
+                            <small>${e.message || 'Unknown error'}</small>
+                        </div>
+                    `;
+                }
+            }
         }
         async function adminUpdateRequestStatus(id, status){
             try {

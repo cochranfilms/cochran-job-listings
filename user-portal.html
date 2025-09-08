@@ -7169,6 +7169,8 @@
                     neededTo: null,
                     notes: `Quick request for ${equipmentName}`,
                     status: 'pending',
+                    userEmail: email,
+                    userName: name,
                     requestedBy: email,
                     requestedByName: name,
                     createdAt: new Date().toISOString()
@@ -7198,13 +7200,17 @@
                 const name = currentUser?.name || currentUser?.profile?.name || '';
                 if (!items.length) { toast('Add at least one item', 'error'); return; }
                 await ensureFirestoreReady();
-                const id = await window.FirestoreDataManager.createEquipmentRequest({
+                const id =                 await window.FirestoreDataManager.createEquipmentRequest({
                     userEmail: email,
                     userName: name,
                     items,
                     neededFrom,
                     neededTo,
-                    notes
+                    notes,
+                    status: 'pending',
+                    requestedBy: email,
+                    requestedByName: name,
+                    createdAt: new Date().toISOString()
                 });
                 toast('Request submitted', 'success');
                 await loadEquipmentRequests();
