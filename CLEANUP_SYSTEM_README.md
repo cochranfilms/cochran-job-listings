@@ -47,6 +47,12 @@ Verification checklist
 - Files: `user-portal.html`
 - Cleanup: Removed the standalone "New Message" header button from the Team Messaging card. The bottom composer is the single entry point for starting messages, reducing duplicated controls.
 - Action if reverting: Re-add the `<div class="messaging-controls">…</div>` block inside the Team Messaging card header and restore any modal handlers like `showNewMessageModal()` if that flow is desired again.
+
+### 2025-09-12 — Success Stories: migrate from localStorage to Firestore
+- Files: `user-portal.html`, `firestore-data-manager.js`, `admin-dashboard.html`
+- Cleanup: Removed hardcoded sample stories and localStorage population. The portal now reads from the Firestore `successStories` collection and caches to localStorage only for offline fallback.
+- Admin: Mini-stats prefer Firestore counts with localStorage fallback to avoid blank metrics when offline.
+- Reversion guidance: If Firestore is unavailable, ensure `cochranSuccessStories` cache exists or reintroduce seed data during development only.
 ### Firestore Integration Notes
 - 2025-08-20 — `index.html` job filter derived-title fix: keep this logic when refactoring. The filter must derive a job title from multiple fields and only exclude rows that clearly look like applicant submissions. Do not revert to `job.title`-only checks.
 

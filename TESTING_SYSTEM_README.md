@@ -104,6 +104,18 @@ How to verify quickly:
 2. Confirm the card header shows only the title and no button in the right side.
 3. Type a message in the bottom composer and send; message posts successfully and appears in the list.
 
+### 2025-09-12 — Success Stories now Firestore-backed (live data)
+
+- Files: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`
+- Change: The Success Stories grid in the portal now loads from Firestore collection `successStories` via `FirestoreDataManager.getSuccessStories()` and listens for real-time updates through the shared data-change event. Admin dashboard counts also prefer Firestore with localStorage fallback.
+- Reason: Replace sample/localStorage data with live, centralized data like other collections.
+
+Quick test (browser):
+1. In Firebase Console, create a doc under `successStories` with fields like `author`, `authorEmail`, `role`, `achievement`, `title`, `description`, `stats { projectsCompleted, clientRating, earnings }`, `timestamp`.
+2. Open `user-portal.html` → Community → Success Stories. Verify the new story appears without refresh and respects the achievement filter.
+3. Open `admin-dashboard.html` and check the “Success Stories” mini-stat increments accordingly.
+4. Delete or edit the story in Firestore; verify the portal grid updates live.
+
 ### 2025-09-12 — Equipment Requests: available-gear multi-select
 
 - Files: `user-portal.html`

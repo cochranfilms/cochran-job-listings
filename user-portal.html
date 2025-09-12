@@ -8444,89 +8444,69 @@
             }
         }
         
-        // Success Stories Management
+        // Success Stories Management (Firestore-backed)
         let successStories = [];
-        
+
         function initializeSuccessStories() {
             const filterSelect = document.getElementById('successFilter');
-            
             if (filterSelect) {
                 filterSelect.addEventListener('change', filterSuccessStories);
             }
-            
-            loadSuccessStories();
-        }
-        
-        // Load success stories from localStorage
-        function loadSuccessStories() {
+
+            // Prefer Firestore live data; fall back to any locally cached data if Firestore unavailable
+            loadSuccessStoriesFromFirestore();
+            // Also listen for live updates dispatched by FirestoreDataManager
             try {
-                const saved = localStorage.getItem('cochranSuccessStories');
-                if (saved) {
-                    successStories = JSON.parse(saved);
-                } else {
-                    // Add some sample success stories
-                    successStories = [
-                        {
-                            id: 1,
-                            author: 'Cody Cochran',
-                            authorEmail: 'codylcochran87@gmail.com',
-                            authorAvatar: null,
-                            role: 'Photographer',
-                            achievement: 'Top Performer',
-                            title: 'Outstanding Project Delivery',
-                            description: 'Delivered exceptional photography work for the Stranger Things block party event, exceeding client expectations and receiving rave reviews.',
-                            stats: {
-                                projectsCompleted: 15,
-                                clientRating: 4.9,
-                                earnings: '$2,400'
-                            },
-                            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-                            congratulations: 8
-                        },
-                        {
-                            id: 2,
-                            author: 'Erica Jackson',
-                            authorEmail: 'dedejackson727@gmail.com',
-                            authorAvatar: null,
-                            role: 'Photographer',
-                            achievement: 'Project Excellence',
-                            title: 'Innovative Photography Techniques',
-                            description: 'Introduced new lighting techniques that improved photo quality by 40% and reduced post-processing time significantly.',
-                            stats: {
-                                projectsCompleted: 12,
-                                clientRating: 4.8,
-                                earnings: '$1,800'
-                            },
-                            timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-                            congratulations: 5
-                        },
-                        {
-                            id: 3,
-                            author: 'Will Smith',
-                            authorEmail: 'codylcochran89@gmail.com',
-                            authorAvatar: null,
-                            role: 'Photographer',
-                            achievement: 'Team Player',
-                            title: 'Mentoring New Team Members',
-                            description: 'Took initiative to mentor 3 new photographers, helping them improve their skills and integrate into the team seamlessly.',
-                            stats: {
-                                projectsCompleted: 8,
-                                clientRating: 4.7,
-                                earnings: '$1,200'
-                            },
-                            timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-                            congratulations: 12
-                        }
-                    ];
-                    saveSuccessStories();
-                }
-                displaySuccessStories();
-            } catch (error) {
-                console.error('Error loading success stories:', error);
-                successStories = [];
-            }
+                window.addEventListener('firestore:dataChange', (evt) => {
+                    const d = evt && evt.detail;
+                    if (!d || d.collection !== 'successStories') return;
+                    // Reload from Firestore to keep ordering consistent
+                    loadSuccessStoriesFromFirestore();
+                });
+            } catch (_) {}
         }
-        
+
+        async function loadSuccessStoriesFromFirestore() {
+            try {
+                // Ensure Firestore is ready
+                if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                    try { await window.FirestoreDataManager.init(); } catch(_) {}
+                }
+
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const stories = await window.FirestoreDataManager.getSuccessStories();
+                    // Normalize expected fields and compute derived stats where needed
+                    successStories = (stories || []).map((s) => ({
+                        id: s.id || Date.now(),
+                        author: s.author || s.authorName || 'Team Member',
+                        authorEmail: s.authorEmail || '',
+                        authorAvatar: s.authorAvatar || s.avatar || null,
+                        role: s.role || s.authorRole || 'Team Member',
+                        achievement: s.achievement || s.badge || '',
+                        title: s.title || '',
+                        description: s.description || '',
+                        stats: s.stats || {
+                            projectsCompleted: s.projectsCompleted || 0,
+                            clientRating: s.clientRating || 0,
+                            earnings: s.earnings || '$0'
+                        },
+                        timestamp: s.timestamp || s.createdAt || new Date().toISOString(),
+                        congratulations: typeof s.congratulations === 'number' ? s.congratulations : (s.kudos || 0)
+                    }));
+                    // Cache for offline fallback
+                    try { localStorage.setItem('cochranSuccessStories', JSON.stringify(successStories)); } catch(_) {}
+                } else {
+                    // Fallback to local cache
+                    successStories = JSON.parse(localStorage.getItem('cochranSuccessStories') || '[]');
+                }
+            } catch (error) {
+                console.error('Error loading success stories from Firestore:', error);
+                // Keep UI usable with any cached data
+                try { successStories = JSON.parse(localStorage.getItem('cochranSuccessStories') || '[]'); } catch(_) { successStories = []; }
+            }
+            displaySuccessStories();
+        }
+
         // Display success stories
         function displaySuccessStories() {
             const grid = document.getElementById('successStoriesGrid');
@@ -8612,7 +8592,7 @@
             showNotification('Share feature coming soon!', 'info');
         }
         
-        // Save success stories to localStorage
+        // Save success stories to localStorage (used only as offline cache)
         function saveSuccessStories() {
             try {
                 localStorage.setItem('cochranSuccessStories', JSON.stringify(successStories));

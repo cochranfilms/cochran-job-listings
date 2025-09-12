@@ -6685,18 +6685,45 @@
         // ==================== COMMUNITY MANAGEMENT FUNCTIONS ====================
         
         // Community Analytics
-        function updateCommunityStats() {
+        async function updateCommunityStats() {
             try {
-                // Load data from localStorage (in a real app, this would come from a database)
-                const messages = JSON.parse(localStorage.getItem('cochranMessages') || '[]');
-                const showcases = JSON.parse(localStorage.getItem('cochranShowcases') || '[]');
-                const events = JSON.parse(localStorage.getItem('cochranEvents') || '[]');
-                const successStories = JSON.parse(localStorage.getItem('cochranSuccessStories') || '[]');
-                
-                document.getElementById('totalMessages').textContent = messages.length;
-                document.getElementById('totalShowcases').textContent = showcases.length;
-                document.getElementById('totalEvents').textContent = events.length;
-                document.getElementById('totalSuccessStories').textContent = successStories.length;
+                // Prefer Firestore live counts; fallback to localStorage if unavailable
+                let messages = [];
+                let showcases = [];
+                let events = [];
+                let successStories = [];
+
+                if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                    try { await window.FirestoreDataManager.init(); } catch(_) {}
+                }
+
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    try {
+                        const db = window.FirestoreDataManager.db;
+                        const [msgSnap, showSnap, evtSnap, sucSnap] = await Promise.all([
+                            db.collection(window.FirestoreDataManager.collections.messages).get(),
+                            db.collection(window.FirestoreDataManager.collections.showcases).get(),
+                            db.collection(window.FirestoreDataManager.collections.events).get(),
+                            db.collection(window.FirestoreDataManager.collections.successStories).get()
+                        ]);
+                        messages = msgSnap.docs;
+                        showcases = showSnap.docs;
+                        events = evtSnap.docs;
+                        successStories = sucSnap.docs;
+                    } catch (e) {
+                        // Silent fallback to local cache below
+                    }
+                }
+
+                if (!messages.length) messages = JSON.parse(localStorage.getItem('cochranMessages') || '[]');
+                if (!showcases.length) showcases = JSON.parse(localStorage.getItem('cochranShowcases') || '[]');
+                if (!events.length) events = JSON.parse(localStorage.getItem('cochranEvents') || '[]');
+                if (!successStories.length) successStories = JSON.parse(localStorage.getItem('cochranSuccessStories') || '[]');
+
+                document.getElementById('totalMessages').textContent = messages.length || messages.size || 0;
+                document.getElementById('totalShowcases').textContent = showcases.length || showcases.size || 0;
+                document.getElementById('totalEvents').textContent = events.length || events.size || 0;
+                document.getElementById('totalSuccessStories').textContent = successStories.length || successStories.size || 0;
             } catch (error) {
                 console.error('Error updating community stats:', error);
             }
