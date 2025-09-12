@@ -786,6 +786,27 @@
 
         // Contract flow flags
         let requirePasswordForSignature = true; // Default: original apply flow requires setting a password
+
+        // Resolve the primary job key from a user's jobs map when not explicitly set
+        function resolvePrimaryJobKey(userLike){
+            try {
+                const jobs = (userLike && userLike.jobs) || {};
+                const docPrimary = userLike && userLike.primaryJob;
+                if (docPrimary && jobs[docPrimary]) return docPrimary;
+                const keys = Object.keys(jobs || {});
+                if (!keys.length) return null;
+                // Prefer approved status
+                const approvedKey = keys.find(k => (jobs[k] && (jobs[k].status === 'approved' || jobs[k].projectStatus === 'approved')));
+                if (approvedKey) return approvedKey;
+                // Prefer most recent assignedDate
+                const dated = [...keys].sort((a,b)=>{
+                    const da = Date.parse(jobs[a]?.assignedDate || jobs[a]?.date || '');
+                    const db = Date.parse(jobs[b]?.assignedDate || jobs[b]?.date || '');
+                    return (isNaN(db)?0:db) - (isNaN(da)?0:da);
+                });
+                return dated[0] || keys[0];
+            } catch(_) { return userLike && userLike.primaryJob ? userLike.primaryJob : null; }
+        }
         
         // Global GitHub configuration
         let GITHUB_CONFIG = {
@@ -1871,8 +1892,9 @@
                 const userData = approvedUsers[matchingUser];
                 
                 // Store freelancer data for both signed and unsigned contracts
-                // Get job-specific details from primary job (for Quick Apply users)
-                const primaryJob = userData.jobs?.[userData.primaryJob];
+                // Get job-specific details from resolved primary job (for Quick Apply users)
+                const resolvedKey = resolvePrimaryJobKey(userData);
+                const primaryJob = userData.jobs?.[resolvedKey];
                 currentFreelancerData = {
                     name: matchingUser,
                     email: userData.profile?.email,
@@ -1885,7 +1907,7 @@
                     contractSignedDate: userData.contract?.contractSignedDate,
                     contractUploadedDate: userData.contract?.contractUploadedDate,
                     contractId: userData.contract?.contractId,
-                    primaryJob: userData.primaryJob,
+                    primaryJob: resolvedKey || userData.primaryJob,
                     jobs: userData.jobs,
                     paymentMethod: userData.paymentMethod
                 };
@@ -2005,7 +2027,7 @@
             const effectiveDate = data.profile?.approvedDate || new Date().toISOString().split('T')[0];
             
             // Get job-specific details from primary job (for Quick Apply users)
-            const primaryJob = data.jobs?.[data.primaryJob];
+            const primaryJob = data.jobs?.[data.primaryJob || resolvePrimaryJobKey(data)];
             const role = primaryJob?.title || data.profile?.role || 'Contractor';
             const location = primaryJob?.location || data.profile?.location || 'Atlanta Area';
             const projectStart = primaryJob?.date || data.application?.eventDate || data.profile?.projectDate || data.profile?.projectStart || 'TBD';
