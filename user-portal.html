@@ -17145,6 +17145,8 @@
             animation: modalSlideIn 0.3s ease-out;
             position: relative;
             margin: auto;
+            display: flex;
+            flex-direction: column;
         }
         
         @keyframes modalSlideIn {
@@ -17202,6 +17204,14 @@
             max-height: 60vh;
             overflow-y: auto;
             min-height: 300px;
+            /* Override global .modal-content absolute centering used elsewhere */
+            position: relative;
+            top: auto;
+            left: auto;
+            transform: none;
+            right: auto;
+            bottom: auto;
+            width: auto;
         }
         
         .event-details-grid {
@@ -17294,6 +17304,7 @@
             display: flex;
             justify-content: flex-end;
             gap: 1rem;
+            margin-top: auto; /* Push footer to bottom within flex column */
         }
         
         @media (max-width: 768px) {
