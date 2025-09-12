@@ -49,6 +49,8 @@ const FirestoreDataManager = {
             await this.initializeCollectionsIfEmpty();
             // Repair misplaced docs (jobs/options under users)
             await this.repairCollections();
+            // Merge duplicate user docs by email and clean up sanitized-id duplicates
+            try { await this.repairDuplicateUsersByEmail(); } catch (e) { console.warn('⚠️ Duplicate users repair skipped:', e?.message || e); }
             // One-time migration from API JSON if Firestore empty
             await this.runAutoMigrationIfNeeded();
             
@@ -1392,6 +1394,180 @@ const FirestoreDataManager = {
             console.log('✅ Repair pass complete');
         } catch (err) {
             console.warn('⚠️ repairCollections skipped:', err?.message || err);
+        }
+    },
+
+    // Merge duplicate user docs that share the same email; prefer the richest doc and delete the duplicate
+    async repairDuplicateUsersByEmail() {
+        try {
+            if (!this.db) return false;
+            console.log('🛠️ Repairing duplicate user docs by email…');
+            const snap = await this.db.collection(this.collections.users).get();
+
+            // Helpers
+            const sanitizeIdFromEmail = (email) => String(email || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const isSanitizedEmailId = (id) => /^[a-z0-9]+$/.test(id || '') && /(?:gmail|icloud|yahoo|outlook|hotmail|proton|me|mac|edu|org|net|com)$/.test(String(id || ''));
+            const richnessScore = (data) => {
+                let s = 0;
+                if (data?.profile) s += Object.keys(data.profile).length;
+                if (data?.contract && Object.keys(data.contract).length) s += 5;
+                if (data?.jobs && Object.keys(data.jobs).length) s += 3;
+                if (data?.paymentMethod) s += 1;
+                if (data?.paymentStatus) s += 1;
+                if (data?.profilePicture) s += 2;
+                if (data?.performance) s += 1;
+                return s;
+            };
+            const mergePref = (base, incoming) => {
+                const out = { ...(base || {}) };
+                Object.entries(incoming || {}).forEach(([k, v]) => {
+                    const hasCurrent = out[k] !== undefined && out[k] !== null && out[k] !== '' && !(typeof out[k] === 'object' && Object.keys(out[k]).length === 0);
+                    const hasIncoming = v !== undefined && v !== null && v !== '' && !(typeof v === 'object' && Object.keys(v).length === 0);
+                    if (!hasCurrent && hasIncoming) out[k] = v;
+                });
+                return out;
+            };
+
+            // Index by email
+            const byEmail = new Map(); // email -> { id, data }
+            const byId = new Map();
+            snap.forEach(doc => byId.set(doc.id, doc.data() || {}));
+
+            snap.forEach(doc => {
+                const data = doc.data() || {};
+                const email = (data.profile && data.profile.email) ? String(data.profile.email).toLowerCase()
+                    : (data.email ? String(data.email).toLowerCase() : '');
+                if (email) {
+                    const current = byEmail.get(email);
+                    if (!current) {
+                        byEmail.set(email, { id: doc.id, data });
+                    } else {
+                        // Found another doc with the same email → merge to the richer one
+                        const a = { id: current.id, data: current.data };
+                        const b = { id: doc.id, data };
+                        const primary = richnessScore(a.data) >= richnessScore(b.data) ? a : b;
+                        const secondary = primary.id === a.id ? b : a;
+                        const merged = {
+                            profile: mergePref(primary.data.profile, secondary.data.profile),
+                            contract: mergePref(primary.data.contract, secondary.data.contract),
+                            application: mergePref(primary.data.application, secondary.data.application),
+                            jobs: { ...(primary.data.jobs || {}), ...(secondary.data.jobs || {}) },
+                            paymentMethod: primary.data.paymentMethod || secondary.data.paymentMethod || '',
+                            paymentStatus: primary.data.paymentStatus || secondary.data.paymentStatus || '',
+                            profilePicture: primary.data.profilePicture || secondary.data.profilePicture || null,
+                            performance: primary.data.performance || secondary.data.performance || null,
+                            bankData: primary.data.bankData || secondary.data.bankData || null,
+                            bankDetails: primary.data.bankDetails || secondary.data.bankDetails || null,
+                            paymentUpdatedAt: primary.data.paymentUpdatedAt || secondary.data.paymentUpdatedAt || null,
+                            paymentHistory: (Array.isArray(primary.data.paymentHistory) && primary.data.paymentHistory.length)
+                                ? primary.data.paymentHistory
+                                : (secondary.data.paymentHistory || [])
+                        };
+                        // Persist into primary, delete secondary
+                        // Ensure email is stored deterministically
+                        merged.profile = { ...(merged.profile || {}), email };
+                        merged.email = email;
+                        // Write and delete
+                        const primaryId = primary.id;
+                        const secondaryId = secondary.id;
+                        // eslint-disable-next-line no-console
+                        console.log(`🔧 Merging duplicate user docs: ${secondaryId} → ${primaryId} (email ${email})`);
+                        byId.set(primaryId, { ...(byId.get(primaryId) || {}), ...merged });
+                        byId.delete(secondaryId);
+                        byEmail.set(email, { id: primaryId, data: merged });
+                    }
+                }
+            });
+
+            // Also link docs that have sanitized-email ids but missing email fields
+            for (const [id, data] of Array.from(byId.entries())) {
+                const hasEmail = !!((data.profile && data.profile.email) || data.email);
+                if (hasEmail) continue;
+                if (isSanitizedEmailId(id)) {
+                    // Try to find a user whose sanitized email matches this id
+                    let target = null;
+                    for (const [email, entry] of byEmail.entries()) {
+                        if (sanitizeIdFromEmail(email) === id) { target = entry; break; }
+                    }
+                    if (target && target.id !== id) {
+                        // Merge this data into the target and drop this doc
+                        const merged = {
+                            profile: mergePref(target.data.profile, data.profile),
+                            contract: mergePref(target.data.contract, data.contract),
+                            application: mergePref(target.data.application, data.application),
+                            jobs: { ...(target.data.jobs || {}), ...(data.jobs || {}) },
+                            paymentMethod: target.data.paymentMethod || data.paymentMethod || '',
+                            paymentStatus: target.data.paymentStatus || data.paymentStatus || '',
+                            profilePicture: target.data.profilePicture || data.profilePicture || null,
+                            performance: target.data.performance || data.performance || null,
+                            bankData: target.data.bankData || data.bankData || null,
+                            bankDetails: target.data.bankDetails || data.bankDetails || null,
+                            paymentUpdatedAt: target.data.paymentUpdatedAt || data.paymentUpdatedAt || null,
+                            paymentHistory: (Array.isArray(target.data.paymentHistory) && target.data.paymentHistory.length)
+                                ? target.data.paymentHistory
+                                : (data.paymentHistory || [])
+                        };
+                        merged.profile = { ...(merged.profile || {}), email: (target.data.profile?.email || target.data.email || '').toLowerCase() };
+                        merged.email = merged.profile.email;
+                        // Apply writes
+                        await this.db.collection(this.collections.users).doc(target.id).set(merged, { merge: true });
+                        await this.db.collection(this.collections.users).doc(id).delete();
+                        // eslint-disable-next-line no-console
+                        console.log(`✅ Consolidated sanitized-id doc '${id}' into '${target.id}'`);
+                    }
+                }
+            }
+
+            // Apply merges for same-email duplicates discovered earlier
+            // We need to re-fetch to ensure we have current; but for efficiency, we wrote directly only for sanitized-id case.
+            // For same-email duplicates, perform actual writes now by re-scanning for email collisions.
+            const snap2 = await this.db.collection(this.collections.users).get();
+            const emailToDocs = new Map();
+            snap2.forEach(d => {
+                const data = d.data() || {};
+                const email = (data.profile && data.profile.email) ? String(data.profile.email).toLowerCase() : (data.email ? String(data.email).toLowerCase() : '');
+                if (!email) return;
+                const list = emailToDocs.get(email) || [];
+                list.push({ id: d.id, data });
+                emailToDocs.set(email, list);
+            });
+            for (const [email, list] of emailToDocs.entries()) {
+                if (list.length <= 1) continue;
+                // Choose primary by highest richness; merge others then delete
+                list.sort((a, b) => richnessScore(b.data) - richnessScore(a.data));
+                const primary = list[0];
+                for (let i = 1; i < list.length; i++) {
+                    const dup = list[i];
+                    const merged = {
+                        profile: mergePref(primary.data.profile, dup.data.profile),
+                        contract: mergePref(primary.data.contract, dup.data.contract),
+                        application: mergePref(primary.data.application, dup.data.application),
+                        jobs: { ...(primary.data.jobs || {}), ...(dup.data.jobs || {}) },
+                        paymentMethod: primary.data.paymentMethod || dup.data.paymentMethod || '',
+                        paymentStatus: primary.data.paymentStatus || dup.data.paymentStatus || '',
+                        profilePicture: primary.data.profilePicture || dup.data.profilePicture || null,
+                        performance: primary.data.performance || dup.data.performance || null,
+                        bankData: primary.data.bankData || dup.data.bankData || null,
+                        bankDetails: primary.data.bankDetails || dup.data.bankDetails || null,
+                        paymentUpdatedAt: primary.data.paymentUpdatedAt || dup.data.paymentUpdatedAt || null,
+                        paymentHistory: (Array.isArray(primary.data.paymentHistory) && primary.data.paymentHistory.length)
+                            ? primary.data.paymentHistory
+                            : (dup.data.paymentHistory || [])
+                    };
+                    merged.profile = { ...(merged.profile || {}), email };
+                    merged.email = email;
+                    await this.db.collection(this.collections.users).doc(primary.id).set(merged, { merge: true });
+                    await this.db.collection(this.collections.users).doc(dup.id).delete();
+                    // eslint-disable-next-line no-console
+                    console.log(`✅ Merged duplicate '${dup.id}' into '${primary.id}' for ${email}`);
+                }
+            }
+
+            console.log('✅ Duplicate user repair complete');
+            return true;
+        } catch (e) {
+            console.warn('⚠️ repairDuplicateUsersByEmail error:', e?.message || e);
+            return false;
         }
     },
 
