@@ -1,8 +1,17 @@
+## 2025-09-12 — Contract System: Firestore Storage Integration
+### Scope: `contract.html`, `user-portal.html`
+- Contract PDFs now upload to Firestore Storage instead of GitHub:
+  - `uploadPDFToFirestoreStorage()` replaces `uploadPDFToGitHub()` in contract signing flow.
+  - PDFs organized by user email in `contracts/{email}/` folders using `storage-utils.js`.
+  - Download functions prioritize `fileUrl` (Firestore Storage) over `githubUrl` (GitHub) for new contracts.
+  - Legacy GitHub URLs remain as fallbacks for existing contracts.
+- Email notifications now contain Firestore Storage download links instead of GitHub URLs.
+
 ## 2025-09-12 — Multi-job timelines and all-contracts listing (portal)
 ### Scope: `user-portal.html`
 - Primary sections now render multiple items:
   - Jobs tab: `displayCurrentJobs()` maps all jobs to cards with timelines.
-  - Contracts tab: `displayContracts()` lists all uploaded contracts for the user’s email, and each Download button calls `downloadContractById()` to avoid cross-file downloads.
+  - Contracts tab: `displayContracts()` lists all uploaded contracts for the user's email, and each Download button calls `downloadContractById()` to avoid cross-file downloads.
 - Leave legacy `displayUserContracts()`/`displayJobsWithStatus()` helpers for any single-job subviews, but do not use them in the main tabs.
 
 ## 2025-09-12 — Quick Apply Cleanup & Ownership

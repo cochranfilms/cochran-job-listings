@@ -1,7 +1,18 @@
+### 2025-09-12 — Contract System: Firestore Storage Integration
+
+- Files: `contract.html`, `user-portal.html`
+- Change: All contract PDFs now upload to Firestore Storage organized by user email in `contracts/{email}/` folders instead of GitHub. Download buttons prioritize Firestore Storage URLs over GitHub URLs. Contract signing process uses `uploadPDFToFirestoreStorage()` instead of `uploadPDFToGitHub()`.
+- Test:
+  1. Sign a new contract via `contract.html` or quick apply in `user-portal.html`.
+  2. Verify PDF uploads to Firestore Storage at `contracts/{email}/{filename}`.
+  3. Check that download buttons in user portal use Firestore Storage URLs.
+  4. Verify email notifications contain Firestore Storage download links.
+  5. Legacy GitHub URLs should still work as fallbacks for existing contracts.
+
 ### 2025-09-12 — User Portal: Multi-job timelines and all-contracts listing
 
 - Files: `user-portal.html`
-- Change: Jobs tab now renders all job timelines for the signed-in user using `displayCurrentJobs()` (instead of single-selection timeline). Contracts tab now lists all uploaded contracts for the user’s email using `displayContracts()`. Each contract’s Download now calls `downloadContractById(contractId, fileName?, githubUrl?, fileUrl?)` to ensure the correct PDF is served.
+- Change: Jobs tab now renders all job timelines for the signed-in user using `displayCurrentJobs()` (instead of single-selection timeline). Contracts tab now lists all uploaded contracts for the user's email using `displayContracts()`. Each contract's Download now calls `downloadContractById(contractId, fileName?, githubUrl?, fileUrl?)` to ensure the correct PDF is served.
 - Test:
   1. Ensure a user has 2+ entries under `users/<uid>.jobs` and at least 2 contract docs in Firestore `contracts` with `freelancerEmail` equal to the user email.
   2. Open `user-portal.html` and sign in as that user.

@@ -2563,13 +2563,24 @@
         }
 
         // Download contract by an explicit file reference (supports multiple)
-        function downloadUserContractByFile(fileNameEnc, githubUrlEnc) {
+        function downloadUserContractByFile(fileNameEnc, githubUrlEnc, fileUrlEnc = '') {
             const fileName = decodeURIComponent(fileNameEnc);
             const githubUrl = decodeURIComponent(githubUrlEnc || '');
+            const fileUrl = decodeURIComponent(fileUrlEnc || '');
+            
+            // Look for the contract in uploadedContracts to get the fileUrl
+            const list = Array.isArray(uploadedContracts) ? uploadedContracts : [];
+            const match = list.find(c => c.fileName === fileName);
+            
             const candidates = [];
+            // Prioritize Firestore Storage URLs
+            if (match && match.fileUrl) candidates.push(match.fileUrl);
+            if (fileUrl) candidates.push(fileUrl);
+            // Keep GitHub URLs as fallback for legacy contracts
             if (githubUrl) candidates.push(githubUrl);
             candidates.push(`/contracts/${encodeURIComponent(fileName)}`);
             candidates.push(`/api/contracts?filename=${encodeURIComponent(fileName)}`);
+            
             (async () => {
                 for (const url of candidates) {
                     try { const resp = await fetch(url, { method: 'HEAD' }); if (resp.ok) {

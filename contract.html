@@ -59,6 +59,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
     <!-- PDF Generation Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -67,6 +68,7 @@
     <!-- Project Firebase config + Firestore Data Manager -->
     <script src="/firebase-config.js"></script>
     <script src="/firestore-data-manager.js"></script>
+    <script src="/storage-utils.js"></script>
     
     <style>
         :root {
@@ -1451,8 +1453,8 @@
             }
         }
         
-        // Upload PDF to GitHub via server API
-        async function uploadPDFToGitHub(contractData) {
+        // Upload PDF to Firestore Storage organized by user name
+        async function uploadPDFToFirestoreStorage(contractData) {
             try {
                 console.log('📄 Generating PDF for contract:', contractData.contractId);
                 
@@ -1470,54 +1472,53 @@
                     }
                 }
                 
-                // Convert PDF to base64
-                const pdfBase64 = doc.output('datauristring').split(',')[1];
+                // Convert PDF to blob for Firestore Storage
+                const pdfBlob = doc.output('blob');
                 
-                console.log('📤 Uploading PDF to GitHub via contracts API...');
+                console.log('📤 Uploading PDF to Firestore Storage...');
                 
-                // Upload to GitHub via dedicated contracts API
-                const response = await fetch(`/api/contracts`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contractId: contractData.contractId,
-                        pdfContent: pdfBase64,
-                        freelancerName: contractData.freelancerName,
-                        fileName: buildContractFileName(contractData)
-                    })
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log(`✅ PDF uploaded successfully:`, result.downloadUrl);
-                    
-                    // Update uploaded contracts tracking
-                    const uploadedContract = {
-                        contractId: contractData.contractId,
-                        freelancerName: contractData.freelancerName,
-                        freelancerEmail: contractData.freelancerEmail,
-                        role: contractData.role,
-                        rate: contractData.rate,
-                        location: contractData.location,
-                        fileName: buildContractFileName(contractData),
-                        fileSize: Math.round(pdfBase64.length * 0.75), // Approximate size
-                        uploadDate: new Date().toISOString(),
-                        status: 'uploaded',
-                        githubUrl: result.downloadUrl,
-                        notes: 'Automatically uploaded via contract signing'
-                    };
-                    
-                    console.log('✅ Contract uploaded to GitHub');
-                    return uploadedContract;
-                } else {
-                    const error = await response.json();
-                    throw new Error(`Server upload error: ${error.error}`);
+                // Initialize storage utils
+                if (!window.StorageUtils) {
+                    throw new Error('StorageUtils not available');
                 }
                 
+                const storageUtils = new window.StorageUtils();
+                
+                // Create a clean filename
+                const fileName = buildContractFileName(contractData);
+                
+                // Upload to Firestore Storage in user-specific folder
+                const uploadResult = await storageUtils.uploadFile(pdfBlob, {
+                    ownerEmail: contractData.freelancerEmail,
+                    folder: 'contracts',
+                    filename: fileName,
+                    contentType: 'application/pdf'
+                });
+                
+                console.log(`✅ PDF uploaded to Firestore Storage:`, uploadResult.downloadURL);
+                
+                // Update uploaded contracts tracking
+                const uploadedContract = {
+                    contractId: contractData.contractId,
+                    freelancerName: contractData.freelancerName,
+                    freelancerEmail: contractData.freelancerEmail,
+                    role: contractData.role,
+                    rate: contractData.rate,
+                    location: contractData.location,
+                    fileName: fileName,
+                    fileSize: pdfBlob.size,
+                    uploadDate: new Date().toISOString(),
+                    status: 'uploaded',
+                    fileUrl: uploadResult.downloadURL,
+                    storagePath: uploadResult.path,
+                    notes: 'Automatically uploaded via contract signing to Firestore Storage'
+                };
+                
+                console.log('✅ Contract uploaded to Firestore Storage');
+                return uploadedContract;
+                
             } catch (error) {
-                console.error('❌ Error uploading PDF to GitHub:', error);
+                console.error('❌ Error uploading PDF to Firestore Storage:', error);
                 throw error;
             }
         }
@@ -2648,14 +2649,14 @@
                     // Add a small delay before PDF upload to ensure GitHub API is ready
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     
-                    // Upload PDF to GitHub FIRST
-                    const uploadedContract = await uploadPDFToGitHub(signedContractData);
+                    // Upload PDF to Firestore Storage FIRST
+                    const uploadedContract = await uploadPDFToFirestoreStorage(signedContractData);
                     
                     // Update contract status to uploaded
                     signedContractData.status = 'UPLOADED';
                     signedContractData.uploadedContract = uploadedContract;
                     
-                    console.log('✅ PDF automatically uploaded to GitHub:', uploadedContract.githubUrl);
+                    console.log('✅ PDF automatically uploaded to Firestore Storage:', uploadedContract.fileUrl);
                     
                     updateNotificationProgress('Finalizing your contract...', 85);
                     
@@ -2825,7 +2826,7 @@
                     }
                     
                     // Update only contract status metadata; never store passwords
-                    const fileUrl = contractData?.uploadedContract?.githubUrl || null;
+                    const fileUrl = contractData?.uploadedContract?.fileUrl || null;
                     users[userKey].contract.contractStatus = fileUrl ? 'uploaded' : 'signed';
                     users[userKey].contract.contractSignedDate = contractData.signedDateTime;
                     if (fileUrl) {
@@ -2902,11 +2903,12 @@
                     rate: contractData.rate,
                     location: contractData.location,
                     fileName: buildContractFileName(contractData),
-                    fileSize: 0, // Will be updated when file is actually uploaded
+                    fileSize: contractData?.uploadedContract?.fileSize || 0,
                     uploadDate: new Date().toISOString(),
                     status: 'uploaded',
-                    githubUrl: `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${encodeURIComponent(buildContractFileName(contractData))}`,
-                    notes: 'Automatically uploaded via contract signing',
+                    fileUrl: contractData?.uploadedContract?.fileUrl || null,
+                    storagePath: contractData?.uploadedContract?.storagePath || null,
+                    notes: 'Automatically uploaded via contract signing to Firestore Storage',
                     contractDate: contractData.effectiveDate,
                     signedDate: contractData.signatureDate
                 };
@@ -2934,8 +2936,9 @@
                         fileName: buildContractFileName(contractData),
                         uploadDate: new Date().toISOString(),
                         status: 'uploaded',
-                        githubUrl: `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${encodeURIComponent(buildContractFileName(contractData))}`,
-                        notes: 'Automatically uploaded via contract signing',
+                        fileUrl: contractData?.uploadedContract?.fileUrl || null,
+                        storagePath: contractData?.uploadedContract?.storagePath || null,
+                        notes: 'Automatically uploaded via contract signing to Firestore Storage',
                         contractDate: contractData.effectiveDate,
                         signedDate: contractData.signatureDate
                     };
@@ -2974,8 +2977,8 @@
                 rate: contractData.rate,
                 project_start: contractData.projectStart,
                 contract_id: contractData.contractId,
-                // New: consistent download link for EmailJS templates
-                download_link: `/api/contracts?filename=${encodeURIComponent(contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim())}.pdf`
+                // New: Firestore Storage download link for EmailJS templates
+                download_link: contractData?.uploadedContract?.fileUrl || 'Contract will be available in your portal'
             };
             
             console.log('📧 Sending user confirmation email with template:', EMAILJS_CONFIG.userTemplateId);
@@ -3004,8 +3007,8 @@
                 signed_timestamp: new Date(contractData.signedTimestamp).toLocaleString(),
                 portal_password_reference: `Password set for ${contractData.freelancerEmail} - Check admin dashboard for secure access`,
                 
-                // Contract PDF download link for admin
-                download_link: `/api/contracts?filename=${encodeURIComponent(contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim())}.pdf`
+                // Contract PDF download link for admin (Firestore Storage)
+                download_link: contractData?.uploadedContract?.fileUrl || 'Contract will be available in admin dashboard'
             };
             
             console.log('📧 Sending admin notification email with template:', EMAILJS_CONFIG.templateId);
