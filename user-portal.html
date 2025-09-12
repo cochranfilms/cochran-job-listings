@@ -2495,7 +2495,8 @@
 
         // Render timeline steps for jobs
         function renderTimelineSteps(job) {
-            const computedStatus = getJobStatus(job?.projectStart || job?.date || getEffectiveProjectStartDate());
+            const start = getListingStartDateFor(job) || job?.projectStart || job?.date || getEffectiveProjectStartDate();
+            const computedStatus = getJobStatus(start);
             const steps = [
                 { title: 'Project Assigned', status: 'completed' },
                 { title: 'In Progress', status: (computedStatus === 'in-progress' || computedStatus === 'completed') ? 'completed' : 'upcoming' },
@@ -3189,6 +3190,8 @@
         function getProjectTimeline() {
             const selectedJob = getSelectedJob();
             if (!selectedJob) return [];
+            const listingStart = getListingStartDateFor(selectedJob) || selectedJob.projectStart || selectedJob.date || getEffectiveProjectStartDate();
+            const listingStartDate = parseDateFlexible(listingStart);
             
             const timeline = [
                 {
@@ -3216,8 +3219,8 @@
                     title: 'Project Start',
                     description: 'Begin your assigned project',
                     icon: 'fas fa-play-circle',
-                    status: getJobStatus(selectedJob.projectStart),
-                    date: selectedJob.projectStart,
+                    status: getJobStatus(listingStartDate),
+                    date: listingStartDate,
                     details: 'Your project is ready to begin. Review project details and start working.',
                     action: 'View project details'
                 },
@@ -4258,21 +4261,11 @@
                             default: return 'pending';
                         }
                     })(),
-                    date: (() => {
-                        // Use project start date if available
-                        if (selectedJob?.projectStart && selectedJob.projectStart !== 'TBD') {
-                            try {
-                                return new Date(selectedJob.projectStart);
-                            } catch (e) {
-                                console.warn('Could not parse project start date:', selectedJob.projectStart);
-                            }
-                        }
-                        return null;
-                    })(),
+                    date: listingStartDate,
                     details: (() => {
                         switch (projectStatus) {
                             case 'upcoming': 
-                                return `📅 Your project is scheduled to begin on ${selectedJob?.projectStart ? new Date(selectedJob.projectStart).toLocaleDateString() : 'the scheduled date'}. Please prepare for your assignment.`;
+                                return `📅 Your project is scheduled to begin on ${formatDisplayDate(listingStartDate)}. Please prepare for your assignment.`;
                             case 'in-progress': 
                                 return `🔄 Your project is currently in progress. Please check in regularly for updates and complete all assigned tasks.`;
                             case 'completed': 
