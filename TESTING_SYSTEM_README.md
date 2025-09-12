@@ -93,6 +93,30 @@ Console expectations:
 - On switching to Requests: logs “🔄 Loading equipment requests …” then “✅ Loaded equipment requests …” and “✅ Equipment requests rendered successfully”.
 - On switching to Rented: logs “🔄 Loading rented equipment …” then “✅ Loaded rented equipment …” and “✅ Rented equipment rendered successfully”.
 
+### 2025-09-12 — Team Messaging: remove standalone "New Message" button
+
+- Files: `user-portal.html`
+- Change: Removed the extra "New Message" button from the Team Messaging card header. The messaging workflow now uses only the inline composer at the bottom of the card.
+- Reason: Avoid duplicate entry points; composer already supports starting new threads/replies.
+
+How to verify quickly:
+1. Open `user-portal.html` → Community → Team Messaging.
+2. Confirm the card header shows only the title and no button in the right side.
+3. Type a message in the bottom composer and send; message posts successfully and appears in the list.
+
+### 2025-09-12 — Equipment Requests: available-gear multi-select
+
+- Files: `user-portal.html`
+- Change: Replaced free-text items input with a multi-select dropdown populated from Firestore `equipment` where `status === 'available'`. Prefill from Gear Library now selects the item in the dropdown. Submissions read selected options instead of comma text.
+
+How to test:
+1. Ensure at least one equipment document has `status: 'available'` (and at least one set to `checked_out` for contrast).
+2. Open `user-portal.html` → Equipment → Equipment Requests.
+3. Verify the Items control shows a multi-select list of only available gear; names are alphabetized and may include serial numbers.
+4. Hold Cmd/Ctrl to select multiple; submit the request.
+5. In Admin → Requests, approve. Switch back to portal → Rented tab should show the approved items after approval.
+6. From Gear Library, click “Request” on an available item → the Requests tab opens with that item pre-selected.
+
 Verification steps:
 1. Open `admin-dashboard.html` and sign in.
 2. In the User & Contract Management card, confirm there is no “Quick Actions” section and no related buttons.
