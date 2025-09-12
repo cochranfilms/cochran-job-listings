@@ -7547,8 +7547,8 @@
 
             // Escape for inline attribute usage in this modal block
             const _safe = (v) => String(v == null ? '' : v)
-                .replace(/\\/g, \\\\)
-                .replace(/'/g, \\\' )
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
                 .replace(/[\n\r\t]/g, ' ');
             const sTitle = _safe(jobTitle);
             const sDate = _safe(eventDate);
