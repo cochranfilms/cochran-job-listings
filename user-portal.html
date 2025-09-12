@@ -2491,15 +2491,12 @@
                     </div>
                 `;
             }
-            // Keep the summary cards (Current Project + Payment Method) in sync
-            try { displayProjectInfo(); } catch(_) {}
-            try { displayPaymentInfo(); } catch(_) {}
         }
 
-        // Render timeline steps for jobs
+        // Render timeline steps for jobs (use Firestore listing date when available)
         function renderTimelineSteps(job) {
-            const start = getListingStartDateFor(job) || job?.projectStart || job?.date || getEffectiveProjectStartDate();
-            const computedStatus = getJobStatus(start);
+            const listingStart = getListingStartDateFor(job) || job?.projectStart || job?.date || getEffectiveProjectStartDate();
+            const computedStatus = getJobStatus(listingStart);
             const steps = [
                 { title: 'Project Assigned', status: 'completed' },
                 { title: 'In Progress', status: (computedStatus === 'in-progress' || computedStatus === 'completed') ? 'completed' : 'upcoming' },
@@ -4264,11 +4261,21 @@
                             default: return 'pending';
                         }
                     })(),
-                    date: listingStartDate,
+                    date: (() => {
+                        // Use project start date if available
+                        if (selectedJob?.projectStart && selectedJob.projectStart !== 'TBD') {
+                            try {
+                                return new Date(selectedJob.projectStart);
+                            } catch (e) {
+                                console.warn('Could not parse project start date:', selectedJob.projectStart);
+                            }
+                        }
+                        return null;
+                    })(),
                     details: (() => {
                         switch (projectStatus) {
                             case 'upcoming': 
-                                return `📅 Your project is scheduled to begin on ${formatDisplayDate(listingStartDate)}. Please prepare for your assignment.`;
+                                return `📅 Your project is scheduled to begin on ${selectedJob?.projectStart ? new Date(selectedJob.projectStart).toLocaleDateString() : 'the scheduled date'}. Please prepare for your assignment.`;
                             case 'in-progress': 
                                 return `🔄 Your project is currently in progress. Please check in regularly for updates and complete all assigned tasks.`;
                             case 'completed': 
