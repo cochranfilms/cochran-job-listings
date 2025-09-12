@@ -89,8 +89,11 @@
     body {
       font-family: 'Inter', sans-serif;
       line-height: 1.6;
-      color: var(--gray-dark);
-      background: var(--white);
+      color: #e5e7eb;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(255,178,0,.08), transparent 60%),
+        radial-gradient(1000px 500px at 120% 0%, rgba(99,102,241,.07), transparent 60%),
+        #0b0b10;
     }
     
     /* Header */
@@ -486,14 +489,21 @@
       gap: 2rem;
       margin-bottom: 1rem;
       flex-wrap: wrap;
+      background: linear-gradient(180deg, rgba(99,102,241,0.16), rgba(0,0,0,0));
+      border: 1px solid rgba(99,102,241,0.25);
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.25);
     }
     
     .section-title {
       font-family: 'Cinzel', serif;
       font-size: 2.5rem;
-      font-weight: 600;
-      color: var(--black);
+      font-weight: 700;
+      color: #ffffff;
       margin: 0;
+      text-shadow: 0 2px 8px rgba(0,0,0,.45);
+      letter-spacing: .02em;
     }
     
     .refresh-btn {
@@ -594,20 +604,21 @@
     }
     
     .job-card {
-      background: var(--white);
-      border-radius: var(--border-radius);
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px;
       padding: 2rem;
-      box-shadow: var(--shadow);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(99,102,241,0.10) inset;
       transition: all 0.3s ease;
-      border: 2px solid transparent;
+      border: 1px solid rgba(255,178,0,0.28);
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(10px);
     }
     
     /* Inactive job styling */
     .job-card.inactive {
       opacity: 0.7;
-      background: #f8f9fa;
+      background: rgba(255,255,255,0.04);
     }
     
     .job-card.inactive .job-title,
@@ -644,25 +655,32 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary), var(--gold));
+      height: 3px;
+      background: linear-gradient(90deg, #FFB200, #FFD700);
     }
     
     .job-card:hover {
       transform: translateY(-5px);
-      box-shadow: var(--shadow-hover);
-      border-color: rgba(255,178,0,0.2);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,178,0,0.25) inset;
+      border-color: rgba(255,178,0,0.45);
     }
     
     .job-header {
       margin-bottom: 1.5rem;
+      background: linear-gradient(180deg, rgba(99,102,241,0.16), rgba(0,0,0,0));
+      border: 1px solid rgba(99,102,241,0.25);
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
     }
     
     .job-title {
       font-size: 1.4rem;
-      font-weight: 600;
-      color: var(--black);
+      font-weight: 700;
+      color: #ffffff;
       margin-bottom: 0.5rem;
+      font-family: 'Cinzel', serif;
+      letter-spacing: .02em;
+      text-shadow: 0 2px 8px rgba(0,0,0,.35);
     }
     
     .job-meta {
@@ -676,8 +694,8 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.9rem;
-      color: var(--gray-medium);
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.8);
     }
     
     .job-meta-icon {
@@ -686,17 +704,18 @@
     }
     
     .job-pay {
-      background: linear-gradient(135deg, var(--primary), var(--gold));
-      color: var(--black);
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.9rem;
+      background: linear-gradient(135deg, #FFB200, #FFD700);
+      color: #0b0b10;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: .02em;
     }
     
     .job-description {
-      color: var(--gray-medium);
-      line-height: 1.6;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.7;
       margin-bottom: 1.5rem;
       display: none;
     }
@@ -738,8 +757,10 @@
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--gold));
-      color: var(--black);
+      background: linear-gradient(135deg, #FFB200, #FFD700);
+      color: #0b0b10;
+      border: 1px solid rgba(255,178,0,0.45);
+      box-shadow: 0 8px 24px rgba(255,178,0,0.25);
     }
     
     .btn-primary:hover {
@@ -749,8 +770,8 @@
     
     .btn-secondary {
       background: transparent;
-      color: var(--gray-medium);
-      border: 2px solid var(--gray-medium);
+      color: rgba(255,255,255,0.85);
+      border: 1px solid rgba(255,255,255,0.25);
     }
     
     .btn-secondary:hover {
