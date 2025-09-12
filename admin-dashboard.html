@@ -6743,10 +6743,39 @@
         }
         
         // Showcase Management
-        function manageShowcases() {
-            console.log('🖼️ Managing showcases...');
-            showNotification('Showcase management opened!', 'info');
-            // This would open a modal to manage showcases
+        async function manageShowcases() {
+            try {
+                await ensureFirestoreReady();
+                const list = await window.FirestoreDataManager.getShowcases();
+                if (!Array.isArray(list) || !list.length) { showAdminNotification('Info','No showcases submitted yet','info'); return; }
+                const pending = list.filter(s => (s.status || 'pending') === 'pending');
+                const choices = (pending.length ? pending : list).map((s, i) => `${i+1}) ${s.title} — ${s.author || s.ownerEmail || ''} [${s.status||'pending'}]`).join('\n');
+                const pick = prompt(`Select a showcase to approve/deny/delete:\n${choices}\nEnter number:`);
+                const idx = Math.max(1, Number(pick||'1')) - 1;
+                const item = (pending.length ? pending : list)[idx];
+                if (!item) return;
+                const action = prompt('Type "approve", "deny", "edit", or "delete":', 'approve');
+                if (action === 'delete') {
+                    await window.FirestoreDataManager.deleteShowcase(item.id);
+                    showAdminNotification('Deleted','Showcase removed','success');
+                } else if (action === 'approve') {
+                    await window.FirestoreDataManager.updateShowcase(item.id, { status: 'approved', approvedAt: new Date().toISOString() });
+                    showAdminNotification('Approved','Showcase approved','success');
+                } else if (action === 'deny') {
+                    const reason = prompt('Reason for denial (optional)') || '';
+                    await window.FirestoreDataManager.updateShowcase(item.id, { status: 'denied', denialReason: reason, reviewedAt: new Date().toISOString() });
+                    showAdminNotification('Updated','Showcase denied','success');
+                } else if (action === 'edit') {
+                    const newTitle = prompt('New title', item.title || '') || item.title;
+                    const newDesc = prompt('New description', item.description || '') || item.description;
+                    await window.FirestoreDataManager.updateShowcase(item.id, { title: newTitle, description: newDesc });
+                    showAdminNotification('Updated','Showcase updated','success');
+                }
+                await updateCommunityStats();
+            } catch (e) {
+                console.error(e);
+                showAdminNotification('Error','Failed to manage showcases','error');
+            }
         }
         
         function reviewShowcases() {
@@ -6756,29 +6785,116 @@
         }
         
         // Event Management
-        function createEvent() {
-            console.log('📅 Creating event...');
-            showNotification('Event creation form opened!', 'info');
-            // This would open a modal to create new events
+        async function createEvent() {
+            try {
+                await ensureFirestoreReady();
+                const title = prompt('Event title');
+                if (!title) return;
+                const date = prompt('Event date (YYYY-MM-DD)');
+                if (!date) return;
+                const description = prompt('Description') || '';
+                const location = prompt('Location') || '';
+                const payload = { title, date, description, location, status: 'scheduled' };
+                await window.FirestoreDataManager.addEvent(payload);
+                showAdminNotification('Added','Event created','success');
+                await updateCommunityStats();
+            } catch (e) {
+                console.error(e);
+                showAdminNotification('Error','Failed to create event','error');
+            }
         }
         
-        function manageEvents() {
-            console.log('📆 Managing events...');
-            showNotification('Event management opened!', 'info');
-            // This would open a modal to manage events
+        async function manageEvents() {
+            try {
+                await ensureFirestoreReady();
+                const list = await window.FirestoreDataManager.getEvents();
+                if (!Array.isArray(list) || !list.length) { showAdminNotification('Info','No events yet','info'); return; }
+                const choices = list.map((ev, i) => `${i+1}) ${ev.title} — ${ev.date}`).join('\n');
+                const pick = prompt(`Select an event to edit/delete:\n${choices}\nEnter number:`);
+                const idx = Math.max(1, Number(pick||'1')) - 1;
+                const ev = list[idx];
+                if (!ev) return;
+                const action = prompt('Type "edit" to update or "delete" to remove or "status" to change status:', 'edit');
+                if (action === 'delete') {
+                    await window.FirestoreDataManager.deleteEvent(ev.id);
+                    showAdminNotification('Deleted','Event removed','success');
+                } else if (action === 'status') {
+                    const newStatus = prompt('Status (scheduled|cancelled|completed)', ev.status || 'scheduled') || ev.status || 'scheduled';
+                    await window.FirestoreDataManager.updateEvent(ev.id, { status: newStatus });
+                    showAdminNotification('Updated','Event status updated','success');
+                } else if (action === 'edit') {
+                    const newTitle = prompt('New title', ev.title || '') || ev.title;
+                    const newDate = prompt('New date (YYYY-MM-DD)', ev.date || '') || ev.date;
+                    await window.FirestoreDataManager.updateEvent(ev.id, { title: newTitle, date: newDate });
+                    showAdminNotification('Updated','Event updated','success');
+                }
+                await updateCommunityStats();
+            } catch (e) {
+                console.error(e);
+                showAdminNotification('Error','Failed to manage events','error');
+            }
         }
         
         // Success Stories Management
-        function addSuccessStory() {
-            console.log('🏆 Adding success story...');
-            showNotification('Success story form opened!', 'info');
-            // This would open a modal to add success stories
+        async function addSuccessStory() {
+            try {
+                await ensureFirestoreReady();
+                const author = prompt('Author name');
+                if (!author) return;
+                const authorEmail = prompt('Author email') || '';
+                const role = prompt('Role (e.g., Photographer)') || 'Team Member';
+                const achievement = prompt('Achievement badge (e.g., Top Performer)') || '';
+                const title = prompt('Story title');
+                if (!title) return;
+                const description = prompt('Short description') || '';
+                const projectsCompleted = Number(prompt('Projects completed') || 0);
+                const clientRating = Number(prompt('Client rating (e.g., 4.9)') || 0);
+                const earnings = prompt('Earnings (e.g., $2,400)') || '$0';
+                const payload = {
+                    author,
+                    authorEmail,
+                    role,
+                    achievement,
+                    title,
+                    description,
+                    stats: { projectsCompleted, clientRating, earnings },
+                    congratulations: 0,
+                    timestamp: new Date().toISOString()
+                };
+                await window.FirestoreDataManager.addSuccessStory(payload);
+                showAdminNotification('Added','Success story created','success');
+                await updateCommunityStats();
+            } catch (e) {
+                console.error(e);
+                showAdminNotification('Error','Failed to add success story','error');
+            }
         }
-        
-        function manageSuccessStories() {
-            console.log('📝 Managing success stories...');
-            showNotification('Success story management opened!', 'info');
-            // This would open a modal to manage success stories
+
+        async function manageSuccessStories() {
+            try {
+                await ensureFirestoreReady();
+                const list = await window.FirestoreDataManager.getSuccessStories();
+                if (!Array.isArray(list) || !list.length) { showAdminNotification('Info','No success stories yet','info'); return; }
+                const choices = list.map((s, i) => `${i+1}) ${s.title} — ${s.author}`).join('\n');
+                const pick = prompt(`Select a story to edit/delete:\n${choices}\nEnter number:`);
+                const idx = Math.max(1, Number(pick||'1')) - 1;
+                const story = list[idx];
+                if (!story) return;
+                const action = prompt('Type "edit" to update or "delete" to remove:', 'edit');
+                if (action === 'delete') {
+                    await window.FirestoreDataManager.deleteSuccessStory(story.id);
+                    showAdminNotification('Deleted','Success story removed','success');
+                } else if (action === 'edit') {
+                    const newTitle = prompt('New title', story.title || '') || story.title;
+                    const newDesc = prompt('New description', story.description || '') || story.description;
+                    await window.FirestoreDataManager.updateSuccessStory(story.id, { title: newTitle, description: newDesc });
+                    showAdminNotification('Updated','Success story updated','success');
+                }
+                await updateCommunityStats();
+            } catch (e) {
+                console.error(e);
+                showAdminNotification('Error','Failed to manage success stories','error');
+            }
         }
         
         // Community Actions

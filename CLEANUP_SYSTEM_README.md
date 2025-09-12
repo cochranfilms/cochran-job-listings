@@ -53,6 +53,11 @@ Verification checklist
 - Cleanup: Removed hardcoded sample stories and localStorage population. The portal now reads from the Firestore `successStories` collection and caches to localStorage only for offline fallback.
 - Admin: Mini-stats prefer Firestore counts with localStorage fallback to avoid blank metrics when offline.
 - Reversion guidance: If Firestore is unavailable, ensure `cochranSuccessStories` cache exists or reintroduce seed data during development only.
+
+### 2025-09-12 — Admin Community Tools activation
+- Files: `admin-dashboard.html`
+- Cleanup: Replaced demo button handlers with Firestore-backed flows using lightweight prompts (no heavy UI). When upgrading to full modals, keep calls to `FirestoreDataManager` (`add*/get*/update*/delete*`) and the `ensureFirestoreReady()` guard.
+- Note: Mini-stat refresh uses `updateCommunityStats()` which prefers Firestore counts and falls back to localStorage.
 ### Firestore Integration Notes
 - 2025-08-20 — `index.html` job filter derived-title fix: keep this logic when refactoring. The filter must derive a job title from multiple fields and only exclude rows that clearly look like applicant submissions. Do not revert to `job.title`-only checks.
 
