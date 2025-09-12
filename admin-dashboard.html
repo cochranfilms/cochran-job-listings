@@ -1372,7 +1372,7 @@
                                 <div class="tool-item">
                                     <h4>Create Event</h4>
                                     <p>Add new company events and training sessions</p>
-                                    <button onclick="createEvent()" class="btn btn-small">
+                                    <button onclick="openEventManager('create')" class="btn btn-small">
                                         <i class="fas fa-calendar-plus"></i> Create Event
                                     </button>
                                 </div>
@@ -6956,67 +6956,202 @@
         async function createEvent() { openEventManager('create'); }
         async function manageEvents() { openEventManager('manage'); }
         
-        // Success Stories Management
-        async function addSuccessStory() {
-            try {
-                await ensureFirestoreReady();
-                const author = prompt('Author name');
-                if (!author) return;
-                const authorEmail = prompt('Author email') || '';
-                const role = prompt('Role (e.g., Photographer)') || 'Team Member';
-                const achievement = prompt('Achievement badge (e.g., Top Performer)') || '';
-                const title = prompt('Story title');
-                if (!title) return;
-                const description = prompt('Short description') || '';
-                const projectsCompleted = Number(prompt('Projects completed') || 0);
-                const clientRating = Number(prompt('Client rating (e.g., 4.9)') || 0);
-                const earnings = prompt('Earnings (e.g., $2,400)') || '$0';
-                const payload = {
-                    author,
-                    authorEmail,
-                    role,
-                    achievement,
-                    title,
-                    description,
-                    stats: { projectsCompleted, clientRating, earnings },
-                    congratulations: 0,
-                    timestamp: new Date().toISOString()
-                };
-                await window.FirestoreDataManager.addSuccessStory(payload);
-                showAdminNotification('Added','Success story created','success');
-                await updateCommunityStats();
-            } catch (e) {
-                console.error(e);
-                showAdminNotification('Error','Failed to add success story','error');
+        // Success Stories Management (Modern Modal UI)
+        function openSuccessStoryManager(mode = 'manage', existing = null) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:12000;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top,16px) 12px env(safe-area-inset-bottom,16px);overflow:auto;';
+            modal.innerHTML = `
+                <div style="background:#0f1115;border:1px solid rgba(255,178,0,0.25);border-radius:14px;width:min(980px,96%);max-height:calc(100vh - 48px);display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.5);color:#fff;">
+                    <div style=\"padding:14px 16px;border-bottom:1px solid rgba(255,178,0,0.2);display:flex;justify-content:space-between;align-items:center;\">
+                        <div style=\"display:flex;align-items:center;gap:10px;\">
+                            <i class=\"fas fa-trophy\" style=\"color:#FFB200;\"></i>
+                            <h3 style=\"margin:0;color:#FFB200;font-weight:800;\">Success Story Manager</h3>
+                        </div>
+                        <div>
+                            <button id=\"ss-close\" class=\"btn btn-secondary\" style=\"padding:.4rem .8rem;\">Close</button>
+                        </div>
+                    </div>
+                    <div style=\"display:grid;grid-template-columns: 1.1fr .9fr;gap:16px;padding:16px;\">
+                        <div>
+                            <div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;\">
+                                <h4 style=\"margin:0;color:#FFB200;\">Stories</h4>
+                                <div style=\"display:flex;gap:8px;\">
+                                    <button id=\"ss-refresh\" class=\"btn btn-secondary\" style=\"padding:.35rem .7rem;\">Refresh</button>
+                                    <button id=\"ss-new\" class=\"btn\" style=\"padding:.35rem .7rem;\">New Story</button>
+                                </div>
+                            </div>
+                            <div id=\"ss-list\" style=\"display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;\"></div>
+                        </div>
+                        <div>
+                            <h4 style=\"margin:0 0 8px 0;color:#FFB200;\">${mode==='create'?'Create Story':'Edit Story'}</h4>
+                            <form id=\"ss-form\" style=\"display:grid;gap:10px;\">
+                                <input type=\"hidden\" id=\"ss-id\" />
+                                <div style=\"display:grid;grid-template-columns:1fr 1fr;gap:10px;\">
+                                    <label style=\"display:flex;flex-direction:column;gap:6px;\">
+                                        <span>Author</span>
+                                        <input id=\"ss-author\" type=\"text\" placeholder=\"Jane Doe\" style=\"padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;\" />
+                                    </label>
+                                    <label style=\"display:flex;flex-direction:column;gap:6px;\">
+                                        <span>Author Email</span>
+                                        <input id=\"ss-email\" type=\"email\" placeholder=\"jane@example.com\" style=\"padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;\" />
+                                    </label>
+                                </div>
+                                <div style=\"display:grid;grid-template-columns:1fr 1fr;gap:10px;\">
+                                    <label style=\"display:flex;flex-direction:column;gap:6px;\">
+                                        <span>Role</span>
+                                        <input id=\"ss-role\" type=\"text\" placeholder=\"Photographer\" style=\"padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;\" />
+                                    </label>
+                                    <label style=\"display:flex;flex-direction:column;gap:6px;\">
+                                        <span>Achievement Badge</span>
+                                        <input id=\"ss-achievement\" type=\"text\" placeholder=\"Top Performer\" style=\"padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;\" />
+                                    </label>
+                                </div>
+                                <label style=\"display:flex;flex-direction:column;gap:6px;\">
+                                    <span>Title</span>
+                                    <input id=\"ss-title\" type=\"text\" placeholder=\"Crushed a multi-day production\" style=\"padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;\" />
+                                </label>
+                                <label style=\"display:flex;flex-direction:column;gap:6px;\">
+                                    <span>Description</span>
+                                    <textarea id=\"ss-description\" rows=\"5\" placeholder=\"Short description…\" style=\"padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;resize:vertical;\"></textarea>
+                                </label>
+                                <div style=\"display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;\">
+                                    <label style=\"display:flex;flex-direction:column;gap:6px;\">
+                                        <span>Projects Completed</span>
+                                        <input id=\"ss-projects\" type=\"number\" min=\"0\" step=\"1\" placeholder=\"0\" style=\"padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;\" />
+                                    </label>
+                                    <label style=\"display:flex;flex-direction:column;gap:6px;\">
+                                        <span>Client Rating</span>
+                                        <input id=\"ss-rating\" type=\"number\" min=\"0\" max=\"5\" step=\"0.1\" placeholder=\"4.9\" style=\"padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;\" />
+                                    </label>
+                                    <label style=\"display:flex;flex-direction:column;gap:6px;\">
+                                        <span>Earnings</span>
+                                        <input id=\"ss-earnings\" type=\"text\" placeholder=\"$2,400\" style=\"padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;\" />
+                                    </label>
+                                </div>
+                                <div style=\"display:flex;gap:8px;justify-content:flex-end;\">
+                                    <button type=\"button\" id=\"ss-clear\" class=\"btn btn-secondary\">Clear</button>
+                                    <button type=\"submit\" class=\"btn\">Save</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+
+            const listEl = modal.querySelector('#ss-list');
+            const form = modal.querySelector('#ss-form');
+            const close = () => modal.remove();
+            modal.querySelector('#ss-close').onclick = close;
+            modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+            function fillForm(story) {
+                modal.querySelector('#ss-id').value = story?.id || '';
+                modal.querySelector('#ss-author').value = story?.author || '';
+                modal.querySelector('#ss-email').value = story?.authorEmail || '';
+                modal.querySelector('#ss-role').value = story?.role || '';
+                modal.querySelector('#ss-achievement').value = story?.achievement || '';
+                modal.querySelector('#ss-title').value = story?.title || '';
+                modal.querySelector('#ss-description').value = story?.description || '';
+                modal.querySelector('#ss-projects').value = story?.stats?.projectsCompleted || '';
+                modal.querySelector('#ss-rating').value = story?.stats?.clientRating || '';
+                modal.querySelector('#ss-earnings').value = story?.stats?.earnings || '';
             }
+
+            async function loadStories() {
+                try {
+                    await ensureFirestoreReady();
+                    const stories = await window.FirestoreDataManager.getSuccessStories();
+                    if (!listEl) return;
+                    if (!Array.isArray(stories) || !stories.length) {
+                        listEl.innerHTML = `<div style=\"text-align:center;color:#9ca3af;padding:1rem;border:1px dashed rgba(255,178,0,0.25);border-radius:10px;\">No stories yet</div>`;
+                        return;
+                    }
+                    listEl.innerHTML = stories.map(s => `
+                        <div class=\"list-item\" style=\"display:flex;justify-content:space-between;align-items:center;gap:12px;padding:.8rem;border:1px solid rgba(255,178,0,0.2);border-radius:10px;\">
+                            <div>
+                                <div style=\"font-weight:700;color:#FFB200;\">${s.title || 'Untitled'}</div>
+                                <div style=\"color:#9ca3af;font-size:.9rem;\">${s.author || ''}${s.role?` • ${s.role}`:''}</div>
+                            </div>
+                            <div style=\"display:flex;gap:6px;\">
+                                <button class=\"btn btn-secondary\" data-action=\"edit\" data-id=\"${s.id}\">Edit</button>
+                                <button class=\"btn btn-danger\" data-action=\"delete\" data-id=\"${s.id}\">Delete</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    console.error('loadStories error', e);
+                }
+            }
+
+            listEl?.addEventListener('click', async (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const id = btn.getAttribute('data-id');
+                const action = btn.getAttribute('data-action');
+                await ensureFirestoreReady();
+                const all = await window.FirestoreDataManager.getSuccessStories();
+                const story = (all||[]).find(x => x.id === id);
+                if (!story) return;
+                if (action === 'edit') {
+                    fillForm(story);
+                } else if (action === 'delete') {
+                    if (confirm('Delete this story?')) {
+                        await window.FirestoreDataManager.deleteSuccessStory(id);
+                        await loadStories();
+                        await updateCommunityStats();
+                        showAdminNotification('Deleted','Success story removed','success');
+                        if (modal.querySelector('#ss-id').value === id) fillForm(null);
+                    }
+                }
+            });
+
+            modal.querySelector('#ss-refresh')?.addEventListener('click', loadStories);
+            modal.querySelector('#ss-new')?.addEventListener('click', () => fillForm(null));
+            modal.querySelector('#ss-clear')?.addEventListener('click', () => fillForm(null));
+
+            form?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    await ensureFirestoreReady();
+                    const id = modal.querySelector('#ss-id').value.trim();
+                    const payload = {
+                        author: modal.querySelector('#ss-author').value.trim(),
+                        authorEmail: modal.querySelector('#ss-email').value.trim().toLowerCase(),
+                        role: modal.querySelector('#ss-role').value.trim() || 'Team Member',
+                        achievement: modal.querySelector('#ss-achievement').value.trim(),
+                        title: modal.querySelector('#ss-title').value.trim(),
+                        description: modal.querySelector('#ss-description').value.trim(),
+                        stats: {
+                            projectsCompleted: Number(modal.querySelector('#ss-projects').value || 0),
+                            clientRating: Number(modal.querySelector('#ss-rating').value || 0),
+                            earnings: modal.querySelector('#ss-earnings').value.trim() || '$0'
+                        },
+                        congratulations: 0,
+                        timestamp: new Date().toISOString()
+                    };
+                    if (!payload.author) { showAdminNotification('Missing','Author is required','error'); return; }
+                    if (!payload.title) { showAdminNotification('Missing','Title is required','error'); return; }
+                    if (id) {
+                        await window.FirestoreDataManager.updateSuccessStory(id, payload);
+                        showAdminNotification('Saved','Success story updated','success');
+                    } else {
+                        await window.FirestoreDataManager.addSuccessStory(payload);
+                        showAdminNotification('Added','Success story created','success');
+                    }
+                    await loadStories();
+                    await updateCommunityStats();
+                } catch (err) {
+                    console.error(err);
+                    showAdminNotification('Error','Failed to save success story','error');
+                }
+            });
+
+            if (mode === 'create') fillForm(existing);
+            loadStories();
         }
 
-        async function manageSuccessStories() {
-            try {
-                await ensureFirestoreReady();
-                const list = await window.FirestoreDataManager.getSuccessStories();
-                if (!Array.isArray(list) || !list.length) { showAdminNotification('Info','No success stories yet','info'); return; }
-                const choices = list.map((s, i) => `${i+1}) ${s.title} — ${s.author}`).join('\n');
-                const pick = prompt(`Select a story to edit/delete:\n${choices}\nEnter number:`);
-                const idx = Math.max(1, Number(pick||'1')) - 1;
-                const story = list[idx];
-                if (!story) return;
-                const action = prompt('Type "edit" to update or "delete" to remove:', 'edit');
-                if (action === 'delete') {
-                    await window.FirestoreDataManager.deleteSuccessStory(story.id);
-                    showAdminNotification('Deleted','Success story removed','success');
-                } else if (action === 'edit') {
-                    const newTitle = prompt('New title', story.title || '') || story.title;
-                    const newDesc = prompt('New description', story.description || '') || story.description;
-                    await window.FirestoreDataManager.updateSuccessStory(story.id, { title: newTitle, description: newDesc });
-                    showAdminNotification('Updated','Success story updated','success');
-                }
-                await updateCommunityStats();
-            } catch (e) {
-                console.error(e);
-                showAdminNotification('Error','Failed to manage success stories','error');
-            }
-        }
+        async function addSuccessStory(){ openSuccessStoryManager('create'); }
+        async function manageSuccessStories(){ openSuccessStoryManager('manage'); }
         
         // Community Actions
         function exportCommunityData() {
