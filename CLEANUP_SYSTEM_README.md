@@ -1,3 +1,10 @@
+## 2025-09-12 — Multi-job timelines and all-contracts listing (portal)
+### Scope: `user-portal.html`
+- Primary sections now render multiple items:
+  - Jobs tab: `displayCurrentJobs()` maps all jobs to cards with timelines.
+  - Contracts tab: `displayContracts()` lists all uploaded contracts for the user’s email.
+- Leave legacy `displayUserContracts()`/`displayJobsWithStatus()` helpers for any single-job subviews, but do not use them in the main tabs.
+
 ## 2025-09-12 — Quick Apply Cleanup & Ownership
 ### Scope: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`
 - Canonical data: Full applications live in Firestore `applications`; Quick Apply lives in `quickApplications`.

@@ -1,3 +1,13 @@
+### 2025-09-12 — User Portal: Multi-job timelines and all-contracts listing
+
+- Files: `user-portal.html`
+- Change: Jobs tab now renders all job timelines for the signed-in user using `displayCurrentJobs()` (instead of single-selection timeline). Contracts tab now lists all uploaded contracts for the user’s email using `displayContracts()`.
+- Test:
+  1. Ensure a user has 2+ entries under `users/<uid>.jobs` and at least 2 contract docs in Firestore `contracts` with `freelancerEmail` equal to the user email.
+  2. Open `user-portal.html` and sign in as that user.
+  3. Jobs tab should show a `.job-card` for each job, each with its own “Project Timeline”.
+  4. Contracts tab should show multiple `.contract-card` entries, newest first, with working Download buttons.
+
 ### 2025-09-12 — Quick Apply Flow (Portal → Admin Queue)
 
 - Files: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`
