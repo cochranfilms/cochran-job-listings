@@ -2388,6 +2388,19 @@
             }
             return selected;
         }
+        // Resolve a job's start date from Firestore listing first (per-job)
+        function getListingStartDateFor(job){
+            try {
+                if (!job) return '';
+                if (Array.isArray(jobsData) && jobsData.length){
+                    const byId = jobsData.find(j => j && (j.id === job.id));
+                    const byTitle = !byId ? jobsData.find(j => String(j.title||j.role||'').toLowerCase() === String(job.title||job.role||'').toLowerCase()) : null;
+                    const listing = byId || byTitle;
+                    return listing?.date || listing?.projectStart || '';
+                }
+            } catch(_) {}
+            return '';
+        }
         // Helper function to get project progress
         function getProjectProgress() {
             const job = getSelectedJob();
@@ -2414,8 +2427,8 @@
                     <div class="card job-card">
                         <div class="card-header">
                             <h3 class="card-title">${job.title || job.role || 'Project'}</h3>
-                            <span class="status-badge status-${getJobStatus(job.projectStart || job.date || getEffectiveProjectStartDate())}">
-                                ${getJobStatus(job.projectStart || job.date || getEffectiveProjectStartDate())}
+                            <span class="status-badge status-${getJobStatus(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}">
+                                ${getJobStatus(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}
                             </span>
                         </div>
                         <div class="job-details">
@@ -2430,7 +2443,7 @@
                                 </div>
                                 <div class="info-item">
                                     <span class="label">Start Date:</span>
-                                    <span class="value">${formatDisplayDate(job.projectStart || job.date || getEffectiveProjectStartDate())}</span>
+                                    <span class="value">${formatDisplayDate(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}</span>
                                 </div>
                             </div>
                             <div class="job-timeline">
@@ -3046,12 +3059,23 @@
             const selectedJob = userJobs[selectedJobIndex] || userJobs[0];
             return selectedJob;
         }
-        // Compute effective project start date using broad fallbacks
+        // Compute effective project start date favoring the job listing's own date
         function getEffectiveProjectStartDate() {
             if (!currentUser) return '';
             const selectedJob = getSelectedJob();
             const userJob = selectedJob ? (currentUser.jobs && currentUser.jobs[selectedJob.id]) : null;
+            // Prefer Firestore job listing date if we can match by id or title
+            let listingDate = '';
+            try {
+                if (Array.isArray(jobsData) && jobsData.length) {
+                    const byId = jobsData.find(j => j && selectedJob && (j.id === selectedJob.id));
+                    const byTitle = !byId && selectedJob ? jobsData.find(j => String(j.title||j.role||'').toLowerCase() === String(selectedJob.title||selectedJob.role||'').toLowerCase()) : null;
+                    const listing = byId || byTitle;
+                    listingDate = listing?.date || listing?.projectStart || '';
+                }
+            } catch(_) {}
             return (
+                listingDate ||
                 (userJob && (userJob.projectStart || userJob.date)) ||
                 (selectedJob && (selectedJob.projectStart || selectedJob.date)) ||
                 currentUser.profile?.projectDate ||
@@ -6710,6 +6734,10 @@
                 loadRentedEquipment();
             }
             if (tabName === 'requests') {
+                // Ensure equipment list is loaded to populate dropdown
+                Promise.resolve(loadEquipment()).then(() => {
+                    renderRequestItemOptions();
+                });
                 loadEquipmentRequests().then(() => renderEquipmentRequests());
             }
         }
@@ -6768,20 +6796,36 @@
             `).join('');
         }
 
+        function renderRequestItemOptions() {
+            try {
+                const select = document.getElementById('requestItemsSelect');
+                if (!select) return;
+                // Build options from available equipment only
+                const available = (_equipment||[]).filter(item => (item.status||'available') === 'available');
+                const currentSelections = new Set(Array.from(select.selectedOptions||[]).map(o => o.value));
+                select.innerHTML = available
+                    .sort((a,b) => (a.name||'').localeCompare(b.name||''))
+                    .map(item => `<option value="${(item.name||'Unnamed').replace(/"/g,'&quot;')}">${item.name||'Unnamed'}${item.serialNumber?` — ${item.serialNumber}`:''}</option>`)
+                    .join('');
+                // Re-apply previous selections if still available
+                Array.from(select.options).forEach(opt => { if (currentSelections.has(opt.value)) opt.selected = true; });
+            } catch(_) {}
+        }
+
         async function prefillRequest(equipmentId, equipmentName) {
             try {
                 // First switch to the requests tab
                 switchEquipmentTab('requests');
-                
-                // Create a quick request for this specific equipment
-                await createQuickEquipmentRequest(equipmentId, equipmentName);
-                
-                // Also prefill the form for additional items
-                const input = document.getElementById('requestItems');
-                if (input) {
-                    const list = input.value ? input.value.split(',').map(s => s.trim()).filter(Boolean) : [];
-                    if (!list.includes(equipmentName)) list.push(equipmentName);
-                    input.value = list.join(', ');
+                // Ensure the dropdown is populated and select the item
+                renderRequestItemOptions();
+                const select = document.getElementById('requestItemsSelect');
+                if (select) {
+                    // Try to find matching option by name (case-insensitive)
+                    const nameLower = String(equipmentName||'').toLowerCase();
+                    Array.from(select.options).forEach(opt => {
+                        if (opt.value.toLowerCase() === nameLower) opt.selected = true;
+                    });
+                    select.focus();
                 }
             } catch(e) {
                 console.error('Error in prefillRequest:', e);
@@ -6832,7 +6876,10 @@
         async function submitEquipmentRequest(event) {
             event.preventDefault();
             try {
-                const items = (document.getElementById('requestItems')?.value || '').split(',').map(s => s.trim()).filter(Boolean);
+                const selectEl = document.getElementById('requestItemsSelect');
+                const items = Array.from(selectEl ? selectEl.selectedOptions : [])
+                    .map(o => o.value)
+                    .filter(Boolean);
                 const neededFrom = document.getElementById('requestFrom')?.value || null;
                 const neededTo = document.getElementById('requestTo')?.value || null;
                 const notes = document.getElementById('requestNotes')?.value || '';
@@ -6855,7 +6902,11 @@
                 toast('Request submitted', 'success');
                 await loadEquipmentRequests();
                 renderEquipmentRequests();
-                try { document.getElementById('equipmentRequestForm').reset(); } catch(_) {}
+                try { 
+                    const form = document.getElementById('equipmentRequestForm');
+                    form.reset();
+                    renderRequestItemOptions();
+                } catch(_) {}
             } catch (e) {
                 console.error('submitEquipmentRequest error', e);
                 toast('Failed to submit request', 'error');
@@ -17785,8 +17836,9 @@
                         <div class="card-content">
                             <form id="equipmentRequestForm" onsubmit="submitEquipmentRequest(event)">
                                 <div class="form-group">
-                                    <label for="requestItems">Items (comma separated)</label>
-                                    <input id="requestItems" type="text" placeholder="Camera A, Light Kit, C-Stand">
+                                    <label for="requestItemsSelect">Items</label>
+                                    <select id="requestItemsSelect" multiple size="5" style="width:100%; background:#0b1020; color:#e5e7eb; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:8px;"></select>
+                                    <small style="display:block; color:#9ca3af; margin-top:6px;">Hold Cmd/Ctrl to select multiple items. Only available gear is listed.</small>
                                 </div>
                                 <div class="form-group">
                                     <label for="requestDates">Dates</label>
