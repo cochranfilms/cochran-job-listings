@@ -807,6 +807,20 @@
                 return dated[0] || keys[0];
             } catch(_) { return userLike && userLike.primaryJob ? userLike.primaryJob : null; }
         }
+
+        // Build a unique, descriptive contract filename for multi-job users
+        function buildContractFileName(contractData){
+            const clean = (s) => (s || '')
+                .toString()
+                .replace(/[^a-zA-Z0-9\s\-]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            const name = clean(contractData.freelancerName);
+            const role = clean(contractData.role || getCurrentJobTitle());
+            const id = (contractData.contractId || '').toString().trim();
+            const base = [name, role, id].filter(Boolean).join(' - ');
+            return `${base}.pdf`;
+        }
         
         // Global GitHub configuration
         let GITHUB_CONFIG = {
@@ -1471,7 +1485,7 @@
                         contractId: contractData.contractId,
                         pdfContent: pdfBase64,
                         freelancerName: contractData.freelancerName,
-                        fileName: `${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`
+                        fileName: buildContractFileName(contractData)
                     })
                 });
                 
@@ -1487,7 +1501,7 @@
                         role: contractData.role,
                         rate: contractData.rate,
                         location: contractData.location,
-                        fileName: `${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
+                        fileName: buildContractFileName(contractData),
                         fileSize: Math.round(pdfBase64.length * 0.75), // Approximate size
                         uploadDate: new Date().toISOString(),
                         status: 'uploaded',
@@ -1550,7 +1564,7 @@
                 }
                 
                 // Save PDF to user's device using user name instead of contract ID
-                const safeFileName = contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim() + '.pdf';
+                const safeFileName = buildContractFileName(contractData);
                 doc.save(safeFileName);
                 
                 console.log('✅ PDF downloaded successfully:', safeFileName);
@@ -2887,11 +2901,11 @@
                     role: contractData.role,
                     rate: contractData.rate,
                     location: contractData.location,
-                    fileName: `${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
+                    fileName: buildContractFileName(contractData),
                     fileSize: 0, // Will be updated when file is actually uploaded
                     uploadDate: new Date().toISOString(),
                     status: 'uploaded',
-                    githubUrl: `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
+                    githubUrl: `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${encodeURIComponent(buildContractFileName(contractData))}`,
                     notes: 'Automatically uploaded via contract signing',
                     contractDate: contractData.effectiveDate,
                     signedDate: contractData.signatureDate
@@ -2917,10 +2931,10 @@
                         role: contractData.role,
                         rate: contractData.rate,
                         location: contractData.location,
-                        fileName: `${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
+                        fileName: buildContractFileName(contractData),
                         uploadDate: new Date().toISOString(),
                         status: 'uploaded',
-                        githubUrl: `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${contractData.freelancerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim()}.pdf`,
+                        githubUrl: `https://raw.githubusercontent.com/cochranfilms/cochran-job-listings/main/contracts/${encodeURIComponent(buildContractFileName(contractData))}`,
                         notes: 'Automatically uploaded via contract signing',
                         contractDate: contractData.effectiveDate,
                         signedDate: contractData.signatureDate
