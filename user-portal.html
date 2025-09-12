@@ -8944,10 +8944,10 @@
                 ].filter(Boolean).join(' ');
                 
                 const dayEventsHTML = dayEvents.map(event => 
-                    `<div class="calendar-event" onclick="openEventDetails('${event.id}', '${event.title.replace(/'/g, "\\'")}', '${event.date}', '${event.status || 'Event'}', '${event.location || ''}', '${event.description || ''}')" title="${event.title}">
+                    `<div class="calendar-event" onclick="openEventDetails('${event.id}')" title="${event.title}">
                         <div class="event-card-header">
                             <div class="event-title">${event.title}</div>
-                            <div class="event-status ${(event.status || 'Event').toLowerCase().replace(/\s+/g, '-')}">${event.status || 'Event'}</div>
+                            <div class="event-status ${(event.status || event.type || 'Event').toLowerCase().replace(/\s+/g, '-')}">${event.status || event.type || 'Event'}</div>
                         </div>
                         ${event.location ? `<div class="event-location"><i class="fas fa-map-marker-alt"></i> ${event.location}</div>` : ''}
                     </div>`
@@ -8977,13 +8977,13 @@
             const sortedEvents = events.sort((a, b) => new Date(a.date) - new Date(b.date));
             
             container.innerHTML = sortedEvents.map(event => `
-                <div class="event-item" onclick="openEventDetails('${event.id}', '${event.title.replace(/'/g, "\\'")}', '${event.date}', '${event.status || 'Event'}', '${event.location || ''}', '${event.description || ''}')" style="cursor: pointer;">
+                <div class="event-item" onclick="openEventDetails('${event.id}')" style="cursor: pointer;">
                     <div class="event-header">
                         <div>
                             <h4 class="event-title">${event.title}</h4>
                             <div class="event-date">${new Date(event.date).toLocaleDateString()}</div>
                         </div>
-                        <span class="event-type">${event.type}</span>
+                        <span class="event-type">${event.status || event.type || 'Event'}</span>
                     </div>
                     <p class="event-description">${event.description}</p>
                     ${event.location ? `
@@ -9008,6 +9008,7 @@
                         title: event.title,
                         description: event.description || '',
                         date: event.date,
+                        status: event.status || 'scheduled',
                         type: event.status || 'Event',
                         location: event.location || ''
                     }));
@@ -9036,20 +9037,34 @@
         }
         
         // Event Details Modal Functions
-        function openEventDetails(id, title, date, status, location, description) {
+        function openEventDetails(id) {
             const modal = document.getElementById('eventDetailsModal');
             if (!modal) return;
             
+            // Find the event by id from the in-memory events array
+            const event = (events || []).find(e => String(e.id) === String(id));
+            if (!event) {
+                console.warn('Event not found for id:', id);
+                return;
+            }
+            
+            // Safely extract fields
+            const title = event.title || 'No title provided';
+            const date = event.date || '';
+            const status = event.status || event.type || 'Event';
+            const location = event.location || 'No location provided';
+            const description = event.description || 'No description provided';
+            
             // Populate modal with event data
-            document.getElementById('eventDetailsTitle').textContent = title || 'No title provided';
+            document.getElementById('eventDetailsTitle').textContent = title;
             document.getElementById('eventDetailsDate').textContent = formatEventDate(date) || 'No date provided';
-            document.getElementById('eventDetailsLocation').textContent = location || 'No location provided';
-            document.getElementById('eventDetailsDescription').textContent = description || 'No description provided';
+            document.getElementById('eventDetailsLocation').textContent = location;
+            document.getElementById('eventDetailsDescription').textContent = description;
             
             // Set status badge
             const statusElement = document.getElementById('eventDetailsStatus');
-            statusElement.textContent = status || 'Event';
-            statusElement.className = `status-badge ${(status || 'Event').toLowerCase().replace(/\s+/g, '-')}`;
+            statusElement.textContent = status;
+            statusElement.className = `status-badge ${status.toLowerCase().replace(/\s+/g, '-')}`;
             
             // Show modal
             modal.style.display = 'flex';
