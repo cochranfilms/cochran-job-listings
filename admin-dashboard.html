@@ -6784,56 +6784,177 @@
             // This would open a modal to review showcase content
         }
         
-        // Event Management
-        async function createEvent() {
-            try {
-                await ensureFirestoreReady();
-                const title = prompt('Event title');
-                if (!title) return;
-                const date = prompt('Event date (YYYY-MM-DD)');
-                if (!date) return;
-                const description = prompt('Description') || '';
-                const location = prompt('Location') || '';
-                const payload = { title, date, description, location, status: 'scheduled' };
-                await window.FirestoreDataManager.addEvent(payload);
-                showAdminNotification('Added','Event created','success');
-                await updateCommunityStats();
-            } catch (e) {
-                console.error(e);
-                showAdminNotification('Error','Failed to create event','error');
+        // Event Management (Modern Modal UI)
+        function openEventManager(mode = 'manage', existing = null) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:12000;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top,16px) 12px env(safe-area-inset-bottom,16px);overflow:auto;';
+            modal.innerHTML = `
+                <div style="background:#0f1115;border:1px solid rgba(255,178,0,0.25);border-radius:14px;width:min(880px,96%);max-height:calc(100vh - 48px);display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.5);color:#fff;">
+                    <div style="padding:14px 16px;border-bottom:1px solid rgba(255,178,0,0.2);display:flex;justify-content:space-between;align-items:center;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-calendar-alt" style="color:#FFB200;"></i>
+                            <h3 style="margin:0;color:#FFB200;font-weight:800;">Event Manager</h3>
+                        </div>
+                        <div>
+                            <button id="em-close" class="btn btn-secondary" style="padding:.4rem .8rem;">Close</button>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns: 1.1fr .9fr;gap:16px;padding:16px;">
+                        <div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <h4 style="margin:0;color:#FFB200;">Upcoming Events</h4>
+                                <div style="display:flex;gap:8px;">
+                                    <button id="em-refresh" class="btn btn-secondary" style="padding:.35rem .7rem;">Refresh</button>
+                                    <button id="em-new" class="btn" style="padding:.35rem .7rem;">New Event</button>
+                                </div>
+                            </div>
+                            <div id="em-list" style="display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;"></div>
+                        </div>
+                        <div>
+                            <h4 style="margin:0 0 8px 0;color:#FFB200;">${mode==='create'?'Create Event':'Edit Event'}</h4>
+                            <form id="em-form" style="display:grid;gap:10px;">
+                                <input type="hidden" id="em-id" />
+                                <label style="display:flex;flex-direction:column;gap:6px;">
+                                    <span>Title</span>
+                                    <input id="em-title" type="text" placeholder="Company Town Hall" style="padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;" />
+                                </label>
+                                <div style="display:grid;grid-template-columns: 1fr 1fr; gap:10px;">
+                                    <label style="display:flex;flex-direction:column;gap:6px;">
+                                        <span>Date</span>
+                                        <input id="em-date" type="date" style="padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;" />
+                                    </label>
+                                    <label style="display:flex;flex-direction:column;gap:6px;">
+                                        <span>Status</span>
+                                        <select id="em-status" style="padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;">
+                                            <option value="scheduled">scheduled</option>
+                                            <option value="cancelled">cancelled</option>
+                                            <option value="completed">completed</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <label style="display:flex;flex-direction:column;gap:6px;">
+                                    <span>Location</span>
+                                    <input id="em-location" type="text" placeholder="Atlanta HQ" style="padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;" />
+                                </label>
+                                <label style="display:flex;flex-direction:column;gap:6px;">
+                                    <span>Description</span>
+                                    <textarea id="em-description" rows="5" placeholder="Details for the team…" style="padding:.6rem;border-radius:8px;border:1px solid rgba(255,178,0,0.3);background:#0b0d11;color:#fff;resize:vertical;"></textarea>
+                                </label>
+                                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                                    <button type="button" id="em-clear" class="btn btn-secondary">Clear</button>
+                                    <button type="submit" class="btn">Save</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+
+            const listEl = modal.querySelector('#em-list');
+            const form = modal.querySelector('#em-form');
+            const close = () => modal.remove();
+            modal.querySelector('#em-close').onclick = close;
+            modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+            function fillForm(ev) {
+                modal.querySelector('#em-id').value = ev?.id || '';
+                modal.querySelector('#em-title').value = ev?.title || '';
+                modal.querySelector('#em-date').value = (ev?.date || '').slice(0,10);
+                modal.querySelector('#em-status').value = ev?.status || 'scheduled';
+                modal.querySelector('#em-location').value = ev?.location || '';
+                modal.querySelector('#em-description').value = ev?.description || '';
             }
-        }
-        
-        async function manageEvents() {
-            try {
-                await ensureFirestoreReady();
-                const list = await window.FirestoreDataManager.getEvents();
-                if (!Array.isArray(list) || !list.length) { showAdminNotification('Info','No events yet','info'); return; }
-                const choices = list.map((ev, i) => `${i+1}) ${ev.title} — ${ev.date}`).join('\n');
-                const pick = prompt(`Select an event to edit/delete:\n${choices}\nEnter number:`);
-                const idx = Math.max(1, Number(pick||'1')) - 1;
-                const ev = list[idx];
-                if (!ev) return;
-                const action = prompt('Type "edit" to update or "delete" to remove or "status" to change status:', 'edit');
-                if (action === 'delete') {
-                    await window.FirestoreDataManager.deleteEvent(ev.id);
-                    showAdminNotification('Deleted','Event removed','success');
-                } else if (action === 'status') {
-                    const newStatus = prompt('Status (scheduled|cancelled|completed)', ev.status || 'scheduled') || ev.status || 'scheduled';
-                    await window.FirestoreDataManager.updateEvent(ev.id, { status: newStatus });
-                    showAdminNotification('Updated','Event status updated','success');
-                } else if (action === 'edit') {
-                    const newTitle = prompt('New title', ev.title || '') || ev.title;
-                    const newDate = prompt('New date (YYYY-MM-DD)', ev.date || '') || ev.date;
-                    await window.FirestoreDataManager.updateEvent(ev.id, { title: newTitle, date: newDate });
-                    showAdminNotification('Updated','Event updated','success');
+
+            async function loadEvents() {
+                try {
+                    await ensureFirestoreReady();
+                    const events = await window.FirestoreDataManager.getEvents();
+                    if (!listEl) return;
+                    if (!Array.isArray(events) || !events.length) {
+                        listEl.innerHTML = `<div style="text-align:center;color:#9ca3af;padding:1rem;border:1px dashed rgba(255,178,0,0.25);border-radius:10px;">No events yet</div>`;
+                        return;
+                    }
+                    listEl.innerHTML = events.map(ev => `
+                        <div class="list-item" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:.8rem;border:1px solid rgba(255,178,0,0.2);border-radius:10px;">
+                            <div>
+                                <div style="font-weight:700;color:#FFB200;">${ev.title || 'Untitled'}</div>
+                                <div style="color:#9ca3af;font-size:.9rem;">${ev.date ? new Date(ev.date).toLocaleDateString() : ''} • <span class="status-${ev.status||'scheduled'}">${ev.status||'scheduled'}</span>${ev.location?` • ${ev.location}`:''}</div>
+                            </div>
+                            <div style="display:flex;gap:6px;">
+                                <button class="btn btn-secondary" data-action="edit" data-id="${ev.id}">Edit</button>
+                                <button class="btn btn-danger" data-action="delete" data-id="${ev.id}">Delete</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    console.error('loadEvents error', e);
                 }
-                await updateCommunityStats();
-            } catch (e) {
-                console.error(e);
-                showAdminNotification('Error','Failed to manage events','error');
             }
+
+            listEl?.addEventListener('click', async (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const id = btn.getAttribute('data-id');
+                const action = btn.getAttribute('data-action');
+                await ensureFirestoreReady();
+                const all = await window.FirestoreDataManager.getEvents();
+                const ev = (all||[]).find(x => x.id === id);
+                if (!ev) return;
+                if (action === 'edit') {
+                    fillForm(ev);
+                } else if (action === 'delete') {
+                    if (confirm('Delete this event?')) {
+                        await window.FirestoreDataManager.deleteEvent(id);
+                        await loadEvents();
+                        await updateCommunityStats();
+                        showAdminNotification('Deleted','Event removed','success');
+                        // Clear form if it was showing this event
+                        if (modal.querySelector('#em-id').value === id) fillForm(null);
+                    }
+                }
+            });
+
+            modal.querySelector('#em-refresh')?.addEventListener('click', loadEvents);
+            modal.querySelector('#em-new')?.addEventListener('click', () => fillForm(null));
+            modal.querySelector('#em-clear')?.addEventListener('click', () => fillForm(null));
+
+            form?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    await ensureFirestoreReady();
+                    const id = modal.querySelector('#em-id').value.trim();
+                    const payload = {
+                        title: modal.querySelector('#em-title').value.trim(),
+                        date: modal.querySelector('#em-date').value,
+                        status: modal.querySelector('#em-status').value || 'scheduled',
+                        location: modal.querySelector('#em-location').value.trim(),
+                        description: modal.querySelector('#em-description').value.trim()
+                    };
+                    if (!payload.title) { showAdminNotification('Missing','Title is required','error'); return; }
+                    if (!payload.date) { showAdminNotification('Missing','Date is required','error'); return; }
+                    if (id) {
+                        await window.FirestoreDataManager.updateEvent(id, payload);
+                        showAdminNotification('Saved','Event updated','success');
+                    } else {
+                        await window.FirestoreDataManager.addEvent(payload);
+                        showAdminNotification('Added','Event created','success');
+                    }
+                    await loadEvents();
+                    await updateCommunityStats();
+                } catch (err) {
+                    console.error(err);
+                    showAdminNotification('Error','Failed to save event','error');
+                }
+            });
+
+            // Prefill when invoked from Create button
+            if (mode === 'create') fillForm(existing);
+            loadEvents();
         }
+
+        // Backward-compatible handlers
+        async function createEvent() { openEventManager('create'); }
+        async function manageEvents() { openEventManager('manage'); }
         
         // Success Stories Management
         async function addSuccessStory() {

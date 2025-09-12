@@ -127,20 +127,21 @@ Quick test (browser):
 3. Open `admin-dashboard.html` and check the “Success Stories” mini-stat increments accordingly.
 4. Delete or edit the story in Firestore; verify the portal grid updates live.
 
-### 2025-09-12 — Admin Community Tools wired to Firestore
+### 2025-09-12 — Community Tools modernization (Admin)
 
 - Files: `admin-dashboard.html`, `firestore-data-manager.js`
-- Change: The Community Management buttons now perform real actions:
-  - Add Success Story → prompts for details, creates a doc in `successStories`.
-  - Manage Stories → lists stories, allows edit/delete.
-  - Create Event → prompts and writes to `events`.
-  - Manage Events → lists events, allows edit/delete/status.
-  - Manage Showcases → lists submissions (prefers pending), allows approve/deny/edit/delete on `showcases`.
+- Change: Replaced prompt-based flows for Events with a modern modal Event Manager.
+  - Create, edit, delete, and status changes are performed in a modal UI.
+  - Buttons `Create Event` and `Manage Events` now open the Event Manager.
+  - Validation: Title and Date required; inline toasts on success/failure.
+- Mini-stat counters still pull from Firestore with localStorage fallback.
 
 Quick test:
 1. Open `admin-dashboard.html` → Community Management.
-2. Click each button and follow prompts; verify Firestore updates and mini-stats refresh.
-3. Check `user-portal.html` Community tabs; Success Stories and counts reflect changes live.
+2. Click Create Event or Manage Events; the Event Manager modal appears.
+3. Create a new event (Title + Date required). Verify it appears in the list.
+4. Edit and delete events; verify Firestore updates and mini-stats refresh.
+5. Check `user-portal.html` Community tabs; counts reflect changes live.
 
 ### 2025-09-12 — Equipment Requests: available-gear multi-select
 

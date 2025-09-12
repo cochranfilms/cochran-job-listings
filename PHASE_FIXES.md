@@ -1,3 +1,8 @@
+- Community Tools Modernization (2025-09-12)
+  - Admin `Event Manager` added as a modern modal (create/edit/delete/status)
+  - Buttons `Create Event` and `Manage Events` open the modal
+  - Firestore-backed via `FirestoreDataManager` with `ensureFirestoreReady()` guard
+  - Mini-stats wired to Firestore; UI is consistent with other admin modals
 ### 2025-09-08 — Portfolio Builder (Phase: Creator Experience)
 - Added Firestore `portfolios` collection with CRUD and realtime listeners in `firestore-data-manager.js`.
 - Implemented `portfolio-builder.html` with:
