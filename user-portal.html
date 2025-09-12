@@ -2517,55 +2517,66 @@
             const container = document.getElementById('contractsContent');
             if (!container) return;
             
-            const userContract = getUserContractStatus(currentUser.email);
-            
-            if (userContract) {
-                container.innerHTML = `
-                    <div class="card contract-card">
-                        <div class="card-header">
-                            <h2 class="card-title">Signed Contract</h2>
-                            <i class="fas fa-file-contract"></i>
-                        </div>
-                        <div class="contract-info">
-                            <div class="contract-details">
-                                <div class="info-item">
-                                    <span class="label">Contract ID:</span>
-                                    <span class="value">${userContract.contractId || 'N/A'}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="label">Status:</span>
-                                    <span class="status-badge status-completed">Signed</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="label">Signed Date:</span>
-                                    <span class="value">${userContract.signedDate || 'N/A'}</span>
-                                </div>
-                            </div>
-                            <div class="contract-actions">
-                                <button onclick="downloadUserContract()" class="btn btn-primary">
-                                    <i class="fas fa-download"></i>
-                                    Download Contract
-                                </button>
-                                <button onclick="viewContractDetails()" class="btn btn-secondary">
-                                    <i class="fas fa-eye"></i>
-                                    View Details
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
+            // Show ALL uploaded contracts for this user (not just latest)
+            const userEmailLower = (currentUser && currentUser.email) ? currentUser.email.toLowerCase() : '';
+            const allUserContracts = (uploadedContracts || []).filter(c => {
+                const ce = (c && (c.freelancerEmail || c.userEmail)) ? String(c.freelancerEmail || c.userEmail).toLowerCase() : '';
+                return ce && ce === userEmailLower;
+            }).sort((a,b)=> new Date(b.signedDate||b.uploadDate||0) - new Date(a.signedDate||a.uploadDate||0));
+
+            if (allUserContracts.length === 0) {
                 container.innerHTML = `
                     <div class="card no-contract-card">
                         <div class="no-contract-content">
                             <i class="fas fa-file-signature"></i>
-                            <h3>No Contract Found</h3>
+                            <h3>No Contracts Found</h3>
                             <p>You don't have any signed contracts yet.</p>
                             <p>Contracts will appear here once they're signed and uploaded.</p>
                         </div>
                     </div>
                 `;
+                return;
             }
+
+            container.innerHTML = allUserContracts.map(c => `
+                <div class="card contract-card">
+                    <div class="card-header">
+                        <h2 class="card-title">${c.role || 'Contract'}</h2>
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <div class="contract-info">
+                        <div class="contract-details">
+                            <div class="info-item"><span class="label">Contract ID:</span><span class="value">${c.contractId}</span></div>
+                            <div class="info-item"><span class="label">Signed Date:</span><span class="value">${c.signedDate ? new Date(c.signedDate).toLocaleDateString() : 'N/A'}</span></div>
+                            <div class="info-item"><span class="label">Rate:</span><span class="value">${c.rate || 'N/A'}</span></div>
+                            <div class="info-item"><span class="label">Location:</span><span class="value">${c.location || 'N/A'}</span></div>
+                        </div>
+                        <div class="contract-actions">
+                            <button onclick="downloadUserContractByFile('${encodeURIComponent(c.fileName || (currentUser.name + '.pdf'))}', '${encodeURIComponent(c.githubUrl || '')}')" class="btn btn-primary">
+                                <i class="fas fa-download"></i>
+                                Download Contract
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Download contract by an explicit file reference (supports multiple)
+        function downloadUserContractByFile(fileNameEnc, githubUrlEnc) {
+            const fileName = decodeURIComponent(fileNameEnc);
+            const githubUrl = decodeURIComponent(githubUrlEnc || '');
+            const candidates = [];
+            if (githubUrl) candidates.push(githubUrl);
+            candidates.push(`/contracts/${encodeURIComponent(fileName)}`);
+            candidates.push(`/api/contracts?filename=${encodeURIComponent(fileName)}`);
+            (async () => {
+                for (const url of candidates) {
+                    try { const resp = await fetch(url, { method: 'HEAD' }); if (resp.ok) {
+                        const link = document.createElement('a'); link.href = url; link.download = fileName; link.target = '_blank'; document.body.appendChild(link); link.click(); document.body.removeChild(link); return; } } catch(_) {}
+                }
+                showNotification('Contract file is not available yet. Please try again later or contact support.', 'error');
+            })();
         }
         // Display performance reviews for modern layout
         function displayPerformanceReviews() {
