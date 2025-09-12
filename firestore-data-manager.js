@@ -18,6 +18,7 @@ const FirestoreDataManager = {
         portfolios: 'portfolios', // user-owned portfolio profiles and galleries
         events: 'events', // company events and calendar
         successStories: 'successStories', // success stories and achievements
+        applications: 'applications', // job applications (quick apply + full)
         // Equipment & Resource Center
         equipment: 'equipment', // inventory of gear
         resources: 'resources', // brand guidelines, templates, style guides
@@ -145,6 +146,16 @@ const FirestoreDataManager = {
                     this.handleSuccessStoriesUpdate(snapshot);
                 }, (error) => {
                     console.error('❌ Success stories listener error:', error);
+                });
+
+            // Listen for applications changes (admin queue)
+            this.db.collection(this.collections.applications)
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    console.log('📝 Applications collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleApplicationsUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Applications listener error:', error);
                 });
 
             // Listen for equipment inventory changes
@@ -323,6 +334,23 @@ const FirestoreDataManager = {
             } else if (change.type === 'removed') {
                 console.log('🏆 Success story removed:', change.doc.id);
                 this.notifyDataChange('successStories', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle applications collection updates
+    handleApplicationsUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('📝 New application added:', change.doc.id);
+                this.notifyDataChange('applications', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('📝 Application modified:', change.doc.id);
+                this.notifyDataChange('applications', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('📝 Application removed:', change.doc.id);
+                this.notifyDataChange('applications', 'removed', change.doc.id, change.doc.data());
             }
         });
     },
@@ -2120,6 +2148,115 @@ Object.assign(FirestoreDataManager, {
             console.error('❌ Error deleting maintenance:', error);
             throw error;
         }
+    },
+
+    // ==================== APPLICATIONS (QUICK APPLY + FULL) ====================
+
+    async addApplication(app) {
+        try {
+            const nowIso = new Date().toISOString();
+            const userEmail = String(app.applicant?.email || '').toLowerCase();
+            const jobId = app.jobId || null;
+            const uid = app.applicant?.uid || null;
+
+            if (!jobId) throw new Error('Missing jobId for application');
+            if (!userEmail && !uid) throw new Error('Missing applicant identity (email or uid)');
+
+            // Duplicate guard: same email+job within 24h
+            try {
+                const q = await this.db.collection(this.collections.applications)
+                    .where('jobId', '==', jobId)
+                    .where('applicant.email', '==', userEmail)
+                    .limit(1)
+                    .get();
+                if (!q.empty) {
+                    console.log('⏭️ Duplicate application detected for', userEmail, jobId);
+                    return q.docs[0].id;
+                }
+            } catch (_) {}
+
+            const payload = {
+                source: app.source || 'quick_apply',
+                status: app.status || 'new', // new | approved | denied
+                jobId,
+                jobTitle: app.jobTitle || '',
+                jobDate: app.jobDate || null,
+                location: app.location || '',
+                payDisplay: app.payDisplay || '',
+                priority: !!app.priority,
+                applicant: {
+                    uid,
+                    name: app.applicant?.name || '',
+                    email: userEmail,
+                    phone: app.applicant?.phone || '',
+                    portfolio: app.applicant?.portfolio || '',
+                    avatarUrl: app.applicant?.avatarUrl || null
+                },
+                createdAt: nowIso,
+                updatedAt: nowIso
+            };
+
+            // Create main application doc
+            const ref = await this.db.collection(this.collections.applications).add(payload);
+            const appId = ref.id;
+
+            // Mirror to user and job subcollections for fast lookups
+            const ops = [];
+            if (uid) {
+                ops.push({ type: 'set', collection: `${this.collections.users}/${uid}/applications`, docId: appId, data: payload });
+            }
+            ops.push({ type: 'set', collection: `${this.collections.jobs}/${jobId}/applications`, docId: appId, data: payload });
+
+            await this.batchWrite(ops);
+            console.log('✅ Application created with mirrors:', appId);
+            return appId;
+        } catch (error) {
+            console.error('❌ Error adding application:', error);
+            throw error;
+        }
+    },
+
+    async updateApplication(appId, updateData) {
+        try {
+            const ref = this.db.collection(this.collections.applications).doc(appId);
+            const snap = await ref.get();
+            if (!snap.exists) throw new Error('Application not found');
+            const current = snap.data() || {};
+            const merged = { ...updateData, updatedAt: new Date().toISOString() };
+            await ref.set(merged, { merge: true });
+
+            const mirrors = [];
+            if (current.applicant?.uid) {
+                mirrors.push({ type: 'set', collection: `${this.collections.users}/${current.applicant.uid}/applications`, docId: appId, data: merged });
+            }
+            if (current.jobId) {
+                mirrors.push({ type: 'set', collection: `${this.collections.jobs}/${current.jobId}/applications`, docId: appId, data: merged });
+            }
+            if (mirrors.length) await this.batchWrite(mirrors);
+            console.log('✅ Application updated with mirrors:', appId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating application:', error);
+            throw error;
+        }
+    },
+
+    async getApplications(options = {}) {
+        try {
+            let ref = this.db.collection(this.collections.applications).orderBy('createdAt', 'desc');
+            if (options.status) ref = ref.where('status', '==', options.status);
+            if (options.jobId) ref = ref.where('jobId', '==', options.jobId);
+            if (options.email) ref = ref.where('applicant.email', '==', String(options.email).toLowerCase());
+            const snapshot = await ref.get();
+            return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (error) {
+            console.error('❌ Error getting applications:', error);
+            return [];
+        }
+    },
+
+    async setApplicationStatus(appId, status) {
+        return this.updateApplication(appId, { status });
     }
 });
 
