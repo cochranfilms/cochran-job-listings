@@ -77,6 +77,22 @@ What changed:
   - Functions removed: `generateAllContracts`, `exportUsersData`, `downloadUsersJSON`, `downloadContractFiles`, `forceRefreshUsers`, `migrateToFirestore`, `runFullMigration`, `verifyMigration`.
   - Dropped the page include for `migrate-to-firestore.js` (no longer referenced).
 
+### 2025-09-12 — Equipment Center tab visibility and refresh fix
+
+- Files: `user-portal.html`
+- Change: `switchEquipmentTab(tabName)` now correctly adds/removes the `active` class on tab content and sets inline `display` to ensure tabs render. Also triggers `loadEquipmentRequests()` when opening Requests and `loadRentedEquipment()` when opening Rented.
+- Reason: Previously, switching tabs only toggled `style.display` without the `active` class; because `.performance-tab-content { display:none }`, some tabs stayed hidden, showing a blank area.
+
+Quick test (browser):
+1. Sign in to `user-portal.html` and go to Equipment & Resource Center.
+2. Click “Equipment Requests” → form and “Your Requests” list should appear. Submit a test request and see it render in “Your Requests”.
+3. From `admin-dashboard.html`, approve the request (Row 4 → Requests). Ensure at least one item is checked out.
+4. Back in `user-portal.html`, click “My Rented Equipment” → the checked‑out item(s) render with rental details. No empty state if items exist.
+
+Console expectations:
+- On switching to Requests: logs “🔄 Loading equipment requests …” then “✅ Loaded equipment requests …” and “✅ Equipment requests rendered successfully”.
+- On switching to Rented: logs “🔄 Loading rented equipment …” then “✅ Loaded rented equipment …” and “✅ Rented equipment rendered successfully”.
+
 Verification steps:
 1. Open `admin-dashboard.html` and sign in.
 2. In the User & Contract Management card, confirm there is no “Quick Actions” section and no related buttons.

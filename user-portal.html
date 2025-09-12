@@ -6684,17 +6684,33 @@
 
         function switchEquipmentTab(tabName) {
             const tabs = ['library','resources','requests','rented','maintenance'];
+            // Hide all tab contents and remove active class
             tabs.forEach(name => {
                 const el = document.getElementById(`equipment-${name}-tab`);
-                if (el) el.style.display = (name === tabName) ? '' : 'none';
+                if (el) {
+                    el.classList.remove('active');
+                    el.style.display = 'none';
+                }
             });
+
+            // Show the selected tab content (ensure inline style doesn't override)
+            const activeEl = document.getElementById(`equipment-${tabName}-tab`);
+            if (activeEl) {
+                activeEl.classList.add('active');
+                activeEl.style.display = '';
+            }
+
+            // Update active state on buttons
             document.querySelectorAll('.performance-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
             const btn = document.querySelector(`.performance-tabs .tab-btn[onclick="switchEquipmentTab('${tabName}')"]`);
             if (btn) btn.classList.add('active');
             
-            // Load rented equipment when switching to that tab
+            // Refresh data for specific tabs when opened
             if (tabName === 'rented') {
                 loadRentedEquipment();
+            }
+            if (tabName === 'requests') {
+                loadEquipmentRequests().then(() => renderEquipmentRequests());
             }
         }
 

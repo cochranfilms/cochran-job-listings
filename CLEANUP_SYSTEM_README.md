@@ -37,6 +37,10 @@ Verification checklist
 - User portal Equipment Center loads without errors and renders empty states when collections are empty.
 - Admin inventory/resources/requests/maintenance lists load and allow CRUD without console errors.
 - Files: `user-portal.html`, `admin-dashboard.html`
+
+### 2025-09-12 — Tab visibility fix note
+- When modifying Equipment Center tabs in `user-portal.html`, keep `switchEquipmentTab()` updating both inline `style.display` and the `.active` class on `.performance-tab-content` elements. The CSS uses `.performance-tab-content { display:none }` and `.performance-tab-content.active { display:block }`; forgetting the class can leave tabs invisible.
+- Ensure opening the Requests tab calls `loadEquipmentRequests()` and opening the Rented tab calls `loadRentedEquipment()` to avoid stale UI after admin approvals.
 - Change: Use the selected job's start date as the single source of truth for project start across Current Jobs status/timeline and admin job assignment. This removes reliance on contract signed date or `profile.projectDate` for status transitions.
 - Follow-up: Ensure `contract.html` already uses `(application.eventDate || jobs[primary].date || profile.projectDate || profile.projectStart)` for displayed `projectStart`. No contract change required today.
 ### Firestore Integration Notes
