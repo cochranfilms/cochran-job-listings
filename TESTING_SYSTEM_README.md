@@ -143,6 +143,23 @@ Quick test:
 3. Click Add Success Story or Manage Success Stories; the Success Story Manager modal appears. Create/edit/delete stories and verify counters update.
 4. Check `user-portal.html` Community tabs; counts reflect changes live.
 
+### 2025-09-12 — Calendar Events Firestore Integration
+
+- Files: `user-portal.html`
+- Change: Events calendar now loads from Firestore instead of localStorage with sample data.
+  - `loadEvents()` function updated to use `FirestoreDataManager.getEvents()`.
+  - Events are mapped to calendar format (title, description, date, type, location).
+  - Removed localStorage fallback and sample data generation.
+  - Calendar initialization is now async with `ensureFirestoreReady()` guard.
+- Events display in calendar grid and events list with real-time updates.
+
+Quick test:
+1. Open `admin-dashboard.html` → Community Management → Create Event. Add a test event with title and date.
+2. Open `user-portal.html` → Events & Calendar tab.
+3. Verify the calendar shows the new event on the correct date.
+4. Check events list displays the event with proper details.
+5. Console should show "✅ Loaded events from Firestore: X" where X is the count.
+
 ### 2025-09-12 — Equipment Requests: available-gear multi-select
 
 - Files: `user-portal.html`

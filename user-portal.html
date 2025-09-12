@@ -8891,8 +8891,8 @@
         let currentDate = new Date();
         let events = [];
         
-        function initializeCalendar() {
-            loadEvents();
+        async function initializeCalendar() {
+            await loadEvents();
             renderCalendar();
             displayEventsList();
         }
@@ -8990,56 +8990,33 @@
             `).join('');
         }
         
-        // Load events (in a real app, this would come from a database)
-        function loadEvents() {
+        // Load events from Firestore
+        async function loadEvents() {
             try {
-                const saved = localStorage.getItem('cochranEvents');
-                if (saved) {
-                    events = JSON.parse(saved);
+                await ensureFirestoreReady();
+                
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const firestoreEvents = await window.FirestoreDataManager.getEvents();
+                    events = firestoreEvents.map(event => ({
+                        id: event.id,
+                        title: event.title,
+                        description: event.description || '',
+                        date: event.date,
+                        type: event.status || 'Event',
+                        location: event.location || ''
+                    }));
+                    console.log('✅ Loaded events from Firestore:', events.length);
                 } else {
-                    // Add some sample events
-                    events = [
-                        {
-                            id: 1,
-                            title: 'Team Meeting',
-                            description: 'Weekly team sync and project updates',
-                            date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                            type: 'Meeting',
-                            location: 'Conference Room A'
-                        },
-                        {
-                            id: 2,
-                            title: 'Photography Workshop',
-                            description: 'Advanced lighting techniques and composition',
-                            date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-                            type: 'Training',
-                            location: 'Studio 1'
-                        },
-                        {
-                            id: 3,
-                            title: 'Client Presentation',
-                            description: 'Presenting Q4 project proposals',
-                            date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
-                            type: 'Presentation',
-                            location: 'Main Conference Room'
-                        }
-                    ];
-                    saveEvents();
+                    console.warn('⚠️ FirestoreDataManager not available, using empty events list');
+                    events = [];
                 }
             } catch (error) {
-                console.error('Error loading events:', error);
+                console.error('Error loading events from Firestore:', error);
                 events = [];
             }
         }
         
-        // Save events
-        function saveEvents() {
-            try {
-                localStorage.setItem('cochranEvents', JSON.stringify(events));
-            } catch (error) {
-                console.error('Error saving events:', error);
-            }
-        }
+        // Events are now managed through Firestore - no local saving needed
         
         // Calendar navigation
         function previousMonth() {
@@ -9053,7 +9030,7 @@
         }
         
         // Initialize all community features when section is shown
-        function initializeCommunityFeatures() {
+        async function initializeCommunityFeatures() {
             if (document.getElementById('community-section').classList.contains('active')) {
                 initializeProfilePicture();
                 initializeContractorDirectory();
@@ -9064,7 +9041,7 @@
                 initializeShowcases();
             }
             if (document.getElementById('calendar-section').classList.contains('active')) {
-                initializeCalendar();
+                await initializeCalendar();
             }
         }
         
@@ -9074,8 +9051,8 @@
             originalSwitchPortalTab(tabName);
             
             // Initialize community features when switching to those sections
-            setTimeout(() => {
-                initializeCommunityFeatures();
+            setTimeout(async () => {
+                await initializeCommunityFeatures();
                 // Initialize equipment center when needed
                 if (document.getElementById('equipment-section') && document.getElementById('equipment-section').classList.contains('active')) {
                     try { initializeEquipmentCenter(); } catch(e) { console.warn('equipment init skipped', e); }
