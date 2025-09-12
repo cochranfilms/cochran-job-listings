@@ -1482,7 +1482,7 @@
                     throw new Error('StorageUtils not available');
                 }
                 
-                const storageUtils = new window.StorageUtils();
+                const storageUtils = window.StorageUtils; // StorageUtils is a plain object, not a class
                 
                 // Create a clean filename
                 const fileName = buildContractFileName(contractData);
@@ -2676,7 +2676,7 @@
                         const fsUsers = await window.FirestoreDataManager.getUsers();
                         const userKey = Object.keys(fsUsers || {}).find(k => (fsUsers[k]?.profile?.email || '').toLowerCase() === (signedContractData.freelancerEmail || '').toLowerCase());
                         if (userKey) {
-                            const fileUrl = signedContractData?.uploadedContract?.githubUrl || null;
+                            const fileUrl = signedContractData?.uploadedContract?.fileUrl || null;
                             await window.FirestoreDataManager.setUser(userKey, {
                                 profile: { ...(fsUsers[userKey].profile||{}), approvedDate: fsUsers[userKey].profile?.approvedDate || new Date().toISOString().split('T')[0] },
                                 contract: {
