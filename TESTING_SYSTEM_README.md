@@ -104,6 +104,17 @@ How to verify quickly:
 2. Confirm the card header shows only the title and no button in the right side.
 3. Type a message in the bottom composer and send; message posts successfully and appears in the list.
 
+### 2025-09-12 — Equipment Requests: remove manual form
+
+- Files: `user-portal.html`
+- Change: The Equipment Requests tab no longer shows a manual form. Users initiate requests from the Gear Library “Request” button; the Requests tab now shows instructions plus “Your Requests”.
+- Reason: Single, clear entry point and avoids duplicate UX.
+
+Quick test:
+1. Open `user-portal.html` → Equipment & Resource Center.
+2. In Gear Library, click “Request” on an available item; dates modal/flow creates a request.
+3. Switch to Equipment Requests tab; the new request appears in the list. No form is present.
+
 ### 2025-09-12 — Success Stories now Firestore-backed (live data)
 
 - Files: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`

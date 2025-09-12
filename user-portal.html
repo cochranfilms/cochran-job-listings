@@ -2301,7 +2301,6 @@
             // Update payment info
             displayPaymentInfo();
         }
-
         // Display project information for modern layout
         function displayProjectInfo() {
             const container = document.getElementById('projectInfo');
@@ -5370,7 +5369,6 @@
                 await updatePaymentAnalytics();
             }, 300000);
         }
-
         // Add payment to processing queue
         async function addPaymentToQueue(amount, method, description = '') {
             const payment = {
@@ -6075,7 +6073,6 @@
                 await generatePerformanceInsightsFromFirebase();
             }, 300000);
         }
-
         // Show advanced analytics dashboard
         function showAdvancedAnalyticsDashboard() {
             const modal = document.createElement('div');
@@ -6876,46 +6873,49 @@
                 showNotification('Failed to create request', 'error');
             }
         }
-
-        async function submitEquipmentRequest(event) {
-            event.preventDefault();
+        async function loadEquipmentRequests() {
             try {
-                const selectEl = document.getElementById('requestItemsSelect');
-                const items = Array.from(selectEl ? selectEl.selectedOptions : [])
-                    .map(o => o.value)
-                    .filter(Boolean);
-                const neededFrom = document.getElementById('requestFrom')?.value || null;
-                const neededTo = document.getElementById('requestTo')?.value || null;
-                const notes = document.getElementById('requestNotes')?.value || '';
-                const email = (currentUser && currentUser.email) ? currentUser.email : (auth && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : '';
-                const name = currentUser?.name || currentUser?.profile?.name || '';
-                if (!items.length) { toast('Add at least one item', 'error'); return; }
-                await ensureFirestoreReady();
-                const id =                 await window.FirestoreDataManager.createEquipmentRequest({
-                    userEmail: email,
-                    userName: name,
-                    items,
-                    neededFrom,
-                    neededTo,
-                    notes,
-                    status: 'pending',
-                    requestedBy: email,
-                    requestedByName: name,
-                    createdAt: new Date().toISOString()
-                });
-                toast('Request submitted', 'success');
-                await loadEquipmentRequests();
-                renderEquipmentRequests();
-                try { 
-                    const form = document.getElementById('equipmentRequestForm');
-                    form.reset();
-                    renderRequestItemOptions();
-                } catch(_) {}
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const list = await window.FirestoreDataManager.getEquipmentRequestsByEmail(currentUser.email);
+                    window._equipmentRequests = list || [];
+                } else {
+                    window._equipmentRequests = [];
+                }
             } catch (e) {
-                console.error('submitEquipmentRequest error', e);
-                toast('Failed to submit request', 'error');
+                console.error('Failed to load equipment requests', e);
+                window._equipmentRequests = [];
             }
         }
+
+        function switchEquipmentTab(tabName) {
+            const tabs = ['library','resources','requests','rented','maintenance'];
+            // Hide all tab contents and remove active class
+            document.querySelectorAll('.performance-tab-content').forEach(el => { el.style.display = 'none'; el.classList.remove('active'); });
+            // Show selected tab
+            const target = document.getElementById(`equipment-${tabName}-tab`);
+            if (target) { target.style.display = 'block'; target.classList.add('active'); }
+
+            // Update active state on buttons
+            document.querySelectorAll('.performance-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+            const btn = document.querySelector(`.performance-tabs .tab-btn[onclick="switchEquipmentTab('${tabName}')"]`);
+            if (btn) btn.classList.add('active');
+            
+            if (tabName === 'library') {
+                // Ensure filters and list are rendered
+                renderEquipmentList();
+            } else if (tabName === 'resources') {
+                renderResources();
+            } else if (tabName === 'requests') {
+                // Only load and render existing requests; no manual form
+                loadEquipmentRequests().then(() => renderEquipmentRequests());
+            } else if (tabName === 'rented') {
+                loadRentedEquipment();
+            } else if (tabName === 'maintenance') {
+                loadMaintenance();
+            }
+        }
+
+        // Removed submitEquipmentRequest form handler; requests are created via Gear Library Request button
 
         function renderEquipmentRequests() {
             const container = document.getElementById('equipmentRequestList');
@@ -7675,7 +7675,6 @@
             const completedJobs = jobs.filter(job => job.status === 'completed').length;
             return Math.round((completedJobs / jobs.length) * 100);
         }
-
         // Calculate Average Rating
         function calculateAverageRating() {
             if (!currentUser || !currentUser.performanceReviews) return 0;
@@ -8465,7 +8464,6 @@
                 });
             } catch (_) {}
         }
-
         async function loadSuccessStoriesFromFirestore() {
             try {
                 // Ensure Firestore is ready
@@ -9086,7 +9084,6 @@
         };
 
     </script>
-
     <style>
         /* Equipment Center lightweight styles reuse existing classes */
         #equipmentList .card,
@@ -9880,7 +9877,6 @@
             height: 100%;
             pointer-events: none;
         }
-
         .btn-particle {
             position: absolute;
             width: 3px;
@@ -11457,7 +11453,6 @@
             animation-delay: var(--delay);
             filter: blur(0.5px);
         }
-
         .floating-icon:nth-child(1) { top: 15%; left: 8%; animation-duration: 10s; }
         .floating-icon:nth-child(2) { top: 65%; left: 85%; animation-duration: 12s; }
         .floating-icon:nth-child(3) { top: 85%; left: 15%; animation-duration: 9s; }
@@ -12257,7 +12252,6 @@
         .form-group {
             text-align: left;
         }
-
         .form-group label {
             display: block;
             margin-bottom: var(--spacing-sm);
@@ -13054,7 +13048,6 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(255,178,0,0.2);
         }
-
         .tab-btn.active {
             background: linear-gradient(135deg, #FFB200, #FFD700);
             color: #000;
@@ -15444,7 +15437,6 @@
             color: #FFB200;
             font-size: 1rem;
         }
-
         .job-pay {
             background: linear-gradient(135deg, #FFB200, #FFD700);
             color: #1a1a1a;
@@ -16777,7 +16769,6 @@
             height: 100%;
             object-fit: cover;
         }
-        
         .image-preview .remove-btn {
             position: absolute;
             top: 0.5rem;
@@ -17806,40 +17797,17 @@
                     </div>
                 </div>
 
-                <!-- Equipment Requests Tab -->
+                <!-- Equipment Requests Tab (no manual form; uses Gear Library "Request" CTA) -->
                 <div id="equipment-requests-tab" class="performance-tab-content" style="display: none;">
                     <div class="card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-list"></i> Request Equipment</h3>
-                        </div>
-                        <div class="card-content">
-                            <form id="equipmentRequestForm" onsubmit="submitEquipmentRequest(event)">
-                                <div class="form-group">
-                                    <label for="requestItemsSelect">Items</label>
-                                    <select id="requestItemsSelect" multiple size="5" style="width:100%; background:#0b1020; color:#e5e7eb; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:8px;"></select>
-                                    <small style="display:block; color:#9ca3af; margin-top:6px;">Hold Cmd/Ctrl to select multiple items. Only available gear is listed.</small>
-                                </div>
-                                <div class="form-group">
-                                    <label for="requestDates">Dates</label>
-                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                                        <input id="requestFrom" type="date">
-                                        <input id="requestTo" type="date">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="requestNotes">Notes</label>
-                                    <textarea id="requestNotes" rows="3" placeholder="Any special needs or job context..."></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Request</button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="card" style="margin-top:1rem;">
                         <div class="card-header">
                             <h3><i class="fas fa-inbox"></i> Your Requests</h3>
                         </div>
                         <div class="card-content">
+                            <div class="empty-state" style="margin-bottom:1rem;">
+                                <p>Start a request from the <strong>Gear Library</strong> using the "Request" button on any available item. Your pending requests will appear here.</p>
+                                <button class="btn btn-secondary" onclick="switchEquipmentTab('library')"><i class="fas fa-arrow-left"></i> Go to Gear Library</button>
+                            </div>
                             <div id="equipmentRequestList" class="showcases-grid"></div>
                         </div>
                     </div>
@@ -17912,8 +17880,6 @@
             </div>
         </main>
     </div>
-
-
     <!-- Notification Dropdown (Moved outside containers to avoid stacking context issues) -->
     <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
         <div class="notification-header">

@@ -55,6 +55,10 @@ Verification checklist
 - Reversion guidance: If Firestore is unavailable, ensure `cochranSuccessStories` cache exists or reintroduce seed data during development only.
 
 ### 2025-09-12 — Admin Community Tools activation
+### 2025-09-12 — Equipment Requests UX simplification
+- Files: `user-portal.html`
+- Cleanup: Removed duplicate manual request form from Equipment Requests tab. Requests originate exclusively via the Gear Library button; the Requests tab lists existing/pending requests only.
+- Reintroduction guidance: If you bring the form back, ensure it calls the same Firestore path as the Gear Library request flow and avoids duplicating validation logic.
 - Files: `admin-dashboard.html`
 - Cleanup: Replaced demo button handlers with Firestore-backed flows using lightweight prompts (no heavy UI). When upgrading to full modals, keep calls to `FirestoreDataManager` (`add*/get*/update*/delete*`) and the `ensureFirestoreReady()` guard.
 - Note: Mini-stat refresh uses `updateCommunityStats()` which prefers Firestore counts and falls back to localStorage.
