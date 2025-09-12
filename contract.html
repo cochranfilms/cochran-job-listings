@@ -666,7 +666,7 @@
                         </div>
                         
                         <!-- Portal Password Section -->
-                        <div class="contract-section" style="background: rgba(255, 178, 0, 0.05); border: 1px solid rgba(255, 178, 0, 0.2); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+                        <div id="portalPasswordSection" class="contract-section" style="background: rgba(255, 178, 0, 0.05); border: 1px solid rgba(255, 178, 0, 0.2); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
                             <h4 style="color: #FFB200; margin-bottom: 1rem;"><i class="fas fa-key"></i> Set Portal Password</h4>
                             <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-size: 0.9rem;">
                                 Create a password for your freelancer portal access. This will allow you to view your contracts, job details, and project timeline.
@@ -783,6 +783,9 @@
             templateId: 'template_6izinct', // Admin notification template
             userTemplateId: 'template_user_confirm' // User confirmation template - UPDATE THIS IN EMAILJS
         };
+
+        // Contract flow flags
+        let requirePasswordForSignature = true; // Default: original apply flow requires setting a password
         
         // Global GitHub configuration
         let GITHUB_CONFIG = {
@@ -1894,6 +1897,20 @@
                 
                 console.log('✅ Access granted for:', matchingUser);
                 
+                // Determine if user is already authenticated with this email → skip password entry
+                try {
+                    await window.FirebaseConfig.waitForInit();
+                    const auth = window.FirebaseConfig.auth || (window.firebase && window.firebase.auth && window.firebase.auth());
+                    const authUser = auth && auth.currentUser;
+                    if (authUser && (authUser.email || '').toLowerCase() === email) {
+                        requirePasswordForSignature = false;
+                        const section = document.getElementById('portalPasswordSection');
+                        if (section) { section.style.display = 'none'; }
+                    } else {
+                        requirePasswordForSignature = true;
+                    }
+                } catch (_) { /* keep default */ }
+
                 // Populate contract details
                 populateContractDetails();
                 
@@ -2081,9 +2098,9 @@
                     // Check signature
                     const signatureValid = signature.length >= 3 && signature.toLowerCase() === expectedName;
                     
-                    // Check password
-                    const passwordValid = password.length >= 6;
-                    const passwordsMatch = password === confirmPassword;
+                    // Check password (only when required)
+                    const passwordValid = requirePasswordForSignature ? (password.length >= 6) : true;
+                    const passwordsMatch = requirePasswordForSignature ? (password === confirmPassword) : true;
                     
                     // Update signature input styling
                     if (signatureValid) {
@@ -2193,14 +2210,15 @@
                 return;
             }
             
-            if (!password || password.length < 6) {
-                alert('❌ Please enter a password with at least 6 characters.');
-                return;
-            }
-            
-            if (password !== confirmPassword) {
-                alert('❌ Passwords do not match. Please check your password confirmation.');
-                return;
+            if (requirePasswordForSignature) {
+                if (!password || password.length < 6) {
+                    alert('❌ Please enter a password with at least 6 characters.');
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    alert('❌ Passwords do not match. Please check your password confirmation.');
+                    return;
+                }
             }
             
             if (!currentFreelancerData) {
@@ -2527,16 +2545,17 @@
 
                 updateNotificationProgress('Securing your data...', 50);
                 
-                // Ensure Firebase account exists and set password (creates account via REST if needed)
-                const newPassword = document.getElementById('portalPassword').value;
-                const firebaseResult = await ensureFirebaseAccount(signatureData.freelancerEmail, newPassword);
-                
-                if (firebaseResult.success) {
-                    console.log('✅ Firebase account ready for:', signatureData.freelancerEmail);
-                    try { showToast('✅ Portal password set successfully', 'success'); } catch (e) {}
-                } else {
-                    console.warn('⚠️ Could not set Firebase password:', firebaseResult.error);
-                    try { showToast(`⚠️ Password not saved: ${firebaseResult.error || 'Unknown error'}`, 'warning'); } catch (e) {}
+                // Ensure Firebase account exists only when we required a password in this flow
+                if (requirePasswordForSignature) {
+                    const newPassword = document.getElementById('portalPassword').value;
+                    const firebaseResult = await ensureFirebaseAccount(signatureData.freelancerEmail, newPassword);
+                    if (firebaseResult.success) {
+                        console.log('✅ Firebase account ready for:', signatureData.freelancerEmail);
+                        try { showToast('✅ Portal password set successfully', 'success'); } catch (e) {}
+                    } else {
+                        console.warn('⚠️ Could not set Firebase password:', firebaseResult.error);
+                        try { showToast(`⚠️ Password not saved: ${firebaseResult.error || 'Unknown error'}`, 'warning'); } catch (e) {}
+                    }
                 }
                 
                 // Update freelancer data status to "signed" (not fully processed until admin uploads)
