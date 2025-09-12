@@ -1243,6 +1243,22 @@ const FirestoreDataManager = {
                 console.log('🗂️ Portfolios collection empty (ok)');
             }
             
+            // Equipment & Resource Center base collections
+            const ensureMeta = async (collectionName) => {
+                if (!(await this.hasData(collectionName))) {
+                    console.log(`📦 Initializing empty collection: ${collectionName}`);
+                    await this.db.collection(collectionName).doc('_meta').set({
+                        initializedAt: new Date().toISOString(),
+                        note: 'System placeholder to create collection; safe to delete.',
+                        collection: collectionName
+                    }, { merge: true });
+                }
+            };
+            await ensureMeta(this.collections.equipment);
+            await ensureMeta(this.collections.resources);
+            await ensureMeta(this.collections.equipmentRequests);
+            await ensureMeta(this.collections.maintenance);
+            
             console.log('✅ Collections initialization check complete');
         } catch (error) {
             console.error('❌ Error initializing collections:', error);
