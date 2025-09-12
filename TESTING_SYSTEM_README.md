@@ -1,3 +1,22 @@
+### 2025-09-12 — Quick Apply Flow (Portal → Admin Queue)
+
+- Files: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`
+- Change:
+  - Priority Jobs “Quick Apply” now creates an application in Firestore via `FirestoreDataManager.addApplication()` with duplicate prevention (same email+job guarded).
+  - Admin dashboard Applications section loads live applications via `getApplications()` and supports Approve/Deny using `setApplicationStatus()`.
+  - Multi-job per user is supported by mirroring to `users/{uid}/applications/*` and `jobs/{jobId}/applications/*` for fast lookups.
+
+Old automatic testing system steps:
+1) Prep: In Firebase Console, ensure at least one job exists in `jobs` with fields: `title`, optional `date`, `location`, `pay`.
+2) User portal: Open `user-portal.html`, sign in as a test user; go to Priority Jobs and click “Quick Apply”. Expect toast “Application sent! Admin will review shortly.” and no JS errors. If Firestore unavailable, a prefilled `/apply.html` opens instead.
+3) Admin: Open `admin-dashboard.html` → Application Management. Verify counters update and the application appears with email + date, with Approve and Deny buttons.
+4) Click Approve. Expect toast “Application approved”; status pill turns accepted; counters update. Click Deny on another app and verify status transitions.
+5) Refresh both pages; ensure states persist. In Firestore, confirm a doc in `applications`, and mirrors under `users/{uid}/applications/{appId}` and `jobs/{jobId}/applications/{appId}`.
+
+Notes:
+- Duplicate prevention: submitting Quick Apply again for the same job/email within 24h returns the existing application id rather than creating a new doc.
+- Fallback: If Firestore is not available, Quick Apply opens `/apply.html` with prefilled query params; no data loss, but admin queue won’t reflect until manual submission.
+
 ### 2025-08-20 — Project Start Date Source & Current Jobs Status
 
 - Scope: `user-portal.html`, `admin-dashboard.html`
@@ -177,6 +196,20 @@ Verification steps:
 1. Open `admin-dashboard.html` and sign in.
 2. In the User & Contract Management card, confirm there is no “Quick Actions” section and no related buttons.
 3. Open DevTools Console and run any removed function name (e.g., `generateAllContracts`) and confirm `undefined` errors are not present because nothing binds them to UI; no references remain on the page.
+
+### 2025-09-12 — Social Flyer: OBS Technical Assistant
+
+- Files: `OBS-Technical-Assistant-Flyer.html`
+- Purpose: A social-ready flyer to recruit an on-site OBS Technical Assistant using Cochran Films branding.
+
+Quick test (manual browser):
+1. Open `/OBS-Technical-Assistant-Flyer.html` in a desktop browser.
+2. Verify visuals:
+   - Cochran Films logo renders crisply with gold glow.
+   - Title shows “OBS Technical Assistant”.
+   - When/times: 9/15 & 9/16; 10:30–1:30 (9/15) and 4:30–9:30 (9/16).
+3. Click “Download as PNG”. Expect `OBS-Tech-Assistant-Flyer-<timestamp>.png` to download. If blocked, take a screenshot of the card at 1080×1350.
+4. Resize to mobile (~390px). Layout stacks cleanly; no clipping or overflow.
 
 
 ### 2025-08-20 — Prevent stuck global loading overlay in admin dashboard

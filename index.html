@@ -773,27 +773,6 @@
       color: rgba(255,255,255,0.85);
       border: 1px solid rgba(255,255,255,0.25);
     }
-
-    /* Quick Apply button (green) */
-    .btn-quick {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #0b0b10;
-      border: 1px solid rgba(34,197,94,0.45);
-      box-shadow: 0 8px 24px rgba(16,185,129,0.25);
-    }
-    .btn-quick:hover { filter: brightness(1.05); transform: translateY(-2px); }
-
-    /* Quick Apply Modal */
-    .qa-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 10000; padding: 16px; }
-    .qa-panel { width: min(560px, 94vw); border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(15,15,25,0.95), rgba(25,25,35,0.95)); border: 1px solid rgba(255,178,0,0.3); box-shadow: 0 24px 60px rgba(0,0,0,0.5); color: #fff; }
-    .qa-head { padding: 18px 18px 12px 18px; border-bottom: 1px solid rgba(255,178,0,0.2); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .qa-title { margin: 0; font-family: 'Cinzel', serif; font-weight: 800; }
-    .qa-body { padding: 16px 18px; display: grid; gap: 12px; }
-    .qa-row { display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: center; color: rgba(255,255,255,0.85); }
-    .qa-input { width: 100%; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: #fff; outline: none; }
-    .qa-input:focus { border-color: rgba(255,178,0,0.5); box-shadow: 0 0 0 2px rgba(255,178,0,0.2); }
-    .qa-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 0 18px 18px 18px; }
-    .qa-close { width: 40px; height: 40px; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); color: #fff; }
     
     .btn-secondary:hover {
       background: var(--gray-medium);
@@ -1864,32 +1843,6 @@
     </a>
   </div>
 
-  <!-- Quick Apply Modal (index only) -->
-  <div id="qaOverlay" class="qa-overlay" aria-hidden="true">
-    <div class="qa-panel" role="dialog" aria-modal="true" aria-labelledby="qaTitle">
-      <div class="qa-head">
-        <h3 id="qaTitle" class="qa-title">Quick Apply</h3>
-        <button class="qa-close" onclick="closeQuickApply()">✕</button>
-      </div>
-      <div class="qa-body">
-        <div class="qa-row"><span>📌</span><div id="qaJobTitle">–</div></div>
-        <div class="qa-row"><span>📅</span><div id="qaJobDate">–</div></div>
-        <div class="qa-row"><span>📍</span><div id="qaJobLocation">–</div></div>
-        <div class="qa-row"><span>💵</span><div id="qaJobPay">–</div></div>
-        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 6px 0;">
-        <input id="qaName" class="qa-input" type="text" placeholder="Your name" autocomplete="name">
-        <input id="qaEmail" class="qa-input" type="email" placeholder="Email" autocomplete="email">
-        <input id="qaPhone" class="qa-input" type="tel" placeholder="Phone (optional)" autocomplete="tel">
-        <input id="qaPortfolio" class="qa-input" type="url" placeholder="Portfolio/Instagram (optional)">
-        <div id="qaError" style="color:#fca5a5; display:none; font-weight:700;">Please enter a valid email.</div>
-      </div>
-      <div class="qa-actions">
-        <button class="btn btn-secondary" onclick="closeQuickApply()">Cancel</button>
-        <button id="qaSubmit" class="btn btn-quick" onclick="submitQuickApply()">Submit</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
@@ -1980,81 +1933,6 @@
       if (description) params.append('description', description);
       return `${APPLY_URL}?${params.toString()}`;
     }
-
-    // Quick Apply state (index only)
-    let QA_CURRENT_JOB = null;
-    function openQuickApply(job) {
-      QA_CURRENT_JOB = job || {};
-      const overlay = document.getElementById('qaOverlay');
-      if (!overlay) return;
-      document.getElementById('qaJobTitle').textContent = job?.title || '—';
-      document.getElementById('qaJobDate').textContent = formatDateForForm(job?.date) || '—';
-      document.getElementById('qaJobLocation').textContent = job?.location || '—';
-      document.getElementById('qaJobPay').textContent = job?.pay || '—';
-      document.getElementById('qaError').style.display = 'none';
-      document.getElementById('qaName').value = '';
-      document.getElementById('qaEmail').value = '';
-      document.getElementById('qaPhone').value = '';
-      document.getElementById('qaPortfolio').value = '';
-      overlay.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-    }
-    function closeQuickApply() {
-      const overlay = document.getElementById('qaOverlay');
-      if (overlay) overlay.style.display = 'none';
-      document.body.style.overflow = '';
-    }
-    function isValidEmail(email) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
-    }
-    async function submitQuickApply() {
-      const name = document.getElementById('qaName').value.trim();
-      const email = document.getElementById('qaEmail').value.trim().toLowerCase();
-      const phone = document.getElementById('qaPhone').value.trim();
-      const portfolio = document.getElementById('qaPortfolio').value.trim();
-      const errorEl = document.getElementById('qaError');
-      if (!isValidEmail(email)) {
-        errorEl.style.display = 'block';
-        return;
-      }
-
-      // If Firestore is ready, write an application; otherwise redirect to apply.html prefilled
-      try {
-        await waitForFirestoreReady(4000);
-        if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-          const payload = {
-            jobId: QA_CURRENT_JOB?.id || '',
-            jobTitle: QA_CURRENT_JOB?.title || '',
-            jobDate: QA_CURRENT_JOB?.date || '',
-            location: QA_CURRENT_JOB?.location || '',
-            payDisplay: QA_CURRENT_JOB?.pay || '',
-            source: 'quick_apply',
-            page: 'index',
-            priority: true,
-            applicant: { name, email, phone, portfolio },
-            status: 'new',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          // Use a generic add method if exposed; otherwise fall back to add via integration
-          if (typeof window.FirestoreDataManager.addApplication === 'function') {
-            await window.FirestoreDataManager.addApplication(payload);
-          } else if (window.FirestoreIntegration && typeof window.FirestoreIntegration.addDocument === 'function') {
-            await window.FirestoreIntegration.addDocument('applications', payload);
-          } else {
-            // Last resort: open apply.html prefilled
-            throw new Error('No write helper available');
-          }
-          closeQuickApply();
-          showRefreshNotification('✅ Application sent! We\'ll be in touch soon.');
-          return;
-        }
-      } catch (_) {}
-
-      // Fallback redirect
-      const link = generateApplyLink(QA_CURRENT_JOB?.title, QA_CURRENT_JOB?.date, QA_CURRENT_JOB?.location, QA_CURRENT_JOB?.pay, 'Quick Apply');
-      window.location.href = link;
-    }
     
     // Format date string
     function formatDate(dateString) {
@@ -2142,7 +2020,9 @@
       
       // Build apply button - disable for inactive jobs
       const applyButton = isActive 
-        ? `<button type="button" class="btn btn-quick" onclick='openQuickApply(${JSON.stringify({ id: cardId, title: jobTitle, date: eventDate, location: jobLocation, pay: formatPay(jobPay) })})'>⚡ Quick Apply</button>`
+        ? `<a href="${applyLink}" target="_blank" class="btn btn-primary apply-btn">
+             <span>📝</span> Apply Now
+           </a>`
         : `<button class="btn btn-primary apply-btn" disabled style="opacity: 0.5; cursor: not-allowed;">
              <span>📝</span> Position ${jobStatus === 'filled' ? 'Filled' : 'Closed'}
            </button>`;

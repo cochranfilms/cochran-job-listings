@@ -6588,54 +6588,92 @@
             if (earningsEl) earningsEl.textContent = `$${totalEarnings.toLocaleString()}`;
         }
 
-        // Update Application Stats
-        function updateApplicationStats() {
-            // This would typically load from Firestore or API
-            // For now, we'll use sample data
-            const sampleApplications = [
-                { jobTitle: 'Wedding Photography', status: 'pending', date: new Date() },
-                { jobTitle: 'Corporate Event', status: 'accepted', date: new Date() },
-                { jobTitle: 'Portrait Session', status: 'rejected', date: new Date() }
-            ];
-
-            const stats = {
-                total: sampleApplications.length,
-                pending: sampleApplications.filter(app => app.status === 'pending').length,
-                accepted: sampleApplications.filter(app => app.status === 'accepted').length,
-                rejected: sampleApplications.filter(app => app.status === 'rejected').length
-            };
-
-            // Update UI
-            const totalEl = document.getElementById('totalApplications');
-            const pendingEl = document.getElementById('pendingApplications');
-            const acceptedEl = document.getElementById('acceptedApplications');
-            const rejectedEl = document.getElementById('rejectedApplications');
-
-            if (totalEl) totalEl.textContent = stats.total;
-            if (pendingEl) pendingEl.textContent = stats.pending;
-            if (acceptedEl) acceptedEl.textContent = stats.accepted;
-            if (rejectedEl) rejectedEl.textContent = stats.rejected;
-
-            // Update applications list
-            loadApplicationsList(sampleApplications);
+        // Update Application Stats (Firestore-backed)
+        async function updateApplicationStats() {
+            try {
+                if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                    try { await window.FirestoreDataManager.init(); } catch(_) {}
+                }
+                let applications = [];
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    applications = await window.FirestoreDataManager.getApplications();
+                }
+                try {
+                    const jobFilter = document.getElementById('applicationJobFilter');
+                    if (jobFilter) {
+                        const existing = new Set();
+                        applications.forEach(a => existing.add(a.jobTitle || ''));
+                        const options = ['<option value="">All Jobs</option>'].concat(Array.from(existing).filter(Boolean).map(t => `<option value="${t}">${t}</option>`));
+                        jobFilter.innerHTML = options.join('');
+                    }
+                } catch (_) {}
+                const stats = {
+                    total: applications.length,
+                    pending: applications.filter(app => (app.status || 'new') === 'new' || app.status === 'pending').length,
+                    accepted: applications.filter(app => app.status === 'approved' || app.status === 'accepted').length,
+                    rejected: applications.filter(app => app.status === 'denied' || app.status === 'rejected').length
+                };
+                const totalEl = document.getElementById('totalApplications');
+                const pendingEl = document.getElementById('pendingApplications');
+                const acceptedEl = document.getElementById('acceptedApplications');
+                const rejectedEl = document.getElementById('rejectedApplications');
+                if (totalEl) totalEl.textContent = String(stats.total);
+                if (pendingEl) pendingEl.textContent = String(stats.pending);
+                if (acceptedEl) acceptedEl.textContent = String(stats.accepted);
+                if (rejectedEl) rejectedEl.textContent = String(stats.rejected);
+                loadApplicationsList(applications);
+            } catch (err) {
+                console.error('❌ Failed to update application stats:', err);
+                showNotification('Failed to load applications', 'error');
+            }
         }
 
-        // Load Applications List
+        // Load Applications List with Approve/Deny
         function loadApplicationsList(applications) {
             const container = document.getElementById('adminApplicationsList');
             if (!container) return;
-
-            container.innerHTML = applications.map(app => `
+            const html = applications.map(app => {
+                const created = app.createdAt ? new Date(app.createdAt) : (app.date ? new Date(app.date) : new Date());
+                const status = (app.status || 'new');
+                const statusClass = status === 'approved' || status === 'accepted' ? 'accepted' : (status === 'denied' || status === 'rejected' ? 'rejected' : 'pending');
+                return `
                 <div class="application-item">
                     <div class="application-info">
-                        <h4>${app.jobTitle}</h4>
-                        <p>Applied on ${app.date.toLocaleDateString()}</p>
+                        <h4>${app.jobTitle || 'Untitled Role'}</h4>
+                        <p>${(app.applicant && app.applicant.email) ? app.applicant.email : ''} • ${created.toLocaleDateString()}</p>
                     </div>
-                    <div class="application-status status-${app.status}">
-                        ${app.status}
+                    <div class="application-status status-${statusClass}">${status}</div>
+                    <div style="display:flex; gap:.5rem; align-items:center;">
+                        <button class="btn btn-small" onclick="approveApplication('${app.id}')">Approve</button>
+                        <button class="btn btn-small" onclick="denyApplication('${app.id}')">Deny</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
+            container.innerHTML = html;
+        }
+
+        async function approveApplication(appId) {
+            try {
+                if (!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable())) throw new Error('Firestore unavailable');
+                await window.FirestoreDataManager.setApplicationStatus(appId, 'approved');
+                showNotification('Application approved', 'success');
+                updateApplicationStats();
+            } catch (e) {
+                console.error('❌ approveApplication failed:', e);
+                showNotification('Failed to approve application', 'error');
+            }
+        }
+
+        async function denyApplication(appId) {
+            try {
+                if (!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable())) throw new Error('Firestore unavailable');
+                await window.FirestoreDataManager.setApplicationStatus(appId, 'denied');
+                showNotification('Application denied', 'warning');
+                updateApplicationStats();
+            } catch (e) {
+                console.error('❌ denyApplication failed:', e);
+                showNotification('Failed to deny application', 'error');
+            }
         }
 
         // Export Performance Report

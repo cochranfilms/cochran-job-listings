@@ -7407,23 +7407,94 @@
         }
 
         // Quick Apply to Job
-        function quickApplyToJob(jobTitle, eventDate, location, pay, description) {
-            if (!currentUser) {
-                showNotification('Please log in to apply for jobs', 'error');
-                return;
-            }
+        async function quickApplyToJob(jobTitle, eventDate, location, pay, description) {
+            try {
+                if (!currentUser) {
+                    showNotification('Please log in to apply for jobs', 'error');
+                    return;
+                }
 
-            // Pre-fill apply form with user data and job details
-            const applyUrl = generateQuickApplyUrl(jobTitle, eventDate, location, pay, description);
-            
-            // Open in new tab
-            window.open(applyUrl, '_blank');
-            
-            // Track quick apply
-            quickApplyCount++;
-            updatePriorityStats();
-            
-            showNotification('Quick apply opened! Your profile will be pre-filled.', 'success');
+                // Find matching job in current priority jobs (prefer Firestore id)
+                let matchedJob = null;
+                try {
+                    matchedJob = (filteredPriorityJobs || []).find(j => {
+                        const jt = (j.title || j.Title || j.jobTitle || '').trim();
+                        return jt === jobTitle;
+                    }) || null;
+                } catch (_) {}
+
+                const jobId = matchedJob?.id || `slug-${jobTitle.replace(/\s+/g,'-').toLowerCase()}`;
+
+                // Compose applicant data
+                const applicant = {
+                    uid: currentUser?.id || currentUser?.uid || null,
+                    name: currentUser?.name || currentUser?.profile?.name || '',
+                    email: (currentUser?.email || currentUser?.profile?.email || '').toLowerCase(),
+                    phone: currentUser?.profile?.phone || '',
+                    portfolio: currentUser?.profile?.portfolio || '',
+                    avatarUrl: currentUser?.profile?.avatarUrl || null
+                };
+
+                // Ensure Firestore manager is ready
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    try {
+                        const appId = await window.FirestoreDataManager.addApplication({
+                            source: 'quick_apply',
+                            status: 'new',
+                            jobId: jobId,
+                            jobTitle: jobTitle,
+                            jobDate: eventDate || null,
+                            location: location || '',
+                            payDisplay: pay || '',
+                            priority: true,
+                            applicant
+                        });
+
+                        // Optimistic local performance log (if structure exists)
+                        try {
+                            if (window.performanceData) {
+                                window.performanceData.applications = window.performanceData.applications || [];
+                                const exists = window.performanceData.applications.some(a => a.id === appId);
+                                if (!exists) {
+                                    window.performanceData.applications.unshift({ id: appId, jobTitle, status: 'pending', date: new Date().toISOString() });
+                                }
+                            }
+                        } catch (_) {}
+
+                        // Show toast and optionally notify admin (webhook/email placeholder)
+                        showNotification('Application sent! Admin will review shortly.', 'success', { priority: 'high' });
+                        try {
+                            // Optional webhook: replace URL with actual automation endpoint if available
+                            const webhookUrl = (window.CONFIG && window.CONFIG.webhooks && window.CONFIG.webhooks.applicationCreated) || null;
+                            if (webhookUrl) {
+                                fetch(webhookUrl, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ type: 'application_created', appId, jobId, jobTitle, applicant: { email: applicant.email, name: applicant.name } })
+                                }).catch(() => {});
+                            }
+                        } catch (_) {}
+                    } catch (e) {
+                        console.error('❌ addApplication failed, falling back to prefill URL:', e);
+                        // Fallback to prefilled form
+                        const applyUrl = generateQuickApplyUrl(jobTitle, eventDate, location, pay, description);
+                        window.open(applyUrl, '_blank');
+                        showNotification('Opened apply form. If issues persist, contact admin.', 'warning');
+                    }
+                } else {
+                    // Firestore not available: fallback to prefilled form
+                    const applyUrl = generateQuickApplyUrl(jobTitle, eventDate, location, pay, description);
+                    window.open(applyUrl, '_blank');
+                    showNotification('Opened apply form (offline mode).', 'info');
+                }
+
+                // Track quick apply
+                quickApplyCount++;
+                updatePriorityStats();
+            } catch (err) {
+                console.error('❌ Quick Apply error:', err);
+                showNotification('Could not submit application. Please try again.', 'error');
+            }
         }
 
         // Generate Quick Apply URL

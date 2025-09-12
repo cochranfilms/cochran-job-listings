@@ -1,3 +1,18 @@
+## 2025-09-12 — Quick Apply Cleanup & Ownership
+### Scope: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`
+- Canonical data: Applications live in Firestore `applications` with mirrors at `users/{uid}/applications/*` and `jobs/{jobId}/applications/*`.
+- Remove any legacy sample arrays or hardcoded application lists in admin; always read via `getApplications()`.
+- Do not write applications to JSON backups; Quick Apply is Firestore-only. Optional webhook/email triggers are non-blocking and may be configured via `window.CONFIG.webhooks.applicationCreated`.
+- Duplicate prevention is built-in (email+jobId guard). Do not reintroduce client-side dedupe lists.
+
+Cleanup checklist:
+- Remove temporary sample app stats if reintroduced during development.
+- Verify Applications section binds Approve/Deny to `setApplicationStatus()` and not to local arrays.
+- Keep quick-apply button in portal priority jobs; do not add it to the public landing `index.html`.
+
+Verification:
+- Create an application via portal; ensure it appears in admin without refresh (listener) and status changes persist on approval/denial.
+
 ## 2025-08-20 — Align Start Date to Job Selection
 ### 2025-09-08 — Portfolio Builder Integration Notes
 - New files: `portfolio-builder.html`, `storage-utils.js`, `api/portfolio-theme.js`.
@@ -64,6 +79,13 @@ Verification checklist
 - Files: `admin-dashboard.html`
 - Cleanup: Replaced demo button handlers with Firestore-backed flows using lightweight prompts (no heavy UI). When upgrading to full modals, keep calls to `FirestoreDataManager` (`add*/get*/update*/delete*`) and the `ensureFirestoreReady()` guard.
 - Note: Mini-stat refresh uses `updateCommunityStats()` which prefers Firestore counts and falls back to localStorage.
+
+### 2025-09-12 — Social Flyer asset (OBS Technical Assistant)
+- Files: `OBS-Technical-Assistant-Flyer.html`
+- Purpose: Standalone, social-ready flyer (1080×1350 portrait) for quick export.
+- Style: Uses brand colors (gold on dark), glass-morphism, and `Logo.png`.
+- Export: Top-right “Download as PNG” performs DOM-to-image export. If blocked, screenshot the card at 1080×1350.
+- Cleanup: Safe to keep for reuse; remove just the HTML to deprecate. No other references. Preserve `CNAME` and custom domain settings.
 ### Firestore Integration Notes
 - 2025-08-20 — `index.html` job filter derived-title fix: keep this logic when refactoring. The filter must derive a job title from multiple fields and only exclude rows that clearly look like applicant submissions. Do not revert to `job.title`-only checks.
 
