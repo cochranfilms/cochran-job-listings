@@ -1871,13 +1871,15 @@
                 const userData = approvedUsers[matchingUser];
                 
                 // Store freelancer data for both signed and unsigned contracts
+                // Get job-specific details from primary job (for Quick Apply users)
+                const primaryJob = userData.jobs?.[userData.primaryJob];
                 currentFreelancerData = {
                     name: matchingUser,
                     email: userData.profile?.email,
-                    role: userData.profile?.role,
-                    location: userData.profile?.location,
-                    projectStart: (userData.application?.eventDate || userData.jobs?.[userData.primaryJob]?.date || userData.profile?.projectDate || userData.profile?.projectStart) || 'TBD',
-                    rate: userData.jobs?.[userData.primaryJob]?.rate || userData.profile?.rate,
+                    role: primaryJob?.title || userData.profile?.role,
+                    location: primaryJob?.location || userData.profile?.location,
+                    projectStart: (primaryJob?.date || userData.application?.eventDate || userData.profile?.projectDate || userData.profile?.projectStart) || 'TBD',
+                    rate: primaryJob?.pay || primaryJob?.rate || userData.profile?.rate,
                     approvedDate: userData.profile?.approvedDate,
                     contractStatus: userData.contract?.contractStatus,
                     contractSignedDate: userData.contract?.contractSignedDate,
@@ -2001,12 +2003,13 @@
             
             const data = currentFreelancerData;
             const effectiveDate = data.profile?.approvedDate || new Date().toISOString().split('T')[0];
-            const role = data.profile?.role || 'Contractor';
-            const location = data.profile?.location || 'Atlanta Area';
-            const projectStart = data.application?.eventDate || data.jobs?.[data.primaryJob]?.date || 'TBD';
-            // Get job-specific rate from primary job
+            
+            // Get job-specific details from primary job (for Quick Apply users)
             const primaryJob = data.jobs?.[data.primaryJob];
-            const rate = primaryJob?.rate || data.profile?.rate || '$150/day';
+            const role = primaryJob?.title || data.profile?.role || 'Contractor';
+            const location = primaryJob?.location || data.profile?.location || 'Atlanta Area';
+            const projectStart = primaryJob?.date || data.application?.eventDate || data.profile?.projectDate || data.profile?.projectStart || 'TBD';
+            const rate = primaryJob?.pay || primaryJob?.rate || data.profile?.rate || '$150/day';
             
             const contractDetailsDiv = document.getElementById('contractDetails');
             contractDetailsDiv.innerHTML = `
@@ -2523,7 +2526,7 @@
                     freelancerEmail: signatureData.freelancerEmail,
                     role: currentFreelancerData.role || 'Contractor',
                     location: currentFreelancerData.location || 'Atlanta Area',
-                    projectStart: (currentFreelancerData.application?.eventDate || currentFreelancerData.jobs?.[currentFreelancerData.primaryJob]?.date || currentFreelancerData.profile?.projectDate || currentFreelancerData.profile?.projectStart || currentFreelancerData.projectStart) || 'TBD',
+                    projectStart: currentFreelancerData.projectStart || 'TBD',
                     rate: currentFreelancerData.rate || 'Not specified',
                     effectiveDate: currentFreelancerData.approvedDate || new Date().toISOString().split('T')[0],
                     signatureDate: signatureData.date,
@@ -2535,7 +2538,7 @@
                     // JOB-SPECIFIC CONTRACT LINKING
                     jobId: currentFreelancerData.primaryJob || 'legacy-job',
                     jobRole: currentFreelancerData.role || 'Contractor',
-                    jobDescription: currentFreelancerData.application?.eventDate ? `Project starting ${currentFreelancerData.application.eventDate}` : 'Contractor position',
+                    jobDescription: currentFreelancerData.projectStart !== 'TBD' ? `Project starting ${currentFreelancerData.projectStart}` : 'Contractor position',
                     deviceInfo: {
                         userAgent: navigator.userAgent.substring(0, 200),
                         timestamp: new Date().toISOString(),

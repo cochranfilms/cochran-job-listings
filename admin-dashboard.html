@@ -6749,7 +6749,9 @@
             }
             // Update application status
             const application = { ...(userData.application||{}), status: 'approved', updatedAt: new Date().toISOString(), jobTitle: app.jobTitle };
-            const updatedUser = { ...userData, profile: { ...(userData.profile||{}), email }, application, jobs };
+            
+            // Set primaryJob to the newly approved job for contract display
+            const updatedUser = { ...userData, profile: { ...(userData.profile||{}), email }, application, jobs, primaryJob: jobKey };
 
             try { await window.FirestoreDataManager.setUser(userId, updatedUser); } catch(e){ console.warn('⚠️ setUser on approval:', e?.message||e); }
 
