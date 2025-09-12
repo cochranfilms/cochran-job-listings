@@ -2427,8 +2427,8 @@
                     <div class="card job-card">
                         <div class="card-header">
                             <h3 class="card-title">${job.title || job.role || 'Project'}</h3>
-                            <span class="status-badge status-${getJobStatus(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}">
-                                ${getJobStatus(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}
+                            <span class="status-badge status-${getJobStatus(parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate()))}">
+                                ${getJobStatus(parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate()))}
                             </span>
                         </div>
                         <div class="job-details">
@@ -3084,27 +3084,28 @@
                 ''
             );
         }
-        function formatDisplayDate(dateStr) {
-            if (!dateStr) return 'TBD';
+        // Parse various date shapes without timezone drift (treat YYYY-MM-DD as local date)
+        function parseDateFlexible(value){
             try {
-                // Accept common formats and numeric timestamps
-                let d;
-                if (typeof dateStr === 'number') {
-                    d = new Date(dateStr);
-                } else if (typeof dateStr === 'string') {
-                    // Remove ordinal suffixes 1st/2nd/3rd/4th
-                    const cleaned = dateStr.replace(/(\d+)(st|nd|rd|th)/gi, '$1');
-                    d = new Date(cleaned);
-                } else if (dateStr && dateStr.toDate) {
-                    // Firestore Timestamp
-                    d = dateStr.toDate();
-                } else {
-                    d = new Date(dateStr);
+                if (!value) return null;
+                if (typeof value === 'number') return new Date(value);
+                if (value && typeof value.toDate === 'function') return value.toDate(); // Firestore Timestamp
+                if (typeof value === 'string'){
+                    const cleaned = value.replace(/(\d+)(st|nd|rd|th)/gi, '$1').trim();
+                    const ymd = cleaned.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (ymd){
+                        const y = parseInt(ymd[1],10), m = parseInt(ymd[2],10)-1, d = parseInt(ymd[3],10);
+                        // Noon local avoids DST midnight edge cases
+                        return new Date(y, m, d, 12, 0, 0, 0);
+                    }
+                    return new Date(cleaned);
                 }
-                return isNaN(d.getTime()) ? 'TBD' : d.toLocaleDateString();
-            } catch (_) {
-                return 'TBD';
-            }
+                return new Date(value);
+            } catch(_) { return null; }
+        }
+        function formatDisplayDate(dateStr) {
+            const d = parseDateFlexible(dateStr);
+            return (d && !isNaN(d.getTime())) ? d.toLocaleDateString() : 'TBD';
         }
         // Fix timezone issues with date strings
         function fixTimezone(dateString) {
@@ -3148,7 +3149,7 @@
             if (!projectStart) return 'upcoming';
             
             try {
-                const startDate = new Date(projectStart);
+                const startDate = parseDateFlexible(projectStart);
                 const now = new Date();
                 
                 if (isNaN(startDate.getTime())) {
