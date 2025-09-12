@@ -13671,15 +13671,7 @@
             visibility: hidden;
         }
 
-        .modal-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(20px);
-        }
+        /* Duplicate modal-overlay definition removed - using the first one with position: fixed */
 
         .modal-content {
             position: absolute;
@@ -17136,6 +17128,8 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(20px);
             animation: modalSlideIn 0.3s ease-out;
+            position: relative;
+            margin: auto;
         }
         
         @keyframes modalSlideIn {
@@ -17192,6 +17186,7 @@
             padding: 2rem;
             max-height: 60vh;
             overflow-y: auto;
+            min-height: 300px;
         }
         
         .event-details-grid {
@@ -18185,8 +18180,8 @@
             </div>
             
             <!-- Event Details Modal -->
-            <div id="eventDetailsModal" class="modal-overlay" style="display: none;">
-                <div class="event-details-modal">
+            <div id="eventDetailsModal" class="modal-overlay" style="display: none;" onclick="closeEventDetails()">
+                <div class="event-details-modal" onclick="event.stopPropagation()">
                     <div class="modal-header">
                         <h2><i class="fas fa-calendar-check"></i> Event Details</h2>
                         <button class="close-btn" onclick="closeEventDetails()">
