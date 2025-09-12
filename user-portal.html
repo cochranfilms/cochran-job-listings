@@ -1260,6 +1260,11 @@
                             }
                         },
                         primaryJob: user.primaryJob || Object.keys(user.jobs || {})[0] || 'legacy-job'
+                    ,
+                        // Surface avatar for persistence across refresh
+                        profilePicture: (user.profilePicture !== undefined && user.profilePicture !== null)
+                            ? user.profilePicture
+                            : (user.profile && user.profile.profilePicture) ? user.profile.profilePicture : null
                     }));
                     console.log('✅ Users data loaded from Firestore:', users.length, 'users');
                     console.log('🔍 Available users with jobs and contract status:', users.map(u => ({ 
@@ -2112,6 +2117,7 @@
             const updatedUser = Array.isArray(users) ? users.find(u => u && u.email === emailSnapshot) : null;
             if (updatedUser) {
                 currentUser = updatedUser;
+                try { sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(currentUser)); } catch(_) {}
                 // Merge Firestore assignments into currentUser.jobs to reflect admin updates
                 try {
                     if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable() && currentUser && currentUser.name) {
@@ -2187,6 +2193,12 @@
                 }
             }
             
+            // Display user info (ensure avatar and payment persist across refresh)
+            try {
+                if (currentUser && currentUser.profilePicture) {
+                    displayProfilePicture(currentUser.profilePicture);
+                }
+            } catch(_) {}
             // Display user info
             displayUserInfo();
             displayUserContracts();
@@ -4621,6 +4633,7 @@
                 // Persist update to Firestore, then update UI
                 try {
                     await updateUserPaymentMethod(currentUser.email, paymentMethod);
+                    try { sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(currentUser)); } catch(_) {}
                     updatePaymentStatusDisplay();
                     updateTimelineDisplay();
                     console.log(`✅ Payment method updated to: ${paymentMethod.toUpperCase()}`);
@@ -4673,6 +4686,7 @@
                 displayUserInfo();
                 displayCurrentJobs();
             }
+            try { sessionStorage.setItem('userPortalAuthenticated', JSON.stringify(currentUser)); } catch(_) {}
             console.log('✅ Payment method updated in Firestore for', email);
         }
 
@@ -8046,9 +8060,29 @@
         
         // Load existing profile picture
         function loadProfilePicture() {
-            if (currentUser && currentUser.profilePicture) {
-                displayProfilePicture(currentUser.profilePicture);
-            }
+            try {
+                if (currentUser && currentUser.profilePicture) {
+                    displayProfilePicture(currentUser.profilePicture);
+                    return;
+                }
+                // Fallback: read from Firestore snapshot by email to recover avatar after hard refresh
+                if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable() && currentUser && currentUser.email) {
+                    window.FirestoreDataManager.findUserIdByEmail(currentUser.email).then(async (id) => {
+                        if (!id) return;
+                        try {
+                            const doc = await window.FirebaseConfig.getFirestore().collection('users').doc(id).get();
+                            const data = doc.exists ? (doc.data() || {}) : {};
+                            const avatar = (data.profilePicture !== undefined && data.profilePicture !== null)
+                                ? data.profilePicture
+                                : (data.profile && data.profile.profilePicture) ? data.profile.profilePicture : null;
+                            if (avatar) {
+                                currentUser.profilePicture = avatar;
+                                displayProfilePicture(avatar);
+                            }
+                        } catch(_) {}
+                    }).catch(()=>{});
+                }
+            } catch(_) {}
         }
         
         // Remove profile picture
