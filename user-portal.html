@@ -2552,7 +2552,7 @@
                             <div class="info-item"><span class="label">Location:</span><span class="value">${c.location || 'N/A'}</span></div>
                         </div>
                         <div class="contract-actions">
-                            <button onclick="downloadUserContractByFile('${encodeURIComponent(c.fileName || (currentUser.name + '.pdf'))}', '${encodeURIComponent(c.githubUrl || '')}')" class="btn btn-primary">
+                            <button onclick="downloadContractById('${encodeURIComponent(c.contractId || c.id || '')}', '${encodeURIComponent(c.fileName || '')}', '${encodeURIComponent(c.githubUrl || '')}', '${encodeURIComponent(c.fileUrl || '')}')" class="btn btn-primary">
                                 <i class="fas fa-download"></i>
                                 Download Contract
                             </button>
@@ -2577,6 +2577,46 @@
                 }
                 showNotification('Contract file is not available yet. Please try again later or contact support.', 'error');
             })();
+        }
+
+        // Download a specific contract by its contractId, with robust fallbacks
+        function downloadContractById(contractIdEnc, fileNameEnc = '', githubUrlEnc = '', fileUrlEnc = '') {
+            try {
+                const contractId = decodeURIComponent(contractIdEnc || '');
+                const fileNameOverride = decodeURIComponent(fileNameEnc || '');
+                const githubUrl = decodeURIComponent(githubUrlEnc || '');
+                const fileUrl = decodeURIComponent(fileUrlEnc || '');
+
+                const list = Array.isArray(uploadedContracts) ? uploadedContracts : [];
+                const match = list.find(c => String(c.contractId || c.id || '').trim() === contractId);
+
+                const fileName = (match && match.fileName) || fileNameOverride || (currentUser && currentUser.name ? `${currentUser.name}.pdf` : 'contract.pdf');
+                const candidates = [];
+                if (match && match.fileUrl) candidates.push(match.fileUrl);
+                if (fileUrl) candidates.push(fileUrl);
+                if (match && match.githubUrl) candidates.push(match.githubUrl);
+                if (githubUrl) candidates.push(githubUrl);
+                candidates.push(`/contracts/${encodeURIComponent(fileName)}`);
+                candidates.push(`/api/contracts?filename=${encodeURIComponent(fileName)}`);
+
+                const tryHead = async (u) => {
+                    try { const r = await fetch(u, { method: 'HEAD' }); return r.ok; } catch(_) { return false; }
+                };
+
+                (async () => {
+                    for (const u of candidates) {
+                        const ok = await tryHead(u);
+                        if (ok) {
+                            const a = document.createElement('a'); a.href = u; a.download = fileName; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                            return;
+                        }
+                    }
+                    showNotification('Contract file is not available yet. Please try again later or contact support.', 'error');
+                })();
+            } catch (e) {
+                console.warn('⚠️ downloadContractById failed:', e);
+                showNotification('Unable to download contract due to an unexpected error.', 'error');
+            }
         }
         // Display performance reviews for modern layout
         function displayPerformanceReviews() {

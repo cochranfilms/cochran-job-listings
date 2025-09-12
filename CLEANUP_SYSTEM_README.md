@@ -2,7 +2,7 @@
 ### Scope: `user-portal.html`
 - Primary sections now render multiple items:
   - Jobs tab: `displayCurrentJobs()` maps all jobs to cards with timelines.
-  - Contracts tab: `displayContracts()` lists all uploaded contracts for the user’s email.
+  - Contracts tab: `displayContracts()` lists all uploaded contracts for the user’s email, and each Download button calls `downloadContractById()` to avoid cross-file downloads.
 - Leave legacy `displayUserContracts()`/`displayJobsWithStatus()` helpers for any single-job subviews, but do not use them in the main tabs.
 
 ## 2025-09-12 — Quick Apply Cleanup & Ownership
