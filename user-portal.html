@@ -7369,6 +7369,17 @@
             const formattedPay = jobPay && jobPay !== 'Competitive Pay' ? 
                 (jobPay.startsWith('$') ? jobPay : `$${jobPay}`) : 'Competitive Pay';
 
+            // Escape values for safe inline attribute usage
+            const _safe = (v) => String(v == null ? '' : v)
+                .replace(/\\/g, \\\\)
+                .replace(/'/g, \\\' )
+                .replace(/[\n\r\t]/g, ' ');
+            const sTitle = _safe(jobTitle);
+            const sDate = _safe(eventDate);
+            const sLoc = _safe(jobLocation);
+            const sPay = _safe(jobPay);
+            const sDesc = _safe(jobDescription);
+
             return `
                 <div class="priority-job-card" data-job-id="${job.id || jobTitle.replace(/\s+/g, '-').toLowerCase()}">
                     <div class="${badgeClass}">${badgeText}</div>
@@ -7393,11 +7404,11 @@
                     </div>
                     
                     <div class="job-actions">
-                        <button class="btn-quick-apply" onclick="quickApplyToJob('${jobTitle}', '${eventDate}', '${jobLocation}', '${jobPay}', '${jobDescription}')">
+                        <button class="btn-quick-apply" onclick="quickApplyToJob('${sTitle}', '${sDate}', '${sLoc}', '${sPay}', '${sDesc}')">
                             <i class="fas fa-bolt"></i>
                             Quick Apply
                         </button>
-                        <button class="btn-details" onclick="showJobDetails('${jobTitle}', '${eventDate}', '${jobLocation}', '${jobPay}', '${jobDescription}')">
+                        <button class="btn-details" onclick="showJobDetails('${sTitle}', '${sDate}', '${sLoc}', '${sPay}', '${sDesc}')">
                             <i class="fas fa-info-circle"></i>
                             Details
                         </button>
@@ -7534,6 +7545,17 @@
                 padding: 20px;
             `;
 
+            // Escape for inline attribute usage in this modal block
+            const _safe = (v) => String(v == null ? '' : v)
+                .replace(/\\/g, \\\\)
+                .replace(/'/g, \\\' )
+                .replace(/[\n\r\t]/g, ' ');
+            const sTitle = _safe(jobTitle);
+            const sDate = _safe(eventDate);
+            const sLoc = _safe(location);
+            const sPay = _safe(pay);
+            const sDesc = _safe(description);
+
             modal.innerHTML = `
                 <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); border: 1px solid rgba(255, 178, 0, 0.3); border-radius: 16px; max-width: 500px; width: 100%; padding: 2rem; color: white;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -7560,7 +7582,7 @@
                     </div>
                     
                     <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button onclick="quickApplyToJob('${jobTitle}', '${eventDate}', '${location}', '${pay}', '${description}'); this.closest('div').parentElement.remove();" 
+                        <button onclick="quickApplyToJob('${sTitle}', '${sDate}', '${sLoc}', '${sPay}', '${sDesc}'); this.closest('div').parentElement.remove();" 
                                 style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1;">
                             <i class="fas fa-bolt"></i> Quick Apply
                         </button>
