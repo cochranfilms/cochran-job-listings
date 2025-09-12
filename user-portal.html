@@ -25,11 +25,13 @@
     <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
     <!-- Firebase Configuration and Data Manager -->
     <script defer src="firebase-config.js"></script>
     <script defer src="firestore-data-manager.js"></script>
     <script defer src="firestore-integration.js"></script>
+    <script defer src="/storage-utils.js"></script>
     
     <!-- PDF Generation Libraries -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -7828,7 +7830,7 @@
         }
         
         // Handle profile picture upload
-        function handleProfilePictureUpload(event) {
+        async function handleProfilePictureUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
             
@@ -7844,14 +7846,29 @@
                 return;
             }
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                profilePictureData = e.target.result;
-                displayProfilePicture(profilePictureData);
-                saveProfilePicture(profilePictureData);
-                showNotification('Profile picture updated successfully!', 'success');
-            };
-            reader.readAsDataURL(file);
+            try {
+                const ownerEmail = currentUser && currentUser.email ? currentUser.email : '';
+                const result = await window.StorageUtils.uploadFile(file, {
+                    ownerEmail,
+                    folder: 'avatars',
+                    filename: file.name,
+                    bucketURL: (window && window.FIREBASE_BUCKET_URL) || undefined,
+                    onProgress: ({ percent }) => {
+                        try { document.getElementById('profileUploadProgress')?.style?.setProperty('--pct', percent + '%'); } catch(_) {}
+                    }
+                });
+                const downloadURL = result && result.downloadURL ? result.downloadURL : null;
+                if (downloadURL) {
+                    displayProfilePicture(downloadURL);
+                    await saveProfilePicture(downloadURL);
+                    showNotification('Profile photo uploaded!', 'success');
+                } else {
+                    showNotification('Upload failed to return a URL', 'error');
+                }
+            } catch (err) {
+                console.error('Avatar upload failed', err);
+                showNotification('Failed to upload profile photo', 'error');
+            }
         }
         
         // Display profile picture
@@ -8540,41 +8557,42 @@
         }
         
         // Handle showcase form submission
-        function handleShowcaseSubmit(event) {
+        async function handleShowcaseSubmit(event) {
             event.preventDefault();
             
             const formData = new FormData(event.target);
             const title = formData.get('title');
             const description = formData.get('description');
             const category = formData.get('category');
-            const images = Array.from(document.getElementById('showcaseImages').files);
+            const files = Array.from(document.getElementById('showcaseImages').files);
             
             if (!title.trim()) {
                 showNotification('Please enter a project title', 'error');
                 return;
             }
             
-            if (images.length === 0) {
+            if (files.length === 0) {
                 showNotification('Please upload at least one image', 'error');
                 return;
             }
             
-            // Convert images to base64
-            const imagePromises = images.map(file => {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target.result);
-                    reader.readAsDataURL(file);
+            try {
+                const ownerEmail = currentUser && currentUser.email ? currentUser.email : '';
+                const results = await window.StorageUtils.uploadFiles(files, {
+                    ownerEmail,
+                    folder: 'community-showcases',
+                    bucketURL: (window && window.FIREBASE_BUCKET_URL) || undefined,
+                    onProgress: ({ index, percent }) => {
+                        try { document.getElementById('showcaseUploadStatus').textContent = `Uploading ${index + 1}/${files.length} – ${percent}%`; } catch(_) {}
+                    }
                 });
-            });
-            
-            Promise.all(imagePromises).then(imageData => {
+                const imageURLs = results.map(r => r.downloadURL).filter(Boolean);
                 const showcase = {
                     id: Date.now(),
                     title: title.trim(),
                     description: description.trim(),
                     category: category,
-                    images: imageData,
+                    images: imageURLs,
                     author: currentUser.name || currentUser.email.split('@')[0],
                     authorEmail: currentUser.email,
                     authorAvatar: currentUser.profilePicture || null,
@@ -8582,17 +8600,20 @@
                     likes: 0,
                     comments: []
                 };
-                
                 showcases.unshift(showcase);
                 saveShowcases();
                 displayShowcases();
+                if (document.getElementById('showcaseUploadStatus')) document.getElementById('showcaseUploadStatus').textContent = '';
                 
                 // Reset form
                 event.target.reset();
-                document.getElementById('imagePreviewContainer').innerHTML = '';
-                
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                if (previewContainer) previewContainer.innerHTML = '';
                 showNotification('Showcase shared successfully!', 'success');
-            });
+            } catch (err) {
+                console.error('Showcase upload failed', err);
+                showNotification('Failed to upload showcase images', 'error');
+            }
         }
         
         // Handle image preview

@@ -26,6 +26,8 @@ const FirebaseConfig = {
     firestore: null,
     isInitialized: false,
     initPromise: null,
+    // Bucket URL override for Storage (gs:// or https URL)
+    bucketURL: 'gs://cochran-films.firebasestorage.app',
 
     // Admin users (emails that have admin access)
     adminUsers: [
@@ -109,6 +111,7 @@ const FirebaseConfig = {
                 console.log('✅ Firebase persistence set to LOCAL');
 
                 this.isInitialized = true;
+                try { window.FIREBASE_BUCKET_URL = this.bucketURL; } catch(_) {}
                 console.log('✅ Firebase with Firestore initialized successfully');
                 
                 // Trigger custom events to notify other components

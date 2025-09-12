@@ -355,7 +355,24 @@ How it works:
 
 Firebase Storage uploads:
 - `storage-utils.js` wraps `firebase.storage()` uploads with progress callbacks and returns `{ downloadURL, path, size, contentType }`.
-- The builder uses this to upload selected files to `portfolios/{ownerEmail}/{timestamp-filename}`.
+- Supports `bucketURL` override; the project sets `window.FIREBASE_BUCKET_URL = 'gs://cochran-films.firebasestorage.app'` via `firebase-config.js`.
+- The builder uploads to `portfolios/{ownerEmail}/{timestamp-filename}`. The user portal uploads avatars to `avatars/{email}/{timestamp-filename}` and showcases to `community-showcases/{email}/{timestamp-filename}`.
+
+Quick test (old automatic testing system):
+1) Profile Photo Upload
+   - Open `user-portal.html`, sign in.
+   - In Community → Profile Picture, upload a small image (<5MB).
+   - Expect toast “Profile photo uploaded!”. Avatar shows immediately.
+   - In Firebase Console → Storage, confirm file path under `avatars/<email>/...`.
+   - In Firestore `users` doc, field `profilePicture` should be the public download URL (not base64).
+2) Showcase Uploads
+   - In Community → Share a Project, add 2-3 images and submit.
+   - Expect progress text while uploading and a success toast.
+   - Local storage `cochranShowcases` should contain `images` as download URLs.
+   - Files exist under `community-showcases/<email>/...` in Storage.
+3) Portfolio Builder Uploads
+   - Open `portfolio-builder.html`, upload files, click Upload.
+   - Observe progress and verify uploaded items render in preview using download URLs.
 
 Publishing:
 - Clicking Publish saves a Firestore document under `portfolios/<slug>` using `FirestoreDataManager.setPortfolio()`.

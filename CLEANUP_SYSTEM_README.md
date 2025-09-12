@@ -1,10 +1,11 @@
 ## 2025-08-20 — Align Start Date to Job Selection
 ### 2025-09-08 — Portfolio Builder Integration Notes
 - New files: `portfolio-builder.html`, `storage-utils.js`, `api/portfolio-theme.js`.
+- User portal now includes `firebase-storage-compat.js` and uses `storage-utils.js` for uploads (avatars and showcases). Bucket URL is centralized in `firebase-config.js` as `window.FIREBASE_BUCKET_URL` (`gs://cochran-films.firebasestorage.app`).
 - Data ownership: Firestore `portfolios` collection is canonical for portfolio profiles/galleries. No JSON backups.
 - Cleanup guidance:
   - To disable the feature, remove the admin dashboard card link and delete `portfolios/*` docs from Firestore.
-  - Remove `storage-utils.js` include from any pages if no longer needed.
+  - Remove `storage-utils.js` include from any pages if no longer needed. If reverting user portal uploads, also remove the Storage SDK include and switch profile/showcase flows back to base64 (not recommended).
   - Delete `api/portfolio-theme.js` if OpenAI theming is no longer desired.
 - Security:
   - Keep `OPENAI_API_KEY` in Vercel environment variables only; never expose client-side.

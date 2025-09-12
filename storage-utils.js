@@ -55,7 +55,9 @@
 
             const name = options.filename || (input && input.name) || 'upload.bin';
             const fullPath = this.buildPath({ ownerEmail: options.ownerEmail, folder: options.folder, filename: name });
-            const ref = storage.ref().child(fullPath);
+            const bucketURL = options.bucketURL || (typeof window !== 'undefined' ? window.FIREBASE_BUCKET_URL : null);
+            const baseRef = bucketURL ? storage.refFromURL(bucketURL) : storage.ref();
+            const ref = baseRef.child(fullPath);
 
             const metadata = { contentType };
             return new Promise((resolve, reject) => {
