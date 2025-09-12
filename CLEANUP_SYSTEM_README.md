@@ -55,8 +55,8 @@ Verification checklist
 - Reversion guidance: If Firestore is unavailable, ensure `cochranSuccessStories` cache exists or reintroduce seed data during development only.
 
 ### 2025-09-12 — Community Tools modernization
-- Replaced prompt-based Event flows with a modal Event Manager in `admin-dashboard.html`.
-- Keep calls to `FirestoreDataManager` (`addEvent/getEvents/updateEvent/deleteEvent`) and the `ensureFirestoreReady()` guard when further upgrading UI.
+- Replaced prompt-based Event flows with a modal Event Manager and Success Stories with a modal Story Manager in `admin-dashboard.html`.
+- Keep calls to `FirestoreDataManager` (`addEvent/getEvents/updateEvent/deleteEvent`, `addSuccessStory/getSuccessStories/updateSuccessStory/deleteSuccessStory`) and the `ensureFirestoreReady()` guard when further upgrading UI.
 ### 2025-09-12 — Equipment Requests UX simplification
 - Files: `user-portal.html`
 - Cleanup: Removed duplicate manual request form from Equipment Requests tab. Requests originate exclusively via the Gear Library button; the Requests tab lists existing/pending requests only.

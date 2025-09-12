@@ -130,18 +130,18 @@ Quick test (browser):
 ### 2025-09-12 — Community Tools modernization (Admin)
 
 - Files: `admin-dashboard.html`, `firestore-data-manager.js`
-- Change: Replaced prompt-based flows for Events with a modern modal Event Manager.
-  - Create, edit, delete, and status changes are performed in a modal UI.
-  - Buttons `Create Event` and `Manage Events` now open the Event Manager.
+- Change: Replaced prompt-based flows for Events and Success Stories with modern modals.
+  - Event Manager: create/edit/delete/status in a modal UI.
+  - Success Story Manager: create/edit/delete with stats fields (projects, rating, earnings).
+  - Buttons `Create Event`/`Manage Events` and `Add Success Story`/`Manage Success Stories` open the modals.
   - Validation: Title and Date required; inline toasts on success/failure.
 - Mini-stat counters still pull from Firestore with localStorage fallback.
 
 Quick test:
 1. Open `admin-dashboard.html` → Community Management.
-2. Click Create Event or Manage Events; the Event Manager modal appears.
-3. Create a new event (Title + Date required). Verify it appears in the list.
-4. Edit and delete events; verify Firestore updates and mini-stats refresh.
-5. Check `user-portal.html` Community tabs; counts reflect changes live.
+2. Click Create Event or Manage Events; the Event Manager modal appears. Create a new event (Title + Date required). Verify it appears and counters update.
+3. Click Add Success Story or Manage Success Stories; the Success Story Manager modal appears. Create/edit/delete stories and verify counters update.
+4. Check `user-portal.html` Community tabs; counts reflect changes live.
 
 ### 2025-09-12 — Equipment Requests: available-gear multi-select
 
