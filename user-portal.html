@@ -104,6 +104,8 @@
                     
                     // Set up auth state observer after Firebase is ready
                     setupAuthStateObserver();
+                    // Load Community Hub stats from Firestore
+                    try { await loadCommunityHubStats(); } catch(_) {}
                 }
             } catch (error) {
                 console.error('❌ Firebase initialization failed:', error);
@@ -152,6 +154,7 @@
                     try { localStorage.setItem('userPortalAuthEmail', user.email); } catch(_) {}
                     // Start/refresh 30-minute cross-tab session
                     setPortalSession(30);
+                    try { loadCommunityHubStats(); } catch(_) {}
                     return;
                 }
 
@@ -189,6 +192,51 @@
                 }, 6000);
             });
         }
+
+        // Community Hub: read counts from Firestore
+        async function loadCommunityHubStats() {
+            try {
+                // Ensure manager is ready
+                if (window.FirestoreDataManager && !window.FirestoreDataManager.isAvailable()) {
+                    try { await window.FirestoreDataManager.init(); } catch(_) {}
+                }
+                if (!window.FirestoreDataManager || !window.FirestoreDataManager.isAvailable()) return;
+
+                const [usersObj, messages, showcases] = await Promise.all([
+                    window.FirestoreDataManager.getUsers().catch(() => ({})),
+                    window.FirestoreDataManager.getMessages().catch(() => ([])),
+                    window.FirestoreDataManager.getShowcases().catch(() => ([]))
+                ]);
+
+                const teamMembers = Object.keys(usersObj || {}).length;
+                const tmEl = document.getElementById('teamMemberCount');
+                if (tmEl) tmEl.textContent = teamMembers ? `${teamMembers} ${teamMembers === 1 ? 'Member' : 'Members'}` : '0 Members';
+
+                const activeProjects = Array.isArray(showcases) ? showcases.length : 0;
+                const apEl = document.getElementById('activeProjectCount');
+                if (apEl) apEl.textContent = activeProjects ? `${activeProjects} ${activeProjects === 1 ? 'Project' : 'Projects'}` : '0 Projects';
+
+                const msgCount = Array.isArray(messages) ? messages.length : 0;
+                const umEl = document.getElementById('unreadMessageCount');
+                if (umEl) umEl.textContent = `${msgCount} ${msgCount === 1 ? 'Message' : 'Messages'}`;
+            } catch (e) {
+                console.warn('⚠️ Community Hub stats load failed:', e?.message || e);
+                try {
+                    const tmEl = document.getElementById('teamMemberCount'); if (tmEl) tmEl.textContent = '—';
+                    const apEl = document.getElementById('activeProjectCount'); if (apEl) apEl.textContent = '—';
+                } catch(_) {}
+            }
+        }
+
+        // Update card in realtime on Firestore changes
+        window.addEventListener('firestore:dataChange', function(e){
+            try {
+                const c = (e && e.detail && e.detail.collection) || '';
+                if (c === 'users' || c === 'messages' || c === 'showcases') {
+                    loadCommunityHubStats();
+                }
+            } catch(_) {}
+        });
 
         // Load performance reviews from Firestore only (no JSON fallback)
         async function loadPerformanceReviews() {
