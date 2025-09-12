@@ -559,8 +559,25 @@
       "notes": "Automatically uploaded via contract signing",
       "contractDate": "2025-09-12",
       "signedDate": "2025-09-12"
+    },
+    {
+      "contractId": "CF-1757720491996-CCYAS",
+      "freelancerName": "Wolf Man",
+      "freelancerEmail": "developer@marketingmousetrapagency.com",
+      "role": "Backdrop Photographer Base",
+      "rate": "$400",
+      "location": "Douglasville, GA",
+      "fileName": "Wolf Man - Backdrop Photographer Base - CF-1757720491996-CCYAS.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-09-12T23:41:42.531Z",
+      "status": "uploaded",
+      "fileUrl": null,
+      "storagePath": null,
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-12",
+      "signedDate": "2025-09-12"
     }
   ],
-  "lastUpdated": "2025-09-12T21:23:41.899Z",
-  "totalContracts": 35
+  "lastUpdated": "2025-09-12T23:41:42.531Z",
+  "totalContracts": 36
 }
