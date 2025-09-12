@@ -576,8 +576,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-12",
       "signedDate": "2025-09-12"
+    },
+    {
+      "contractId": "CF-1757721445486-15162",
+      "freelancerName": "Wolf Man",
+      "freelancerEmail": "developer@marketingmousetrapagency.com",
+      "role": "Backdrop Photographer Spotlight",
+      "rate": "$300 + Tip",
+      "location": "Douglasville, GA",
+      "fileName": "Wolf Man - Backdrop Photographer Spotlight - CF-1757721445486-15162.pdf",
+      "fileSize": 10361,
+      "uploadDate": "2025-09-12T23:57:40.948Z",
+      "status": "uploaded",
+      "fileUrl": "https://firebasestorage.googleapis.com/v0/b/cochran-films.firebasestorage.app/o/contracts%2Fdeveloper%40marketingmousetrapagency.com%2F1757721446580-wolf-man-backdrop-photographer-spotlight-cf-1757721445486-15162.pdf?alt=media&token=194ed0a8-df2d-4c83-a4b1-451cd0fd753c",
+      "storagePath": "contracts/developer@marketingmousetrapagency.com/1757721446580-wolf-man-backdrop-photographer-spotlight-cf-1757721445486-15162.pdf",
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-12",
+      "signedDate": "2025-09-12"
     }
   ],
-  "lastUpdated": "2025-09-12T23:41:42.531Z",
-  "totalContracts": 36
+  "lastUpdated": "2025-09-12T23:57:40.948Z",
+  "totalContracts": 37
 }
