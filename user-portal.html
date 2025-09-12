@@ -2491,6 +2491,9 @@
                     </div>
                 `;
             }
+            // Keep the summary cards (Current Project + Payment Method) in sync
+            try { displayProjectInfo(); } catch(_) {}
+            try { displayPaymentInfo(); } catch(_) {}
         }
 
         // Render timeline steps for jobs
