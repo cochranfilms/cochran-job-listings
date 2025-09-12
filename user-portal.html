@@ -7449,7 +7449,7 @@
                 // Ensure Firestore manager is ready
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     try {
-                        const appId = await window.FirestoreDataManager.addApplication({
+                        const appId = await window.FirestoreDataManager.addQuickApplication({
                             source: 'quick_apply',
                             status: 'new',
                             jobId: jobId,

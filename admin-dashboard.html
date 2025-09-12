@@ -6595,9 +6595,16 @@
                     try { await window.FirestoreDataManager.init(); } catch(_) {}
                 }
                 let applications = [];
+                let quickApps = [];
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
                     applications = await window.FirestoreDataManager.getApplications();
+                    try { quickApps = await window.FirestoreDataManager.getQuickApplications(); } catch(_) { quickApps = []; }
                 }
+                // Merge queues but tag source for clarity
+                const merged = [].concat(
+                    (applications||[]).map(a => ({...a, __source:'applications'})),
+                    (quickApps||[]).map(a => ({...a, __source:'quickApplications'}))
+                );
                 try {
                     const jobFilter = document.getElementById('applicationJobFilter');
                     if (jobFilter) {
@@ -6608,10 +6615,10 @@
                     }
                 } catch (_) {}
                 const stats = {
-                    total: applications.length,
-                    pending: applications.filter(app => (app.status || 'new') === 'new' || app.status === 'pending').length,
-                    accepted: applications.filter(app => app.status === 'approved' || app.status === 'accepted').length,
-                    rejected: applications.filter(app => app.status === 'denied' || app.status === 'rejected').length
+                    total: merged.length,
+                    pending: merged.filter(app => (app.status || 'new') === 'new' || app.status === 'pending').length,
+                    accepted: merged.filter(app => app.status === 'approved' || app.status === 'accepted').length,
+                    rejected: merged.filter(app => app.status === 'denied' || app.status === 'rejected').length
                 };
                 const totalEl = document.getElementById('totalApplications');
                 const pendingEl = document.getElementById('pendingApplications');
@@ -6621,7 +6628,7 @@
                 if (pendingEl) pendingEl.textContent = String(stats.pending);
                 if (acceptedEl) acceptedEl.textContent = String(stats.accepted);
                 if (rejectedEl) rejectedEl.textContent = String(stats.rejected);
-                loadApplicationsList(applications);
+                loadApplicationsList(merged);
             } catch (err) {
                 console.error('❌ Failed to update application stats:', err);
                 showNotification('Failed to load applications', 'error');
@@ -6639,23 +6646,30 @@
                 return `
                 <div class="application-item">
                     <div class="application-info">
-                        <h4>${app.jobTitle || 'Untitled Role'}</h4>
+                        <h4>${app.jobTitle || 'Untitled Role'} ${app.__source==='quickApplications' ? '<span style="font-size:.75rem;color:#FFB200">(Quick)</span>' : ''}</h4>
                         <p>${(app.applicant && app.applicant.email) ? app.applicant.email : ''} • ${created.toLocaleDateString()}</p>
                     </div>
                     <div class="application-status status-${statusClass}">${status}</div>
                     <div style="display:flex; gap:.5rem; align-items:center;">
-                        <button class="btn btn-small" onclick="approveApplication('${app.id}')">Approve</button>
-                        <button class="btn btn-small" onclick="denyApplication('${app.id}')">Deny</button>
+                        <button class="btn btn-small" onclick="approveApplication('${app.id}','${app.__source||'applications'}')">Approve</button>
+                        <button class="btn btn-small" onclick="denyApplication('${app.id}','${app.__source||'applications'}')">Deny</button>
                     </div>
                 </div>`;
             }).join('');
             container.innerHTML = html;
         }
 
-        async function approveApplication(appId) {
+        async function approveApplication(appId, source) {
             try {
                 if (!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable())) throw new Error('Firestore unavailable');
-                await window.FirestoreDataManager.setApplicationStatus(appId, 'approved');
+                const s = source || 'applications';
+                if (s === 'quickApplications') {
+                    await window.FirestoreDataManager.setQuickApplicationStatus(appId, 'approved');
+                    await processQuickApplicationApproval(appId);
+                } else {
+                    await window.FirestoreDataManager.setApplicationStatus(appId, 'approved');
+                    await processStandardApplicationApproval(appId);
+                }
                 showNotification('Application approved', 'success');
                 updateApplicationStats();
             } catch (e) {
@@ -6664,16 +6678,83 @@
             }
         }
 
-        async function denyApplication(appId) {
+        async function denyApplication(appId, source) {
             try {
                 if (!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable())) throw new Error('Firestore unavailable');
-                await window.FirestoreDataManager.setApplicationStatus(appId, 'denied');
+                const s = source || 'applications';
+                if (s === 'quickApplications') {
+                    await window.FirestoreDataManager.setQuickApplicationStatus(appId, 'denied');
+                } else {
+                    await window.FirestoreDataManager.setApplicationStatus(appId, 'denied');
+                }
                 showNotification('Application denied', 'warning');
                 updateApplicationStats();
             } catch (e) {
                 console.error('❌ denyApplication failed:', e);
                 showNotification('Failed to deny application', 'error');
             }
+        }
+
+        // Process approvals to follow same onboarding pipeline
+        async function processStandardApplicationApproval(appId){
+            // For now, rely on existing approveUser path once user is attached
+            try {
+                const apps = await window.FirestoreDataManager.getApplications();
+                const app = (apps||[]).find(a=>a.id===appId);
+                if (!app) return;
+                await attachJobAndSendOnboarding(app);
+            } catch(_) {}
+        }
+
+        async function processQuickApplicationApproval(appId){
+            try {
+                const qapps = await window.FirestoreDataManager.getQuickApplications();
+                const app = (qapps||[]).find(a=>a.id===appId);
+                if (!app) return;
+                await attachJobAndSendOnboarding(app);
+            } catch(e) { console.warn('⚠️ processQuickApplicationApproval:', e?.message||e); }
+        }
+
+        // Shared function: map job to user profile and trigger email+contract
+        async function attachJobAndSendOnboarding(app){
+            try {
+                await window.FirebaseConfig.waitForInit();
+            } catch(_) {}
+            const email = (app.applicant && app.applicant.email)||'';
+            const uid = app.applicant && app.applicant.uid;
+            let userId = uid || await window.FirestoreDataManager.findUserIdByEmail(email);
+            if (!userId) {
+                // Create a minimal user entry if not found (email is required for EmailJS)
+                userId = email || (uid || 'unknown');
+            }
+            // Load existing user data
+            let users = {};
+            try { users = await window.FirestoreDataManager.getUsers(); } catch(_){ users = window.users||{}; }
+            const userData = users[userId] || { profile: { email }, application: {}, jobs: {} };
+
+            // Build job object
+            const jobKey = app.jobId || (`slug-${(app.jobTitle||'').replace(/\s+/g,'-').toLowerCase()}`);
+            const jobObj = {
+                id: app.jobId || null,
+                title: app.jobTitle || 'Contractor',
+                location: app.location || (userData.profile && userData.profile.location) || 'Atlanta Area',
+                date: app.jobDate || null,
+                pay: app.payDisplay || 'TBD',
+                status: 'approved'
+            };
+            // Duplicate guard on jobs
+            const jobs = { ...(userData.jobs||{}) };
+            if (!jobs[jobKey]) {
+                jobs[jobKey] = jobObj;
+            }
+            // Update application status
+            const application = { ...(userData.application||{}), status: 'approved', updatedAt: new Date().toISOString(), jobTitle: app.jobTitle };
+            const updatedUser = { ...userData, profile: { ...(userData.profile||{}), email }, application, jobs };
+
+            try { await window.FirestoreDataManager.setUser(userId, updatedUser); } catch(e){ console.warn('⚠️ setUser on approval:', e?.message||e); }
+
+            // Trigger email + contract onboarding using existing function
+            try { sendJobAcceptanceEmail(userId, updatedUser); } catch(e){ console.warn('⚠️ sendJobAcceptanceEmail unavailable:', e?.message||e); }
         }
 
         // Export Performance Report

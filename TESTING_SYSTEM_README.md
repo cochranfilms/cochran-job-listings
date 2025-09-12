@@ -2,9 +2,10 @@
 
 - Files: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`
 - Change:
-  - Priority Jobs “Quick Apply” now creates an application in Firestore via `FirestoreDataManager.addApplication()` with duplicate prevention (same email+job guarded).
-  - Admin dashboard Applications section loads live applications via `getApplications()` and supports Approve/Deny using `setApplicationStatus()`.
-  - Multi-job per user is supported by mirroring to `users/{uid}/applications/*` and `jobs/{jobId}/applications/*` for fast lookups.
+  - Priority Jobs “Quick Apply” now writes to `quickApplications` via `FirestoreDataManager.addQuickApplication()` with duplicate prevention (email+job guarded).
+  - Admin dashboard merges `applications` + `quickApplications` into one queue with source tags; Approve/Deny supports both via `setQuickApplicationStatus()` or `setApplicationStatus()`.
+  - On Approve, we attach job to user (duplicate-guarded), persist to Firestore, and call existing `sendJobAcceptanceEmail` to kick off EmailJS → Contract → Portal flow (same as `apply.html`).
+  - Mirrors: `users/{uid}/quickApplications/*` and `jobs/{jobId}/quickApplications/*` for quick applies.
 
 Old automatic testing system steps:
 1) Prep: In Firebase Console, ensure at least one job exists in `jobs` with fields: `title`, optional `date`, `location`, `pay`.

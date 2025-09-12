@@ -1,9 +1,13 @@
 ## 2025-09-12 — Quick Apply Cleanup & Ownership
 ### Scope: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`
-- Canonical data: Applications live in Firestore `applications` with mirrors at `users/{uid}/applications/*` and `jobs/{jobId}/applications/*`.
-- Remove any legacy sample arrays or hardcoded application lists in admin; always read via `getApplications()`.
-- Do not write applications to JSON backups; Quick Apply is Firestore-only. Optional webhook/email triggers are non-blocking and may be configured via `window.CONFIG.webhooks.applicationCreated`.
-- Duplicate prevention is built-in (email+jobId guard). Do not reintroduce client-side dedupe lists.
+- Canonical data: Full applications live in Firestore `applications`; Quick Apply lives in `quickApplications`.
+- Mirrors:
+  - Standard: `users/{uid}/applications/*`, `jobs/{jobId}/applications/*`
+  - Quick: `users/{uid}/quickApplications/*`, `jobs/{jobId}/quickApplications/*`
+- Admin queue merges both collections but tags source; actions use the correct setter (`setQuickApplicationStatus` vs `setApplicationStatus`).
+- Remove any legacy sample arrays or hardcoded lists; always load via Firestore getters.
+- No JSON backups for applications; optional webhook/email triggers are non-blocking via `window.CONFIG.webhooks.applicationCreated`.
+- Duplicate guard: email+job returns existing id for both collections.
 
 Cleanup checklist:
 - Remove temporary sample app stats if reintroduced during development.

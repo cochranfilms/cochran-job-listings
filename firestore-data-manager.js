@@ -18,7 +18,8 @@ const FirestoreDataManager = {
         portfolios: 'portfolios', // user-owned portfolio profiles and galleries
         events: 'events', // company events and calendar
         successStories: 'successStories', // success stories and achievements
-        applications: 'applications', // job applications (quick apply + full)
+        applications: 'applications', // legacy/general applications (apply.html, etc.)
+        quickApplications: 'quickApplications', // dedicated queue for Quick Apply from user-portal
         // Equipment & Resource Center
         equipment: 'equipment', // inventory of gear
         resources: 'resources', // brand guidelines, templates, style guides
@@ -156,6 +157,16 @@ const FirestoreDataManager = {
                     this.handleApplicationsUpdate(snapshot);
                 }, (error) => {
                     console.error('❌ Applications listener error:', error);
+                });
+
+            // Listen for quick applications changes (Quick Apply queue)
+            this.db.collection(this.collections.quickApplications)
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    console.log('⚡ quickApplications updated:', snapshot.docChanges().length, 'changes');
+                    this.handleQuickApplicationsUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ quickApplications listener error:', error);
                 });
 
             // Listen for equipment inventory changes
@@ -351,6 +362,23 @@ const FirestoreDataManager = {
             } else if (change.type === 'removed') {
                 console.log('📝 Application removed:', change.doc.id);
                 this.notifyDataChange('applications', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle quickApplications collection updates
+    handleQuickApplicationsUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('⚡ New quick application added:', change.doc.id);
+                this.notifyDataChange('quickApplications', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('⚡ quick application modified:', change.doc.id);
+                this.notifyDataChange('quickApplications', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('⚡ quick application removed:', change.doc.id);
+                this.notifyDataChange('quickApplications', 'removed', change.doc.id, change.doc.data());
             }
         });
     },
@@ -2162,7 +2190,7 @@ Object.assign(FirestoreDataManager, {
             if (!jobId) throw new Error('Missing jobId for application');
             if (!userEmail && !uid) throw new Error('Missing applicant identity (email or uid)');
 
-            // Duplicate guard: same email+job within 24h
+            // Duplicate guard: same email+job within 24h (applications)
             try {
                 const q = await this.db.collection(this.collections.applications)
                     .where('jobId', '==', jobId)
@@ -2213,6 +2241,109 @@ Object.assign(FirestoreDataManager, {
         } catch (error) {
             console.error('❌ Error adding application:', error);
             throw error;
+        }
+    },
+
+    // Quick Applications (separate collection)
+    async addQuickApplication(app) {
+        try {
+            const nowIso = new Date().toISOString();
+            const userEmail = String(app.applicant?.email || '').toLowerCase();
+            const jobId = app.jobId || null;
+            const uid = app.applicant?.uid || null;
+
+            if (!jobId) throw new Error('Missing jobId for application');
+            if (!userEmail && !uid) throw new Error('Missing applicant identity (email or uid)');
+
+            // Duplicate guard in quickApplications
+            try {
+                const q = await this.db.collection(this.collections.quickApplications)
+                    .where('jobId', '==', jobId)
+                    .where('applicant.email', '==', userEmail)
+                    .limit(1)
+                    .get();
+                if (!q.empty) {
+                    console.log('⏭️ Duplicate quick application detected for', userEmail, jobId);
+                    return q.docs[0].id;
+                }
+            } catch (_) {}
+
+            const payload = {
+                source: app.source || 'quick_apply',
+                status: app.status || 'new',
+                jobId,
+                jobTitle: app.jobTitle || '',
+                jobDate: app.jobDate || null,
+                location: app.location || '',
+                payDisplay: app.payDisplay || '',
+                priority: !!app.priority,
+                applicant: {
+                    uid,
+                    email: userEmail,
+                    name: app.applicant?.name || '',
+                    phone: app.applicant?.phone || '',
+                    portfolio: app.applicant?.portfolio || '',
+                    avatarUrl: app.applicant?.avatarUrl || null
+                },
+                createdAt: nowIso,
+                updatedAt: nowIso
+            };
+
+            const ref = await this.db.collection(this.collections.quickApplications).add(payload);
+            const appId = ref.id;
+
+            // Mirrors for quick applications
+            const ops = [];
+            if (uid) {
+                ops.push({ type: 'set', collection: `${this.collections.users}/${uid}/quickApplications`, docId: appId, data: payload });
+            }
+            ops.push({ type: 'set', collection: `${this.collections.jobs}/${jobId}/quickApplications`, docId: appId, data: payload });
+            await this.batchWrite(ops);
+            console.log('✅ QuickApplication created with mirrors:', appId);
+            return appId;
+        } catch (error) {
+            console.error('❌ Error adding quick application:', error);
+            throw error;
+        }
+    },
+
+    async getQuickApplications(options = {}) {
+        try {
+            let ref = this.db.collection(this.collections.quickApplications).orderBy('createdAt', 'desc');
+            if (options.status) ref = ref.where('status', '==', options.status);
+            const snap = await ref.get();
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (err) {
+            console.error('❌ getQuickApplications error:', err);
+            return [];
+        }
+    },
+
+    async setQuickApplicationStatus(appId, status) {
+        return this.updateQuickApplication(appId, { status });
+    },
+
+    async updateQuickApplication(appId, updateData) {
+        try {
+            const ref = this.db.collection(this.collections.quickApplications).doc(appId);
+            const snap = await ref.get();
+            if (!snap.exists) throw new Error('Quick application not found');
+            const current = snap.data() || {};
+            const merged = { ...updateData, updatedAt: new Date().toISOString() };
+            await ref.set(merged, { merge: true });
+
+            const mirrors = [];
+            if (current.applicant?.uid) {
+                mirrors.push({ type: 'set', collection: `${this.collections.users}/${current.applicant.uid}/quickApplications`, docId: appId, data: { ...current, ...merged } });
+            }
+            if (current.jobId) {
+                mirrors.push({ type: 'set', collection: `${this.collections.jobs}/${current.jobId}/quickApplications`, docId: appId, data: { ...current, ...merged } });
+            }
+            await this.batchWrite(mirrors);
+            return true;
+        } catch (err) {
+            console.error('❌ updateQuickApplication error:', err);
+            throw err;
         }
     },
 
