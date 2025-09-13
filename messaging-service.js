@@ -158,6 +158,15 @@ class MessagingService {
                 readBy: [this.currentUser.email]
             };
             
+            // Ensure participants include current sender (and admin identity if applicable)
+            try {
+                const convRef = this.firestore.collection('directMessages').doc(conversationId);
+                const updates = { participants: firebase.firestore.FieldValue.arrayUnion(this.currentUser.email) };
+                // If sender is an admin, ensure this admin email is recorded (handled by above),
+                // no need to add all admins.
+                await convRef.set(updates, { merge: true });
+            } catch(_) {}
+
             // Add message to conversation
             await messageRef.set(messageData);
             
@@ -448,7 +457,9 @@ class MessagingService {
             if (!this.currentUser) throw new Error('User not authenticated');
             
             const adminEmails = window.FirebaseConfig.getAdminUsers();
-            const participants = [this.currentUser.email, adminEmails[0]]; // Use first admin
+            // Prefer the first admin as the canonical endpoint
+            const primaryAdmin = adminEmails[0];
+            const participants = [this.currentUser.email, primaryAdmin];
             
             const conversationId = participants.sort().join('_').replace(/[^a-zA-Z0-9_]/g, '_');
             
@@ -459,6 +470,10 @@ class MessagingService {
                 .get();
             
             if (conversationDoc.exists) {
+                // Ensure canonical participants are set
+                await this.firestore.collection('directMessages').doc(conversationId).set({
+                    participants: [this.currentUser.email, primaryAdmin]
+                }, { merge: true });
                 return conversationId;
             } else {
                 // Create new conversation

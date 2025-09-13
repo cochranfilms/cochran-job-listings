@@ -19984,11 +19984,44 @@
     let selectedFiles = [];
 
     // Initialize messaging when section is shown
-    function initializeMessaging() {
+    async function initializeMessaging() {
         if (!messagingService) {
             messagingService = new MessagingService();
         }
-        loadConversations();
+        // wait for service readiness and attach live listener so the left panel fills without clicking
+        try { await messagingService.readyPromise; } catch(_) {}
+        // initial load
+        await loadConversations();
+        // realtime conversations panel
+        try {
+            messagingService.listenToConversations((list) => {
+                const conversationsList = document.getElementById('conversationsList');
+                if (!conversationsList) return;
+                if (!Array.isArray(list) || list.length === 0) {
+                    conversationsList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-comments"></i>
+                            <h3>No conversations yet</h3>
+                            <p>Use the New Message button to start a conversation</p>
+                        </div>
+                    `;
+                    return;
+                }
+                conversationsList.innerHTML = list.map(conv => `
+                    <div class=\"conversation-item\" data-conversation-id=\"${conv.id}\" onclick=\"selectConversation('${conv.id}', event)\">
+                        <div class=\"conversation-header\">
+                            <span class=\"conversation-participant\">${getParticipantName(conv)}</span>
+                            <span class=\"conversation-time\">${messagingService.formatTimestamp(conv.lastMessageTime)}</span>
+                        </div>
+                        <div class=\"conversation-preview\">${conv.lastMessage || 'No messages yet'}</div>
+                        <div class=\"conversation-meta\">
+                            ${conv.jobId ? `<span class=\\\"conversation-job\\\">Job: ${conv.jobId}</span>` : ''}
+                            ${conv.unreadCount > 0 ? `<span class=\\\"unread-badge\\\">${conv.unreadCount}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            });
+        } catch(e) { console.error('❌ Conversations listener failed:', e); }
     }
 
     // Load conversations for the current user
