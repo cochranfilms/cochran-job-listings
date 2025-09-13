@@ -10,6 +10,18 @@
   5. Legacy GitHub URLs should still work as fallbacks for existing contracts.
 
 ### 2025-09-12 — User Portal: Multi-job timelines and all-contracts listing
+### 2025-09-13 — Community Likes fix (comments + showcases)
+
+- Files: `user-portal.html`
+- Fix: Quote string IDs in inline handlers and harden like functions.
+  - Buttons now call `toggleMessageLike('<id>')` and `toggleLike('<id>')`.
+  - Functions compare via `String(id)` and coerce counts with `Number(...)`.
+- Why: Unquoted IDs created global references like `atMnDSBK6Z6YpF0Cdlf8` which caused `ReferenceError` on click.
+- Quick test (browser):
+  1. Open `user-portal.html` → Community → Team Messaging. Send a message, then click its heart. Expect count to increment without console errors.
+  2. Community → Success Stories. Click heart on any card. Expect count to increment; no `ReferenceError`.
+  3. Reload and confirm persisted via localStorage cache (for showcases/messages in demo mode).
+
 
 - Files: `user-portal.html`
 - Change: Jobs tab now renders all job timelines for the signed-in user using `displayCurrentJobs()` (instead of single-selection timeline). Contracts tab now lists all uploaded contracts for the user's email using `displayContracts()`. Each contract's Download now calls `downloadContractById(contractId, fileName?, githubUrl?, fileUrl?)` to ensure the correct PDF is served.

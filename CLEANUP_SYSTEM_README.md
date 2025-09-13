@@ -8,6 +8,13 @@
 - Email notifications now contain Firestore Storage download links instead of GitHub URLs.
 
 ## 2025-09-12 — Multi-job timelines and all-contracts listing (portal)
+## 2025-09-13 — Community Likes inline-handler cleanup
+
+- Scope: `user-portal.html`
+- Change: Inline `onclick` handlers for message/showcase likes now wrap IDs in quotes and escape single quotes. The like functions compare via `String(id)` and coerce counts.
+- Reason: Prevent global-variable resolution of unquoted IDs which caused `ReferenceError: <id> is not defined` when clicking like on comments or showcases.
+- Maintenance note: When templating inline handlers with dynamic IDs, always quote and escape the value or prefer `addEventListener` delegation to avoid HTML injection and global lookup pitfalls.
+
 ### Scope: `user-portal.html`
 - Primary sections now render multiple items:
   - Jobs tab: `displayCurrentJobs()` maps all jobs to cards with timelines.

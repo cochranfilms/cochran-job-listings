@@ -8504,7 +8504,7 @@
                         </div>
                         <div class="message-text">${message.text}</div>
                         <div class="message-actions">
-                            <button class="message-like-btn" onclick="toggleMessageLike(${message.id})">
+                            <button class="message-like-btn" onclick="toggleMessageLike('${String(message.id).replace(/'/g, "&#39;")}')">
                                 <i class="fas fa-heart"></i>
                                 <span>${message.likes}</span>
                             </button>
@@ -8573,9 +8573,10 @@
         
         // Toggle message like
         function toggleMessageLike(messageId) {
-            const message = messages.find(m => m.id === messageId);
+            const targetId = String(messageId);
+            const message = messages.find(m => String(m.id) === targetId);
             if (message) {
-                message.likes += 1;
+                message.likes = (Number(message.likes) || 0) + 1;
                 saveMessages();
                 displayMessages();
             }
@@ -9101,11 +9102,11 @@
                             </div>
                         </div>
                         <div class="showcase-actions">
-                            <button class="showcase-like-btn" onclick="toggleLike(${showcase.id})">
+                            <button class="showcase-like-btn" onclick="toggleLike('${String(showcase.id).replace(/'/g, "&#39;")}')">
                                 <i class="fas fa-heart"></i>
                                 <span>${showcase.likes}</span>
                             </button>
-                            <button class="showcase-comment-btn" onclick="showComments(${showcase.id})">
+                            <button class="showcase-comment-btn" onclick="showComments('${String(showcase.id).replace(/'/g, "&#39;")}')">
                                 <i class="fas fa-comment"></i>
                                 <span>${showcase.comments.length}</span>
                             </button>
@@ -9128,9 +9129,10 @@
         
         // Toggle like
         function toggleLike(showcaseId) {
-            const showcase = showcases.find(s => s.id === showcaseId);
+            const targetId = String(showcaseId);
+            const showcase = showcases.find(s => String(s.id) === targetId);
             if (showcase) {
-                showcase.likes += 1;
+                showcase.likes = (Number(showcase.likes) || 0) + 1;
                 saveShowcases();
                 displayShowcases();
             }
