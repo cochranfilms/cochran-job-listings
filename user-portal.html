@@ -2415,71 +2415,13 @@
             }
         }
 
-        // Display current jobs for modern layout
+        // Display current jobs for modern layout (multi-job aware)
         function displayCurrentJobs() {
             const container = document.getElementById('jobsContent');
             if (!container) return;
             
             const userJobs = Object.values(currentUser.jobs || {});
-            
-            if (userJobs.length > 0) {
-                container.innerHTML = userJobs.map(job => `
-                    <div class="card job-card">
-                        <div class="card-header">
-                            <h3 class="card-title">${job.title || job.role || 'Project'}</h3>
-                            <span class="status-badge status-${getJobStatus(parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate()))}">
-                                ${getJobStatus(parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate()))}
-                            </span>
-                        </div>
-                        <div class="job-details">
-                            <div class="job-info">
-                                <div class="info-item">
-                                    <span class="label">Location:</span>
-                                    <span class="value">${job.location || 'N/A'}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="label">Rate:</span>
-                                    <span class="value highlight">${job.rate || 'N/A'}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="label">Start Date:</span>
-                                    <span class="value">${formatDisplayDate(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}</span>
-                                </div>
-                            </div>
-                            <div class="job-timeline">
-                                <h4>Project Timeline</h4>
-                                <div class="timeline">
-                                    ${renderTimelineSteps(job)}
-                                </div>
-                            </div>
-                            <div class="job-payment-section">
-                                <h4>Payment Method</h4>
-                                <div class="payment-info">
-                                    ${currentUser.paymentMethod ? `
-                                        <div class="payment-method">
-                                            <i class="fas fa-check-circle"></i>
-                                            <span>${currentUser.paymentMethod.toUpperCase()}</span>
-                                        </div>
-                                        <button onclick="showPaymentModal()" class="btn btn-secondary">
-                                            <i class="fas fa-edit"></i>
-                                            Update Payment Method
-                                        </button>
-                                    ` : `
-                                        <div class="no-payment">
-                                            <i class="fas fa-exclamation-circle"></i>
-                                            <p>Payment method not configured</p>
-                                            <button onclick="showPaymentModal()" class="btn btn-primary">
-                                                <i class="fas fa-plus"></i>
-                                                Set Payment Method
-                                            </button>
-                                        </div>
-                                    `}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
+            if (!userJobs.length) {
                 container.innerHTML = `
                     <div class="card no-jobs-card">
                         <div class="no-jobs-content">
@@ -2490,6 +2432,124 @@
                         </div>
                     </div>
                 `;
+                return;
+            }
+
+            // Helper: compute start date and status for a job
+            const getStartFor = (job) => parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate());
+            const now = new Date();
+
+            // Determine primary (active or nearest upcoming), next-up, and others
+            const inProgress = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'in-progress');
+            const upcoming = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'upcoming')
+                .sort((a,b) => getStartFor(a) - getStartFor(b));
+            const completed = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'completed')
+                .sort((a,b) => getStartFor(b) - getStartFor(a));
+
+            const primary = inProgress[0] || upcoming[0] || userJobs[0];
+            const nextUp = upcoming.find(j => j !== primary) || null;
+            const others = userJobs.filter(j => j !== primary && j !== nextUp);
+
+            // Build UI
+            const parts = [];
+
+            // Primary full timeline
+            if (primary) {
+                parts.push(renderFullJobCard(primary, 'Primary Assignment'));
+            }
+
+            // Next up compact card
+            if (nextUp) {
+                parts.push(`
+                    <div class="card job-card" style="margin-top: 1rem;">
+                        ${renderCompactJobCard(nextUp, 'Next Up')}
+                    </div>
+                `);
+            }
+
+            // Other jobs grid (compact)
+            if (others.length) {
+                parts.push(`
+                    <div class="card" style="margin-top: 1rem;">
+                        <div class="card-header"><h3 class="card-title">Other Assignments</h3></div>
+                        <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem;">
+                            ${others.map(j => `<div class="job-card">${renderCompactJobCard(j)}</div>`).join('')}
+                        </div>
+                    </div>
+                `);
+            }
+
+            container.innerHTML = parts.join('');
+        }
+
+        // Render a full timeline card for a specific job
+        function renderFullJobCard(job, label) {
+            const status = getJobStatus(parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate()));
+            return `
+                <div class="card job-card">
+                    <div class="card-header">
+                        <h3 class="card-title">${job.title || job.role || 'Project'}${label ? ` <small style="opacity:.7;font-weight:400">• ${label}</small>` : ''}</h3>
+                        <span class="status-badge status-${status}">${status}</span>
+                    </div>
+                    <div class="job-details">
+                        <div class="job-info">
+                            <div class="info-item"><span class="label">Location:</span><span class="value">${job.location || 'N/A'}</span></div>
+                            <div class="info-item"><span class="label">Rate:</span><span class="value highlight">${job.rate || 'N/A'}</span></div>
+                            <div class="info-item"><span class="label">Start Date:</span><span class="value">${formatDisplayDate(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}</span></div>
+                        </div>
+                        <div class="job-timeline">
+                            <h4>Project Timeline</h4>
+                            <div class="timeline">${renderTimelineSteps(job)}</div>
+                        </div>
+                        <div class="job-payment-section">
+                            <h4>Payment Method</h4>
+                            <div class="payment-info">
+                                ${currentUser.paymentMethod ? `
+                                    <div class="payment-method"><i class="fas fa-check-circle"></i><span>${currentUser.paymentMethod.toUpperCase()}</span></div>
+                                    <button onclick="showPaymentModal()" class="btn btn-secondary"><i class="fas fa-edit"></i>Update Payment Method</button>
+                                ` : `
+                                    <div class="no-payment"><i class="fas fa-exclamation-circle"></i><p>Payment method not configured</p>
+                                        <button onclick="showPaymentModal()" class="btn btn-primary"><i class="fas fa-plus"></i>Set Payment Method</button>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render a compact job card (no full timeline)
+        function renderCompactJobCard(job, badgeLabel) {
+            const status = getJobStatus(parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate()));
+            return `
+                <div class="card-header">
+                    <h3 class="card-title">${job.title || job.role || 'Project'}</h3>
+                    <span class="status-badge status-${status}">${badgeLabel || status}</span>
+                </div>
+                <div class="job-details">
+                    <div class="job-info">
+                        <div class="info-item"><span class="label">Location:</span><span class="value">${job.location || 'N/A'}</span></div>
+                        <div class="info-item"><span class="label">Rate:</span><span class="value highlight">${job.rate || 'N/A'}</span></div>
+                        <div class="info-item"><span class="label">Start Date:</span><span class="value">${formatDisplayDate(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}</span></div>
+                    </div>
+                    <div style="padding:1rem 0 0.25rem">
+                        <div class="progress-bar" style="height:8px; background:rgba(255,255,255,0.08); border-radius:6px; overflow:hidden;">
+                            <div class="progress-fill" style="height:100%; width:${getProjectProgressForJob(job)}%; background:linear-gradient(90deg,#00d4ff,#00ffa3);"></div>
+                        </div>
+                        <small style="opacity:.8">${getProjectProgressForJob(job)}% Complete</small>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getProjectProgressForJob(job){
+            const status = (job && (job.projectStatus || job.status)) || 'upcoming';
+            switch (status) {
+                case 'upcoming': return 0;
+                case 'in-progress': return 50;
+                case 'completed': return 100;
+                default: return 0;
             }
         }
 
