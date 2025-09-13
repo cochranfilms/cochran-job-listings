@@ -275,7 +275,7 @@ class MessagingService {
                 });
             
             this.messageListeners.set(conversationId, unsubscribe);
-            
+            return unsubscribe;
         } catch (error) {
             console.error('❌ Failed to set up message listener:', error);
         }

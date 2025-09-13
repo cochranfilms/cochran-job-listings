@@ -30,6 +30,7 @@
     <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
     <!-- Firebase Configuration and Data Manager -->
     <script defer src="firebase-config.js"></script>
@@ -8385,7 +8386,7 @@
                 }
 
                 conversationsList.innerHTML = conversations.map(conv => `
-                    <div class="conversation-item" onclick="adminSelectConversation('${conv.id}')">
+                    <div class="conversation-item" data-conversation-id="${conv.id}" onclick="adminSelectConversation('${conv.id}', event)">
                         <div class="conversation-header">
                             <span class="conversation-participant">${getAdminParticipantName(conv)}</span>
                             <span class="conversation-time">${adminMessagingService.formatTimestamp(conv.lastMessageTime)}</span>
@@ -8413,7 +8414,7 @@
         }
 
         // Select a conversation (admin)
-        async function adminSelectConversation(conversationId) {
+        async function adminSelectConversation(conversationId, ev) {
             try {
                 adminCurrentConversationId = conversationId;
                 
@@ -8421,7 +8422,12 @@
                 document.querySelectorAll('.conversation-item').forEach(item => {
                     item.classList.remove('active');
                 });
-                event.currentTarget.classList.add('active');
+                if (ev && ev.currentTarget) {
+                    ev.currentTarget.classList.add('active');
+                } else {
+                    const el = document.querySelector(`.conversation-item[data-conversation-id="${conversationId}"]`);
+                    if (el) el.classList.add('active');
+                }
                 
                 // Show chat panel
                 document.getElementById('adminChatHeader').style.display = 'flex';

@@ -20014,7 +20014,7 @@
             }
 
             conversationsList.innerHTML = conversations.map(conv => `
-                <div class="conversation-item" onclick="selectConversation('${conv.id}')">
+                <div class="conversation-item" data-conversation-id="${conv.id}" onclick="selectConversation('${conv.id}', event)">
                     <div class="conversation-header">
                         <span class="conversation-participant">${getParticipantName(conv)}</span>
                         <span class="conversation-time">${messagingService.formatTimestamp(conv.lastMessageTime)}</span>
@@ -20066,7 +20066,7 @@
     }
 
     // Select a conversation
-    async function selectConversation(conversationId) {
+    async function selectConversation(conversationId, ev) {
         try {
             currentConversationId = conversationId;
             
@@ -20074,7 +20074,12 @@
             document.querySelectorAll('.conversation-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.currentTarget.classList.add('active');
+            if (ev && ev.currentTarget) {
+                ev.currentTarget.classList.add('active');
+            } else {
+                const el = document.querySelector(`.conversation-item[data-conversation-id="${conversationId}"]`);
+                if (el) el.classList.add('active');
+            }
             
             // Show chat panel
             document.getElementById('chatHeader').style.display = 'flex';
