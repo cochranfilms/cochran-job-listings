@@ -216,6 +216,7 @@
                 const apEl = document.getElementById('activeProjectCount');
                 if (apEl) apEl.textContent = activeProjects ? `${activeProjects} ${activeProjects === 1 ? 'Project' : 'Projects'}` : '0 Projects';
 
+                // Messages + replies count
                 const msgCount = Array.isArray(messages) ? messages.length : 0;
                 const umEl = document.getElementById('unreadMessageCount');
                 if (umEl) umEl.textContent = `${msgCount} ${msgCount === 1 ? 'Message' : 'Messages'}`;
@@ -8373,6 +8374,21 @@
                 window.addEventListener('firestore:dataChange', function(event) {
                     if (event.detail.collection === 'messages') {
                         loadMessages();
+                    } else if (event.detail.collection === 'replies') {
+                        // Merge new replies into messages in memory for rendering
+                        const data = event.detail.data || {};
+                        const msg = messages.find(m => String(m.id) === String(data.messageId));
+                        if (msg) {
+                            msg._replies = Array.isArray(msg._replies) ? msg._replies : [];
+                            const exists = msg._replies.some(r => r.id === event.detail.docId);
+                            if (!exists) {
+                                msg._replies.push({ id: event.detail.docId, ...data });
+                                displayMessages();
+                            }
+                        } else {
+                            // If message not loaded yet, reload all
+                            loadMessages();
+                        }
                     }
                 });
             }
@@ -8385,6 +8401,14 @@
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
                     messages = await window.FirestoreDataManager.getMessages();
+                    // Load replies per message for inline display
+                    try {
+                        const enriched = await Promise.all(messages.map(async (m) => {
+                            const replies = await window.FirestoreDataManager.getRepliesByMessageId(String(m.id));
+                            return { ...m, _replies: replies };
+                        }));
+                        messages = enriched;
+                    } catch(_) {}
                     if (messages.length === 0) {
                         // Add sample messages if none exist
                         await addSampleMessages();
@@ -8440,7 +8464,7 @@
             }
         }
         
-        // Display messages
+        // Display messages (with replies)
         function displayMessages() {
             const container = document.getElementById('messagesContainer');
             if (!container) return;
@@ -8452,8 +8476,21 @@
             
             const sortedMessages = messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
-            container.innerHTML = sortedMessages.map(message => `
-                <div class="message-item">
+            container.innerHTML = sortedMessages.map(message => {
+                const repliesHtml = Array.isArray(message._replies)
+                    ? message._replies.map(r => `
+                        <div class="reply-item">
+                            <div class="reply-avatar">${r.authorAvatar ? `<img src="${r.authorAvatar}" alt="${r.author}">` : `<div class=\"placeholder\"><i class=\"fas fa-user\"></i></div>`}</div>
+                            <div class="reply-content">
+                                <div class="reply-header">
+                                    <div class="reply-author">${r.author}</div>
+                                    <div class="reply-time">${formatMessageTime(r.timestamp)}</div>
+                                </div>
+                                <div class="reply-text">${r.text}</div>
+                            </div>
+                        </div>`).join('') : '';
+                return `
+                <div class="message-item" data-message-id="${message.id}">
                     <div class="message-avatar">
                         ${message.authorAvatar ? 
                             `<img src="${message.authorAvatar}" alt="${message.author}">` : 
@@ -8471,14 +8508,15 @@
                                 <i class="fas fa-heart"></i>
                                 <span>${message.likes}</span>
                             </button>
-                            <button class="message-reply-btn" onclick="replyToMessage(${message.id})">
+                            <button class="message-reply-btn" onclick="openReplyComposer(${message.id}, '${(message.authorEmail||'').toLowerCase()}', '${(message.author||'').replace(/'/g, "&#39;")}')">
                                 <i class="fas fa-reply"></i>
                                 <span>Reply</span>
                             </button>
                         </div>
+                        <div class="replies-container">${repliesHtml}</div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
             
             // Auto-scroll to bottom
             container.scrollTop = container.scrollHeight;
@@ -8543,9 +8581,74 @@
             }
         }
         
-        // Reply to message (placeholder)
-        function replyToMessage(messageId) {
-            showNotification('Reply feature coming soon!', 'info');
+        // Open reply composer modal
+        function openReplyComposer(messageId, toEmail, toAuthor) {
+            const modal = document.createElement('div');
+            modal.className = 'new-message-modal';
+            modal.innerHTML = `
+                <div class="new-message-content">
+                    <div class="new-message-header">
+                        <h3>Reply to ${toAuthor || 'message'}</h3>
+                        <button class="close-modal" onclick="closeNewMessageModal()"><i class="fas fa-times"></i></button>
+                    </div>
+                    <form class="new-message-form" onsubmit="handleReplySubmit(event, '${messageId}', '${(toEmail||'').toLowerCase()}', '${(toAuthor||'').replace(/'/g, "&#39;")}')">
+                        <textarea id="newReplyText" placeholder="Write your reply..." required></textarea>
+                        <div class="new-message-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeNewMessageModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Send Reply</button>
+                        </div>
+                    </form>
+                </div>`;
+            document.body.appendChild(modal);
+            document.getElementById('newReplyText').focus();
+        }
+
+        async function handleReplySubmit(event, messageId, toEmail, toAuthor) {
+            event.preventDefault();
+            const textarea = document.getElementById('newReplyText');
+            const text = (textarea && textarea.value ? textarea.value.trim() : '');
+            if (!text) return;
+
+            const reply = {
+                messageId: String(messageId),
+                author: (currentUser && (currentUser.name || (currentUser.email && currentUser.email.split('@')[0]))) || 'Unknown',
+                authorEmail: (currentUser && currentUser.email) || '',
+                authorAvatar: (currentUser && currentUser.profilePicture) || null,
+                text: text,
+                toEmail: toEmail || '',
+                toAuthor: toAuthor || ''
+            };
+
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
+                    await window.FirestoreDataManager.addReply(reply);
+                    if (toEmail) {
+                        try {
+                            await window.FirestoreDataManager.sendUserNotification({
+                                toEmail,
+                                title: 'New Reply to Your Message',
+                                message: `${reply.author} replied: ${text.substring(0, 120)}${text.length > 120 ? '…' : ''}`,
+                                type: 'info',
+                                data: { messageId }
+                            });
+                        } catch(_) {}
+                    }
+                } else {
+                    // Local fallback: attach to in-memory message
+                    const msg = messages.find(m => String(m.id) === String(messageId));
+                    if (msg) {
+                        msg._replies = Array.isArray(msg._replies) ? msg._replies : [];
+                        msg._replies.push({ ...reply, id: Date.now(), timestamp: new Date().toISOString() });
+                        saveMessages();
+                        displayMessages();
+                    }
+                }
+                closeNewMessageModal();
+                showNotification('Reply sent!', 'success');
+            } catch (e) {
+                console.error('Error sending reply:', e);
+                showNotification('Error sending reply. Please try again.', 'error');
+            }
         }
         
         // Show new message modal
@@ -17606,6 +17709,15 @@
                 padding: 0.5rem;
             }
         }
+        /* Replies styling */
+        .replies-container { margin-top: 8px; padding-left: 56px; }
+        .reply-item { display: flex; gap: 12px; margin: 10px 0; }
+        .reply-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: var(--bg-2); display: flex; align-items: center; justify-content: center; }
+        .reply-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .reply-content { background: var(--bg-2); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); width: 100%; }
+        .reply-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .reply-author { font-weight: 600; }
+        .reply-time { font-size: 12px; color: var(--muted-2); }
     </style>
 </head>
 <body>

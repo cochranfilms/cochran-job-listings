@@ -14,6 +14,8 @@ const FirestoreDataManager = {
         dropdownOptions: 'dropdownOptions', // centralized dropdowns
         contracts: 'contracts',
         messages: 'messages', // team messaging board
+        replies: 'replies', // message replies (threaded)
+        notifications: 'notifications', // cross-user notifications
         showcases: 'showcases', // project showcases
         portfolios: 'portfolios', // user-owned portfolio profiles and galleries
         events: 'events', // company events and calendar
@@ -108,6 +110,26 @@ const FirestoreDataManager = {
                     this.handleMessagesUpdate(snapshot);
                 }, (error) => {
                     console.error('❌ Messages listener error:', error);
+                });
+
+            // Listen for replies changes
+            this.db.collection(this.collections.replies)
+                .orderBy('timestamp', 'asc')
+                .onSnapshot((snapshot) => {
+                    console.log('↩️ Replies collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleRepliesUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Replies listener error:', error);
+                });
+
+            // Listen for notifications changes
+            this.db.collection(this.collections.notifications)
+                .orderBy('timestamp', 'desc')
+                .onSnapshot((snapshot) => {
+                    console.log('🔔 Notifications collection updated:', snapshot.docChanges().length, 'changes');
+                    this.handleNotificationsUpdate(snapshot);
+                }, (error) => {
+                    console.error('❌ Notifications listener error:', error);
                 });
 
             // Listen for portfolios changes
@@ -277,6 +299,40 @@ const FirestoreDataManager = {
             } else if (change.type === 'removed') {
                 console.log('💬 Message removed:', change.doc.id);
                 this.notifyDataChange('messages', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle replies collection updates
+    handleRepliesUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('↩️ New reply added:', change.doc.id);
+                this.notifyDataChange('replies', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('↩️ Reply modified:', change.doc.id);
+                this.notifyDataChange('replies', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('↩️ Reply removed:', change.doc.id);
+                this.notifyDataChange('replies', 'removed', change.doc.id, change.doc.data());
+            }
+        });
+    },
+
+    // Handle notifications collection updates
+    handleNotificationsUpdate(snapshot) {
+        const changes = snapshot.docChanges();
+        changes.forEach((change) => {
+            if (change.type === 'added') {
+                console.log('🔔 New notification added:', change.doc.id);
+                this.notifyDataChange('notifications', 'added', change.doc.id, change.doc.data());
+            } else if (change.type === 'modified') {
+                console.log('🔔 Notification modified:', change.doc.id);
+                this.notifyDataChange('notifications', 'modified', change.doc.id, change.doc.data());
+            } else if (change.type === 'removed') {
+                console.log('🔔 Notification removed:', change.doc.id);
+                this.notifyDataChange('notifications', 'removed', change.doc.id, change.doc.data());
             }
         });
     },
@@ -1723,6 +1779,75 @@ Object.assign(FirestoreDataManager, {
         } catch (error) {
             console.error('❌ Error getting messages:', error);
             return [];
+        }
+    },
+
+    // Replies Operations
+    async getRepliesByMessageId(messageId) {
+        try {
+            const snapshot = await this.db.collection(this.collections.replies)
+                .where('messageId', '==', messageId)
+                .orderBy('timestamp', 'asc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('❌ Error getting replies:', error);
+            return [];
+        }
+    },
+
+    async addReply(replyData) {
+        try {
+            const payload = {
+                messageId: replyData.messageId,
+                parentReplyId: replyData.parentReplyId || null,
+                author: replyData.author || 'Unknown',
+                authorEmail: (replyData.authorEmail || '').toLowerCase(),
+                authorAvatar: replyData.authorAvatar || null,
+                text: replyData.text || '',
+                timestamp: new Date().toISOString(),
+                createdAt: new Date(),
+                toEmail: (replyData.toEmail || '').toLowerCase(),
+                toAuthor: replyData.toAuthor || ''
+            };
+            const docRef = await this.db.collection(this.collections.replies).add(payload);
+            console.log('✅ Reply added with ID:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('❌ Error adding reply:', error);
+            throw error;
+        }
+    },
+
+    async deleteReply(replyId) {
+        try {
+            await this.db.collection(this.collections.replies).doc(replyId).delete();
+            console.log('✅ Reply deleted:', replyId);
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting reply:', error);
+            throw error;
+        }
+    },
+
+    // Notification Operations (Firestore-backed for cross-user delivery)
+    async sendUserNotification({ toEmail, title, message, type = 'info', data = {} }) {
+        try {
+            const payload = {
+                toEmail: (toEmail || '').toLowerCase(),
+                title,
+                message,
+                type,
+                data,
+                timestamp: new Date().toISOString(),
+                read: false
+            };
+            const docRef = await this.db.collection(this.collections.notifications).add(payload);
+            console.log('✅ Notification queued for', payload.toEmail, 'id:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('❌ Error sending notification:', error);
+            throw error;
         }
     },
 
