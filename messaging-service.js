@@ -190,25 +190,37 @@ class MessagingService {
             if (!this.currentUser) return;
             
             // Query in two steps to avoid composite index requirement:
-            // Fetch active conversations first, then filter by participant client-side.
+            // Fetch active conversations first (no orderBy to avoid index),
+            // then filter by participant and sort client-side by lastMessageTime desc.
             const activeQuery = this.firestore
                 .collection('directMessages')
-                .where('isActive', '==', true)
-                .orderBy('lastMessageTime', 'desc');
+                .where('isActive', '==', true);
             
             const snapshot = await activeQuery.get();
             this.conversations.clear();
-            
+
+            const matching = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
                 if (Array.isArray(data.participants) && data.participants.includes(this.currentUser.email)) {
-                    this.conversations.set(doc.id, {
+                    matching.push({
                         id: doc.id,
                         ...data,
                         unreadCount: this.getUnreadCount(data.readStatus)
                     });
                 }
             });
+
+            // Sort by lastMessageTime descending (missing/null last)
+            matching.sort((a, b) => {
+                const ta = a.lastMessageTime && a.lastMessageTime.toMillis ? a.lastMessageTime.toMillis() : 0;
+                const tb = b.lastMessageTime && b.lastMessageTime.toMillis ? b.lastMessageTime.toMillis() : 0;
+                return tb - ta;
+            });
+
+            for (const conv of matching) {
+                this.conversations.set(conv.id, conv);
+            }
             
             console.log('✅ Loaded conversations:', this.conversations.size);
             return Array.from(this.conversations.values());
