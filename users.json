@@ -245,10 +245,34 @@
       },
       "jobs": {},
       "primaryJob": null
+    },
+    "Eric John": {
+      "profile": {
+        "email": "codylcochran87@gmail.com",
+        "location": "Atlanta, GA",
+        "role": "",
+        "projectType": ""
+      },
+      "contract": {
+        "contractStatus": "pending"
+      },
+      "application": {
+        "status": "pending",
+        "submittedAt": "2025-09-13T10:41:01.578Z",
+        "jobTitle": "OBS Tech Assistant",
+        "eventDate": "2025-09-15",
+        "pay": "$400",
+        "description": "I need an OBS Tech for the software and connecting via a capture card.",
+        "phone": "4704202169",
+        "portfolio": "https://pitch.cochranfilms.com",
+        "source": "apply-html"
+      },
+      "jobs": {},
+      "primaryJob": null
     }
   },
   "statusOptions": {},
   "lastUpdated": "2025-09-13",
-  "totalUsers": 10,
+  "totalUsers": 11,
   "system": {}
 }
