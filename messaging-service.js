@@ -105,7 +105,12 @@ class MessagingService {
             
             // Sort participants to create consistent conversation IDs
             const sortedParticipants = participants.sort();
-            const conversationId = sortedParticipants.join('_').replace(/[^a-zA-Z0-9_]/g, '_');
+            let conversationId = sortedParticipants.join('_').replace(/[^a-zA-Z0-9_]/g, '_');
+
+            // Special case: broadcasts use a dedicated conversation id to avoid clashing with any single-user threads
+            if (sortedParticipants.length === 1 && String(sortedParticipants[0]).toLowerCase() === 'broadcasts') {
+                conversationId = 'broadcasts_all_users';
+            }
             
             const conversationData = {
                 id: conversationId,

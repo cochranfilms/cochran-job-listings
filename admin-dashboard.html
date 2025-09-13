@@ -722,7 +722,7 @@
             background: var(--card-bg);
             border-radius: var(--border-radius);
             border: 1px solid rgba(255,255,255,0.1);
-            overflow: hidden;
+            overflow: visible; /* allow inline popups to render fully */
         }
 
         .conversations-panel {
@@ -761,9 +761,9 @@
         /* Inline user picker (AI theme) */
         .user-picker {
             position: absolute;
-            top: 72px;
-            right: 12px;
-            width: 360px;
+            top: 70px;
+            left: 12px;
+            width: 340px;
             max-height: 420px;
             background: rgba(17,24,39,0.92);
             border: 1px solid rgba(99,102,241,0.30);
@@ -773,12 +773,12 @@
             z-index: 12000;
         }
         .user-picker.hidden { display: none; }
-        .user-picker .up-header { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.08); }
-        .user-picker .up-header input { flex:1; height:38px; border-radius:10px; border:1px solid rgba(99,102,241,0.25); background: rgba(12,18,32,0.55); color:#e5e7eb; padding:0 12px; }
+        .user-picker .up-header { display:flex; align-items:center; gap:10px; padding:12px; border-bottom:1px solid rgba(255,255,255,0.08); }
+        .user-picker .up-header input { flex:1; height:40px; border-radius:12px; border:1px solid rgba(99,102,241,0.25); background: rgba(12,18,32,0.65); color:#e5e7eb; padding:0 12px; }
         .user-picker .up-list { max-height: 340px; overflow:auto; }
-        .user-picker .up-item { display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.06); }
+        .user-picker .up-item { display:flex; align-items:center; gap:12px; padding:12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.06); }
         .user-picker .up-item:hover { background: rgba(99,102,241,0.10); }
-        .user-picker .up-avatar { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background: linear-gradient(135deg,#22d3ee,#a78bfa); color:#0b1020; font-weight:800; font-size:.85rem; }
+        .user-picker .up-avatar { width:32px; height:32px; border-radius:50%; display:grid; place-items:center; background: linear-gradient(135deg,#22d3ee,#a78bfa); color:#0b1020; font-weight:800; font-size:.9rem; }
         .user-picker .up-meta { display:flex; flex-direction:column; }
         .user-picker .up-meta .name { color:#eef2ff; font-weight:700; font-size:.92rem; }
         .user-picker .up-meta .email { color:#c7d2fe; opacity:.85; font-size:.82rem; }
@@ -8552,10 +8552,13 @@
         // Get participant name for admin display
         function getAdminParticipantName(conversation) {
             const adminEmails = window.FirebaseConfig?.getAdminUsers() || [];
-            const otherParticipants = conversation.participants.filter(email => !adminEmails.includes(email));
-            
-            if (otherParticipants.length === 0) return 'System';
-            return otherParticipants[0].split('@')[0]; // Show username part
+            const others = (conversation.participants || []).filter(email => !adminEmails.includes(email));
+            // Dedicated broadcast thread label
+            if (others.length === 1 && String(others[0]).toLowerCase() === 'broadcasts') {
+                return 'Broadcasts';
+            }
+            if (others.length === 0) return 'System';
+            return others[0].split('@')[0];
         }
 
         // Select a conversation (admin)
@@ -8890,6 +8893,10 @@
                     const adminEmails = (window.FirebaseConfig && window.FirebaseConfig.getAdminUsers) ? window.FirebaseConfig.getAdminUsers() : [];
                     const recipients = users.map(u => u.profile.email).filter(e => e && !adminEmails.includes(String(e).toLowerCase()));
                     if (!recipients.length) { showAdminNotification('Broadcast','No recipients found','info'); return; }
+                    // ensure dedicated broadcast thread exists and is selected
+                    let broadcastsConvId = null;
+                    try { broadcastsConvId = await adminMessagingService.createConversation(['broadcasts']); } catch(_) {}
+                    if (broadcastsConvId) { try { await adminSelectConversation(broadcastsConvId); } catch(_) {} }
                     let sentCount = 0;
                     for (const email of recipients) {
                         try {
@@ -8900,6 +8907,8 @@
                             console.warn('Broadcast send failed for', email, e);
                         }
                     }
+                    // Log to broadcast thread
+                    if (broadcastsConvId) { try { await adminMessagingService.sendMessage(broadcastsConvId, `[Broadcast] ${message}`, []); } catch(_) {} }
                     if (input) input.value = '';
                     adminToggleBroadcast(false);
                     showAdminNotification('Broadcast', `Message sent to ${sentCount} users`, 'success');
