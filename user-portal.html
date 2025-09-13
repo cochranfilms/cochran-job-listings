@@ -2371,22 +2371,32 @@
             }
         }
 
-        // Helper function to get selected job
+        // Helper function to get selected job (prioritizes most recent upcoming job)
         function getSelectedJob() {
             if (!currentUser || !currentUser.jobs) return null;
-            const jobKeys = Object.keys(currentUser.jobs);
-            if (jobKeys.length === 0) return null;
-            // Prefer primaryJob if valid, else first key
-            const key = (currentUser.primaryJob && currentUser.jobs[currentUser.primaryJob]) ? currentUser.primaryJob : jobKeys[0];
-            const selected = currentUser.jobs[key];
+            const userJobs = Object.values(currentUser.jobs);
+            if (userJobs.length === 0) return null;
+            
+            // Helper: compute start date and status for a job
+            const getStartFor = (job) => parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate());
+            const now = new Date();
+
+            // Determine primary (active or nearest upcoming), same logic as displayCurrentJobs
+            const inProgress = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'in-progress');
+            const upcoming = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'upcoming')
+                .sort((a,b) => getStartFor(a) - getStartFor(b));
+            
+            // Prioritize: in-progress jobs first, then nearest upcoming job
+            const primary = inProgress[0] || upcoming[0] || userJobs[0];
+            
             // Normalize fields
-            if (selected) {
-                selected.title = selected.title || selected.role || 'Project';
-                selected.projectStart = selected.projectStart || selected.date || currentUser.application?.eventDate || '';
-                selected.location = selected.location || currentUser.profile?.location || '';
-                selected.rate = selected.rate || currentUser.profile?.rate || '';
+            if (primary) {
+                primary.title = primary.title || primary.role || 'Project';
+                primary.projectStart = primary.projectStart || primary.date || currentUser.application?.eventDate || '';
+                primary.location = primary.location || currentUser.profile?.location || '';
+                primary.rate = primary.rate || currentUser.profile?.rate || '';
             }
-            return selected;
+            return primary;
         }
         // Resolve a job's start date from Firestore listing first (per-job)
         function getListingStartDateFor(job){
@@ -2450,36 +2460,93 @@
             const nextUp = upcoming.find(j => j !== primary) || null;
             const others = userJobs.filter(j => j !== primary && j !== nextUp);
 
-            // Build UI
+            // Build UI with tabs for better organization
             const parts = [];
 
-            // Primary full timeline
-            if (primary) {
-                parts.push(renderFullJobCard(primary, 'Primary Assignment'));
-            }
+            // Add tab navigation
+            parts.push(`
+                <div class="jobs-tabs" style="margin-bottom: 1.5rem;">
+                    <button class="tab-button active" onclick="switchJobsTab('current')" id="currentTab">
+                        <i class="fas fa-star"></i> Current & Upcoming
+                    </button>
+                    <button class="tab-button" onclick="switchJobsTab('all')" id="allTab">
+                        <i class="fas fa-list"></i> All Jobs (${userJobs.length})
+                    </button>
+                </div>
+            `);
 
-            // Next up compact card
-            if (nextUp) {
-                parts.push(`
-                    <div class="card job-card" style="margin-top: 1rem;">
-                        ${renderCompactJobCard(nextUp, 'Next Up')}
-                    </div>
-                `);
-            }
+            // Current & Upcoming tab content
+            parts.push(`
+                <div id="currentJobsContent" class="tab-content">
+                    ${primary ? renderFullJobCard(primary, 'Current Assignment') : ''}
+                    ${nextUp ? `
+                        <div class="card job-card" style="margin-top: 1rem;">
+                            ${renderCompactJobCard(nextUp, 'Next Up')}
+                        </div>
+                    ` : ''}
+                    ${others.length ? `
+                        <div class="card" style="margin-top: 1rem;">
+                            <div class="card-header"><h3 class="card-title">Other Upcoming</h3></div>
+                            <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem;">
+                                ${others.filter(j => getJobStatus(getStartFor(j)) === 'upcoming').map(j => `<div class="job-card">${renderCompactJobCard(j)}</div>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `);
 
-            // Other jobs grid (compact)
-            if (others.length) {
-                parts.push(`
-                    <div class="card" style="margin-top: 1rem;">
-                        <div class="card-header"><h3 class="card-title">Other Assignments</h3></div>
-                        <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem;">
-                            ${others.map(j => `<div class="job-card">${renderCompactJobCard(j)}</div>`).join('')}
+            // All Jobs tab content
+            parts.push(`
+                <div id="allJobsContent" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">All Your Jobs</h3>
+                            <p style="margin: 0.5rem 0 0; opacity: 0.8; font-size: 0.9rem;">
+                                Complete overview of all your assignments, past and present
+                            </p>
+                        </div>
+                        <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;padding:1rem;">
+                            ${userJobs.map(job => {
+                                const status = getJobStatus(getStartFor(job));
+                                const statusClass = status === 'completed' ? 'completed' : status === 'in-progress' ? 'in-progress' : 'upcoming';
+                                return `
+                                    <div class="job-card ${statusClass}">
+                                        <div class="card-header">
+                                            <h4>${job.title || job.role || 'Project'}</h4>
+                                            <span class="status-badge status-${statusClass}">${status}</span>
+                                        </div>
+                                        <div class="job-info">
+                                            <div class="info-item"><span class="label">Date:</span><span class="value">${formatDisplayDate(getStartFor(job))}</span></div>
+                                            <div class="info-item"><span class="label">Location:</span><span class="value">${job.location || 'N/A'}</span></div>
+                                            <div class="info-item"><span class="label">Rate:</span><span class="value highlight">${job.rate || 'N/A'}</span></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
                     </div>
-                `);
-            }
+                </div>
+            `);
 
             container.innerHTML = parts.join('');
+        }
+
+        // Switch between job tabs
+        function switchJobsTab(tabName) {
+            const currentTab = document.getElementById('currentTab');
+            const allTab = document.getElementById('allTab');
+            const currentContent = document.getElementById('currentJobsContent');
+            const allContent = document.getElementById('allJobsContent');
+
+            if (!currentTab || !allTab || !currentContent || !allContent) return;
+
+            // Update tab buttons
+            currentTab.classList.toggle('active', tabName === 'current');
+            allTab.classList.toggle('active', tabName === 'all');
+
+            // Update content visibility
+            currentContent.style.display = tabName === 'current' ? 'block' : 'none';
+            allContent.style.display = tabName === 'all' ? 'block' : 'none';
         }
 
         // Render a full timeline card for a specific job
@@ -16120,6 +16187,67 @@
             background: linear-gradient(135deg, #FFB200, #FFD700);
             color: #1a1a1a;
             font-weight: 600;
+        }
+
+        /* Jobs tab styles */
+        .jobs-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-button {
+            background: rgba(255, 178, 0, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 178, 0, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,178,0,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .tab-button:hover::before {
+            left: 100%;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 178, 0, 0.2);
+            border-color: rgba(255, 178, 0, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255,178,0,0.2);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            color: #000;
+            border-color: #FFB200;
+            box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .tab-content {
+            display: block;
+        }
+
+        .tab-content.hidden {
+            display: none;
         }
 
         .performance-tab-content {

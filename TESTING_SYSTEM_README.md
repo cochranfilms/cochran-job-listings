@@ -23,6 +23,22 @@ How to test quickly (old script workflow):
   5. Legacy GitHub URLs should still work as fallbacks for existing contracts.
 
 ### 2025-09-12 — User Portal: Multi-job timelines and all-contracts listing
+
+### 2025-09-12 — User Portal: Job Prioritization and Tabbed Interface
+
+- Files: `user-portal.html`
+- Changes: 
+  - Fixed `getSelectedJob()` to prioritize most recent upcoming job instead of `primaryJob` or first job
+  - Added tabbed interface with "Current & Upcoming" and "All Jobs" tabs
+  - Enhanced job display logic to show strategic job prioritization
+  - Added CSS styles for new tab buttons matching existing design system
+- Test:
+  1. Ensure a user has multiple jobs with different dates (some upcoming, some completed)
+  2. Open `user-portal.html` and sign in as that user
+  3. Verify "Current & Upcoming" tab shows the most recent upcoming job as primary
+  4. Verify "All Jobs" tab shows all jobs with proper status indicators
+  5. Test tab switching functionality works smoothly
+  6. Verify job prioritization logic correctly identifies upcoming vs completed jobs
 ### 2025-09-13 — Community Likes fix (comments + showcases)
 
 - Files: `user-portal.html`

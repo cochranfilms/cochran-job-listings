@@ -17,6 +17,16 @@
 - Email notifications now contain Firestore Storage download links instead of GitHub URLs.
 
 ## 2025-09-12 — Multi-job timelines and all-contracts listing (portal)
+
+## 2025-09-12 — Job Prioritization and User Experience Enhancement
+- Scope: `user-portal.html`
+- Changes:
+  - Fixed `getSelectedJob()` function to prioritize most recent upcoming job instead of `primaryJob` or first job
+  - Added tabbed interface with "Current & Upcoming" and "All Jobs" tabs for better job organization
+  - Enhanced job display logic to show strategic job prioritization based on dates and status
+  - Added CSS styles for new tab buttons matching existing design system
+- Impact: Users can now clearly distinguish between their most important upcoming job and all their jobs
+- Maintenance: Job prioritization logic uses same date parsing as `displayCurrentJobs()` for consistency
 ## 2025-09-13 — Community Likes inline-handler cleanup
 - Firestore persistence: Likes now update `messages/<id>.likes` and `showcases/<id>.likes` with a `likedBy[]` deduped by email. When `FirestoreDataManager` is unavailable, localStorage fallback remains for dev-only.
 - Notifications: After a successful like, a `notifications` doc is created for the content author via `sendUserNotification()`.
