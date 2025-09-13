@@ -51,6 +51,42 @@ service cloud.firestore {
         request.auth.token.email == 'admin@cochranfilms.com'
       );
     }
+
+    // Direct Messages - conversations between users and admins
+    match /directMessages/{conversationId} {
+      allow read, write: if request.auth != null && (
+        // Admin users can access all conversations
+        request.auth.token.email == 'cody@cochranfilms.com' ||
+        request.auth.token.email == 'info@cochranfilms.com' ||
+        request.auth.token.email == 'admin@cochranfilms.com' ||
+        // Regular users can only access conversations they're part of
+        request.auth.token.email in resource.data.participants
+      );
+    }
+
+    // Individual messages within conversations
+    match /directMessages/{conversationId}/messages/{messageId} {
+      allow read, write: if request.auth != null && (
+        // Admin users can access all messages
+        request.auth.token.email == 'cody@cochranfilms.com' ||
+        request.auth.token.email == 'info@cochranfilms.com' ||
+        request.auth.token.email == 'admin@cochranfilms.com' ||
+        // Regular users can only access messages in conversations they're part of
+        request.auth.token.email in get(/databases/$(database)/documents/directMessages/$(conversationId)).data.participants
+      );
+    }
+
+    // Message attachments stored in Firebase Storage
+    match /messageAttachments/{conversationId}/{messageId}/{fileName} {
+      allow read, write: if request.auth != null && (
+        // Admin users can access all attachments
+        request.auth.token.email == 'cody@cochranfilms.com' ||
+        request.auth.token.email == 'info@cochranfilms.com' ||
+        request.auth.token.email == 'admin@cochranfilms.com' ||
+        // Regular users can only access attachments in conversations they're part of
+        request.auth.token.email in get(/databases/$(database)/documents/directMessages/$(conversationId)).data.participants
+      );
+    }
   }
 }
 

@@ -1,3 +1,34 @@
+## Jan 2025 — Messaging System Implementation
+
+### 2025-01-XX — Real-time Messaging System
+
+- Files: `user-portal.html`, `admin-dashboard.html`, `messaging-service.js`, `firestore.rules`
+- Changes:
+  - Added comprehensive messaging system with real-time Firebase integration
+  - Created `directMessages` Firestore collection with conversation and message subcollections
+  - Implemented file attachment support with Firebase Storage
+  - Added read receipts and message status tracking
+  - Created admin messaging interface with user management capabilities
+  - Added security rules for conversation access control
+  - Implemented search functionality for messages
+  - Added responsive design for mobile compatibility
+
+- Test:
+  1. Open `user-portal.html` and sign in as a regular user
+  2. Navigate to Messages section and start a new conversation with admin
+  3. Send messages with text and file attachments
+  4. Open `admin-dashboard.html` and sign in as admin
+  5. Verify admin can see all conversations and respond to users
+  6. Test real-time message updates between user and admin
+  7. Verify file attachments upload and display correctly
+  8. Test read receipts and message status indicators
+  9. Run `messaging-test.js` for comprehensive automated testing
+
+- Database Schema:
+  - `directMessages/{conversationId}`: Conversation metadata
+  - `directMessages/{conversationId}/messages/{messageId}`: Individual messages
+  - `messageAttachments/{conversationId}/{messageId}/{fileName}`: File attachments
+
 ## Sept 2025 — Jobs/Applications sync fixes
 
 - Public `index.html` continues to use Apply link only; Quick Apply is limited to `user-portal.html` job cards.

@@ -40,6 +40,9 @@
     <script defer src="secure-bank-storage.js"></script>
     <script defer src="admin-bank-viewer.js"></script>
     
+    <!-- Messaging Service -->
+    <script defer src="messaging-service.js"></script>
+    
     <!-- Modular System CSS -->
     <link rel="stylesheet" href="admin-dashboard-modular/css/main.css">
     <link rel="stylesheet" href="admin-dashboard-modular/css/components.css">
@@ -709,6 +712,434 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* ==================== MESSAGING SYSTEM STYLES ==================== */
+        .messaging-container {
+            display: flex;
+            height: 600px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+
+        .conversations-panel {
+            width: 350px;
+            background: rgba(0,0,0,0.3);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .conversations-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .conversations-header h3 {
+            margin: 0;
+            color: var(--white);
+            font-size: 1.1rem;
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .conversation-item {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            position: relative;
+        }
+
+        .conversation-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,178,0,0.3);
+        }
+
+        .conversation-item.active {
+            background: rgba(255,178,0,0.1);
+            border-color: var(--primary);
+        }
+
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .conversation-participant {
+            font-weight: 600;
+            color: var(--white);
+            font-size: 0.9rem;
+        }
+
+        .conversation-time {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .conversation-preview {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.4;
+            margin-bottom: 0.5rem;
+        }
+
+        .conversation-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .conversation-job {
+            font-size: 0.75rem;
+            color: var(--primary);
+            background: rgba(255,178,0,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .unread-badge {
+            background: var(--primary);
+            color: var(--black);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .chat-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .chat-participant-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .participant-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--black);
+            font-size: 1.1rem;
+        }
+
+        .participant-details h4 {
+            margin: 0;
+            color: var(--white);
+            font-size: 1rem;
+        }
+
+        .status-online {
+            font-size: 0.8rem;
+            color: #4ade80;
+        }
+
+        .status-offline {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .empty-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+        }
+
+        .empty-chat i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 1rem;
+            animation: messageSlideIn 0.3s ease;
+        }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message.received {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message.sent .message-content {
+            background: var(--primary);
+            color: var(--black);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.received .message-content {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        .message-text {
+            line-height: 1.4;
+        }
+
+        .message-attachments {
+            margin-top: 0.5rem;
+        }
+
+        .attachment-item {
+            display: inline-block;
+            margin: 0.25rem 0.25rem 0 0;
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+
+        .attachment-item img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .attachment-item a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .message-status {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 0.25rem;
+            font-size: 0.7rem;
+        }
+
+        .status-sent { color: rgba(255,255,255,0.5); }
+        .status-delivered { color: rgba(255,255,255,0.7); }
+        .status-read { color: var(--primary); }
+
+        .chat-input-container {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.75rem;
+            position: relative;
+        }
+
+        .attachment-btn {
+            padding: 0.75rem;
+            border-radius: 50%;
+            min-width: auto;
+        }
+
+        .attachment-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 0.5rem;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .attachment-menu button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.5rem;
+            background: transparent;
+            border: none;
+            color: var(--white);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .attachment-menu button:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .message-input-container {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 0.5rem;
+        }
+
+        #adminMessageInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--white);
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            max-height: 120px;
+        }
+
+        #adminMessageInput::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .send-btn {
+            padding: 0.75rem;
+            border-radius: 50%;
+            min-width: auto;
+            margin-left: 0.5rem;
+        }
+
+        .attachments-preview {
+            margin-top: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .attachment-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+
+        .attachment-preview img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .attachment-preview button {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        /* Animations */
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .messaging-container {
+                height: 500px;
+            }
+            
+            .conversations-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            
+            .chat-panel {
+                display: none;
+            }
+            
+            .chat-panel.active {
+                display: flex;
+            }
         }
     </style>
 </head>
@@ -1472,6 +1903,96 @@
                                 <button onclick="resetCommunitySettings()" class="btn btn-danger">
                                     <i class="fas fa-undo"></i> Reset Settings
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Row 5: Messaging System -->
+            <div class="content-row">
+                <!-- Admin Messaging -->
+                <div class="content-card" style="min-width: 800px;">
+                    <div class="card-header">
+                        <h2>💬 Admin Messaging</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="messaging-container" style="height: 600px;">
+                            <!-- Conversations List -->
+                            <div class="conversations-panel">
+                                <div class="conversations-header">
+                                    <h3><i class="fas fa-inbox"></i> All Conversations</h3>
+                                    <button class="btn btn-primary" onclick="adminStartNewConversation()">
+                                        <i class="fas fa-plus"></i> New Message
+                                    </button>
+                                </div>
+                                <div class="conversations-list" id="adminConversationsList">
+                                    <!-- Conversations will be populated here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Chat Panel -->
+                            <div class="chat-panel">
+                                <div class="chat-header" id="adminChatHeader" style="display: none;">
+                                    <div class="chat-participant-info">
+                                        <div class="participant-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="participant-details">
+                                            <h4 id="adminChatParticipantName">User</h4>
+                                            <span id="adminChatParticipantStatus" class="status-online">Online</span>
+                                        </div>
+                                    </div>
+                                    <div class="chat-actions">
+                                        <button class="btn btn-secondary" onclick="adminSearchMessages()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="adminToggleChatSettings()">
+                                            <i class="fas fa-cog"></i>
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="adminBroadcastMessage()">
+                                            <i class="fas fa-bullhorn"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="chat-messages" id="adminChatMessages">
+                                    <div class="empty-chat">
+                                        <i class="fas fa-comments"></i>
+                                        <h3>Select a conversation</h3>
+                                        <p>Choose a conversation from the list to start messaging</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="chat-input-container" id="adminChatInputContainer" style="display: none;">
+                                    <div class="chat-input-wrapper">
+                                        <button class="btn btn-secondary attachment-btn" onclick="adminToggleAttachmentMenu()">
+                                            <i class="fas fa-paperclip"></i>
+                                        </button>
+                                        <div class="attachment-menu" id="adminAttachmentMenu" style="display: none;">
+                                            <button onclick="adminSelectFile('image')">
+                                                <i class="fas fa-image"></i> Image
+                                            </button>
+                                            <button onclick="adminSelectFile('document')">
+                                                <i class="fas fa-file"></i> Document
+                                            </button>
+                                        </div>
+                                        <input type="file" id="adminFileInput" style="display: none;" multiple accept="image/*,.pdf,.doc,.docx">
+                                        <div class="message-input-container">
+                                            <textarea 
+                                                id="adminMessageInput" 
+                                                placeholder="Type your message..." 
+                                                rows="1"
+                                                onkeydown="adminHandleMessageKeydown(event)"
+                                                oninput="adminAutoResizeTextarea(this)"
+                                            ></textarea>
+                                            <button class="btn btn-primary send-btn" onclick="adminSendMessage()">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="attachments-preview" id="adminAttachmentsPreview"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -7831,6 +8352,312 @@
         async function adminDeleteMaintenance(id){ try { await ensureFirestoreReady(); await window.FirestoreDataManager.deleteMaintenance(id); await adminLoadMaintenance(); showAdminNotification('Deleted','Maintenance removed','success'); } catch(e){ console.error(e); showAdminNotification('Error','Failed to delete maintenance','error'); } }
         function adminClearMaintenanceForm(){ try { document.getElementById('adminMaintenanceForm').reset(); } catch(_) {} }
 
+        // ==================== ADMIN MESSAGING SYSTEM FUNCTIONS ====================
+        let adminCurrentConversationId = null;
+        let adminMessagingService = null;
+        let adminSelectedFiles = [];
+
+        // Initialize admin messaging
+        function initializeAdminMessaging() {
+            if (!adminMessagingService) {
+                adminMessagingService = new MessagingService();
+            }
+            loadAdminConversations();
+        }
+
+        // Load all conversations for admin
+        async function loadAdminConversations() {
+            try {
+                if (!adminMessagingService) return;
+                
+                const conversations = await adminMessagingService.loadUserConversations();
+                const conversationsList = document.getElementById('adminConversationsList');
+                
+                if (conversations.length === 0) {
+                    conversationsList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-comments"></i>
+                            <h3>No conversations yet</h3>
+                            <p>Users will appear here when they start conversations</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                conversationsList.innerHTML = conversations.map(conv => `
+                    <div class="conversation-item" onclick="adminSelectConversation('${conv.id}')">
+                        <div class="conversation-header">
+                            <span class="conversation-participant">${getAdminParticipantName(conv)}</span>
+                            <span class="conversation-time">${adminMessagingService.formatTimestamp(conv.lastMessageTime)}</span>
+                        </div>
+                        <div class="conversation-preview">${conv.lastMessage || 'No messages yet'}</div>
+                        <div class="conversation-meta">
+                            ${conv.jobId ? `<span class="conversation-job">Job: ${conv.jobId}</span>` : ''}
+                            ${conv.unreadCount > 0 ? `<span class="unread-badge">${conv.unreadCount}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('❌ Failed to load admin conversations:', error);
+            }
+        }
+
+        // Get participant name for admin display
+        function getAdminParticipantName(conversation) {
+            const adminEmails = window.FirebaseConfig?.getAdminUsers() || [];
+            const otherParticipants = conversation.participants.filter(email => !adminEmails.includes(email));
+            
+            if (otherParticipants.length === 0) return 'System';
+            return otherParticipants[0].split('@')[0]; // Show username part
+        }
+
+        // Select a conversation (admin)
+        async function adminSelectConversation(conversationId) {
+            try {
+                adminCurrentConversationId = conversationId;
+                
+                // Update UI
+                document.querySelectorAll('.conversation-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.currentTarget.classList.add('active');
+                
+                // Show chat panel
+                document.getElementById('adminChatHeader').style.display = 'flex';
+                document.getElementById('adminChatInputContainer').style.display = 'block';
+                
+                // Load messages
+                await adminLoadMessages(conversationId);
+                
+                // Set up real-time listener
+                adminMessagingService.listenToMessages(conversationId, (messages) => {
+                    adminDisplayMessages(messages);
+                });
+                
+            } catch (error) {
+                console.error('❌ Failed to select admin conversation:', error);
+            }
+        }
+
+        // Load messages for admin
+        async function adminLoadMessages(conversationId) {
+            try {
+                const messages = await adminMessagingService.loadMessages(conversationId);
+                adminDisplayMessages(messages);
+            } catch (error) {
+                console.error('❌ Failed to load admin messages:', error);
+            }
+        }
+
+        // Display messages in admin chat
+        function adminDisplayMessages(messages) {
+            const chatMessages = document.getElementById('adminChatMessages');
+            const currentUserEmail = adminMessagingService?.currentUser?.email;
+            
+            if (messages.length === 0) {
+                chatMessages.innerHTML = `
+                    <div class="empty-chat">
+                        <i class="fas fa-comments"></i>
+                        <h3>No messages yet</h3>
+                        <p>Start the conversation by sending a message</p>
+                    </div>
+                `;
+                return;
+            }
+
+            chatMessages.innerHTML = messages.map(message => {
+                const isSent = message.senderId === currentUserEmail;
+                const timestamp = adminMessagingService.formatTimestamp(message.timestamp);
+                
+                return `
+                    <div class="message ${isSent ? 'sent' : 'received'}">
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="message-sender">${isSent ? 'You' : getAdminParticipantName({participants: [message.senderId]})}</span>
+                                <span class="message-time">${timestamp}</span>
+                            </div>
+                            <div class="message-text">${message.content}</div>
+                            ${message.attachments && message.attachments.length > 0 ? `
+                                <div class="message-attachments">
+                                    ${message.attachments.map(attachment => `
+                                        <div class="attachment-item">
+                                            ${attachment.type.startsWith('image/') ? 
+                                                `<img src="${attachment.url}" alt="${attachment.name}" onclick="openImageModal('${attachment.url}')">` :
+                                                `<a href="${attachment.url}" target="_blank">${attachment.name}</a>`
+                                            }
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            ${isSent ? `
+                                <div class="message-status">
+                                    <span class="status-${message.status || 'sent'}">
+                                        ${message.status === 'read' ? '✓✓' : message.status === 'delivered' ? '✓' : '○'}
+                                    </span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Start new conversation with user
+        async function adminStartNewConversation() {
+            try {
+                const userEmail = prompt('Enter user email to start conversation:');
+                if (!userEmail) return;
+                
+                if (!adminMessagingService) {
+                    adminMessagingService = new MessagingService();
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+                
+                const conversationId = await adminMessagingService.getOrCreateUserConversation(userEmail);
+                await adminSelectConversation(conversationId);
+                
+                // Focus on message input
+                document.getElementById('adminMessageInput').focus();
+                
+            } catch (error) {
+                console.error('❌ Failed to start admin conversation:', error);
+                alert('Failed to start conversation. Please try again.');
+            }
+        }
+
+        // Send message (admin)
+        async function adminSendMessage() {
+            try {
+                const messageInput = document.getElementById('adminMessageInput');
+                const content = messageInput.value.trim();
+                
+                if (!content && adminSelectedFiles.length === 0) return;
+                if (!adminCurrentConversationId) return;
+                
+                // Upload attachments if any
+                let attachments = [];
+                if (adminSelectedFiles.length > 0) {
+                    for (const file of adminSelectedFiles) {
+                        const attachment = await adminMessagingService.uploadAttachment(adminCurrentConversationId, 'temp', file);
+                        attachments.push(attachment);
+                    }
+                    adminSelectedFiles = [];
+                    adminUpdateAttachmentsPreview();
+                }
+                
+                // Send message
+                await adminMessagingService.sendMessage(adminCurrentConversationId, content, attachments);
+                
+                // Clear input
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                
+            } catch (error) {
+                console.error('❌ Failed to send admin message:', error);
+                alert('Failed to send message. Please try again.');
+            }
+        }
+
+        // Handle message input keydown (admin)
+        function adminHandleMessageKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                adminSendMessage();
+            }
+        }
+
+        // Auto-resize textarea (admin)
+        function adminAutoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        // Toggle attachment menu (admin)
+        function adminToggleAttachmentMenu() {
+            const menu = document.getElementById('adminAttachmentMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Select file for attachment (admin)
+        function adminSelectFile(type) {
+            const fileInput = document.getElementById('adminFileInput');
+            fileInput.accept = type === 'image' ? 'image/*' : '.pdf,.doc,.docx,.txt';
+            fileInput.click();
+            
+            fileInput.onchange = function(event) {
+                const files = Array.from(event.target.files);
+                adminSelectedFiles = [...adminSelectedFiles, ...files];
+                adminUpdateAttachmentsPreview();
+                adminToggleAttachmentMenu();
+            };
+        }
+
+        // Update attachments preview (admin)
+        function adminUpdateAttachmentsPreview() {
+            const preview = document.getElementById('adminAttachmentsPreview');
+            
+            if (adminSelectedFiles.length === 0) {
+                preview.innerHTML = '';
+                return;
+            }
+            
+            preview.innerHTML = adminSelectedFiles.map((file, index) => `
+                <div class="attachment-preview">
+                    ${file.type.startsWith('image/') ? 
+                        `<img src="${URL.createObjectURL(file)}" alt="${file.name}">` :
+                        `<i class="fas fa-file"></i>`
+                    }
+                    <span>${file.name}</span>
+                    <button onclick="adminRemoveAttachment(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Remove attachment (admin)
+        function adminRemoveAttachment(index) {
+            adminSelectedFiles.splice(index, 1);
+            adminUpdateAttachmentsPreview();
+        }
+
+        // Search messages (admin)
+        function adminSearchMessages() {
+            const query = prompt('Search messages:');
+            if (query) {
+                // Implement search functionality
+                console.log('Admin searching for:', query);
+            }
+        }
+
+        // Toggle chat settings (admin)
+        function adminToggleChatSettings() {
+            // Implement chat settings
+            console.log('Admin toggle chat settings');
+        }
+
+        // Broadcast message to all users
+        function adminBroadcastMessage() {
+            const message = prompt('Enter broadcast message:');
+            if (message) {
+                // Implement broadcast functionality
+                console.log('Admin broadcasting:', message);
+                alert('Broadcast functionality will be implemented');
+            }
+        }
+
+        // Initialize admin messaging when dashboard loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize messaging after a short delay to ensure Firebase is ready
+            setTimeout(() => {
+                initializeAdminMessaging();
+            }, 2000);
+        });
+
         // Expose to window
         window.adminLoadEquipment = adminLoadEquipment;
         window.adminSaveEquipment = adminSaveEquipment;
@@ -7845,6 +8672,19 @@
         window.adminScheduleMaintenance = adminScheduleMaintenance;
         window.adminUpdateMaintenanceStatus = adminUpdateMaintenanceStatus;
         window.adminDeleteMaintenance = adminDeleteMaintenance;
+        
+        // Admin messaging functions
+        window.adminStartNewConversation = adminStartNewConversation;
+        window.adminSelectConversation = adminSelectConversation;
+        window.adminSendMessage = adminSendMessage;
+        window.adminHandleMessageKeydown = adminHandleMessageKeydown;
+        window.adminAutoResizeTextarea = adminAutoResizeTextarea;
+        window.adminToggleAttachmentMenu = adminToggleAttachmentMenu;
+        window.adminSelectFile = adminSelectFile;
+        window.adminRemoveAttachment = adminRemoveAttachment;
+        window.adminSearchMessages = adminSearchMessages;
+        window.adminToggleChatSettings = adminToggleChatSettings;
+        window.adminBroadcastMessage = adminBroadcastMessage;
     </script>
 </body>
 </html> 

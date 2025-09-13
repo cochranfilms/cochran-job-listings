@@ -1,3 +1,21 @@
+### Jan 2025 — Messaging System Implementation
+
+- Files: `user-portal.html`, `admin-dashboard.html`, `messaging-service.js`, `firestore.rules`
+- Changes:
+  - Added comprehensive real-time messaging system with Firebase integration
+  - Created `directMessages` Firestore collection with proper security rules
+  - Implemented file attachment support using Firebase Storage
+  - Added read receipts and message status tracking
+  - Created admin messaging interface for user management
+  - Added responsive design for mobile compatibility
+  - Implemented search functionality for messages
+- Database Structure:
+  - `directMessages/{conversationId}`: Conversation metadata with participants array
+  - `directMessages/{conversationId}/messages/{messageId}`: Individual messages with attachments
+  - `messageAttachments/{conversationId}/{messageId}/{fileName}`: File attachments in Storage
+- Security: Users can only access conversations they're part of; admins can access all conversations
+- Testing: Use `messaging-test.js` for automated testing of all messaging features
+
 ### Sept 2025 — Jobs/Applications cleanup notes
 
 - Enforced separation of application entry points:
