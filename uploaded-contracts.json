@@ -610,8 +610,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-13",
       "signedDate": "2025-09-13"
+    },
+    {
+      "contractId": "CF-1757760171023-EC0XB",
+      "freelancerName": "Eric John",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "OBS Tech Assistant",
+      "rate": "$400",
+      "location": "Atlanta, GA",
+      "fileName": "Eric John - OBS Tech Assistant - CF-1757760171023-EC0XB.pdf",
+      "fileSize": 10325,
+      "uploadDate": "2025-09-13T10:43:07.507Z",
+      "status": "uploaded",
+      "fileUrl": "https://firebasestorage.googleapis.com/v0/b/cochran-films.firebasestorage.app/o/contracts%2Fcodylcochran87%40gmail.com%2F1757760172804-eric-john-obs-tech-assistant-cf-1757760171023-ec0xb.pdf?alt=media&token=faca55dd-d906-493f-afd4-2f9611c133e9",
+      "storagePath": "contracts/codylcochran87@gmail.com/1757760172804-eric-john-obs-tech-assistant-cf-1757760171023-ec0xb.pdf",
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-13",
+      "signedDate": "2025-09-13"
     }
   ],
-  "lastUpdated": "2025-09-13T09:11:02.978Z",
-  "totalContracts": 38
+  "lastUpdated": "2025-09-13T10:43:07.508Z",
+  "totalContracts": 39
 }
