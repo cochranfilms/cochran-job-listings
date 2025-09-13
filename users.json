@@ -269,10 +269,34 @@
       },
       "jobs": {},
       "primaryJob": null
+    },
+    "Jim Jones": {
+      "profile": {
+        "email": "dedejackson727@gmail.com",
+        "location": "Douglasville, GA",
+        "role": "",
+        "projectType": ""
+      },
+      "contract": {
+        "contractStatus": "pending"
+      },
+      "application": {
+        "status": "pending",
+        "submittedAt": "2025-09-13T20:10:35.158Z",
+        "jobTitle": "Backdrop Photographer Base",
+        "eventDate": "2025-11-08",
+        "pay": "$400",
+        "description": "You will be taking pictures for on-site printing at the 2nd annual Stranger Things block party from 4-9pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+        "phone": "6787590786",
+        "portfolio": "https://pitch.cochranfilms.com",
+        "source": "apply-html"
+      },
+      "jobs": {},
+      "primaryJob": null
     }
   },
   "statusOptions": {},
   "lastUpdated": "2025-09-13",
-  "totalUsers": 11,
+  "totalUsers": 12,
   "system": {}
 }
