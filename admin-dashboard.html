@@ -8363,7 +8363,41 @@
             if (!adminMessagingService) {
                 adminMessagingService = new MessagingService();
             }
+            // Initial load
             loadAdminConversations();
+            // Real-time updates
+            adminMessagingService.listenToConversations((list) => {
+                try {
+                    const conversationsList = document.getElementById('adminConversationsList');
+                    if (!conversationsList) return;
+                    if (!Array.isArray(list) || list.length === 0) {
+                        conversationsList.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-comments"></i>
+                                <h3>No conversations yet</h3>
+                                <p>Users will appear here when they start conversations</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    conversationsList.innerHTML = list.map(conv => `
+                        <div class="conversation-item" data-conversation-id="${conv.id}" onclick="adminSelectConversation('${conv.id}', event)">
+                            <div class="conversation-header">
+                                <span class="conversation-participant">${getAdminParticipantName(conv)}</span>
+                                <span class="conversation-time">${adminMessagingService.formatTimestamp(conv.lastMessageTime)}</span>
+                            </div>
+                            <div class="conversation-preview">${conv.lastMessage || 'No messages yet'}</div>
+                            <div class="conversation-meta">
+                                ${conv.jobId ? `<span class=\"conversation-job\">Job: ${conv.jobId}</span>` : ''}
+                                ${conv.unreadCount > 0 ? `<span class=\"unread-badge\">${conv.unreadCount}</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    console.error('❌ Failed to render conversation list (rt):', e);
+                }
+            });
         }
 
         // Load all conversations for admin

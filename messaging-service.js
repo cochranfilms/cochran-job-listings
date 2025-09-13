@@ -11,6 +11,7 @@ class MessagingService {
         this.currentUser = null;
         this.conversations = new Map();
         this.messageListeners = new Map();
+        this.conversationsUnsubscribe = null;
         this.isAdmin = false;
         
         // Initialize when Firebase is ready
@@ -297,6 +298,46 @@ class MessagingService {
             return unsubscribe;
         } catch (error) {
             console.error('❌ Failed to set up message listener:', error);
+        }
+    }
+
+    /**
+     * Listen for real-time conversation list updates
+     */
+    listenToConversations(callback) {
+        try {
+            if (this.conversationsUnsubscribe) {
+                this.conversationsUnsubscribe();
+            }
+
+            const queryRef = this.firestore
+                .collection('directMessages')
+                .where('isActive', '==', true);
+
+            this.conversationsUnsubscribe = queryRef.onSnapshot((snapshot) => {
+                const list = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const include = this.isAdmin
+                        ? true
+                        : (Array.isArray(data.participants) && this.currentUser && data.participants.includes(this.currentUser.email));
+                    if (include) {
+                        list.push({ id: doc.id, ...data, unreadCount: this.getUnreadCount(data.readStatus) });
+                    }
+                });
+
+                list.sort((a, b) => {
+                    const ta = a.lastMessageTime && a.lastMessageTime.toMillis ? a.lastMessageTime.toMillis() : 0;
+                    const tb = b.lastMessageTime && b.lastMessageTime.toMillis ? b.lastMessageTime.toMillis() : 0;
+                    return tb - ta;
+                });
+
+                callback(list);
+            });
+
+            return this.conversationsUnsubscribe;
+        } catch (error) {
+            console.error('❌ Failed to set up conversations listener:', error);
         }
     }
 
