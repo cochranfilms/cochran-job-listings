@@ -103,8 +103,13 @@ class MessagingService {
         try {
             if (!this.currentUser) throw new Error('User not authenticated');
             
+            const messagesRef = this.firestore
+                .collection('directMessages')
+                .doc(conversationId)
+                .collection('messages');
+            const messageRef = messagesRef.doc();
             const messageData = {
-                id: this.firestore.collection('directMessages').doc(conversationId).collection('messages').doc().id,
+                id: messageRef.id,
                 senderId: this.currentUser.email,
                 content: content,
                 attachments: attachments,
@@ -114,11 +119,7 @@ class MessagingService {
             };
             
             // Add message to conversation
-            await this.firestore
-                .collection('directMessages')
-                .doc(conversationId)
-                .collection('messages')
-                .add(messageData);
+            await messageRef.set(messageData);
             
             // Update conversation last message
             await this.firestore.collection('directMessages').doc(conversationId).update({
@@ -188,22 +189,25 @@ class MessagingService {
         try {
             if (!this.currentUser) return;
             
-            const query = this.firestore
+            // Query in two steps to avoid composite index requirement:
+            // Fetch active conversations first, then filter by participant client-side.
+            const activeQuery = this.firestore
                 .collection('directMessages')
-                .where('participants', 'array-contains', this.currentUser.email)
                 .where('isActive', '==', true)
                 .orderBy('lastMessageTime', 'desc');
             
-            const snapshot = await query.get();
+            const snapshot = await activeQuery.get();
             this.conversations.clear();
             
             snapshot.forEach(doc => {
                 const data = doc.data();
-                this.conversations.set(doc.id, {
-                    id: doc.id,
-                    ...data,
-                    unreadCount: this.getUnreadCount(data.readStatus)
-                });
+                if (Array.isArray(data.participants) && data.participants.includes(this.currentUser.email)) {
+                    this.conversations.set(doc.id, {
+                        id: doc.id,
+                        ...data,
+                        unreadCount: this.getUnreadCount(data.readStatus)
+                    });
+                }
             });
             
             console.log('✅ Loaded conversations:', this.conversations.size);

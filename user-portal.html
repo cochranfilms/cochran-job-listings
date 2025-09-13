@@ -8241,8 +8241,8 @@
         }
 
         // Load Performance Reviews (existing function)
-        function loadPerformanceReviews() {
-            // This will use the existing displayUserPerformanceReviews function
+        async function loadPerformanceReviews() {
+            // Ensure callers using .then() receive a Promise
             displayUserPerformanceReviews();
         }
 
