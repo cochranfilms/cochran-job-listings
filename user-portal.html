@@ -8572,13 +8572,49 @@
         }
         
         // Toggle message like
-        function toggleMessageLike(messageId) {
+        async function toggleMessageLike(messageId) {
             const targetId = String(messageId);
             const message = messages.find(m => String(m.id) === targetId);
-            if (message) {
-                message.likes = (Number(message.likes) || 0) + 1;
-                saveMessages();
-                displayMessages();
+            if (!message) return;
+
+            const likerEmail = (currentUser && currentUser.email) ? currentUser.email.toLowerCase() : '';
+            const likedBy = Array.isArray(message.likedBy) ? message.likedBy.map(e => String(e).toLowerCase()) : [];
+            if (likerEmail && likedBy.includes(likerEmail)) {
+                showNotification('You already liked this message.', 'info');
+                return;
+            }
+
+            const newLikes = (Number(message.likes) || 0) + 1;
+            const newLikedBy = likerEmail ? Array.from(new Set([...likedBy, likerEmail])) : likedBy;
+
+            // Optimistic UI
+            message.likes = newLikes;
+            message.likedBy = newLikedBy;
+            displayMessages();
+
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
+                    await window.FirestoreDataManager.updateMessage(targetId, { likes: newLikes, likedBy: newLikedBy });
+                    const toEmail = (message.authorEmail || '').toLowerCase();
+                    if (toEmail && likerEmail && toEmail !== likerEmail) {
+                        try {
+                            await window.FirestoreDataManager.sendUserNotification({
+                                toEmail,
+                                title: 'New like on your message',
+                                message: `${(currentUser && (currentUser.name || likerEmail.split('@')[0])) || 'Someone'} liked your message: "${String(message.text || '').slice(0, 80)}${String(message.text || '').length > 80 ? '…' : ''}"`,
+                                type: 'info',
+                                data: { messageId: targetId }
+                            });
+                        } catch (_) {}
+                    }
+                } else {
+                    // Fallback persistence
+                    saveMessages();
+                }
+            } catch (err) {
+                console.error('Failed to persist message like:', err);
+                // Revert optimistic update on error (optional)
+                // message.likes = newLikes - 1; displayMessages();
             }
         }
         
@@ -9128,13 +9164,47 @@
         }
         
         // Toggle like
-        function toggleLike(showcaseId) {
+        async function toggleLike(showcaseId) {
             const targetId = String(showcaseId);
             const showcase = showcases.find(s => String(s.id) === targetId);
-            if (showcase) {
-                showcase.likes = (Number(showcase.likes) || 0) + 1;
-                saveShowcases();
-                displayShowcases();
+            if (!showcase) return;
+
+            const likerEmail = (currentUser && currentUser.email) ? currentUser.email.toLowerCase() : '';
+            const likedBy = Array.isArray(showcase.likedBy) ? showcase.likedBy.map(e => String(e).toLowerCase()) : [];
+            if (likerEmail && likedBy.includes(likerEmail)) {
+                showNotification('You already liked this project.', 'info');
+                return;
+            }
+
+            const newLikes = (Number(showcase.likes) || 0) + 1;
+            const newLikedBy = likerEmail ? Array.from(new Set([...likedBy, likerEmail])) : likedBy;
+
+            // Optimistic UI
+            showcase.likes = newLikes;
+            showcase.likedBy = newLikedBy;
+            displayShowcases();
+
+            try {
+                if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
+                    await window.FirestoreDataManager.updateShowcase(targetId, { likes: newLikes, likedBy: newLikedBy });
+                    const toEmail = (showcase.authorEmail || '').toLowerCase();
+                    if (toEmail && likerEmail && toEmail !== likerEmail) {
+                        try {
+                            await window.FirestoreDataManager.sendUserNotification({
+                                toEmail,
+                                title: 'New like on your showcase',
+                                message: `${(currentUser && (currentUser.name || likerEmail.split('@')[0])) || 'Someone'} liked your project: "${String(showcase.title || '').slice(0, 80)}${String(showcase.title || '').length > 80 ? '…' : ''}"`,
+                                type: 'info',
+                                data: { showcaseId: targetId }
+                            });
+                        } catch (_) {}
+                    }
+                } else {
+                    // Fallback persistence
+                    saveShowcases();
+                }
+            } catch (err) {
+                console.error('Failed to persist showcase like:', err);
             }
         }
         

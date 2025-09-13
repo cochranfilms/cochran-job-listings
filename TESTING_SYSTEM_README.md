@@ -17,10 +17,12 @@
   - Buttons now call `toggleMessageLike('<id>')` and `toggleLike('<id>')`.
   - Functions compare via `String(id)` and coerce counts with `Number(...)`.
 - Why: Unquoted IDs created global references like `atMnDSBK6Z6YpF0Cdlf8` which caused `ReferenceError` on click.
-- Quick test (browser):
-  1. Open `user-portal.html` → Community → Team Messaging. Send a message, then click its heart. Expect count to increment without console errors.
-  2. Community → Success Stories. Click heart on any card. Expect count to increment; no `ReferenceError`.
-  3. Reload and confirm persisted via localStorage cache (for showcases/messages in demo mode).
+- Persistence + notifications test (browser):
+  1. Open `user-portal.html` and sign in as User A; go to Community → Team Messaging. Like a message authored by User B.
+  2. In Firebase Console → Firestore, check `messages/<id>.likes` increases and `likedBy` includes User A's email.
+  3. Sign in as User B in another browser; verify a new document under `notifications` appears with `toEmail=User B` and title “New like on your message”.
+  4. In Community → Success Stories, like a showcase; verify `showcases/<id>.likes` increases and a notification is created for the author.
+  5. Refresh both pages; like counts should persist from Firestore.
 
 
 - Files: `user-portal.html`

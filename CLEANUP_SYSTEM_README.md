@@ -9,6 +9,9 @@
 
 ## 2025-09-12 — Multi-job timelines and all-contracts listing (portal)
 ## 2025-09-13 — Community Likes inline-handler cleanup
+- Firestore persistence: Likes now update `messages/<id>.likes` and `showcases/<id>.likes` with a `likedBy[]` deduped by email. When `FirestoreDataManager` is unavailable, localStorage fallback remains for dev-only.
+- Notifications: After a successful like, a `notifications` doc is created for the content author via `sendUserNotification()`.
+
 
 - Scope: `user-portal.html`
 - Change: Inline `onclick` handlers for message/showcase likes now wrap IDs in quotes and escape single quotes. The like functions compare via `String(id)` and coerce counts.
