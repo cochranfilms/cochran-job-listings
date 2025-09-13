@@ -8359,14 +8359,15 @@
         let adminSelectedFiles = [];
 
         // Initialize admin messaging
-        function initializeAdminMessaging() {
+        async function initializeAdminMessaging() {
             if (!adminMessagingService) {
                 adminMessagingService = new MessagingService();
             }
+            try { await adminMessagingService.readyPromise; } catch(_) {}
             // Initial load
-            loadAdminConversations();
+            await loadAdminConversations();
             // Real-time updates
-            adminMessagingService.listenToConversations((list) => {
+            try { adminMessagingService.listenToConversations((list) => {
                 try {
                     const conversationsList = document.getElementById('adminConversationsList');
                     if (!conversationsList) return;
@@ -8397,7 +8398,7 @@
                 } catch (e) {
                     console.error('❌ Failed to render conversation list (rt):', e);
                 }
-            });
+            }); } catch(e) { console.error('❌ Conversations listener setup failed:', e); }
         }
 
         // Load all conversations for admin

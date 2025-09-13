@@ -15,7 +15,7 @@ class MessagingService {
         this.isAdmin = false;
         
         // Initialize when Firebase is ready
-        this.initializeMessaging();
+        this.readyPromise = this.initializeMessaging();
     }
 
     async initializeMessaging() {
@@ -49,7 +49,9 @@ class MessagingService {
             
         } catch (error) {
             console.error('❌ Failed to initialize messaging service:', error);
+            throw error;
         }
+        return true;
     }
 
     /**
@@ -308,6 +310,10 @@ class MessagingService {
         try {
             if (this.conversationsUnsubscribe) {
                 this.conversationsUnsubscribe();
+            }
+
+            if (!this.firestore) {
+                throw new Error('Firestore not ready');
             }
 
             const queryRef = this.firestore
