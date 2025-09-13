@@ -2583,8 +2583,19 @@
             
             (async () => {
                 for (const url of candidates) {
-                    try { const resp = await fetch(url, { method: 'HEAD' }); if (resp.ok) {
-                        const link = document.createElement('a'); link.href = url; link.download = fileName; link.target = '_blank'; document.body.appendChild(link); link.click(); document.body.removeChild(link); return; } } catch(_) {}
+                    try {
+                        // Cross-origin HEAD often fails due to CORS; allow direct open when cross-origin
+                        const u = new URL(url, window.location.href);
+                        const isCross = u.origin !== window.location.origin;
+                        let ok = true;
+                        if (!isCross) {
+                            const resp = await fetch(url, { method: 'HEAD' });
+                            ok = resp.ok;
+                        }
+                        if (ok) {
+                            const link = document.createElement('a'); link.href = url; link.download = fileName; link.target = '_blank'; document.body.appendChild(link); link.click(); document.body.removeChild(link); return;
+                        }
+                    } catch(_) { /* continue trying next candidate */ }
                 }
                 showNotification('Contract file is not available yet. Please try again later or contact support.', 'error');
             })();
@@ -2611,7 +2622,13 @@
                 candidates.push(`/api/contracts?filename=${encodeURIComponent(fileName)}`);
 
                 const tryHead = async (u) => {
-                    try { const r = await fetch(u, { method: 'HEAD' }); return r.ok; } catch(_) { return false; }
+                    try {
+                        const urlObj = new URL(u, window.location.href);
+                        // Skip HEAD for cross-origin URLs to avoid CORS failures
+                        if (urlObj.origin !== window.location.origin) return true;
+                        const r = await fetch(u, { method: 'HEAD' });
+                        return r.ok;
+                    } catch(_) { return true; }
                 };
 
                 (async () => {
