@@ -1785,11 +1785,13 @@ Object.assign(FirestoreDataManager, {
     // Replies Operations
     async getRepliesByMessageId(messageId) {
         try {
+            // Avoid composite index requirement by sorting on client
             const snapshot = await this.db.collection(this.collections.replies)
                 .where('messageId', '==', messageId)
-                .orderBy('timestamp', 'asc')
                 .get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            return snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
         } catch (error) {
             console.error('❌ Error getting replies:', error);
             return [];

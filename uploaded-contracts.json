@@ -593,8 +593,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-12",
       "signedDate": "2025-09-12"
+    },
+    {
+      "contractId": "CF-1757754644143-O5OCF",
+      "freelancerName": "Big Bad",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Backdrop Photographer Spotlight",
+      "rate": "$300 + Tip",
+      "location": "Douglasville, GA",
+      "fileName": "Big Bad - Backdrop Photographer Spotlight - CF-1757754644143-O5OCF.pdf",
+      "fileSize": 10344,
+      "uploadDate": "2025-09-13T09:11:02.978Z",
+      "status": "uploaded",
+      "fileUrl": "https://firebasestorage.googleapis.com/v0/b/cochran-films.firebasestorage.app/o/contracts%2Fdedejackson727%40gmail.com%2F1757754645956-big-bad-backdrop-photographer-spotlight-cf-1757754644143-o5ocf.pdf?alt=media&token=927c1caa-249f-48bb-885f-ddb9231e95c1",
+      "storagePath": "contracts/dedejackson727@gmail.com/1757754645956-big-bad-backdrop-photographer-spotlight-cf-1757754644143-o5ocf.pdf",
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-13",
+      "signedDate": "2025-09-13"
     }
   ],
-  "lastUpdated": "2025-09-12T23:57:40.948Z",
-  "totalContracts": 37
+  "lastUpdated": "2025-09-13T09:11:02.978Z",
+  "totalContracts": 38
 }

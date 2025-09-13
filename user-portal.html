@@ -8508,7 +8508,7 @@
                                 <i class="fas fa-heart"></i>
                                 <span>${message.likes}</span>
                             </button>
-                            <button class="message-reply-btn" onclick="openReplyComposer(${message.id}, '${(message.authorEmail||'').toLowerCase()}', '${(message.author||'').replace(/'/g, "&#39;")}')">
+                            <button class="message-reply-btn" onclick="openReplyComposer('${String(message.id).replace(/'/g, "&#39;")}', '${(message.authorEmail||'').toLowerCase()}', '${(message.author||'').replace(/'/g, "&#39;")}')">
                                 <i class="fas fa-reply"></i>
                                 <span>Reply</span>
                             </button>
