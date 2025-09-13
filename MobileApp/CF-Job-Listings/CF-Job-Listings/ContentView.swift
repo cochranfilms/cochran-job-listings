@@ -9,7 +9,16 @@ import SwiftUI
 
 struct ContentView: View {
 	var body: some View {
-		JobListView()
+		TabView {
+			NavigationStack { JobListView() }
+				.tabItem { Label("Jobs", systemImage: "list.bullet.rectangle") }
+			NavigationStack { ContractAccessView() }
+				.tabItem { Label("Contract", systemImage: "doc.text") }
+			NavigationStack { UserPortalView() }
+				.tabItem { Label("Portal", systemImage: "person.crop.circle") }
+			NavigationStack { AdminDashboardView() }
+				.tabItem { Label("Admin", systemImage: "gearshape") }
+		}
 	}
 }
 
