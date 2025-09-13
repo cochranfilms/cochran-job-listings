@@ -731,6 +731,7 @@
             border-right: 1px solid rgba(255,255,255,0.1);
             display: flex;
             flex-direction: column;
+            position: relative; /* anchor for inline popup */
         }
 
         .conversations-header {
@@ -756,6 +757,31 @@
             font-size: 0.9rem;
             box-shadow: 0 10px 24px rgba(34,211,238,0.12), 0 4px 10px rgba(167,139,250,0.12);
         }
+
+        /* Inline user picker (AI theme) */
+        .user-picker {
+            position: absolute;
+            top: 72px;
+            right: 12px;
+            width: 360px;
+            max-height: 420px;
+            background: rgba(17,24,39,0.92);
+            border: 1px solid rgba(99,102,241,0.30);
+            border-radius: 14px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(99,102,241,0.10) inset;
+            overflow: hidden;
+            z-index: 12000;
+        }
+        .user-picker.hidden { display: none; }
+        .user-picker .up-header { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.08); }
+        .user-picker .up-header input { flex:1; height:38px; border-radius:10px; border:1px solid rgba(99,102,241,0.25); background: rgba(12,18,32,0.55); color:#e5e7eb; padding:0 12px; }
+        .user-picker .up-list { max-height: 340px; overflow:auto; }
+        .user-picker .up-item { display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.06); }
+        .user-picker .up-item:hover { background: rgba(99,102,241,0.10); }
+        .user-picker .up-avatar { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background: linear-gradient(135deg,#22d3ee,#a78bfa); color:#0b1020; font-weight:800; font-size:.85rem; }
+        .user-picker .up-meta { display:flex; flex-direction:column; }
+        .user-picker .up-meta .name { color:#eef2ff; font-weight:700; font-size:.92rem; }
+        .user-picker .up-meta .email { color:#c7d2fe; opacity:.85; font-size:.82rem; }
 
         .conversations-list {
             flex: 1;
@@ -1980,6 +2006,14 @@
                                     <button class="btn btn-primary" onclick="adminStartNewConversation()">
                                         <i class="fas fa-plus"></i> New Message
                                     </button>
+                                </div>
+                                <!-- Inline user picker (hidden) -->
+                                <div id="adminUserPicker" class="user-picker hidden">
+                                    <div class="up-header">
+                                        <input id="adminUserPickerSearch" type="text" placeholder="Search users by name or email" oninput="adminFilterUserPicker()" />
+                                        <button class="btn btn-secondary" onclick="adminHideUserPicker()">Close</button>
+                                    </div>
+                                    <div id="adminUserPickerList" class="up-list"></div>
                                 </div>
                                 <!-- Inline new-conversation composer (hidden by default) -->
                                 <div id="adminNewMessageInline" style="display:none; margin:8px 12px 0 12px;">
@@ -8627,10 +8661,8 @@
         async function adminStartNewConversation() {
             // Reveal inline composer instead of prompt
             try {
-                const box = document.getElementById('adminNewMessageInline');
-                if (box) { box.style.display = 'block'; }
-                const input = document.getElementById('adminNewMessageEmail');
-                if (input) { input.focus(); }
+                // Prefer user picker instead of email input
+                await adminShowUserPicker();
             } catch(_) {}
         }
 
@@ -8661,6 +8693,7 @@
                 const input = document.getElementById('adminNewMessageEmail');
                 if (input) input.value = '';
                 if (box) box.style.display = 'none';
+                adminHideUserPicker();
             } catch(_) {}
         }
 
@@ -8875,6 +8908,72 @@
                     showAdminNotification('Broadcast', 'Failed to send broadcast', 'error');
                 }
             })();
+        }
+
+        // ==================== USER PICKER (AI THEME) ====================
+        async function adminShowUserPicker(){
+            try {
+                const picker = document.getElementById('adminUserPicker');
+                const listEl = document.getElementById('adminUserPickerList');
+                if (!picker || !listEl) return;
+                picker.classList.remove('hidden');
+                // Load users if list is empty
+                if (!listEl.dataset.loaded) {
+                    await ensureFirestoreReady();
+                    const usersMap = await window.FirestoreDataManager.getUsers();
+                    const users = Object.values(usersMap || {}).filter(u => u && u.profile && u.profile.email);
+                    // Render
+                    listEl.innerHTML = users.map(u => {
+                        const name = (u.profile.fullName || u.profile.name || u.profile.firstName || u.profile.email.split('@')[0] || 'User');
+                        const email = u.profile.email;
+                        const initials = String(name).trim().slice(0,2).toUpperCase();
+                        return `
+                            <div class="up-item" data-email="${email}" onclick="adminPickUser('${email.replace(/'/g,"&#39;")}')">
+                                <div class="up-avatar">${initials}</div>
+                                <div class="up-meta">
+                                    <span class="name">${name}</span>
+                                    <span class="email">${email}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    listEl.dataset.loaded = '1';
+                }
+                const search = document.getElementById('adminUserPickerSearch');
+                if (search) { search.value = ''; search.focus(); }
+            } catch(e) { console.warn('user picker error', e); }
+        }
+
+        function adminHideUserPicker(){
+            const picker = document.getElementById('adminUserPicker');
+            if (picker) picker.classList.add('hidden');
+        }
+
+        function adminFilterUserPicker(){
+            const q = (document.getElementById('adminUserPickerSearch')?.value || '').toLowerCase();
+            const items = Array.from(document.querySelectorAll('#adminUserPickerList .up-item'));
+            items.forEach(it => {
+                const email = (it.getAttribute('data-email')||'').toLowerCase();
+                const name = (it.querySelector('.name')?.textContent || '').toLowerCase();
+                it.style.display = (!q || name.includes(q) || email.includes(q)) ? 'flex' : 'none';
+            });
+        }
+
+        async function adminPickUser(email){
+            try {
+                if (!email) return;
+                if (!adminMessagingService) {
+                    adminMessagingService = new MessagingService();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                const conversationId = await adminMessagingService.getOrCreateUserConversation(email);
+                adminHideUserPicker();
+                await adminSelectConversation(conversationId);
+                document.getElementById('adminMessageInput').focus();
+            } catch (e) {
+                console.error('pick user error', e);
+                showAdminNotification('New Message','Could not open conversation','error');
+            }
         }
 
         // Initialize admin messaging when dashboard loads
