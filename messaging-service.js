@@ -572,6 +572,33 @@ class MessagingService {
     }
 
     /**
+     * Get or create direct conversation between current user and another user (non-admin path)
+     */
+    async getOrCreateDirectConversation(targetEmail) {
+        try {
+            if (!this.currentUser) throw new Error('User not authenticated');
+            if (!targetEmail) throw new Error('Target email required');
+
+            const participants = [this.currentUser.email, targetEmail];
+            const conversationId = participants.sort().join('_').replace(/[^a-zA-Z0-9_]/g, '_');
+
+            const conversationDoc = await this.firestore
+                .collection('directMessages')
+                .doc(conversationId)
+                .get();
+
+            if (conversationDoc.exists) {
+                return conversationId;
+            } else {
+                return await this.createConversation(participants);
+            }
+        } catch (error) {
+            console.error('❌ Failed to get/create direct conversation:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Helper methods
      */
     createReadStatus(participants) {

@@ -20231,20 +20231,76 @@
         }
     }
 
-    // Start a new conversation (show lightweight picker: currently admin-only target)
+    // Start a new conversation (inline recipient picker)
     async function startNewConversation() {
         try {
             if (!messagingService) {
                 messagingService = new MessagingService();
-                await new Promise(resolve => setTimeout(resolve, 500));
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
-            const conversationId = await messagingService.getOrCreateAdminConversation();
+            const panelHost = document.querySelector('.conversations-panel');
+            if (!panelHost) return;
+            const existing = panelHost.querySelector('[data-portal-picker]');
+            if (existing) existing.remove();
+            const wrapper = document.createElement('div');
+            wrapper.setAttribute('data-portal-picker','');
+            wrapper.style.position = 'absolute';
+            wrapper.style.left = '16px';
+            wrapper.style.top = '72px';
+            wrapper.style.width = '340px';
+            wrapper.style.maxHeight = '420px';
+            wrapper.style.overflow = 'auto';
+            wrapper.style.background = 'rgba(17,24,39,0.92)';
+            wrapper.style.border = '1px solid rgba(99,102,241,0.30)';
+            wrapper.style.borderRadius = '14px';
+            wrapper.style.boxShadow = '0 30px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(99,102,241,0.10) inset';
+            wrapper.style.zIndex = '12000';
+            wrapper.style.padding = '12px';
+            wrapper.innerHTML = `
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <input id="portalPickerSearch" placeholder="Search users" style="flex:1; height:40px; border-radius:12px; border:1px solid rgba(99,102,241,.25); background:rgba(12,18,32,.65); color:#e5e7eb; padding:0 12px;" />
+                    <button class="btn btn-secondary" onclick="this.closest('[data-portal-picker]').remove()">Close</button>
+                </div>
+                <div id="portalPickerList"></div>
+            `;
+            panelHost.appendChild(wrapper);
+
+            const usersMap = await (window.FirestoreDataManager && window.FirestoreDataManager.getUsers ? window.FirestoreDataManager.getUsers() : {});
+            const admins = window.FirebaseConfig?.getAdminUsers() || [];
+            const current = messagingService?.currentUser?.email || '';
+            const listEl = wrapper.querySelector('#portalPickerList');
+            const makeRow = (name, email) => `<div class="up-item" style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;" data-email="${email}" onclick="pickPortalRecipient('${email.replace(/'/g,"&#39;")}')"><div class="up-avatar" style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#22d3ee,#a78bfa);color:#0b1020;font-weight:800;font-size:.85rem;">${(name||email).slice(0,2).toUpperCase()}</div><div class="up-meta"><div class="name" style="color:#eef2ff;font-weight:700;font-size:.92rem;">${name||email}</div><div class="email" style="color:#c7d2fe;opacity:.85;font-size:.82rem;">${email}</div></div></div>`;
+            let html = makeRow('Admin Team', admins[0] || 'info@cochranfilms.com');
+            Object.values(usersMap || {}).forEach(u => {
+                const email = u?.profile?.email;
+                if (!email || email === current) return;
+                html += makeRow(u?.profile?.fullName || u?.profile?.name || email.split('@')[0], email);
+            });
+            listEl.innerHTML = html;
+            const search = wrapper.querySelector('#portalPickerSearch');
+            search.addEventListener('input', () => {
+                const q = search.value.toLowerCase();
+                Array.from(listEl.children).forEach(child => {
+                    const name = (child.querySelector('.name')?.textContent||'').toLowerCase();
+                    const email = (child.querySelector('.email')?.textContent||'').toLowerCase();
+                    child.style.display = (!q || name.includes(q) || email.includes(q)) ? 'flex' : 'none';
+                });
+            });
+        } catch (error) {
+            console.error('❌ Failed to open recipient picker:', error);
+            alert('Failed to open recipient picker.');
+        }
+    }
+
+    window.pickPortalRecipient = async function(email){
+        try {
+            if (!messagingService) { messagingService = new MessagingService(); await new Promise(r=>setTimeout(r,300)); }
+            const admins = window.FirebaseConfig?.getAdminUsers() || [];
+            const conversationId = admins.includes(email) ? await messagingService.getOrCreateAdminConversation() : await messagingService.getOrCreateDirectConversation(email);
+            const wrapper = document.querySelector('[data-portal-picker]'); if (wrapper) wrapper.remove();
             await selectConversation(conversationId);
             document.getElementById('messageInput').focus();
-        } catch (error) {
-            console.error('❌ Failed to start new conversation:', error);
-            alert('Failed to start conversation. Please try again.');
-        }
+        } catch (e) { console.error(e); alert('Could not start conversation.'); }
     }
 
     // Send a message
