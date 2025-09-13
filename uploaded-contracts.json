@@ -627,8 +627,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-13",
       "signedDate": "2025-09-13"
+    },
+    {
+      "contractId": "CF-1757762277162-2GM53",
+      "freelancerName": "Eric John",
+      "freelancerEmail": "codylcochran87@gmail.com",
+      "role": "Backdrop Photographer Spotlight",
+      "rate": "$300 + Tip",
+      "location": "Douglasville, GA",
+      "fileName": "Eric John - Backdrop Photographer Spotlight - CF-1757762277162-2GM53.pdf",
+      "fileSize": 10350,
+      "uploadDate": "2025-09-13T11:18:17.057Z",
+      "status": "uploaded",
+      "fileUrl": "https://firebasestorage.googleapis.com/v0/b/cochran-films.firebasestorage.app/o/contracts%2Fcodylcochran87%40gmail.com%2F1757762278246-eric-john-backdrop-photographer-spotlight-cf-1757762277162-2gm53.pdf?alt=media&token=302852fb-19ae-46bf-a518-93d507aeca19",
+      "storagePath": "contracts/codylcochran87@gmail.com/1757762278246-eric-john-backdrop-photographer-spotlight-cf-1757762277162-2gm53.pdf",
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-13",
+      "signedDate": "2025-09-13"
     }
   ],
-  "lastUpdated": "2025-09-13T10:43:07.508Z",
-  "totalContracts": 39
+  "lastUpdated": "2025-09-13T11:18:17.057Z",
+  "totalContracts": 40
 }
