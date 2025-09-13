@@ -1971,6 +1971,15 @@
                                         <i class="fas fa-plus"></i> New Message
                                     </button>
                                 </div>
+                                <!-- Inline new-conversation composer (hidden by default) -->
+                                <div id="adminNewMessageInline" style="display:none; margin:8px 12px 0 12px;">
+                                    <div style="display:flex; gap:8px; align-items:center;">
+                                        <input type="email" id="adminNewMessageEmail" placeholder="Recipient email" 
+                                            style="flex:1; padding:.55rem .7rem; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:var(--white);" />
+                                        <button class="btn btn-primary" onclick="adminSubmitNewMessageInline()">Start</button>
+                                        <button class="btn btn-secondary" onclick="adminCancelNewMessageInline()">Cancel</button>
+                                    </div>
+                                </div>
                                 <div class="conversations-list" id="adminConversationsList">
                                     <!-- Conversations will be populated here -->
                                 </div>
@@ -2009,6 +2018,17 @@
                                     </div>
                                 </div>
                                 
+                                <!-- Inline broadcast composer for admins (hidden by default) -->
+                                <div id="adminBroadcastInline" style="display:none; padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.03);">
+                                    <div style="display:flex; gap:8px; align-items:flex-end;">
+                                        <textarea id="adminBroadcastInput" rows="1" placeholder="Broadcast message to all users..." 
+                                            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';"
+                                            style="flex:1; padding:.55rem .7rem; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:var(--white);"></textarea>
+                                        <button class="btn btn-primary" onclick="adminSendBroadcast()">Send</button>
+                                        <button class="btn btn-secondary" onclick="adminToggleBroadcast()">Cancel</button>
+                                    </div>
+                                </div>
+
                                 <div class="chat-input-container" id="adminChatInputContainer" style="display: none;">
                                     <div class="chat-input-wrapper">
                                         <button class="btn btn-secondary attachment-btn" onclick="adminToggleAttachmentMenu()">
@@ -8595,25 +8615,43 @@
 
         // Start new conversation with user
         async function adminStartNewConversation() {
+            // Reveal inline composer instead of prompt
             try {
-                const userEmail = prompt('Enter user email to start conversation:');
-                if (!userEmail) return;
-                
+                const box = document.getElementById('adminNewMessageInline');
+                if (box) { box.style.display = 'block'; }
+                const input = document.getElementById('adminNewMessageEmail');
+                if (input) { input.focus(); }
+            } catch(_) {}
+        }
+
+        async function adminSubmitNewMessageInline() {
+            try {
+                const input = document.getElementById('adminNewMessageEmail');
+                const userEmail = (input && input.value || '').trim();
+                if (!userEmail) { showAdminNotification('New Message','Enter a valid email','error'); return; }
                 if (!adminMessagingService) {
                     adminMessagingService = new MessagingService();
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
-                
                 const conversationId = await adminMessagingService.getOrCreateUserConversation(userEmail);
                 await adminSelectConversation(conversationId);
-                
-                // Focus on message input
+                if (input) { input.value = ''; }
+                const box = document.getElementById('adminNewMessageInline');
+                if (box) { box.style.display = 'none'; }
                 document.getElementById('adminMessageInput').focus();
-                
             } catch (error) {
                 console.error('❌ Failed to start admin conversation:', error);
-                alert('Failed to start conversation. Please try again.');
+                showAdminNotification('New Message','Failed to start conversation','error');
             }
+        }
+
+        function adminCancelNewMessageInline(){
+            try {
+                const box = document.getElementById('adminNewMessageInline');
+                const input = document.getElementById('adminNewMessageEmail');
+                if (input) input.value = '';
+                if (box) box.style.display = 'none';
+            } catch(_) {}
         }
 
         // Send message (admin)
@@ -8781,40 +8819,52 @@
 
         // Broadcast message to all users
         function adminBroadcastMessage() {
-            const message = prompt('Enter broadcast message:');
-            if (message) {
-                // Implement broadcast functionality using conversations with each user
-                (async () => {
-                    try {
-                        await ensureFirestoreReady();
-                        if (!adminMessagingService) {
-                            adminMessagingService = new MessagingService();
-                            await adminMessagingService.readyPromise;
-                        }
-                        const usersMap = await window.FirestoreDataManager.getUsers();
-                        const users = Object.values(usersMap || {}).filter(u => u && u.profile && u.profile.email);
-                        const adminEmails = (window.FirebaseConfig && window.FirebaseConfig.getAdminUsers) ? window.FirebaseConfig.getAdminUsers() : [];
-                        const recipients = users.map(u => u.profile.email).filter(e => e && !adminEmails.includes(String(e).toLowerCase()));
+            // Toggle inline broadcast composer
+            adminToggleBroadcast(true);
+        }
 
-                        if (!recipients.length) { showAdminNotification('Broadcast','No recipients found','info'); return; }
+        function adminToggleBroadcast(forceShow){
+            const el = document.getElementById('adminBroadcastInline');
+            if (!el) return;
+            if (forceShow === true) { el.style.display = 'block'; return; }
+            if (forceShow === false) { el.style.display = 'none'; return; }
+            el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+        }
 
-                        let sentCount = 0;
-                        for (const email of recipients) {
-                            try {
-                                const convId = await adminMessagingService.getOrCreateUserConversation(email);
-                                await adminMessagingService.sendMessage(convId, message, []);
-                                sentCount++;
-                            } catch (e) {
-                                console.warn('Broadcast send failed for', email, e);
-                            }
-                        }
-                        showAdminNotification('Broadcast', `Message sent to ${sentCount} users`, 'success');
-                    } catch (e) {
-                        console.error('Broadcast failed:', e);
-                        showAdminNotification('Broadcast', 'Failed to send broadcast', 'error');
+        function adminSendBroadcast(){
+            const input = document.getElementById('adminBroadcastInput');
+            const message = (input && input.value || '').trim();
+            if (!message) { showAdminNotification('Broadcast','Enter a message','error'); return; }
+            (async () => {
+                try {
+                    await ensureFirestoreReady();
+                    if (!adminMessagingService) {
+                        adminMessagingService = new MessagingService();
+                        await adminMessagingService.readyPromise;
                     }
-                })();
-            }
+                    const usersMap = await window.FirestoreDataManager.getUsers();
+                    const users = Object.values(usersMap || {}).filter(u => u && u.profile && u.profile.email);
+                    const adminEmails = (window.FirebaseConfig && window.FirebaseConfig.getAdminUsers) ? window.FirebaseConfig.getAdminUsers() : [];
+                    const recipients = users.map(u => u.profile.email).filter(e => e && !adminEmails.includes(String(e).toLowerCase()));
+                    if (!recipients.length) { showAdminNotification('Broadcast','No recipients found','info'); return; }
+                    let sentCount = 0;
+                    for (const email of recipients) {
+                        try {
+                            const convId = await adminMessagingService.getOrCreateUserConversation(email);
+                            await adminMessagingService.sendMessage(convId, message, []);
+                            sentCount++;
+                        } catch (e) {
+                            console.warn('Broadcast send failed for', email, e);
+                        }
+                    }
+                    if (input) input.value = '';
+                    adminToggleBroadcast(false);
+                    showAdminNotification('Broadcast', `Message sent to ${sentCount} users`, 'success');
+                } catch (e) {
+                    console.error('Broadcast failed:', e);
+                    showAdminNotification('Broadcast', 'Failed to send broadcast', 'error');
+                }
+            })();
         }
 
         // Initialize admin messaging when dashboard loads
