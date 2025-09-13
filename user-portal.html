@@ -19078,7 +19078,7 @@
                 </div>
                 
                 <!-- Messaging Board -->
-                <div class="card messaging-board-card">
+                <div class="card messaging-board-card" style="display: none;">
                     <div class="card-header">
                         <h3><i class="fas fa-comments"></i> Team Messaging</h3>
                     </div>
@@ -19088,8 +19088,8 @@
                         </div>
                         <div class="message-input-container">
                             <div class="message-input">
-                                <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
-                                <button class="btn btn-primary" onclick="sendMessage()">
+                                <input type="text" id="teamMessageInput" placeholder="Type your message..." maxlength="500">
+                                <button class="btn btn-primary" onclick="/* legacy team message disabled */ void 0">
                                     <i class="fas fa-paper-plane"></i>
                                 </button>
                             </div>
@@ -20188,7 +20188,11 @@
             const content = messageInput.value.trim();
             
             if (!content && selectedFiles.length === 0) return;
-            if (!currentConversationId) return;
+            // Ensure a conversation exists/selected
+            if (!currentConversationId) {
+                const conversationId = await messagingService.getOrCreateAdminConversation();
+                await selectConversation(conversationId);
+            }
             
             // Upload attachments if any
             let attachments = [];
@@ -20202,11 +20206,15 @@
             }
             
             // Send message
-            await messagingService.sendMessage(currentConversationId, content, attachments);
+            const sentId = await messagingService.sendMessage(currentConversationId, content, attachments);
             
             // Clear input
             messageInput.value = '';
             messageInput.style.height = 'auto';
+            
+            // Optimistically refresh messages and conversation list
+            await loadMessages(currentConversationId);
+            loadConversations();
             
         } catch (error) {
             console.error('❌ Failed to send message:', error);

@@ -191,7 +191,7 @@ class MessagingService {
             
             // Query in two steps to avoid composite index requirement:
             // Fetch active conversations first (no orderBy to avoid index),
-            // then filter by participant and sort client-side by lastMessageTime desc.
+            // then filter by participant (unless admin) and sort client-side by lastMessageTime desc.
             const activeQuery = this.firestore
                 .collection('directMessages')
                 .where('isActive', '==', true);
@@ -202,7 +202,10 @@ class MessagingService {
             const matching = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (Array.isArray(data.participants) && data.participants.includes(this.currentUser.email)) {
+                const include = this.isAdmin
+                    ? true
+                    : (Array.isArray(data.participants) && data.participants.includes(this.currentUser.email));
+                if (include) {
                     matching.push({
                         id: doc.id,
                         ...data,
