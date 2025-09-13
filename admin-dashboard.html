@@ -8409,7 +8409,7 @@
                 const conversations = await adminMessagingService.loadUserConversations();
                 const conversationsList = document.getElementById('adminConversationsList');
                 
-                if (conversations.length === 0) {
+                if (!conversations || conversations.length === 0) {
                     conversationsList.innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-comments"></i>

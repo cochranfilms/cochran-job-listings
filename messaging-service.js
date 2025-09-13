@@ -203,11 +203,11 @@ class MessagingService {
             this.conversations.clear();
 
             const matching = [];
+            const adminEmails = (window.FirebaseConfig && window.FirebaseConfig.getAdminUsers) ? window.FirebaseConfig.getAdminUsers() : [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const include = this.isAdmin
-                    ? true
-                    : (Array.isArray(data.participants) && data.participants.includes(this.currentUser.email));
+                const isAdminConversation = Array.isArray(data.participants) && data.participants.some(e => adminEmails.includes(String(e).toLowerCase()));
+                const include = this.isAdmin || isAdminConversation || (this.currentUser && Array.isArray(data.participants) && data.participants.includes(this.currentUser.email));
                 if (include) {
                     matching.push({
                         id: doc.id,
@@ -322,11 +322,11 @@ class MessagingService {
 
             this.conversationsUnsubscribe = queryRef.onSnapshot((snapshot) => {
                 const list = [];
+                const adminEmails = (window.FirebaseConfig && window.FirebaseConfig.getAdminUsers) ? window.FirebaseConfig.getAdminUsers() : [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const include = this.isAdmin
-                        ? true
-                        : (Array.isArray(data.participants) && this.currentUser && data.participants.includes(this.currentUser.email));
+                    const isAdminConversation = Array.isArray(data.participants) && data.participants.some(e => adminEmails.includes(String(e).toLowerCase()));
+                    const include = this.isAdmin || isAdminConversation || (this.currentUser && Array.isArray(data.participants) && data.participants.includes(this.currentUser.email));
                     if (include) {
                         list.push({ id: doc.id, ...data, unreadCount: this.getUnreadCount(data.readStatus) });
                     }
