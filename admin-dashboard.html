@@ -8577,7 +8577,18 @@
                 const content = messageInput.value.trim();
                 
                 if (!content && adminSelectedFiles.length === 0) return;
-                if (!adminCurrentConversationId) return;
+                if (!adminCurrentConversationId) {
+                    // Try to create/select a conversation with the first user from users list
+                    const users = (window.users && Object.values(window.users)) || [];
+                    const firstUser = users.find(u => u && u.profile && u.profile.email);
+                    if (firstUser) {
+                        const convId = await adminMessagingService.getOrCreateUserConversation(firstUser.profile.email);
+                        await adminSelectConversation(convId);
+                    } else {
+                        alert('No user selected. Click New Message and enter a recipient email.');
+                        return;
+                    }
+                }
                 
                 // Upload attachments if any
                 let attachments = [];
@@ -8598,7 +8609,7 @@
                 messageInput.style.height = 'auto';
                 
             } catch (error) {
-                console.error('❌ Failed to send admin message:', error);
+                console.error('❌ Failed to send admin message:', error?.message || error, error);
                 alert('Failed to send message. Please try again.');
             }
         }

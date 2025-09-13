@@ -54,12 +54,39 @@ class MessagingService {
         return true;
     }
 
+    async ensureReadyForWrites(timeoutMs = 5000) {
+        await window.FirebaseConfig.waitForInit();
+        if (!this.firestore) this.firestore = window.FirebaseConfig.getFirestore();
+        if (!this.auth) this.auth = window.FirebaseConfig.auth;
+        if (!this.storage && typeof firebase !== 'undefined' && firebase.storage) this.storage = firebase.storage();
+
+        if (this.auth && !this.currentUser) this.currentUser = this.auth.currentUser;
+        if (this.currentUser) return true;
+
+        // wait for onAuthStateChanged
+        await new Promise((resolve) => {
+            const started = Date.now();
+            const unsub = this.auth.onAuthStateChanged(() => {
+                this.currentUser = this.auth.currentUser;
+                if (this.currentUser) {
+                    unsub && unsub();
+                    resolve(true);
+                } else if (Date.now() - started > timeoutMs) {
+                    unsub && unsub();
+                    resolve(false);
+                }
+            });
+        });
+        if (!this.currentUser) throw new Error('Not authenticated');
+        return true;
+    }
+
     /**
      * Create a new conversation between users
      */
     async createConversation(participants, jobId = null, initialMessage = null) {
         try {
-            if (!this.currentUser) throw new Error('User not authenticated');
+            await this.ensureReadyForWrites();
             
             // Ensure current user is in participants
             if (!participants.includes(this.currentUser.email)) {
@@ -104,7 +131,7 @@ class MessagingService {
      */
     async sendMessage(conversationId, content, attachments = []) {
         try {
-            if (!this.currentUser) throw new Error('User not authenticated');
+            await this.ensureReadyForWrites();
             
             const messagesRef = this.firestore
                 .collection('directMessages')
@@ -134,7 +161,7 @@ class MessagingService {
             return messageData.id;
             
         } catch (error) {
-            console.error('❌ Failed to send message:', error);
+            console.error('❌ Failed to send message:', error?.message || error, error);
             throw error;
         }
     }
@@ -144,7 +171,7 @@ class MessagingService {
      */
     async uploadAttachment(conversationId, messageId, file) {
         try {
-            if (!this.currentUser) throw new Error('User not authenticated');
+            await this.ensureReadyForWrites();
             
             const fileName = `${Date.now()}_${file.name}`;
             const storageRef = this.storage.ref(`messageAttachments/${conversationId}/${messageId}/${fileName}`);
