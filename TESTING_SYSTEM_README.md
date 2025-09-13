@@ -3,7 +3,7 @@
 - Public `index.html` continues to use Apply link only; Quick Apply is limited to `user-portal.html` job cards.
 - Admin approval path now stores `rate` on the assigned job in the user record (and mirrors to `pay` for backward compatibility). Acceptance emails derive rate from the specific approved job (Quick Apply passes `jobKey`).
 - Add New Job form placeholders restored: "Select Location…", "Select Rate…", and "Select Project Type…". `jobType` is populated from Firestore `dropdownOptions.projectTypes`.
-- When approving Quick Apply applicants, the system attempts to create a Firebase Auth account for the applicant if one doesn’t already exist so they can sign in to the portal.
+- When approving Quick Apply applicants, the system attempts to create a Firebase Auth account for the applicant if one doesn't already exist so they can sign in to the portal.
   - Guard added: server `GET /api/firebase?email=...` checks existence; creation only runs if not found.
 
 How to test quickly (old script workflow):
@@ -49,7 +49,7 @@ How to test quickly (old script workflow):
 - Persistence + notifications test (browser):
   1. Open `user-portal.html` and sign in as User A; go to Community → Team Messaging. Like a message authored by User B.
   2. In Firebase Console → Firestore, check `messages/<id>.likes` increases and `likedBy` includes User A's email.
-  3. Sign in as User B in another browser; verify a new document under `notifications` appears with `toEmail=User B` and title “New like on your message”.
+  3. Sign in as User B in another browser; verify a new document under `notifications` appears with `toEmail=User B` and title "New like on your message".
   4. In Community → Success Stories, like a showcase; verify `showcases/<id>.likes` increases and a notification is created for the author.
   5. Refresh both pages; like counts should persist from Firestore.
 
@@ -59,28 +59,28 @@ How to test quickly (old script workflow):
 - Test:
   1. Ensure a user has 2+ entries under `users/<uid>.jobs` and at least 2 contract docs in Firestore `contracts` with `freelancerEmail` equal to the user email.
   2. Open `user-portal.html` and sign in as that user.
-  3. Jobs tab should show a `.job-card` for each job, each with its own “Project Timeline”.
+  3. Jobs tab should show a `.job-card` for each job, each with its own "Project Timeline".
   4. Contracts tab should show multiple `.contract-card` entries, newest first. Click Download on each; verify the correct corresponding PDF downloads for each card (mismatches would indicate bad contractId wiring).
 
 ### 2025-09-12 — Quick Apply Flow (Portal → Admin Queue)
 
 - Files: `user-portal.html`, `admin-dashboard.html`, `firestore-data-manager.js`
 - Change:
-  - Priority Jobs “Quick Apply” now writes to `quickApplications` via `FirestoreDataManager.addQuickApplication()` with duplicate prevention (email+job guarded).
+  - Priority Jobs "Quick Apply" now writes to `quickApplications` via `FirestoreDataManager.addQuickApplication()` with duplicate prevention (email+job guarded).
   - Admin dashboard merges `applications` + `quickApplications` into one queue with source tags; Approve/Deny supports both via `setQuickApplicationStatus()` or `setApplicationStatus()`.
   - On Approve, we attach job to user (duplicate-guarded), persist to Firestore, and call existing `sendJobAcceptanceEmail` to kick off EmailJS → Contract → Portal flow (same as `apply.html`).
   - Mirrors: `users/{uid}/quickApplications/*` and `jobs/{jobId}/quickApplications/*` for quick applies.
 
 Old automatic testing system steps:
 1) Prep: In Firebase Console, ensure at least one job exists in `jobs` with fields: `title`, optional `date`, `location`, `pay`.
-2) User portal: Open `user-portal.html`, sign in as a test user; go to Priority Jobs and click “Quick Apply”. Expect toast “Application sent! Admin will review shortly.” and no JS errors. If Firestore unavailable, a prefilled `/apply.html` opens instead.
+2) User portal: Open `user-portal.html`, sign in as a test user; go to Priority Jobs and click "Quick Apply". Expect toast "Application sent! Admin will review shortly." and no JS errors. If Firestore unavailable, a prefilled `/apply.html` opens instead.
 3) Admin: Open `admin-dashboard.html` → Application Management. Verify counters update and the application appears with email + date, with Approve and Deny buttons.
-4) Click Approve. Expect toast “Application approved”; status pill turns accepted; counters update. Click Deny on another app and verify status transitions.
+4) Click Approve. Expect toast "Application approved"; status pill turns accepted; counters update. Click Deny on another app and verify status transitions.
 5) Refresh both pages; ensure states persist. In Firestore, confirm a doc in `applications`, and mirrors under `users/{uid}/applications/{appId}` and `jobs/{jobId}/applications/{appId}`.
 
 Notes:
 - Duplicate prevention: submitting Quick Apply again for the same job/email within 24h returns the existing application id rather than creating a new doc.
-- Fallback: If Firestore is not available, Quick Apply opens `/apply.html` with prefilled query params; no data loss, but admin queue won’t reflect until manual submission.
+- Fallback: If Firestore is not available, Quick Apply opens `/apply.html` with prefilled query params; no data loss, but admin queue won't reflect until manual submission.
 
 ### 2025-08-20 — Project Start Date Source & Current Jobs Status
 
@@ -121,7 +121,7 @@ How to verify quickly:
 1. Open `index.html` with DevTools Console visible.
 2. Ensure Firebase initializes (look for "✅ Firebase initialized in index.html").
 3. Check the console for rows logged as "Row with title ..." and confirm jobs render below without the empty-state banner.
-4. Click “Refresh Jobs” and confirm listings persist and update without showing the "not hiring" message unless there truly are zero jobs in Firestore.
+4. Click "Refresh Jobs" and confirm listings persist and update without showing the "not hiring" message unless there truly are zero jobs in Firestore.
 
 ### Admin Dashboard: Quick Actions removed (2025-08-19)
 
@@ -169,13 +169,13 @@ What changed:
 
 Quick test (browser):
 1. Sign in to `user-portal.html` and go to Equipment & Resource Center.
-2. Click “Equipment Requests” → form and “Your Requests” list should appear. Submit a test request and see it render in “Your Requests”.
+2. Click "Equipment Requests" → form and "Your Requests" list should appear. Submit a test request and see it render in "Your Requests".
 3. From `admin-dashboard.html`, approve the request (Row 4 → Requests). Ensure at least one item is checked out.
-4. Back in `user-portal.html`, click “My Rented Equipment” → the checked‑out item(s) render with rental details. No empty state if items exist.
+4. Back in `user-portal.html`, click "My Rented Equipment" → the checked‑out item(s) render with rental details. No empty state if items exist.
 
 Console expectations:
-- On switching to Requests: logs “🔄 Loading equipment requests …” then “✅ Loaded equipment requests …” and “✅ Equipment requests rendered successfully”.
-- On switching to Rented: logs “🔄 Loading rented equipment …” then “✅ Loaded rented equipment …” and “✅ Rented equipment rendered successfully”.
+- On switching to Requests: logs "🔄 Loading equipment requests …" then "✅ Loaded equipment requests …" and "✅ Equipment requests rendered successfully".
+- On switching to Rented: logs "🔄 Loading rented equipment …" then "✅ Loaded rented equipment …" and "✅ Rented equipment rendered successfully".
 
 ### 2025-09-12 — Team Messaging: remove standalone "New Message" button
 
@@ -191,12 +191,12 @@ How to verify quickly:
 ### 2025-09-12 — Equipment Requests: remove manual form
 
 - Files: `user-portal.html`
-- Change: The Equipment Requests tab no longer shows a manual form. Users initiate requests from the Gear Library “Request” button; the Requests tab now shows instructions plus “Your Requests”.
+- Change: The Equipment Requests tab no longer shows a manual form. Users initiate requests from the Gear Library "Request" button; the Requests tab now shows instructions plus "Your Requests".
 - Reason: Single, clear entry point and avoids duplicate UX.
 
 Quick test:
 1. Open `user-portal.html` → Equipment & Resource Center.
-2. In Gear Library, click “Request” on an available item; dates modal/flow creates a request.
+2. In Gear Library, click "Request" on an available item; dates modal/flow creates a request.
 3. Switch to Equipment Requests tab; the new request appears in the list. No form is present.
 
 ### 2025-09-12 — Success Stories now Firestore-backed (live data)
@@ -208,7 +208,7 @@ Quick test:
 Quick test (browser):
 1. In Firebase Console, create a doc under `successStories` with fields like `author`, `authorEmail`, `role`, `achievement`, `title`, `description`, `stats { projectsCompleted, clientRating, earnings }`, `timestamp`.
 2. Open `user-portal.html` → Community → Success Stories. Verify the new story appears without refresh and respects the achievement filter.
-3. Open `admin-dashboard.html` and check the “Success Stories” mini-stat increments accordingly.
+3. Open `admin-dashboard.html` and check the "Success Stories" mini-stat increments accordingly.
 4. Delete or edit the story in Firestore; verify the portal grid updates live.
 
 ### 2025-09-12 — Community Tools modernization (Admin)
@@ -255,11 +255,11 @@ How to test:
 3. Verify the Items control shows a multi-select list of only available gear; names are alphabetized and may include serial numbers.
 4. Hold Cmd/Ctrl to select multiple; submit the request.
 5. In Admin → Requests, approve. Switch back to portal → Rented tab should show the approved items after approval.
-6. From Gear Library, click “Request” on an available item → the Requests tab opens with that item pre-selected.
+6. From Gear Library, click "Request" on an available item → the Requests tab opens with that item pre-selected.
 
 Verification steps:
 1. Open `admin-dashboard.html` and sign in.
-2. In the User & Contract Management card, confirm there is no “Quick Actions” section and no related buttons.
+2. In the User & Contract Management card, confirm there is no "Quick Actions" section and no related buttons.
 3. Open DevTools Console and run any removed function name (e.g., `generateAllContracts`) and confirm `undefined` errors are not present because nothing binds them to UI; no references remain on the page.
 
 ### 2025-09-12 — Social Flyer: OBS Technical Assistant
@@ -271,9 +271,9 @@ Quick test (manual browser):
 1. Open `/OBS-Technical-Assistant-Flyer.html` in a desktop browser.
 2. Verify visuals:
    - Cochran Films logo renders crisply with gold glow.
-   - Title shows “OBS Technical Assistant”.
+   - Title shows "OBS Technical Assistant".
    - When/times: 9/15 & 9/16; 10:30–1:30 (9/15) and 4:30–9:30 (9/16).
-3. Click “Download as PNG”. Expect `OBS-Tech-Assistant-Flyer-<timestamp>.png` to download. If blocked, take a screenshot of the card at 1080×1350.
+3. Click "Download as PNG". Expect `OBS-Tech-Assistant-Flyer-<timestamp>.png` to download. If blocked, take a screenshot of the card at 1080×1350.
 4. Resize to mobile (~390px). Layout stacks cleanly; no clipping or overflow.
 
 
@@ -351,15 +351,15 @@ Regression considerations:
 
 Details:
 - Modal class names: `.ai-gate-modal`, `.ai-gate-panel` (styles inline in `index.html`).
-- CTA: “Visit Current Landing Page” → `https://landing.cochranfilms.com` (opens in new tab).
-- Admin “Enter” shows a password row; unlocking hides the modal for the session.
+- CTA: "Visit Current Landing Page" → `https://landing.cochranfilms.com` (opens in new tab).
+- Admin "Enter" shows a password row; unlocking hides the modal for the session.
 - Password (current): `USER1234`. Change by editing the comparison in the `tryUnlock()` function.
 - Session key used: `cf_index_gate_unlocked_v1`.
 
 Quick test:
 1. Open `index.html`. Verify the modal appears and body scroll is disabled.
-2. Click “Visit Current Landing Page” → confirm new tab opens to landing site.
-3. Click “Enter” → password input appears.
+2. Click "Visit Current Landing Page" → confirm new tab opens to landing site.
+3. Click "Enter" → password input appears.
 4. Enter wrong password → error flashes; modal remains.
 5. Enter `USER1234` → modal closes; page usable; session persists until tab close.
 6. Reload page in same tab/session → modal does not reappear.
@@ -411,14 +411,14 @@ This document describes the comprehensive testing system for the Cochran Films a
 ### Read-Me AI Redesign Verification (2025-08-19)
 - What changed:
   - `Read-Me.html` upgraded to AI-styled glass/neural design inspired by `popup.html` and `index2.html`.
-  - Added “What’s New in 2025” section; refined Hero with typewriter; subtle particles; Firestore added to Technology Stack.
+  - Added "What's New in 2025" section; refined Hero with typewriter; subtle particles; Firestore added to Technology Stack.
 - Quick test:
   1. Open `Read-Me.html` and confirm:
-     - Hero headline cycles through phrases (“Admin Dashboard”, “Creator Portal”, etc.).
+     - Hero headline cycles through phrases ("Admin Dashboard", "Creator Portal", etc.).
      - Navbar gains shadow after scrolling >100px.
      - Particles are subtle (gold/indigo) and interactive.
-  2. Click “What’s New” → cards render with CTAs to `admin-dashboard.html`, `user-portal.html`, `popup.html`, `index2.html`.
-  3. “Technology” shows Firestore tile with Realtime/Scalable/Secure.
+  2. Click "What's New" → cards render with CTAs to `admin-dashboard.html`, `user-portal.html`, `popup.html`, `index2.html`.
+  3. "Technology" shows Firestore tile with Realtime/Scalable/Secure.
   4. Run Lighthouse or PageSpeed: ensure no blocking errors, layout stable on mobile.
 
 ### Modular Managers Firestore-First Loading (2025-08-18)
@@ -486,7 +486,7 @@ Smoke test:
 ### Quick Test
 1. Open `index.html` locally (or `https://collaborate.cochranfilms.com`).
 2. Verify slide 1 shows the Cochran Films logo, the creator-focused headline/subhead, and two CTAs.
-3. Click “JOIN THE ROSTER” → page should smooth-scroll to the jobs list.
+3. Click "JOIN THE ROSTER" → page should smooth-scroll to the jobs list.
 4. Use arrow keys or nav dots to move between slides; ensure the last slide no longer auto-advances.
 5. Confirm mobile swipe left/right still changes slides; first slide content fits and remains centered.
 6. Verify jobs still load from Firestore (or fallback) and the Refresh button still works.
@@ -516,7 +516,7 @@ Smoke test:
 #### Quick Test: Dropdowns load from Firestore
 1. Open the dashboard → Dropdown Management section should populate without refresh.
 2. In Firestore console, edit `dropdownOptions/default.rates` (add a value); confirm it appears within a second in the UI.
-3. Use the “Add” buttons; confirm values appear immediately and exist in Firestore `dropdownOptions/default`.
+3. Use the "Add" buttons; confirm values appear immediately and exist in Firestore `dropdownOptions/default`.
 
 ### Quick Test Steps
 1. Open `admin-dashboard-modular/index.html`.
@@ -556,7 +556,7 @@ Quick test (old automatic testing system):
 1) Profile Photo Upload
    - Open `user-portal.html`, sign in.
    - In Community → Profile Picture, upload a small image (<5MB).
-   - Expect toast “Profile photo uploaded!”. Avatar shows immediately.
+   - Expect toast "Profile photo uploaded!". Avatar shows immediately.
    - In Firebase Console → Storage, confirm file path under `avatars/<email>/...`.
    - In Firestore `users` doc, field `profilePicture` should be the public download URL (not base64).
 2) Showcase Uploads
@@ -579,15 +579,15 @@ Publishing:
 - Admin UI updates both Firestore (when available) and JSON for reliability.
 
 **Admin UI points**:
-- Jobs → each job card shows “User Status” + “Progress” controls with an Apply button. Applies to all users assigned to that listing (by `jobRef` or title match), persists to Firestore assignments and `users.json`.
-- Users → “🧭 Jobs” opens a modal to manage that user’s assignments (status/progress/primary/remove). Persists to Firestore and `users.json`.
+- Jobs → each job card shows "User Status" + "Progress" controls with an Apply button. Applies to all users assigned to that listing (by `jobRef` or title match), persists to Firestore assignments and `users.json`.
+- Users → "🧭 Jobs" opens a modal to manage that user's assignments (status/progress/primary/remove). Persists to Firestore and `users.json`.
 
 **Testing Steps**:
 1. Start local server: `node server.js` (ensure port 8000 is free).
 2. Open `admin-dashboard.html` and sign in.
-3. In Jobs, change “User Status” to `in-progress`, set Progress to `25`, click Apply.
+3. In Jobs, change "User Status" to `in-progress`, set Progress to `25`, click Apply.
 4. Verify success toast; wait for 30s polling or refresh Users.
-5. Open Users → “🧭 Jobs” for an assigned user; confirm status= `in-progress`, progress= `25`.
+5. Open Users → "🧭 Jobs" for an assigned user; confirm status= `in-progress`, progress= `25`.
 6. If Firestore is enabled, confirm the assignment exists/updates under `users/{userId}/assignments/*` and listing exists in `jobs`.
 7. Toggle to `completed` with progress `100` and verify propagation to user portal.
 
@@ -675,7 +675,7 @@ node test-admin-deletion-simple.js
 **Testing Steps**:
 1. Open admin-dashboard.html and user-portal.html in separate tabs
 2. Make changes to jobs-data.json or users.json via admin dashboard
-3. Verify both portals show notification: "📄 [filename] has been updated. Found X items"
+3. Verify both portals show notification: "[filename] has been updated. Found X items"
 4. Check notification badge updates in both portals
 5. Verify notification dropdown shows the update details
 6. Test notification persistence and clearing
@@ -1312,3 +1312,20 @@ curl http://localhost:8000/api/uploaded-contracts
 
 **Phase 3 Status**: 🎉 **COMPLETE AND PRODUCTION READY**
 All advanced user experience features successfully implemented and tested.
+
+### 2025-09-13 — iOS SwiftUI App: CF-Job-Listings
+- Files: `MobileApp/CF-Job-Listings/CF-Job-Listings/*`
+- Scope: Native iOS app mirroring web job listings and apply flow.
+- Config: Set API base in `Config.plist` (`API_BASE_URL` matches your Vercel deployment). Optional Firebase values for direct Firestore.
+- Behavior: Prefers Firestore for jobs/applications if Firebase is available; falls back to existing `/api/jobs-data` and `/api/apply` endpoints.
+
+Old automatic testing system steps (simulated via iOS app):
+1) Seed at least one job in Firestore `jobs` with fields: `title`, optional `date`, `location`, `pay` (or `rate`).
+2) Open the iOS app. Expect the Jobs list to load with Active filter on; search and location filter work.
+3) Tap a job → Details page shows title, location, pay, date, and description.
+4) Tap Apply → Submit with name/email. Expect success banner. In Firestore, verify `users/<Full Name>` has `application.status = pending`. API backup POST to `/api/apply` should succeed (non-blocking).
+5) Disable Firebase in the iOS target (omit Firebase pods) → App should still load jobs via `/api/jobs-data` and submit to `/api/apply`.
+
+Troubleshooting:
+- If jobs do not load: verify `API_BASE_URL` in `Config.plist` and that `/api/jobs-data` returns JSON `{ jobs: [...] }` or `[...]`.
+- If Firebase initialization fails: leave Firebase pods out or ensure `FIREBASE_*` keys are correct; the app will use the Vercel API fallback automatically.

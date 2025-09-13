@@ -1116,3 +1116,10 @@ curl http://localhost:8000/api/health
 ### 2025-09-08 — Modal padding/overflow policy (admin UI)
 - For all admin inline modals (including Edit User), the overlay must include safe-area padding and allow vertical scrolling. Modal panels should use a viewport-constrained max-height with the form body scrolling. This prevents headers/footers from being clipped on small screens.
 - Reference implementation: `admin-dashboard.html` Edit User modal uses overlay padding with `env(safe-area-inset-*)`, `overflow:auto` on the overlay, `max-height: calc(100vh - 48px)` on the panel, and `overflow:auto` on the content body.
+
+### 2025-09-13 — iOS App addition and config handling
+- Files: `MobileApp/CF-Job-Listings/CF-Job-Listings/*`
+- Native app mirrors web job listings and apply flow.
+- Configuration: `Config.plist` holds `API_BASE_URL` and optional `FIREBASE_*` keys. Keep these synchronized with Vercel environment variables and Firebase project settings. Do not commit secrets elsewhere.
+- Data ownership: Firestore is canonical for jobs and applications; the iOS app uses Firestore first (if Firebase SDK present) and posts a non-blocking backup to `/api/apply`. Jobs fallback to `/api/jobs-data` only when Firestore unavailable.
+- Branding: Reuse existing branding/colors; keep font families aligned with web (system stacks acceptable on iOS).
