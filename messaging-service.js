@@ -257,8 +257,15 @@ class MessagingService {
             const adminEmails = (window.FirebaseConfig && window.FirebaseConfig.getAdminUsers) ? window.FirebaseConfig.getAdminUsers() : [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const isAdminConversation = Array.isArray(data.participants) && data.participants.some(e => adminEmails.includes(String(e).toLowerCase()));
-                const include = this.isAdmin || isAdminConversation || (this.currentUser && Array.isArray(data.participants) && data.participants.includes(this.currentUser.email));
+                const participants = Array.isArray(data.participants) ? data.participants : [];
+                const isAdminConversation = participants.some(e => adminEmails.includes(String(e).toLowerCase()));
+                const isBroadcast = participants.some(e => String(e).toLowerCase() === 'broadcasts');
+                let include = false;
+                if (this.isAdmin) {
+                    include = true; // admins see all conversations
+                } else if (this.currentUser) {
+                    include = participants.includes(this.currentUser.email) || isBroadcast; // users see only their own threads + broadcasts
+                }
                 if (include) {
                     matching.push({
                         id: doc.id,
@@ -376,8 +383,15 @@ class MessagingService {
                 const adminEmails = (window.FirebaseConfig && window.FirebaseConfig.getAdminUsers) ? window.FirebaseConfig.getAdminUsers() : [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const isAdminConversation = Array.isArray(data.participants) && data.participants.some(e => adminEmails.includes(String(e).toLowerCase()));
-                    const include = this.isAdmin || isAdminConversation || (this.currentUser && Array.isArray(data.participants) && data.participants.includes(this.currentUser.email));
+                    const participants = Array.isArray(data.participants) ? data.participants : [];
+                    const isAdminConversation = participants.some(e => adminEmails.includes(String(e).toLowerCase()));
+                    const isBroadcast = participants.some(e => String(e).toLowerCase() === 'broadcasts');
+                    let include = false;
+                    if (this.isAdmin) {
+                        include = true;
+                    } else if (this.currentUser) {
+                        include = participants.includes(this.currentUser.email) || isBroadcast;
+                    }
                     if (include) {
                         list.push({ id: doc.id, ...data, unreadCount: this.getUnreadCount(data.readStatus) });
                     }

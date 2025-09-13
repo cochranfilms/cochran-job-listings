@@ -20203,20 +20203,17 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Start a new conversation
+    // Start a new conversation (inline picker like admin – but portal has only Admin Team target)
     async function startNewConversation() {
         try {
             if (!messagingService) {
                 messagingService = new MessagingService();
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for initialization
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
-            
+            // Always open or create the canonical Admin Team conversation (not broadcasts)
             const conversationId = await messagingService.getOrCreateAdminConversation();
             await selectConversation(conversationId);
-            
-            // Focus on message input
             document.getElementById('messageInput').focus();
-            
         } catch (error) {
             console.error('❌ Failed to start new conversation:', error);
             alert('Failed to start conversation. Please try again.');

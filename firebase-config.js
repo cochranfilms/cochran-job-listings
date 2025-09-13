@@ -31,8 +31,8 @@ const FirebaseConfig = {
 
     // Admin users (emails that have admin access)
     adminUsers: [
+        'info@cochranfilms.com', // primary admin (canonical)
         'cody@cochranfilms.com',
-        'info@cochranfilms.com',
         'admin@cochranfilms.com'
         // Add more admin emails as needed
     ],
