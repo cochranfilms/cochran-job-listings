@@ -267,11 +267,13 @@ class MessagingService {
                     include = participants.includes(this.currentUser.email) || isBroadcast; // users see only their own threads + broadcasts
                 }
                 if (include) {
-                    matching.push({
-                        id: doc.id,
-                        ...data,
-                        unreadCount: this.getUnreadCount(data.readStatus)
-                    });
+                    const entry = { id: doc.id, ...data, unreadCount: this.getUnreadCount(data.readStatus) };
+                    // Improve unread counts best-effort
+                    try {
+                        const sinceTs = data.readStatus && this.currentUser ? data.readStatus[this.currentUser.email] : null;
+                        this.countUnreadSince(doc.id, sinceTs).then((n) => { entry.unreadCount = n; }).catch(()=>{});
+                    } catch(_) {}
+                    matching.push(entry);
                 }
             });
 
@@ -548,7 +550,32 @@ class MessagingService {
 
     getUnreadCount(readStatus) {
         if (!readStatus || !this.currentUser) return 0;
+        // If we've never read the thread, show at least 1 as a nudge; accurate counts are computed asynchronously
         return readStatus[this.currentUser.email] === null ? 1 : 0;
+    }
+
+    async countUnreadSince(conversationId, sinceTs, maxToScan = 50) {
+        try {
+            const messagesRef = this.firestore
+                .collection('directMessages')
+                .doc(conversationId)
+                .collection('messages')
+                .orderBy('timestamp', 'desc')
+                .limit(maxToScan);
+            const snapshot = await messagesRef.get();
+            const myEmail = this.currentUser?.email;
+            let count = 0;
+            snapshot.forEach(doc => {
+                const data = doc.data() || {};
+                const ts = data.timestamp && data.timestamp.toMillis ? data.timestamp.toMillis() : 0;
+                const cutoff = sinceTs && sinceTs.toMillis ? sinceTs.toMillis() : 0;
+                if (ts > cutoff && data.senderId !== myEmail) count++;
+            });
+            return count;
+        } catch (e) {
+            console.warn('countUnreadSince error', e);
+            return 0;
+        }
     }
 
     formatTimestamp(timestamp) {

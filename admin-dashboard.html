@@ -8555,7 +8555,7 @@
             const others = (conversation.participants || []).filter(email => !adminEmails.includes(email));
             // Dedicated broadcast thread label
             if (others.length === 1 && String(others[0]).toLowerCase() === 'broadcasts') {
-                return 'Broadcasts';
+                return 'Creator Broadcast';
             }
             if (others.length === 0) return 'System';
             return others[0].split('@')[0];

@@ -20087,6 +20087,9 @@
         if (otherParticipants.some(email => adminEmails.includes(email))) {
             return 'Admin Team';
         }
+        if (otherParticipants.length === 1 && String(otherParticipants[0]).toLowerCase() === 'broadcasts') {
+            return 'Creator Broadcast';
+        }
         
         return otherParticipants[0].split('@')[0]; // Show username part
     }
@@ -20203,14 +20206,13 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Start a new conversation (inline picker like admin – but portal has only Admin Team target)
+    // Start a new conversation (show lightweight picker: currently admin-only target)
     async function startNewConversation() {
         try {
             if (!messagingService) {
                 messagingService = new MessagingService();
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
-            // Always open or create the canonical Admin Team conversation (not broadcasts)
             const conversationId = await messagingService.getOrCreateAdminConversation();
             await selectConversation(conversationId);
             document.getElementById('messageInput').focus();
