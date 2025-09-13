@@ -8361,6 +8361,8 @@
         // Initialize admin messaging
         async function initializeAdminMessaging() {
             if (!adminMessagingService) {
+                // Ensure FirebaseConfig is initialized before constructing service
+                try { await window.FirebaseConfig.waitForInit(); } catch(_) {}
                 adminMessagingService = new MessagingService();
             }
             try { await adminMessagingService.readyPromise; } catch(_) {}

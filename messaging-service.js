@@ -7,6 +7,7 @@ class MessagingService {
     constructor() {
         this.firestore = null;
         this.auth = null;
+        this.app = null;
         this.storage = null;
         this.currentUser = null;
         this.conversations = new Map();
@@ -23,9 +24,15 @@ class MessagingService {
             // Wait for Firebase to be initialized
             await window.FirebaseConfig.waitForInit();
             
+            this.app = window.FirebaseConfig.app || (firebase && firebase.app ? firebase.app() : null);
             this.firestore = window.FirebaseConfig.getFirestore();
             this.auth = window.FirebaseConfig.auth;
-            this.storage = firebase.storage();
+            try {
+                this.storage = this.app && this.app.storage ? this.app.storage() : (firebase && firebase.storage ? firebase.storage() : null);
+            } catch (e) {
+                console.warn('⚠️ Storage not ready yet, will retry lazily');
+                this.storage = null;
+            }
             this.currentUser = this.auth.currentUser;
             
             // Check if user is admin
@@ -56,9 +63,12 @@ class MessagingService {
 
     async ensureReadyForWrites(timeoutMs = 5000) {
         await window.FirebaseConfig.waitForInit();
+        if (!this.app) this.app = window.FirebaseConfig.app || (firebase && firebase.app ? firebase.app() : null);
         if (!this.firestore) this.firestore = window.FirebaseConfig.getFirestore();
         if (!this.auth) this.auth = window.FirebaseConfig.auth;
-        if (!this.storage && typeof firebase !== 'undefined' && firebase.storage) this.storage = firebase.storage();
+        if (!this.storage) {
+            try { this.storage = this.app && this.app.storage ? this.app.storage() : (firebase && firebase.storage ? firebase.storage() : null); } catch(_) {}
+        }
 
         if (this.auth && !this.currentUser) this.currentUser = this.auth.currentUser;
         if (this.currentUser) return true;
