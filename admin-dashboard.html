@@ -910,13 +910,7 @@
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                     <select id="jobType" name="type">
-                                        <option value="Photography">Photography</option>
-                                        <option value="Videography">Videography</option>
-                                        <option value="Event Coverage">Event Coverage</option>
-                                        <option value="Portrait Session">Portrait Session</option>
-                                        <option value="Commercial">Commercial</option>
-                                        <option value="Wedding">Wedding</option>
-                                        <option value="Other">Other</option>
+                                        <option value="">Select Project Type…</option>
                                     </select>
                                     <select id="jobStatus" name="status">
                                         <option value="Active">Active</option>
@@ -2382,6 +2376,11 @@
                 exclusive: formData.get('exclusive') === 'on',
                 priority: formData.get('priority') === 'on'
             };
+
+            // Normalize placeholder defaults so we don't store UI prompts as values
+            if (!job.location || job.location === 'Select Location…' || job.location === 'Select Location...') job.location = '';
+            if (!job.pay || job.pay === 'Select Rate…' || job.pay === 'Select Rate...') job.pay = '';
+            if (!job.type || job.type === 'Select Project Type…' || job.type === 'Select Project Type...') job.type = '';
             
             console.log('📝 Job data collected:', job);
 
@@ -4281,10 +4280,14 @@
                     || 'Contractor';
                 // Get rate ONLY from the job they're assigned to (no more personal rates)
                 let rate = 'Rate to be determined';
-                
+                // Prefer explicit rate on the assigned job
                 if (userData?.jobs && Object.values(userData.jobs)[0]?.rate) {
                     rate = Object.values(userData.jobs)[0].rate;
                     console.log('✅ Rate from assigned job:', rate);
+                } else if (userData?.jobs && Object.values(userData.jobs)[0]?.pay) {
+                    // Backward-compat: some jobs stored pay instead of rate
+                    rate = Object.values(userData.jobs)[0].pay;
+                    console.log('ℹ️ Using pay as rate for email:', rate);
                 } else if (userData?.jobs && Object.keys(userData.jobs).length > 0) {
                     // Fallback: get rate from any available job
                     const firstJob = Object.values(userData.jobs)[0];
@@ -4912,10 +4915,20 @@
                     option.textContent = rate;
                     jobRateSelect.appendChild(option);
                 });
+                if (!jobRateSelect.value) jobRateSelect.value = '';
             }
             
-            // Populate project type dropdown
-            // Remove projectType from profile creation (no longer used)
+            // Populate job type dropdown in Add New Job from dropdownOptions
+            const jobTypeSelect = document.getElementById('jobType');
+            if (jobTypeSelect) {
+                jobTypeSelect.innerHTML = '<option value="">Select Project Type...</option>';
+                (window.dropdownOptions.projectTypes || []).forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    jobTypeSelect.appendChild(option);
+                });
+            }
             
             // Populate job selection dropdown from jobs-data
             const jobSelect = document.getElementById('freelancerJob');
@@ -6741,7 +6754,9 @@
                 title: app.jobTitle || 'Contractor',
                 location: app.location || (userData.profile && userData.profile.location) || 'Atlanta Area',
                 date: app.jobDate || null,
-                pay: app.payDisplay || 'TBD',
+                // Store rate explicitly for email/template compatibility; keep pay for backward-compat
+                rate: app.payDisplay || app.rate || app.pay || 'TBD',
+                pay: app.payDisplay || app.rate || app.pay || 'TBD',
                 status: 'approved'
             };
             // Duplicate guard on jobs
@@ -6756,6 +6771,21 @@
             const updatedUser = { ...userData, profile: { ...(userData.profile||{}), email }, application, jobs, primaryJob: jobKey };
 
             try { await window.FirestoreDataManager.setUser(userId, updatedUser); } catch(e){ console.warn('⚠️ setUser on approval:', e?.message||e); }
+
+            // Ensure a Firebase Auth account exists for approved applicants (so they can log in)
+            try {
+                const tempPwd = (typeof generateTempPassword === 'function') ? generateTempPassword() : Math.random().toString(36).slice(2,10) + 'Aa1!';
+                if (typeof createFirebaseAccount === 'function' && email) {
+                    const res = await createFirebaseAccount(email, tempPwd);
+                    if (res && res.success) {
+                        console.log('✅ Firebase auth account ensured for', email);
+                    } else {
+                        console.log('ℹ️ Firebase account may already exist or was not created:', res);
+                    }
+                }
+            } catch (authErr) {
+                console.warn('⚠️ Could not ensure Firebase auth account:', authErr?.message || authErr);
+            }
 
             // Trigger email + contract onboarding using existing function
             try { sendJobAcceptanceEmail(userId, updatedUser); } catch(e){ console.warn('⚠️ sendJobAcceptanceEmail unavailable:', e?.message||e); }
