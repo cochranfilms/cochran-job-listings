@@ -24,6 +24,19 @@
   8. Test read receipts and message status indicators
   9. Run `messaging-test.js` for comprehensive automated testing
 
+### 2025-09-13 — Admin Broadcast + Search Enhancements
+
+- Files: `admin-dashboard.html`, `messaging-service.js`, `firestore-data-manager.js`
+- Changes:
+  - Implemented admin broadcast sending to each non-admin user by creating/using a direct conversation and posting a message.
+  - Wired admin search to `MessagingService.searchMessages(query, conversationId)` for scoped results with in-chat scroll to last match.
+  - Added lightweight image modal `adminOpenImageModal(url)` for attachments.
+- Test:
+  1. Admin: open Messaging, click megaphone → enter a test broadcast.
+  2. Observe toast showing recipient count; verify user(s) see the message live in `user-portal.html`.
+  3. Open a conversation, click search icon, enter a term from recent messages → verify scroll and count.
+  4. Send an image; click the image in admin chat → modal opens; click outside/✕ to close.
+
 - Database Schema:
   - `directMessages/{conversationId}`: Conversation metadata
   - `directMessages/{conversationId}/messages/{messageId}`: Individual messages

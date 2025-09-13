@@ -16,6 +16,15 @@
 - Security: Users can only access conversations they're part of; admins can access all conversations
 - Testing: Use `messaging-test.js` for automated testing of all messaging features
 
+### 2025-09-13 — Admin Messaging Enhancements (Broadcast/Search/Modal/AI Theme)
+
+- Rollback guidance:
+  - Broadcast: In `admin-dashboard.html`, replace the body of `adminBroadcastMessage()` with the previous console stub. No Firestore schema changes.
+  - Search: Remove the call to `MessagingService.searchMessages()` inside `adminSearchMessages()`. No indexes added.
+  - Image Modal: Remove `adminOpenImageModal()` and the `onclick` image binding in message template.
+  - AI Theme: Delete the `.ai-theme` style block injected in `<head>` and the small script that adds the class to `documentElement`/`body`.
+  - All changes are additive and scoped; removing them will not affect other dashboard logic.
+
 ### Sept 2025 — Jobs/Applications cleanup notes
 
 - Enforced separation of application entry points:

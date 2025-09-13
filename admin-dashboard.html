@@ -1143,6 +1143,50 @@
             }
         }
     </style>
+    <script>
+        // Lightweight AI theme layer (scoped to .ai-theme to avoid breaking existing styles)
+        (function(){
+            try {
+                document.documentElement.classList.add('ai-theme');
+                document.body.classList.add('ai-theme');
+            } catch(_) {}
+        })();
+    </script>
+    <style>
+        .ai-theme body {
+            background: radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,0.15), transparent 60%),
+                        radial-gradient(1000px 500px at 100% 0%, rgba(167,139,250,0.12), transparent 60%),
+                        #0b1020;
+        }
+        .ai-theme .dashboard-header h1,
+        .ai-theme .dashboard-header p { color: #eaf0ff; }
+        .ai-theme .card,
+        .ai-theme .messaging-container,
+        .ai-theme .conversations-panel,
+        .ai-theme .chat-panel { 
+            background: rgba(17,24,39,0.78) !important; 
+            border: 1px solid rgba(99,102,241,0.28) !important;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(99,102,241,0.10) inset !important;
+        }
+        .ai-theme .btn.btn-primary { 
+            background: linear-gradient(135deg, #22d3ee, #a78bfa) !important; 
+            color: #0b1020 !important; 
+            border: 0 !important;
+        }
+        .ai-theme .btn.btn-secondary { 
+            background: rgba(99,102,241,0.16) !important; 
+            color: #c7d2fe !important; 
+            border: 1px solid rgba(99,102,241,0.35) !important; 
+        }
+        .ai-theme .message-input-container { 
+            background: rgba(12,18,32,0.55) !important; 
+            border: 1px solid rgba(99,102,241,0.25) !important; 
+        }
+        .ai-theme .conversation-item.active { 
+            background: rgba(99,102,241,0.18) !important; 
+            border-color: rgba(99,102,241,0.35) !important; 
+        }
+    </style>
 </head>
 <body>
     <!-- Global Loading Indicator -->
@@ -8526,7 +8570,7 @@
                                     ${message.attachments.map(attachment => `
                                         <div class="attachment-item">
                                             ${attachment.type.startsWith('image/') ? 
-                                                `<img src="${attachment.url}" alt="${attachment.name}" onclick="openImageModal('${attachment.url}')">` :
+                                                `<img src="${attachment.url}" alt="${attachment.name}" onclick="adminOpenImageModal('${attachment.url}')">` :
                                                 `<a href="${attachment.url}" target="_blank">${attachment.name}</a>`
                                             }
                                         </div>
@@ -8682,10 +8726,35 @@
         // Search messages (admin)
         function adminSearchMessages() {
             const query = prompt('Search messages:');
-            if (query) {
-                // Implement search functionality
-                console.log('Admin searching for:', query);
-            }
+            if (!query) return;
+            (async () => {
+                try {
+                    // If a conversation is selected, search within it for better signal
+                    if (adminCurrentConversationId && adminMessagingService && adminMessagingService.searchMessages) {
+                        const results = await adminMessagingService.searchMessages(query, adminCurrentConversationId);
+                        if (!results || results.length === 0) { showAdminNotification('Search', 'No matches found', 'info'); return; }
+                        // Scroll to the last matching message in the current chat if visible
+                        const chat = document.getElementById('adminChatMessages');
+                        if (chat && chat.querySelectorAll) {
+                            const indices = [];
+                            Array.from(chat.querySelectorAll('.message-text')).forEach((el, idx) => {
+                                if (String(el.textContent || '').toLowerCase().includes(query.toLowerCase())) indices.push(idx);
+                            });
+                            if (indices.length) {
+                                const lastIdx = indices[indices.length - 1];
+                                const target = chat.querySelectorAll('.message')[lastIdx];
+                                if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }
+                        showAdminNotification('Search', `Found ${results.length} message(s)`, 'success');
+                    } else {
+                        showAdminNotification('Search', 'Open a conversation to search within it', 'info');
+                    }
+                } catch (e) {
+                    console.error('Search failed:', e);
+                    showAdminNotification('Search', 'Search failed', 'error');
+                }
+            })();
         }
 
         // Toggle chat settings (admin)
@@ -8694,13 +8763,57 @@
             console.log('Admin toggle chat settings');
         }
 
+        // Simple image modal for admin chat
+        function adminOpenImageModal(imageUrl) {
+            try {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:12000;display:flex;align-items:center;justify-content:center;padding:16px;';
+                overlay.innerHTML = `
+                    <div style="position:relative;max-width:90vw;max-height:90vh;">
+                        <img src="${imageUrl}" alt="Image" style="max-width:90vw;max-height:90vh;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.5)"/>
+                        <button aria-label="Close" style="position:absolute;top:-12px;right:-12px;background:#0b1020;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:8px 10px;cursor:pointer">✕</button>
+                    </div>
+                `;
+                overlay.addEventListener('click', (e) => { if (e.target === overlay || e.target.tagName === 'BUTTON') overlay.remove(); });
+                document.body.appendChild(overlay);
+            } catch (e) { window.open(imageUrl, '_blank'); }
+        }
+
         // Broadcast message to all users
         function adminBroadcastMessage() {
             const message = prompt('Enter broadcast message:');
             if (message) {
-                // Implement broadcast functionality
-                console.log('Admin broadcasting:', message);
-                alert('Broadcast functionality will be implemented');
+                // Implement broadcast functionality using conversations with each user
+                (async () => {
+                    try {
+                        await ensureFirestoreReady();
+                        if (!adminMessagingService) {
+                            adminMessagingService = new MessagingService();
+                            await adminMessagingService.readyPromise;
+                        }
+                        const usersMap = await window.FirestoreDataManager.getUsers();
+                        const users = Object.values(usersMap || {}).filter(u => u && u.profile && u.profile.email);
+                        const adminEmails = (window.FirebaseConfig && window.FirebaseConfig.getAdminUsers) ? window.FirebaseConfig.getAdminUsers() : [];
+                        const recipients = users.map(u => u.profile.email).filter(e => e && !adminEmails.includes(String(e).toLowerCase()));
+
+                        if (!recipients.length) { showAdminNotification('Broadcast','No recipients found','info'); return; }
+
+                        let sentCount = 0;
+                        for (const email of recipients) {
+                            try {
+                                const convId = await adminMessagingService.getOrCreateUserConversation(email);
+                                await adminMessagingService.sendMessage(convId, message, []);
+                                sentCount++;
+                            } catch (e) {
+                                console.warn('Broadcast send failed for', email, e);
+                            }
+                        }
+                        showAdminNotification('Broadcast', `Message sent to ${sentCount} users`, 'success');
+                    } catch (e) {
+                        console.error('Broadcast failed:', e);
+                        showAdminNotification('Broadcast', 'Failed to send broadcast', 'error');
+                    }
+                })();
             }
         }
 
