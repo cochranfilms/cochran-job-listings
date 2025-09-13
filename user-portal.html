@@ -2456,9 +2456,23 @@
             const completed = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'completed')
                 .sort((a,b) => getStartFor(b) - getStartFor(a));
 
-            const primary = inProgress[0] || upcoming[0] || userJobs[0];
+            // For Current & Upcoming, be more inclusive - include any job that's not completed
+            const currentAndUpcomingJobs = userJobs.filter(j => getJobStatus(getStartFor(j)) !== 'completed');
+            
+            const primary = inProgress[0] || upcoming[0] || currentAndUpcomingJobs[0] || userJobs[0];
             const nextUp = upcoming.find(j => j !== primary) || null;
             const others = userJobs.filter(j => j !== primary && j !== nextUp);
+            
+            // Debug logging
+            console.log('🔍 Job filtering debug:', {
+                totalJobs: userJobs.length,
+                inProgress: inProgress.length,
+                upcoming: upcoming.length,
+                completed: completed.length,
+                currentAndUpcoming: currentAndUpcomingJobs.length,
+                primary: primary?.title || primary?.role || 'none',
+                nextUp: nextUp?.title || nextUp?.role || 'none'
+            });
 
             // Build UI with tabs for better organization
             const parts = [];
@@ -2475,26 +2489,24 @@
                 </div>
             `);
 
-            // Current & Upcoming tab content - only shows active/upcoming jobs
-            const currentAndUpcoming = [...inProgress, ...upcoming];
+            // Current & Upcoming tab content - shows primary job and other non-completed jobs
             parts.push(`
                 <div id="currentJobsContent" class="tab-content">
-                    ${currentAndUpcoming.length > 0 ? `
-                        ${primary ? renderFullJobCard(primary, 'Current Assignment') : ''}
-                        ${nextUp ? `
-                            <div class="card job-card" style="margin-top: 1rem;">
-                                ${renderCompactJobCard(nextUp, 'Next Up')}
+                    ${primary ? renderFullJobCard(primary, 'Current Assignment') : ''}
+                    ${nextUp ? `
+                        <div class="card job-card" style="margin-top: 1rem;">
+                            ${renderCompactJobCard(nextUp, 'Next Up')}
+                        </div>
+                    ` : ''}
+                    ${others.filter(j => getJobStatus(getStartFor(j)) !== 'completed').length ? `
+                        <div class="card" style="margin-top: 1rem;">
+                            <div class="card-header"><h3 class="card-title">Other Jobs</h3></div>
+                            <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem;">
+                                ${others.filter(j => getJobStatus(getStartFor(j)) !== 'completed').map(j => `<div class="job-card">${renderCompactJobCard(j)}</div>`).join('')}
                             </div>
-                        ` : ''}
-                        ${others.filter(j => getJobStatus(getStartFor(j)) === 'upcoming').length ? `
-                            <div class="card" style="margin-top: 1rem;">
-                                <div class="card-header"><h3 class="card-title">Other Upcoming</h3></div>
-                                <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem;">
-                                    ${others.filter(j => getJobStatus(getStartFor(j)) === 'upcoming').map(j => `<div class="job-card">${renderCompactJobCard(j)}</div>`).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                    ` : `
+                        </div>
+                    ` : ''}
+                    ${currentAndUpcomingJobs.length === 0 ? `
                         <div class="card no-jobs-card">
                             <div class="no-jobs-content">
                                 <i class="fas fa-calendar-times"></i>
@@ -2502,7 +2514,7 @@
                                 <p>You don't have any active or upcoming jobs at the moment.</p>
                             </div>
                         </div>
-                    `}
+                    ` : ''}
                 </div>
             `);
 
@@ -16284,6 +16296,10 @@
             border-color: #FFB200;
             box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
             transform: translateY(-1px);
+            /* Ensure consistent sizing */
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
         .tab-content {
