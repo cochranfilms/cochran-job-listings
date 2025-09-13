@@ -29,6 +29,9 @@ class MessagingService {
             this.auth = window.FirebaseConfig.auth;
             try {
                 this.storage = this.app && this.app.storage ? this.app.storage() : (firebase && firebase.storage ? firebase.storage() : null);
+                if (this.storage && typeof this.storage.setMaxUploadRetryTime === 'function') {
+                    this.storage.setMaxUploadRetryTime(15000);
+                }
             } catch (e) {
                 console.warn('⚠️ Storage not ready yet, will retry lazily');
                 this.storage = null;
@@ -198,7 +201,7 @@ class MessagingService {
             await this.ensureReadyForWrites();
             
             const fileName = `${Date.now()}_${file.name}`;
-            const storageRef = this.storage.ref(`messageAttachments/${conversationId}/${messageId}/${fileName}`);
+            const storageRef = this.storage.ref().child(`messageAttachments/${conversationId}/${messageId}/${fileName}`);
             
             const uploadTask = storageRef.put(file);
             

@@ -27,7 +27,7 @@ const FirebaseConfig = {
     isInitialized: false,
     initPromise: null,
     // Bucket URL override for Storage (gs:// or https URL)
-    bucketURL: 'gs://cochran-films.firebasestorage.app',
+    bucketURL: 'gs://cochran-films.appspot.com',
 
     // Admin users (emails that have admin access)
     adminUsers: [

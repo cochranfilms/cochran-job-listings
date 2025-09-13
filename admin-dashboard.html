@@ -8636,7 +8636,7 @@
                                 <div class="message-attachments">
                                     ${message.attachments.map(attachment => `
                                         <div class="attachment-item">
-                                            ${attachment.type.startsWith('image/') ? 
+                                            ${attachment.type && attachment.type.startsWith('image/') ? 
                                                 `<img src="${attachment.url}" alt="${attachment.name}" onclick="adminOpenImageModal('${attachment.url}')">` :
                                                 `<a href="${attachment.url}" target="_blank">${attachment.name}</a>`
                                             }
