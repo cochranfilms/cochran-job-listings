@@ -20083,12 +20083,12 @@
         if (otherParticipants.length === 0) return 'You';
         
         // Check if it's an admin
+        if (otherParticipants.length === 1 && String(otherParticipants[0]).toLowerCase() === 'broadcasts') {
+            return 'Creator Broadcast';
+        }
         const adminEmails = window.FirebaseConfig?.getAdminUsers() || [];
         if (otherParticipants.some(email => adminEmails.includes(email))) {
             return 'Admin Team';
-        }
-        if (otherParticipants.length === 1 && String(otherParticipants[0]).toLowerCase() === 'broadcasts') {
-            return 'Creator Broadcast';
         }
         
         return otherParticipants[0].split('@')[0]; // Show username part
@@ -20198,12 +20198,38 @@
                             </div>
                         ` : ''}
                     </div>
+                    ${(() => {
+                        // Add delete action for user messages only when not a broadcast thread
+                        try {
+                            const isBroadcast = Array.isArray(messages?.conversationParticipants) && messages.conversationParticipants.some(e => String(e).toLowerCase() === 'broadcasts');
+                            if (isSent && !isBroadcast) {
+                                return `<button class="btn btn-secondary" style="margin-top:6px" onclick="deleteUserMessage('${message.id}')">Delete</button>`;
+                            }
+                        } catch(_) {}
+                        return '';
+                    })()}
                 </div>
             `;
         }).join('');
 
         // Scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Delete (archive) a single message authored by current user
+    async function deleteUserMessage(messageId) {
+        try {
+            if (!currentConversationId || !messagingService) return;
+            const msgs = await messagingService.loadMessages(currentConversationId, 50);
+            const target = (msgs || []).find(m => m.id === messageId);
+            if (!target) return;
+            await messagingService.archiveAndDeleteMessage(currentConversationId, target);
+            await loadMessages(currentConversationId);
+            loadConversations();
+        } catch (e) {
+            console.error('❌ deleteUserMessage failed:', e);
+            alert('Could not delete message.');
+        }
     }
 
     // Start a new conversation (show lightweight picker: currently admin-only target)

@@ -168,11 +168,12 @@ class MessagingService {
             
             // Ensure participants include current sender (and admin identity if applicable)
             try {
-                const convRef = this.firestore.collection('directMessages').doc(conversationId);
-                const updates = { participants: firebase.firestore.FieldValue.arrayUnion(this.currentUser.email) };
-                // If sender is an admin, ensure this admin email is recorded (handled by above),
-                // no need to add all admins.
-                await convRef.set(updates, { merge: true });
+                // Skip mutating participants for the dedicated broadcasts thread
+                if (conversationId !== 'broadcasts_all_users') {
+                    const convRef = this.firestore.collection('directMessages').doc(conversationId);
+                    const updates = { participants: firebase.firestore.FieldValue.arrayUnion(this.currentUser.email) };
+                    await convRef.set(updates, { merge: true });
+                }
             } catch(_) {}
 
             // Add message to conversation
@@ -190,6 +191,36 @@ class MessagingService {
         } catch (error) {
             console.error('❌ Failed to send message:', error?.message || error, error);
             throw error;
+        }
+    }
+
+    /**
+     * Archive a message and remove it from the live thread
+     */
+    async archiveAndDeleteMessage(conversationId, message) {
+        try {
+            await this.ensureReadyForWrites();
+            if (!message || !message.id) throw new Error('Message missing id');
+            // Do not allow archiving broadcast thread messages from user UI guard
+            const convDoc = await this.firestore.collection('directMessages').doc(conversationId).get();
+            const participants = (convDoc.exists && convDoc.data() && Array.isArray(convDoc.data().participants)) ? convDoc.data().participants : [];
+            if (participants.some(e => String(e).toLowerCase() === 'broadcasts')) {
+                throw new Error('Broadcast messages cannot be deleted');
+            }
+
+            const archiveId = `${conversationId}_${message.id}`;
+            const archivePayload = {
+                ...message,
+                conversationId,
+                archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                archivedBy: this.currentUser?.email || 'unknown'
+            };
+            await this.firestore.collection('archivedMessages').doc(archiveId).set(archivePayload);
+            await this.firestore.collection('directMessages').doc(conversationId).collection('messages').doc(message.id).delete();
+            return true;
+        } catch (e) {
+            console.error('❌ Failed to archive/delete message:', e);
+            throw e;
         }
     }
 
