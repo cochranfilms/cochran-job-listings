@@ -20154,6 +20154,14 @@
     function displayMessages(messages) {
         const chatMessages = document.getElementById('chatMessages');
         const currentUserEmail = messagingService?.currentUser?.email;
+        // Determine if the selected conversation is the broadcast thread
+        let isBroadcastThread = false;
+        try {
+            const meta = messagingService && messagingService.conversations && messagingService.conversations.get
+                ? messagingService.conversations.get(currentConversationId)
+                : null;
+            isBroadcastThread = !!(meta && Array.isArray(meta.participants) && meta.participants.some(e => String(e).toLowerCase() === 'broadcasts'));
+        } catch(_) {}
         
         if (messages.length === 0) {
             chatMessages.innerHTML = `
@@ -20198,16 +20206,7 @@
                             </div>
                         ` : ''}
                     </div>
-                    ${(() => {
-                        // Add delete action for user messages only when not a broadcast thread
-                        try {
-                            const isBroadcast = Array.isArray(messages?.conversationParticipants) && messages.conversationParticipants.some(e => String(e).toLowerCase() === 'broadcasts');
-                            if (isSent && !isBroadcast) {
-                                return `<button class="btn btn-secondary" style="margin-top:6px" onclick="deleteUserMessage('${message.id}')">Delete</button>`;
-                            }
-                        } catch(_) {}
-                        return '';
-                    })()}
+                    ${isSent && !isBroadcastThread ? `<button class="btn btn-secondary" style="margin-top:6px" onclick="deleteUserMessage('${message.id}')">Delete</button>` : ''}
                 </div>
             `;
         }).join('');
