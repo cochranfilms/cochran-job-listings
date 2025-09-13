@@ -7500,8 +7500,9 @@
             const badgeClass = isExclusive ? 'exclusive-badge' : 'priority-badge';
             const badgeText = isExclusive ? 'Exclusive' : 'Priority';
             
-            // Format date
-            const formattedDate = eventDate ? new Date(eventDate).toLocaleDateString('en-US', {
+            // Format date (use local-safe parser to avoid UTC shifting YYYY-MM-DD)
+            const _d = eventDate ? parseDateFlexible(eventDate) : null;
+            const formattedDate = (_d && !isNaN(_d.getTime())) ? _d.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
@@ -7710,7 +7711,7 @@
                         <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem; color: rgba(255, 255, 255, 0.8);">
                                 <span style="color: #FFB200;">📅</span>
-                                <span>${eventDate ? new Date(eventDate).toLocaleDateString() : 'Date TBD'}</span>
+                                <span>${(parseDateFlexible(eventDate) && !isNaN(parseDateFlexible(eventDate).getTime())) ? parseDateFlexible(eventDate).toLocaleDateString() : 'Date TBD'}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 0.5rem; color: rgba(255, 255, 255, 0.8);">
                                 <span style="color: #FFB200;">📍</span>
