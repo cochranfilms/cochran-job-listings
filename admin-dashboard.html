@@ -4256,7 +4256,7 @@
         }
         
         // Send job acceptance email
-        async function sendJobAcceptanceEmail(userName, userData) {
+        async function sendJobAcceptanceEmail(userName, userData, options = {}) {
             try {
                 // Debug: Log the user data structure to understand what's available
                 console.log('🔍 Debug: User data for email:', {
@@ -4268,25 +4268,28 @@
                 });
 
                 // Prepare email parameters (no contract ID until user actually signs)
+                const preferredJob = (options && options.jobKey && userData?.jobs?.[options.jobKey])
+                    || (userData?.primaryJob && userData?.jobs?.[userData.primaryJob])
+                    || (userData?.jobs && Object.values(userData.jobs)[0])
+                    || null;
+
                 const projectStart = userData?.application?.eventDate 
-                    || (userData?.jobs && Object.values(userData.jobs)[0]?.date)
+                    || (preferredJob && preferredJob.date)
                     || userData?.profile?.projectDate
                     || userData?.profile?.projectStart
                     || 'TBD';
-                const jobTitle = ((userData?.jobs && Object.values(userData.jobs)[0]?.title))
+                const jobTitle = (preferredJob && (preferredJob.title || preferredJob.jobTitle))
                     || userData?.application?.jobTitle
                     || userData?.application?.job
                     || userData?.profile?.role
                     || 'Contractor';
                 // Get rate ONLY from the job they're assigned to (no more personal rates)
                 let rate = 'Rate to be determined';
-                // Prefer explicit rate on the assigned job
-                if (userData?.jobs && Object.values(userData.jobs)[0]?.rate) {
-                    rate = Object.values(userData.jobs)[0].rate;
-                    console.log('✅ Rate from assigned job:', rate);
-                } else if (userData?.jobs && Object.values(userData.jobs)[0]?.pay) {
-                    // Backward-compat: some jobs stored pay instead of rate
-                    rate = Object.values(userData.jobs)[0].pay;
+                if (preferredJob && preferredJob.rate) {
+                    rate = preferredJob.rate;
+                    console.log('✅ Rate from selected job:', rate);
+                } else if (preferredJob && preferredJob.pay) {
+                    rate = preferredJob.pay;
                     console.log('ℹ️ Using pay as rate for email:', rate);
                 } else if (userData?.jobs && Object.keys(userData.jobs).length > 0) {
                     // Fallback: get rate from any available job
@@ -6772,23 +6775,51 @@
 
             try { await window.FirestoreDataManager.setUser(userId, updatedUser); } catch(e){ console.warn('⚠️ setUser on approval:', e?.message||e); }
 
+            // If there is a corresponding public job listing, mark it Inactive so it no longer appears on index.html
+            try {
+                const jobId = app.jobId;
+                if (jobId && window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                    const listing = await window.FirestoreDataManager.getJobListing(jobId);
+                    if (listing) {
+                        listing.status = 'Inactive';
+                        await window.FirestoreDataManager.setJobListing(jobId, listing);
+                        console.log('✅ Marked job listing inactive after approval:', jobId);
+                    }
+                }
+            } catch (inactiveErr) { console.warn('⚠️ Could not set job inactive:', inactiveErr?.message||inactiveErr); }
+
             // Ensure a Firebase Auth account exists for approved applicants (so they can log in)
             try {
                 const tempPwd = (typeof generateTempPassword === 'function') ? generateTempPassword() : Math.random().toString(36).slice(2,10) + 'Aa1!';
-                if (typeof createFirebaseAccount === 'function' && email) {
-                    const res = await createFirebaseAccount(email, tempPwd);
-                    if (res && res.success) {
-                        console.log('✅ Firebase auth account ensured for', email);
-                    } else {
-                        console.log('ℹ️ Firebase account may already exist or was not created:', res);
+                if (email) {
+                    // Guard: check if an auth account already exists via API lookup
+                    try {
+                        const check = await fetch(`/api/firebase?email=${encodeURIComponent(email)}`);
+                        const cj = await check.json();
+                        if (cj && cj.success && cj.exists) {
+                            console.log('ℹ️ Firebase auth already exists for', email);
+                        } else if (typeof createFirebaseAccount === 'function') {
+                            const res = await createFirebaseAccount(email, tempPwd);
+                            if (res && res.success) {
+                                console.log('✅ Firebase auth account ensured for', email);
+                            } else {
+                                console.log('ℹ️ Firebase account may already exist or was not created:', res);
+                            }
+                        }
+                    } catch (lookupErr) {
+                        console.warn('⚠️ Auth existence check failed; attempting create anyway');
+                        if (typeof createFirebaseAccount === 'function') {
+                            const res = await createFirebaseAccount(email, tempPwd);
+                            console.log('ℹ️ Fallback create result:', res);
+                        }
                     }
                 }
             } catch (authErr) {
                 console.warn('⚠️ Could not ensure Firebase auth account:', authErr?.message || authErr);
             }
 
-            // Trigger email + contract onboarding using existing function
-            try { sendJobAcceptanceEmail(userId, updatedUser); } catch(e){ console.warn('⚠️ sendJobAcceptanceEmail unavailable:', e?.message||e); }
+            // Trigger email + contract onboarding for the specific job that was just approved
+            try { sendJobAcceptanceEmail(userId, updatedUser, { jobKey }); } catch(e){ console.warn('⚠️ sendJobAcceptanceEmail unavailable:', e?.message||e); }
         }
 
         // Export Performance Report

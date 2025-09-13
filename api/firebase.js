@@ -39,9 +39,12 @@ module.exports = async (req, res) => {
             return;
         }
 
-        // Support POST (create), PUT (update password), DELETE (delete)
+        // Support GET (exists), POST (create), PUT (update password), DELETE (delete)
 
-        const { email, password, newPassword, oldPassword } = req.body || {};
+        const body = req.body || {};
+        const queryEmail = (req.query && req.query.email) ? req.query.email : undefined;
+        const { email: bodyEmail, password, newPassword, oldPassword } = body;
+        const email = queryEmail || bodyEmail;
 
         if (!email) {
             res.status(400).json({ error: 'Email is required' });
@@ -51,6 +54,30 @@ module.exports = async (req, res) => {
         const apiKey = firebaseConfig.apiKey;
         if (!apiKey) {
             return res.status(200).json({ success: false, error: 'Firebase API key not configured' });
+        }
+
+        // Check if user exists (by attempting sign-in to differentiate INVALID_PASSWORD vs EMAIL_NOT_FOUND)
+        if (req.method === 'GET') {
+            try {
+                const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password: 'this_is_a_dummy_password', returnSecureToken: false })
+                });
+                const j = await r.json();
+                if (r.ok) {
+                    return res.status(200).json({ success: true, exists: true });
+                }
+                const code = j.error?.message || '';
+                if (code === 'INVALID_PASSWORD' || code === 'USER_DISABLED') {
+                    return res.status(200).json({ success: true, exists: true });
+                }
+                if (code === 'EMAIL_NOT_FOUND') {
+                    return res.status(200).json({ success: true, exists: false });
+                }
+                return res.status(200).json({ success: false, exists: false, error: code || 'lookup failed' });
+            } catch (e) {
+                return res.status(200).json({ success: false, exists: false, error: e.message });
+            }
         }
 
         // Create user

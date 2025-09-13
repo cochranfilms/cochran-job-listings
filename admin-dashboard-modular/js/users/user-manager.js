@@ -785,27 +785,31 @@ const UserManager = {
     },
 
     // Send job acceptance email
-    async sendJobAcceptanceEmail(userName, userData) {
+    async sendJobAcceptanceEmail(userName, userData, options = {}) {
         try {
             if (!window.EmailJSConfig || !window.EmailJSConfig.isAvailable()) {
                 console.warn('⚠️ EmailJS not available, skipping email');
                 return;
             }
             
+            const preferredJob = (options && options.jobKey && userData?.jobs?.[options.jobKey])
+                || (userData?.primaryJob && userData?.jobs?.[userData.primaryJob])
+                || (userData?.jobs && Object.values(userData.jobs)[0])
+                || null;
+
             const projectStart = userData?.application?.eventDate 
-                || (userData?.jobs && userData?.primaryJob && userData.jobs[userData.primaryJob]?.date)
+                || (preferredJob && preferredJob.date)
                 || userData?.profile?.projectDate
                 || 'TBD';
                 
-            const jobTitle = (userData?.primaryJob && userData?.jobs?.[userData?.primaryJob]?.title)
+            const jobTitle = (preferredJob && (preferredJob.title || preferredJob.jobTitle))
                 || userData?.application?.jobTitle
                 || userData?.profile?.role
                 || 'Contractor';
                 
             let rate = 'Rate to be determined';
-            if (userData?.primaryJob && userData?.jobs?.[userData?.primaryJob]?.rate) {
-                rate = userData.jobs[userData.primaryJob].rate;
-            }
+            if (preferredJob && preferredJob.rate) { rate = preferredJob.rate; }
+            else if (preferredJob && preferredJob.pay) { rate = preferredJob.pay; }
             
             const emailParams = {
                 freelancer_name: userName || 'User',

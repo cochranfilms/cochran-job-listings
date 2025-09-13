@@ -6,6 +6,7 @@
 - On admin approval, approved job data written to user now includes `rate` (and mirrored `pay`). This prevents "Rate to be determined" in acceptance emails.
 - Admin Add Job form now pulls `jobType` options from Firestore `dropdownOptions` and restores placeholder text for empty selects.
 - Approval flow attempts to create a Firebase Auth account for the applicant to avoid login denials.
+  - Now guarded by an existence check via `GET /api/firebase?email=...` to prevent duplicate auth accounts.
 ## 2025-09-12 — Contract System: Firestore Storage Integration
 ### Scope: `contract.html`, `user-portal.html`
 - Contract PDFs now upload to Firestore Storage instead of GitHub:

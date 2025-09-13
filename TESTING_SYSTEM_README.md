@@ -1,14 +1,15 @@
 ## Sept 2025 — Jobs/Applications sync fixes
 
 - Public `index.html` continues to use Apply link only; Quick Apply is limited to `user-portal.html` job cards.
-- Admin approval path now stores `rate` on the assigned job in the user record (and mirrors to `pay` for backward compatibility). Acceptance emails derive rate from the assigned job.
+- Admin approval path now stores `rate` on the assigned job in the user record (and mirrors to `pay` for backward compatibility). Acceptance emails derive rate from the specific approved job (Quick Apply passes `jobKey`).
 - Add New Job form placeholders restored: "Select Location…", "Select Rate…", and "Select Project Type…". `jobType` is populated from Firestore `dropdownOptions.projectTypes`.
 - When approving Quick Apply applicants, the system attempts to create a Firebase Auth account for the applicant if one doesn’t already exist so they can sign in to the portal.
+  - Guard added: server `GET /api/firebase?email=...` checks existence; creation only runs if not found.
 
 How to test quickly (old script workflow):
 1) In Admin Dashboard, add a job selecting values from the dropdowns; verify placeholders appear when empty.
-2) From User Portal, use Quick Apply on a priority job. Approve in Admin Dashboard.
-3) Check the acceptance email shows the correct rate (not "Rate to be determined").
+2) From User Portal, use Quick Apply on a priority job. Approve that Quick Apply item in Admin Dashboard.
+3) Verify the acceptance email/contract references the specific job you just approved (not an older job), with the correct rate.
 4) Attempt login with the approved email; access should be granted.
 ### 2025-09-12 — Contract System: Firestore Storage Integration
 
