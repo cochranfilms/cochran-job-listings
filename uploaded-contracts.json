@@ -644,8 +644,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-13",
       "signedDate": "2025-09-13"
+    },
+    {
+      "contractId": "CF-1757794288318-EVVSA",
+      "freelancerName": "Jim Jones",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Backdrop Photographer Base",
+      "rate": "$400",
+      "location": "Douglasville, GA",
+      "fileName": "Jim Jones - Backdrop Photographer Base - CF-1757794288318-EVVSA.pdf",
+      "fileSize": 10339,
+      "uploadDate": "2025-09-13T20:11:45.014Z",
+      "status": "uploaded",
+      "fileUrl": "https://firebasestorage.googleapis.com/v0/b/cochran-films.firebasestorage.app/o/contracts%2Fdedejackson727%40gmail.com%2F1757794290346-jim-jones-backdrop-photographer-base-cf-1757794288318-evvsa.pdf?alt=media&token=f22c73dc-9d0d-4416-adf3-f9f0d002e9d7",
+      "storagePath": "contracts/dedejackson727@gmail.com/1757794290346-jim-jones-backdrop-photographer-base-cf-1757794288318-evvsa.pdf",
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-13",
+      "signedDate": "2025-09-13"
     }
   ],
-  "lastUpdated": "2025-09-13T11:18:17.057Z",
-  "totalContracts": 40
+  "lastUpdated": "2025-09-13T20:11:45.014Z",
+  "totalContracts": 41
 }
