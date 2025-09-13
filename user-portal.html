@@ -2465,7 +2465,7 @@
 
             // Add tab navigation
             parts.push(`
-                <div class="jobs-tabs" style="margin-bottom: 1.5rem;">
+                <div class="jobs-tabs" style="margin-bottom: 1rem;">
                     <button class="tab-button active" onclick="switchJobsTab('current')" id="currentTab">
                         <i class="fas fa-star"></i> Current & Upcoming
                     </button>
@@ -2475,60 +2475,101 @@
                 </div>
             `);
 
-            // Current & Upcoming tab content
+            // Current & Upcoming tab content - only shows active/upcoming jobs
+            const currentAndUpcoming = [...inProgress, ...upcoming];
             parts.push(`
                 <div id="currentJobsContent" class="tab-content">
-                    ${primary ? renderFullJobCard(primary, 'Current Assignment') : ''}
-                    ${nextUp ? `
-                        <div class="card job-card" style="margin-top: 1rem;">
-                            ${renderCompactJobCard(nextUp, 'Next Up')}
-                        </div>
-                    ` : ''}
-                    ${others.length ? `
-                        <div class="card" style="margin-top: 1rem;">
-                            <div class="card-header"><h3 class="card-title">Other Upcoming</h3></div>
-                            <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem;">
-                                ${others.filter(j => getJobStatus(getStartFor(j)) === 'upcoming').map(j => `<div class="job-card">${renderCompactJobCard(j)}</div>`).join('')}
+                    ${currentAndUpcoming.length > 0 ? `
+                        ${primary ? renderFullJobCard(primary, 'Current Assignment') : ''}
+                        ${nextUp ? `
+                            <div class="card job-card" style="margin-top: 1rem;">
+                                ${renderCompactJobCard(nextUp, 'Next Up')}
+                            </div>
+                        ` : ''}
+                        ${others.filter(j => getJobStatus(getStartFor(j)) === 'upcoming').length ? `
+                            <div class="card" style="margin-top: 1rem;">
+                                <div class="card-header"><h3 class="card-title">Other Upcoming</h3></div>
+                                <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem;">
+                                    ${others.filter(j => getJobStatus(getStartFor(j)) === 'upcoming').map(j => `<div class="job-card">${renderCompactJobCard(j)}</div>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    ` : `
+                        <div class="card no-jobs-card">
+                            <div class="no-jobs-content">
+                                <i class="fas fa-calendar-times"></i>
+                                <h3>No Current Jobs</h3>
+                                <p>You don't have any active or upcoming jobs at the moment.</p>
                             </div>
                         </div>
-                    ` : ''}
+                    `}
                 </div>
             `);
 
-            // All Jobs tab content
+            // All Jobs tab content - organized by status
             parts.push(`
                 <div id="allJobsContent" class="tab-content" style="display: none;">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">All Your Jobs</h3>
-                            <p style="margin: 0.5rem 0 0; opacity: 0.8; font-size: 0.9rem;">
-                                Complete overview of all your assignments, past and present
-                            </p>
-                        </div>
-                        <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;padding:1rem;">
-                            ${userJobs.map(job => {
-                                const status = getJobStatus(getStartFor(job));
-                                const statusClass = status === 'completed' ? 'completed' : status === 'in-progress' ? 'in-progress' : 'upcoming';
-                                return `
-                                    <div class="job-card ${statusClass}">
-                                        <div class="card-header">
-                                            <h4>${job.title || job.role || 'Project'}</h4>
-                                            <span class="status-badge status-${statusClass}">${status}</span>
-                                        </div>
-                                        <div class="job-info">
-                                            <div class="info-item"><span class="label">Date:</span><span class="value">${formatDisplayDate(getStartFor(job))}</span></div>
-                                            <div class="info-item"><span class="label">Location:</span><span class="value">${job.location || 'N/A'}</span></div>
-                                            <div class="info-item"><span class="label">Rate:</span><span class="value highlight">${job.rate || 'N/A'}</span></div>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
+                    <div class="all-jobs-container">
+                        ${inProgress.length > 0 ? `
+                            <div class="job-section">
+                                <h3 class="section-title"><i class="fas fa-play-circle"></i> In Progress (${inProgress.length})</h3>
+                                <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-bottom:1.5rem;">
+                                    ${inProgress.map(job => renderJobCardForAllJobs(job, getStartFor(job))).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${upcoming.length > 0 ? `
+                            <div class="job-section">
+                                <h3 class="section-title"><i class="fas fa-clock"></i> Upcoming (${upcoming.length})</h3>
+                                <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-bottom:1.5rem;">
+                                    ${upcoming.map(job => renderJobCardForAllJobs(job, getStartFor(job))).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${completed.length > 0 ? `
+                            <div class="job-section">
+                                <h3 class="section-title"><i class="fas fa-check-circle"></i> Completed (${completed.length})</h3>
+                                <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-bottom:1.5rem;">
+                                    ${completed.map(job => renderJobCardForAllJobs(job, getStartFor(job))).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${userJobs.length === 0 ? `
+                            <div class="card no-jobs-card">
+                                <div class="no-jobs-content">
+                                    <i class="fas fa-calendar-times"></i>
+                                    <h3>No Jobs Found</h3>
+                                    <p>You don't have any job assignments yet.</p>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             `);
 
             container.innerHTML = parts.join('');
+        }
+
+        // Render job card for All Jobs tab
+        function renderJobCardForAllJobs(job, startDate) {
+            const status = getJobStatus(startDate);
+            const statusClass = status === 'completed' ? 'completed' : status === 'in-progress' ? 'in-progress' : 'upcoming';
+            return `
+                <div class="job-card ${statusClass}">
+                    <div class="card-header">
+                        <h4>${job.title || job.role || 'Project'}</h4>
+                        <span class="status-badge status-${statusClass}">${status}</span>
+                    </div>
+                    <div class="job-info">
+                        <div class="info-item"><span class="label">Date:</span><span class="value">${formatDisplayDate(startDate)}</span></div>
+                        <div class="info-item"><span class="label">Location:</span><span class="value">${job.location || 'N/A'}</span></div>
+                        <div class="info-item"><span class="label">Rate:</span><span class="value highlight">${job.rate || 'N/A'}</span></div>
+                    </div>
+                </div>
+            `;
         }
 
         // Switch between job tabs
@@ -16193,23 +16234,26 @@
         .jobs-tabs {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .tab-button {
             background: rgba(255, 178, 0, 0.1);
             color: #fff;
             border: 1px solid rgba(255, 178, 0, 0.3);
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
             position: relative;
             overflow: hidden;
+            min-width: auto;
+            flex: 0 0 auto;
         }
 
         .tab-button::before {
@@ -16248,6 +16292,29 @@
 
         .tab-content.hidden {
             display: none;
+        }
+
+        /* All Jobs section styling */
+        .all-jobs-container {
+            padding: 0;
+        }
+
+        .job-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            color: #FFB200;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title i {
+            font-size: 1rem;
         }
 
         .performance-tab-content {
