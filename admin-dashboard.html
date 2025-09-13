@@ -2892,7 +2892,7 @@
                             </span>
                             ${user.jobs && Object.keys(user.jobs).length > 0 ? `
                                 <span style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">
-                                    🎯 Current Job
+                                    🎯 ${Object.keys(user.jobs).length} Job${Object.keys(user.jobs).length === 1 ? '' : 's'}
                                 </span>
                             ` : ''}
                         </div>
@@ -2901,11 +2901,11 @@
                         <span>📧 ${user.profile?.email || 'Email not specified'}</span>
                         <span>🎭 ${user.profile?.role || 'Role not set'}</span>
                         <span>📍 ${user.profile?.location || 'Location not specified'}</span>
-                        <span>💰 ${(user.jobs && Object.values(user.jobs)[0]?.rate) || user.application?.pay || 'Rate not specified'}</span>
+                        <span>💼 ${user.jobs ? Object.keys(user.jobs).length : 0} job${user.jobs && Object.keys(user.jobs).length === 1 ? '' : 's'}</span>
                     </div>
                     <div class="item-description">
                         ${user.application?.jobTitle ? `<div><strong>Applied For:</strong> ${user.application.jobTitle}</div>` : ''}
-                        ${user.jobs && Object.keys(user.jobs).length ? `<div><strong>Current Job:</strong> ${Object.values(user.jobs)[0].title || 'Untitled'}</div>` : '<div><strong>Current Job:</strong> None</div>'}
+                        ${user.jobs && Object.keys(user.jobs).length ? `<div><strong>Current Jobs:</strong><div style="margin-top:.35rem; display:flex; gap:.35rem; flex-wrap:wrap;">${Object.values(user.jobs).map(j => '<span style="background:#111827;border:1px solid #374151;color:#e5e7eb;padding:.25rem .5rem;border-radius:9999px;font-size:.8rem;">'+(j.title||'Untitled')+(j.date?' · '+j.date:'')+(j.location?' · '+j.location:'')+(j.rate?' · '+j.rate:'')+(j.status?' · '+j.status:'')+'</span>').join('')}</div></div>` : '<div><strong>Current Jobs:</strong> None</div>'}
                         <strong>Payment Method:</strong> ${user.paymentMethod || 'Not specified'}<br>
                         <strong>Contract Status:</strong> ${user.contract?.contractStatus || 'Not specified'}
                     </div>
@@ -3193,7 +3193,8 @@
                 el.innerHTML = `<option value="">${label}</option>` + opts.map(v=>`<option value="${v}">${v}</option>`).join('');
                 if (value) el.value = value;
             }
-            const currentJob = (user && user.jobs) ? Object.values(user.jobs)[0] || null : null;
+            // Prefer primaryJob if present; allow multiple jobs
+            const currentJob = (user && user.jobs && user.primaryJob && user.jobs[user.primaryJob]) ? user.jobs[user.primaryJob] : null;
             const roleValue = user?.profile?.role || user?.application?.jobTitle || '';
             const locationValue = user?.profile?.location || currentJob?.location || '';
             const rateValue = currentJob?.rate || user?.profile?.rate || '';
@@ -3226,9 +3227,9 @@
                         projectStatus: selectedProjectStatus
                     }
                 };
-                // Ensure a single current job under jobs and assignments
-                const existingJobId = (user.jobs && Object.keys(user.jobs)[0]) || `job-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
-                const jobsCopy = {};
+                // Merge or add job entry; do not collapse to single job
+                const existingJobId = (user.primaryJob && user.jobs && user.jobs[user.primaryJob]) ? user.primaryJob : `job-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+                const jobsCopy = { ...(user.jobs || {}) };
                 jobsCopy[existingJobId] = {
                     ...(user.jobs && user.jobs[existingJobId] ? user.jobs[existingJobId] : {}),
                     id: existingJobId,
@@ -3245,6 +3246,7 @@
                 // Also allow top-level paymentStatus for backward compatibility
                 updated.paymentStatus = modal.querySelector('#ue-paymentStatus').value || user.paymentStatus || '';
                 updated.jobs = jobsCopy;
+                updated.primaryJob = existingJobId;
                 // Save to Firestore
                 try {
                     if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
@@ -5145,8 +5147,8 @@
                         </h4>
                         <div style="color: rgba(255,255,255,0.9); font-size: 0.95rem; line-height: 1.8;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <strong>Current Job:</strong> 
-                                <span style="color: #FFB200;">${(user.jobs && Object.values(user.jobs)[0]?.title) || 'None'}</span>
+                                <strong>Current Jobs:</strong> 
+                                <span style="color: #FFB200;">${(user.jobs && Object.keys(user.jobs).length) ? Object.values(user.jobs).map(j=>j.title||'Untitled').join(', ') : 'None'}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <strong>Payment Method:</strong> 
