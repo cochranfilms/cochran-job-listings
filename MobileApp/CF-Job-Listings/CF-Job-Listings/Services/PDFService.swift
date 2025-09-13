@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import UIKit
 
 final class PDFService {
 	static let shared = PDFService()
@@ -20,11 +21,12 @@ final class PDFService {
 			kCGPDFContextAuthor as String: "Cochran Films",
 			kCGPDFContextTitle as String: "Freelance Contract"
 		]
+		// Use explicit Letter size to avoid zero/NaN page bounds in debug sessions
 		let data = NSMutableData()
-		UIGraphicsBeginPDFContextToData(data, .zero, pdfMeta)
-		UIGraphicsBeginPDFPage()
+		let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
+		UIGraphicsBeginPDFContextToData(data, pageRect, pdfMeta)
+		UIGraphicsBeginPDFPageWithInfo(pageRect, pdfMeta)
 		let ctx = UIGraphicsGetCurrentContext()
-		let pageRect = UIGraphicsGetPDFContextBounds()
 
 		// Header banner
 		ctx?.setFillColor(UIColor(red: 1.0, green: 178/255.0, blue: 0, alpha: 1).cgColor)
