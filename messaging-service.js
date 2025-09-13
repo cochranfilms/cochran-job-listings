@@ -187,7 +187,7 @@ class MessagingService {
      */
     async loadUserConversations() {
         try {
-            if (!this.currentUser) return;
+            if (!this.currentUser) return [];
             
             // Query in two steps to avoid composite index requirement:
             // Fetch active conversations first (no orderBy to avoid index),

@@ -19996,7 +19996,7 @@
         try {
             if (!messagingService) return;
             
-            const conversations = await messagingService.loadUserConversations();
+            const conversations = await messagingService.loadUserConversations() || [];
             const conversationsList = document.getElementById('conversationsList');
             
             if (conversations.length === 0) {
