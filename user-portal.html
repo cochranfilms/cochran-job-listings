@@ -2427,7 +2427,7 @@
 
         // Build unified jobs array for the signed-in user from multiple sources
         async function getDisplayJobsForCurrentUser() {
-            const localJobs = Object.values(currentUser?.jobs || {});
+            const localJobs = Object.entries(currentUser?.jobs || {}).map(([key, job]) => ({ ...job, __userJobKey: key }));
             const combined = [...localJobs];
 
             // Also pull Quick Apply docs for this user's email and fold them in
@@ -2448,10 +2448,20 @@
                         source: 'quick-application',
                         projectStatus: 'upcoming'
                     }));
-                    // Merge with de-duplication by id or title
+                    // Merge with robust de-duplication
                     const byKey = new Map();
+                    const makeKey = (j) => {
+                        const id = (j.id || '').toString().trim();
+                        if (id) return 'id:' + id;
+                        const userKey = (j.__userJobKey || '').toString().trim();
+                        if (userKey) return 'userKey:' + userKey;
+                        const title = (j.title || j.role || '').toString().trim().toLowerCase();
+                        const date = (j.projectStart || j.date || '').toString().trim();
+                        const loc = (j.location || '').toString().trim().toLowerCase();
+                        return 'composite:' + [title, date, loc].join('|');
+                    };
                     [...combined, ...mapped].forEach(j => {
-                        const k = (j.id || '').toString().trim() || (j.title || j.role || '').toString().trim().toLowerCase();
+                        const k = makeKey(j);
                         if (!byKey.has(k)) byKey.set(k, j);
                     });
                     return Array.from(byKey.values());
@@ -4344,37 +4354,19 @@
             `;
         }
 
-        // Helper function to determine job status (connected to users.json)
+        // Helper function to determine job status (canonical: 'upcoming' | 'in-progress' | 'completed')
         function getJobStatus(projectStart) {
-            if (!currentUser) return 'PENDING';
-            
-            // Get project status from users data for selected job
-            const selectedJob = getSelectedJob();
-            if (!selectedJob) return 'PENDING';
-            
-            // Get job data from current user's jobs
-            const userJob = currentUser.jobs[selectedJob.id];
-            if (userJob && userJob.projectStatus) {
-                // Use project status from users.json
-                switch (userJob.projectStatus) {
-                    case 'upcoming': return 'UPCOMING';
-                    case 'in-progress': return 'IN PROGRESS';
-                    case 'completed': return 'COMPLETED';
-                    case 'cancelled': return 'CANCELLED';
-                    case 'on-hold': return 'ON HOLD';
-                    default: return 'PENDING';
-                }
+            try {
+                if (!projectStart || projectStart === 'TBD') return 'upcoming';
+                const startDate = parseDateFlexible(projectStart);
+                const now = new Date();
+                if (!startDate || isNaN(startDate.getTime())) return 'upcoming';
+                if (startDate > now) return 'upcoming';
+                if (startDate <= now && startDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)) return 'in-progress';
+                return 'completed';
+            } catch (_) {
+                return 'upcoming';
             }
-            
-            // Fallback to date-based logic
-            if (!projectStart || projectStart === 'TBD') return 'PENDING';
-            
-            const startDate = new Date(projectStart);
-            const now = new Date();
-            
-            if (startDate > now) return 'UPCOMING';
-            if (startDate <= now) return 'ACTIVE';
-            return 'COMPLETED';
         }
         // Helper function to check if contract is signed (centralized)
         function getContractSignedStatus() {

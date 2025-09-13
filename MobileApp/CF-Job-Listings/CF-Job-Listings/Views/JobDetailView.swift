@@ -10,7 +10,7 @@ struct JobDetailView: View {
 				Text(job.displayTitle).font(.title).bold()
 				if let loc = job.location, !loc.isEmpty { Label(loc, systemImage: "mappin.and.ellipse") }
 				if !job.displayPay.isEmpty { Label(job.displayPay, systemImage: "dollarsign.circle") }
-				if let date = job.displayDate, !date.isEmpty { Label(date, systemImage: "calendar") }
+				if !job.displayDate.isEmpty { Label(job.displayDate, systemImage: "calendar") }
 				Divider()
 				Text(job.description ?? "No description provided.")
 			}

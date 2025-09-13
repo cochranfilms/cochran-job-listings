@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>API_BASE_URL</key>
-	<string>https://your-app.vercel.app</string>
+	<string>https://collaborate.cochranfilms.com/</string>
 	<key>FIREBASE_API_KEY</key>
 	<string></string>
 	<key>FIREBASE_PROJECT_ID</key>
