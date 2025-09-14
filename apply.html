@@ -24,35 +24,46 @@
       const fd = new FormData(e.target);
       const payload = Object.fromEntries(fd.entries());
       try{
-        // 1) Primary write → Firestore (single source of truth)
+        // 1) Primary write → Firestore (normalized per-user application record)
         await window.FirebaseConfig.waitForInit();
-        // Normalize a deterministic userId; prefer full name as id (existing structure)
-        const userId = (payload.fullName || '').trim();
-        if (!userId) throw new Error('Full name is required');
 
-        const firestoreUser = {
-          profile: {
-            email: payload.email,
-            location: payload.location || '',
-            role: '',
-            projectType: ''
-          },
-          contract: { contractStatus: 'pending' },
-          application: {
-            status: 'pending',
-            submittedAt: new Date().toISOString(),
-            jobTitle: payload.applyingFor || '',
-            eventDate: payload.eventDate || '',
-            pay: payload.pay || '',
-            description: payload.description || '',
-            phone: payload.phone || '',
-            portfolio: payload.portfolio || '',
-            source: 'apply-html'
-          },
-          jobs: {},
-          primaryJob: null
+        const email = (payload.email || '').trim();
+        if (!email) throw new Error('Email is required');
+
+        // Normalize structure identical to portal quick apply
+        const currentJob = (window.__getCurrentJobPrefill && window.__getCurrentJobPrefill()) || {};
+        const normalized = {
+          jobId: currentJob.id || (payload.applyingFor || '').toLowerCase().replace(/\s+/g,'-').slice(0,64),
+          jobTitle: currentJob.title || payload.applyingFor || 'Project',
+          jobDate: currentJob.date || payload.eventDate || '',
+          location: currentJob.location || payload.location || '',
+          payDisplay: currentJob.pay || payload.pay || '',
+          description: payload.description || currentJob.description || '',
+          portfolio: payload.portfolio || '',
+          phone: payload.phone || '',
+          source: 'applyPage',
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          applicant: { email }
         };
-        await window.FirestoreDataManager.setUser(userId, firestoreUser);
+
+        // Save under jobs/<jobId>/applications and users/<uid>/applications
+        try {
+          const db = firebase.firestore();
+          const jobRef = db.collection('jobs').doc(normalized.jobId).collection('applications').doc();
+          await jobRef.set(normalized, { merge: true });
+        } catch(_) {}
+
+        try {
+          const db = firebase.firestore();
+          // Find or create user by email
+          const q = await db.collection('users').where('profile.email','==', email).limit(1).get();
+          let userRef;
+          if (q.empty){ userRef = await db.collection('users').add({ profile: { email } }); }
+          else { userRef = q.docs[0].ref; }
+          const appRef = userRef.collection('applications').doc(normalized.jobId);
+          await appRef.set(normalized, { merge: true });
+        } catch(_) {}
 
         // 2) Best-effort backup write → existing JSON/GitHub API (non-blocking)
         try {

@@ -2486,15 +2486,13 @@
                 }
             } catch (mergeErr) { console.warn('⚠️ Could not merge quick applications into jobs:', mergeErr?.message || mergeErr); }
 
-            // Fallback: if nothing accepted is present, synthesize a job from profile role/date
+            // Always consider adding a synthesized profile job (so OBS Tech Assistant can appear)
             try {
                 const profileRole = currentUser?.profile?.role || currentUser?.role;
-                const profileDate = currentUser?.profile?.projectDate || currentUser?.projectDate || '';
-                const profileLoc = currentUser?.profile?.location || currentUser?.location || '';
-                const profileRate = currentUser?.profile?.rate || currentUser?.rate || '';
-                const hasAccepted = merged.some(j => (j.__userJobKey) || String(j.decision).toLowerCase() === 'accepted');
-                if (!hasAccepted && profileRole) {
-                    // Try to find a listing for this role
+                if (profileRole) {
+                    const profileDate = currentUser?.profile?.projectDate || currentUser?.projectDate || '';
+                    const profileLoc = currentUser?.profile?.location || currentUser?.location || '';
+                    const profileRate = currentUser?.profile?.rate || currentUser?.rate || '';
                     let listing = null;
                     try {
                         if (Array.isArray(jobsData)) {
@@ -2502,18 +2500,27 @@
                             listing = jobsData.find(j => norm(j.title) === norm(profileRole));
                         }
                     } catch(_) { listing = null; }
-                    merged.unshift({
-                        id: (listing && listing.id) || 'profile-role',
-                        title: profileRole,
+                    const profileJob = normalizeJobRecord({
+                        id: (listing && listing.id) || undefined,
+                        jobTitle: profileRole,
                         role: profileRole,
                         location: profileLoc || (listing && listing.location) || '',
-                        rate: profileRate || (listing && listing.pay) || '',
-                        projectStart: profileDate || (listing && listing.date) || '',
-                        date: profileDate || (listing && listing.date) || '',
-                        source: 'profile',
-                        projectStatus: 'upcoming',
-                        decision: 'accepted'
-                    });
+                        payDisplay: profileRate || (listing && listing.pay) || '',
+                        jobDate: profileDate || (listing && listing.date) || ''
+                    }, 'profile');
+                    profileJob.decision = 'accepted';
+                    const byKey = new Map();
+                    const makeKey = (j) => {
+                        const id = (j.id || '').toString().trim();
+                        if (id) return 'id:' + id;
+                        const title = (j.title || j.role || '').toString().trim().toLowerCase();
+                        const date = (j.projectStart || j.date || '').toString().trim();
+                        const loc = (j.location || '').toString().trim().toLowerCase();
+                        return 'composite:' + [title, date, loc].join('|');
+                    };
+                    merged.forEach(j => { const k = makeKey(j); if (!byKey.has(k)) byKey.set(k, j); });
+                    const k = makeKey(profileJob);
+                    if (!byKey.has(k)) merged.unshift(profileJob);
                 }
             } catch(_) {}
 
@@ -2589,6 +2596,8 @@
             // Classify by application decision
             const __decisions = await getApplicationDecisionsForUser(currentUser?.email);
             const __getDecision = (j) => {
+                // Trust normalized decision when present
+                if (j && j.decision) return String(j.decision).toLowerCase();
                 if (j && j.__userJobKey) return 'accepted';
                 const id = (j && j.id ? String(j.id).trim() : '');
                 const titleKey = 'title:' + String(j?.title || j?.role || '').toLowerCase().trim();
