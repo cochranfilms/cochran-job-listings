@@ -14,14 +14,7 @@ import FirebaseCore
 struct CF_Job_ListingsApp: App {
 	init() {
 		#if canImport(FirebaseCore)
-		if FirebaseApp.app() == nil {
-			let cfg = AppConfig.shared
-			let options = FirebaseOptions(googleAppID: cfg.firebaseAppId ?? "", gcmSenderID: cfg.firebaseSenderId ?? "")
-			options.apiKey = cfg.firebaseAPIKey ?? ""
-			options.projectID = cfg.firebaseProjectId ?? ""
-			options.storageBucket = cfg.firebaseStorageBucket ?? ""
-			FirebaseApp.configure(options: options)
-		}
+		if FirebaseApp.app() == nil { FirebaseApp.configure() }
 		#endif
 	}
 
