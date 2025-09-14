@@ -28,6 +28,14 @@ final class AuthService: ObservableObject {
 		self.currentEmail = nil
 		self.isAuthenticated = false
 	}
+
+	func resetPassword(email: String) async throws {
+		#if canImport(FirebaseAuth)
+		try await Auth.auth().sendPasswordReset(withEmail: email)
+		#else
+		throw NSError(domain: "AuthService", code: -1, userInfo: [NSLocalizedDescriptionKey: "FirebaseAuth not available"])
+		#endif
+	}
 }
 
 

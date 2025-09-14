@@ -27,6 +27,9 @@ struct UserPortalView: View {
 									TextField("Email", text: $email).keyboardType(.emailAddress).textContentType(.username)
 									SecureField("Password", text: $password).textContentType(.password)
 									Button("Sign In") { signIn() }.buttonStyle(CFPrimaryButtonStyle())
+									Button("Forgot Password?") { Task { try? await auth.resetPassword(email: email) } }
+										.font(.footnote)
+										.foregroundColor(.white)
 									if let errorMessage { Text(errorMessage).foregroundColor(CFTheme.error) }
 								}
 							}
