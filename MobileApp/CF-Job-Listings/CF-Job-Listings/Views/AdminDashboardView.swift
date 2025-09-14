@@ -3,15 +3,18 @@ import SwiftUI
 struct AdminDashboardView: View {
 	@StateObject private var vm = JobListViewModel()
 	@State private var contractsSummary: String = ""
+    @State private var selectedJob: Job?
 
 	var body: some View {
 		NavigationStack {
 			List {
 				Section("Jobs") {
 					ForEach(vm.allJobs, id: \.self) { job in
-						VStack(alignment: .leading, spacing: 4) {
-							Text(job.displayTitle).font(.headline)
-							Text(job.location ?? "").font(.subheadline).foregroundColor(.secondary)
+						Button { selectedJob = job } label: {
+							VStack(alignment: .leading, spacing: 4) {
+								Text(job.displayTitle).font(.headline)
+								Text(job.location ?? "").font(.subheadline).foregroundColor(.secondary)
+							}
 						}
 					}
 				}
@@ -26,6 +29,14 @@ struct AdminDashboardView: View {
 			await vm.load()
 			await loadContractsSummary()
 		}
+        .sheet(item: $selectedJob) { job in
+            VStack(spacing: 12) {
+                Text(job.displayTitle).font(.title2.bold())
+                Text(job.location ?? "").foregroundColor(.secondary)
+                if !job.displayPay.isEmpty { Text(job.displayPay) }
+                Button("Close") { selectedJob = nil }
+            }.padding()
+        }
 	}
 
 	private func loadContractsSummary() async {

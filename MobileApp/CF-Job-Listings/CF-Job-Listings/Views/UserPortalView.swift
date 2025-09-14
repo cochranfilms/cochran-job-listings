@@ -8,6 +8,7 @@ struct UserPortalView: View {
 	@State private var notifications: [NotificationItem] = []
 	@State private var isLoading = false
 	@State private var errorMessage: String?
+	@State private var contractFiles: [StorageService.ContractFile] = []
 
 	var body: some View {
 		NavigationStack {
@@ -53,6 +54,20 @@ struct UserPortalView: View {
 									}
 								} else {
 									Text("No jobs assigned yet.").foregroundColor(.secondary)
+								}
+							}
+						}
+
+						CFCard {
+							VStack(alignment: .leading, spacing: 8) {
+								Text("Contracts").cfSectionHeader()
+								if contractFiles.isEmpty {
+									Text("No contracts found.").foregroundColor(.secondary)
+								} else {
+									ForEach(contractFiles, id: \.id) { f in
+										Link(f.name, destination: f.url)
+										Divider()
+									}
 								}
 							}
 						}

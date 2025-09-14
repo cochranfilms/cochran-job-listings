@@ -64,5 +64,6 @@ struct JobListView: View {
 			}
 		}
 		.task { await vm.load() }
+		.onAppear { vm.listenRealtime() }
 	}
 }

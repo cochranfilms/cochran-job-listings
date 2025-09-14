@@ -36,6 +36,7 @@ final class MessagingService: ObservableObject {
 	@Published var conversations: [Conversation] = []
 	private var convListener: ListenerRegistration?
 	private var msgListener: ListenerRegistration?
+	@Published var threadMessages: [MessageItem] = []
 
 	func listenConversations(forEmail email: String) {
 		#if canImport(FirebaseFirestore)
@@ -72,6 +73,23 @@ final class MessagingService: ObservableObject {
 	func stopListening() {
 		convListener?.remove(); convListener = nil
 		msgListener?.remove(); msgListener = nil
+	}
+
+	func listenThread(_ conversationId: String) {
+		#if canImport(FirebaseFirestore)
+		msgListener?.remove(); msgListener = nil
+		let db = Firestore.firestore()
+		msgListener = db.collection("directMessages").document(conversationId).collection("messages").orderBy("timestamp", descending: false).addSnapshotListener { [weak self] snap, _ in
+			guard let self = self else { return }
+			var items: [MessageItem] = []
+			snap?.documents.forEach { d in
+				let data = d.data()
+				let ts = (data["timestamp"] as? Timestamp)?.dateValue()
+				items.append(MessageItem(id: d.documentID, senderId: data["senderId"] as? String ?? "", content: data["content"] as? String ?? "", attachments: data["attachments"] as? [String], timestamp: ts, status: data["status"] as? String))
+			}
+			self.threadMessages = items
+		}
+		#endif
 	}
 
 	func sendMessage(conversationId: String, senderEmail: String, text: String) async throws {

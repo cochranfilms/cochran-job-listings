@@ -42,6 +42,29 @@ final class StorageService {
 		throw NSError(domain: "StorageService", code: -1, userInfo: [NSLocalizedDescriptionKey: "FirebaseStorage not available"])
 		#endif
 	}
+
+	struct ContractFile: Identifiable, Hashable {
+		let id: String
+		let name: String
+		let url: URL
+	}
+
+	func listContracts(ownerEmail: String) async throws -> [ContractFile] {
+		#if canImport(FirebaseStorage)
+		let safeOwner = ownerEmail.replacingOccurrences(of: "[^a-zA-Z0-9@._-]", with: "_", options: .regularExpression)
+		let folder = "contracts/\(safeOwner)"
+		let ref = storage.reference(withPath: folder)
+		let list = try await ref.listAll()
+		var results: [ContractFile] = []
+		for item in list.items {
+			let url = try await item.downloadURL()
+			results.append(.init(id: item.name, name: item.name, url: url))
+		}
+		return results.sorted { $0.name < $1.name }
+		#else
+		throw NSError(domain: "StorageService", code: -1, userInfo: [NSLocalizedDescriptionKey: "FirebaseStorage not available"]) 
+		#endif
+	}
 }
 
 

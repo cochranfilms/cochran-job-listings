@@ -40,7 +40,16 @@ struct ThreadView: View {
 	var body: some View {
 		NavigationStack {
 			VStack {
-				List { /* future: live messages */ }
+				List(MessagingService.shared.threadMessages) { m in
+					VStack(alignment: .leading, spacing: 2) {
+						HStack {
+							Text(m.senderId).font(.caption).foregroundColor(.secondary)
+							Spacer()
+							if let ts = m.timestamp { Text(ts, style: .time).font(.caption2).foregroundColor(.secondary) }
+						}
+						Text(m.content)
+					}
+				}
 				HStack {
 					TextField("Message", text: $text)
 						.textFieldStyle(.roundedBorder)
@@ -50,6 +59,7 @@ struct ThreadView: View {
 			}
 			.navigationTitle("Chat")
 		}
+		.onAppear { MessagingService.shared.listenThread(conversation.id) }
 	}
 
 	private func send() async {
