@@ -52,13 +52,18 @@ final class StorageService {
 	func listContracts(ownerEmail: String) async throws -> [ContractFile] {
 		#if canImport(FirebaseStorage)
 		let safeOwner = ownerEmail.replacingOccurrences(of: "[^a-zA-Z0-9@._-]", with: "_", options: .regularExpression)
-		let folder = "contracts/\(safeOwner)"
-		let ref = storage.reference(withPath: folder)
-		let list = try await ref.listAll()
+		let candidates = ["contracts/\(ownerEmail)/", "contracts/\(safeOwner)/", "contracts/\(ownerEmail)", "contracts/\(safeOwner)"]
 		var results: [ContractFile] = []
-		for item in list.items {
-			let url = try await item.downloadURL()
-			results.append(.init(id: item.name, name: item.name, url: url))
+		for folder in candidates {
+			let ref = storage.reference(withPath: folder)
+			do {
+				let list = try await ref.listAll()
+				for item in list.items {
+					let url = try await item.downloadURL()
+					results.append(.init(id: item.name, name: item.name, url: url))
+				}
+				if !results.isEmpty { break }
+			} catch { /* try next candidate */ }
 		}
 		return results.sorted { $0.name < $1.name }
 		#else
