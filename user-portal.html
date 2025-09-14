@@ -8335,13 +8335,25 @@
         let profilePictureData = null;
         let avatarRealtimeWired = false;
         
+        // Expose a global picker opener so inline onclick handlers work even before init
+        try {
+            window.openProfilePicker = function() {
+                const inputId = 'profilePictureInput';
+                let el = document.getElementById(inputId);
+                if (!el) {
+                    try { if (typeof initializeProfilePicture === 'function') { initializeProfilePicture(); } } catch(_) {}
+                    el = document.getElementById(inputId);
+                }
+                if (el) { el.click(); }
+            };
+        } catch(_) {}
+
         // Initialize profile picture functionality
         function initializeProfilePicture() {
             const input = document.getElementById('profilePictureInput');
             if (input) {
                 input.addEventListener('change', handleProfilePictureUpload);
             }
-            try { window.openProfilePicker = function(){ const el = document.getElementById('profilePictureInput'); if (el) el.click(); }; } catch(_) {}
             
             // Load existing profile picture
             loadProfilePicture();

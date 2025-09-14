@@ -50,6 +50,10 @@ No data migrations required. LocalStorage key for the community board remains `c
   - Legacy GitHub URLs remain as fallbacks for existing contracts.
 - Email notifications now contain Firestore Storage download links instead of GitHub URLs.
 
+### 2025-09-14 — Profile Photo picker global helper
+- Exposed `window.openProfilePicker()` early in `user-portal.html` so inline `onclick` works even before initialization binds the input listener. The helper lazily calls `initializeProfilePicture()` if the input is not yet present, then clicks it.
+- Keep this global when refactoring to avoid `ReferenceError: openProfilePicker is not defined` from inline buttons.
+
 ## 2025-09-12 — Multi-job timelines and all-contracts listing (portal)
 
 ## 2025-09-12 — Job Prioritization and User Experience Enhancement

@@ -630,7 +630,8 @@ Firebase Storage uploads:
 Quick test (old automatic testing system):
 1) Profile Photo Upload
    - Open `user-portal.html`, sign in.
-   - In Community → Profile Picture, upload a small image (<5MB).
+   - In Profile tab (or Community → Profile Picture), click Upload or Change. Both call a global `openProfilePicker()` exposed on `window` so inline handlers work reliably.
+   - Select a small image (<5MB).
    - Expect toast "Profile photo uploaded!". Avatar shows immediately.
    - In Firebase Console → Storage, confirm file path under `avatars/<email>/...`.
    - In Firestore `users` doc, field `profilePicture` should be the public download URL (not base64).
