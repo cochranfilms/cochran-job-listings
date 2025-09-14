@@ -15,6 +15,7 @@ struct UserPortalView: View {
 	@State private var editLocation = ""
 	@State private var editRole = ""
 	@State private var equipment: [EquipmentItem] = []
+	@State private var assignedJobs: [AssignedJob] = []
 	@State private var projects: [ProjectShowcaseItem] = []
 	@State private var community: [CommunityPost] = []
 	@State private var performance: [PerformanceEntry] = []
@@ -87,7 +88,18 @@ struct UserPortalView: View {
 							CFCard {
 								VStack(alignment: .leading, spacing: 8) {
 									Text("Jobs").cfSectionHeader()
-									if let jobs = rec.jobs, !jobs.isEmpty {
+									if !assignedJobs.isEmpty {
+										ForEach(assignedJobs) { job in
+											VStack(alignment: .leading, spacing: 6) {
+												Text(job.title).font(.headline)
+												if let loc = job.location, !loc.isEmpty { Label(loc, systemImage: "mappin.and.ellipse") }
+												if let date = job.date, !date.isEmpty { Label(date, systemImage: "calendar") }
+												if let pay = job.pay, !pay.isEmpty { Label(pay, systemImage: "dollarsign.circle") }
+											}
+											.padding(.vertical, 6)
+											Divider()
+										}
+									} else if let jobs = rec.jobs, !jobs.isEmpty {
 										ForEach(jobs.keys.sorted(), id: \.self) { key in
 											if let job = rec.jobs?[key] {
 												VStack(alignment: .leading, spacing: 6) {
@@ -103,13 +115,13 @@ struct UserPortalView: View {
 												}
 												.padding(.vertical, 6)
 												Divider()
+											}
 										}
+									} else {
+										Text("No jobs assigned yet.").foregroundColor(.secondary)
 									}
-								} else {
-									Text("No jobs assigned yet.").foregroundColor(.secondary)
 								}
 							}
-						}
 
 							CFCard {
 								VStack(alignment: .leading, spacing: 8) {
@@ -229,6 +241,7 @@ struct UserPortalView: View {
 					Task { @MainActor in self.record = rec }
 				}
 				if let initial = try? await UserService.shared.fetchUser(byEmail: email) { self.record = initial }
+				self.assignedJobs = await PortalDataService.fetchAssignedJobs(email: email, name: self.record?.name ?? "")
 				self.notifications = (try? await UserService.shared.fetchNotifications()) ?? []
 				self.contractFiles = (try? await StorageService.shared.listContracts(ownerEmail: email)) ?? []
 				self.equipment = await PortalDataService.fetchEquipment()
