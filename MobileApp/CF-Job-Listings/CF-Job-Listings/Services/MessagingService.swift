@@ -43,7 +43,7 @@ final class MessagingService: ObservableObject {
 		convListener?.remove()
 		let db = Firestore.firestore()
 		let ref = db.collection("directMessages").whereField("isActive", isEqualTo: true)
-		convListener = ref.addSnapshotListener { [weak self] snapshot, _ in
+		convListener = ref.addSnapshotListener { [weak self] (snapshot: QuerySnapshot?, error: Error?) in
 			guard let self = self else { return }
 			var list: [Conversation] = []
 			snapshot?.documents.forEach { doc in
@@ -79,23 +79,27 @@ final class MessagingService: ObservableObject {
 		#if canImport(FirebaseFirestore)
 		msgListener?.remove(); msgListener = nil
 		let db = Firestore.firestore()
-		msgListener = db.collection("directMessages").document(conversationId).collection("messages").orderBy("timestamp", descending: false).addSnapshotListener { [weak self] snap, _ in
-			guard let self = self else { return }
-			var items: [MessageItem] = []
-			snap?.documents.forEach { d in
-				let data = d.data()
-				let ts = (data["timestamp"] as? Timestamp)?.dateValue()
-				items.append(MessageItem(id: d.documentID, senderId: data["senderId"] as? String ?? "", content: data["content"] as? String ?? "", attachments: data["attachments"] as? [String], timestamp: ts, status: data["status"] as? String))
+		msgListener = db.collection("directMessages")
+			.document(conversationId)
+			.collection("messages")
+			.order(by: "timestamp", descending: false)
+			.addSnapshotListener { [weak self] (snap: QuerySnapshot?, error: Error?) in
+				guard let self = self else { return }
+				var items: [MessageItem] = []
+				snap?.documents.forEach { d in
+					let data = d.data()
+					let ts = (data["timestamp"] as? Timestamp)?.dateValue()
+					items.append(MessageItem(id: d.documentID, senderId: data["senderId"] as? String ?? "", content: data["content"] as? String ?? "", attachments: data["attachments"] as? [String], timestamp: ts, status: data["status"] as? String))
+				}
+				self.threadMessages = items
 			}
-			self.threadMessages = items
-		}
 		#endif
 	}
 
 	func sendMessage(conversationId: String, senderEmail: String, text: String) async throws {
 		#if canImport(FirebaseFirestore)
 		let db = Firestore.firestore()
-		let msgRef = db.collection("directMessages").doc(conversationId).collection("messages").document()
+		let msgRef = db.collection("directMessages").document(conversationId).collection("messages").document()
 		let payload: [String: Any] = [
 			"id": msgRef.documentID,
 			"senderId": senderEmail,
@@ -106,7 +110,7 @@ final class MessagingService: ObservableObject {
 			"readBy": [senderEmail]
 		]
 		try await msgRef.setData(payload)
-		try await db.collection("directMessages").doc(conversationId).setData([
+		try await db.collection("directMessages").document(conversationId).setData([
 			"lastMessage": text,
 			"lastMessageTime": FieldValue.serverTimestamp()
 		], merge: true)
