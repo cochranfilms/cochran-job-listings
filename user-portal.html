@@ -2431,15 +2431,14 @@
         // Build unified jobs array for the signed-in user from multiple sources
         async function getDisplayJobsForCurrentUser() {
             const localJobs = Object.entries(currentUser?.jobs || {}).map(([key, job]) => ({ ...job, __userJobKey: key }));
-            const combined = [...localJobs];
+            let merged = [...localJobs];
 
-            // Also pull Quick Apply docs for this user's email and fold them in
+            // Pull Quick Apply docs for this user's email and fold them in (dedup by jobId/title/date/location)
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable() && currentUser?.email) {
                     const allQuick = await window.FirestoreDataManager.getQuickApplications();
                     const emailLower = String(currentUser.email).toLowerCase();
                     const mine = (allQuick || []).filter(q => String(q?.applicant?.email || '').toLowerCase() === emailLower);
-                    // Map quick applications to job-like objects for display
                     const mapped = mine.map(q => ({
                         id: q.jobId || q.id,
                         title: q.jobTitle || q.title || 'Project',
@@ -2449,28 +2448,57 @@
                         projectStart: q.jobDate || q.date || '',
                         date: q.jobDate || q.date || '',
                         source: 'quick-application',
-                        projectStatus: 'upcoming'
+                        projectStatus: 'upcoming',
+                        decision: (String(q?.status || '').toLowerCase() === 'approved') ? 'accepted' : (String(q?.status || '').toLowerCase().match(/denied|rejected|declined/) ? 'declined' : 'pending')
                     }));
-                    // Merge with robust de-duplication
                     const byKey = new Map();
                     const makeKey = (j) => {
-                        const id = (j.id || '').toString().trim();
-                        if (id) return 'id:' + id;
                         const userKey = (j.__userJobKey || '').toString().trim();
                         if (userKey) return 'userKey:' + userKey;
+                        const id = (j.id || '').toString().trim();
+                        if (id) return 'id:' + id;
                         const title = (j.title || j.role || '').toString().trim().toLowerCase();
                         const date = (j.projectStart || j.date || '').toString().trim();
                         const loc = (j.location || '').toString().trim().toLowerCase();
                         return 'composite:' + [title, date, loc].join('|');
                     };
-                    [...combined, ...mapped].forEach(j => {
-                        const k = makeKey(j);
-                        if (!byKey.has(k)) byKey.set(k, j);
-                    });
-                    return Array.from(byKey.values());
+                    [...merged, ...mapped].forEach(j => { const k = makeKey(j); if (!byKey.has(k)) byKey.set(k, j); });
+                    merged = Array.from(byKey.values());
                 }
             } catch (mergeErr) { console.warn('⚠️ Could not merge quick applications into jobs:', mergeErr?.message || mergeErr); }
-            return combined;
+
+            // Fallback: if nothing accepted is present, synthesize a job from profile role/date
+            try {
+                const profileRole = currentUser?.profile?.role || currentUser?.role;
+                const profileDate = currentUser?.profile?.projectDate || currentUser?.projectDate || '';
+                const profileLoc = currentUser?.profile?.location || currentUser?.location || '';
+                const profileRate = currentUser?.profile?.rate || currentUser?.rate || '';
+                const hasAccepted = merged.some(j => (j.__userJobKey) || String(j.decision).toLowerCase() === 'accepted');
+                if (!hasAccepted && profileRole) {
+                    // Try to find a listing for this role
+                    let listing = null;
+                    try {
+                        if (Array.isArray(jobsData)) {
+                            const norm = (s) => String(s || '').trim().toLowerCase();
+                            listing = jobsData.find(j => norm(j.title) === norm(profileRole));
+                        }
+                    } catch(_) { listing = null; }
+                    merged.unshift({
+                        id: (listing && listing.id) || 'profile-role',
+                        title: profileRole,
+                        role: profileRole,
+                        location: profileLoc || (listing && listing.location) || '',
+                        rate: profileRate || (listing && listing.pay) || '',
+                        projectStart: profileDate || (listing && listing.date) || '',
+                        date: profileDate || (listing && listing.date) || '',
+                        source: 'profile',
+                        projectStatus: 'upcoming',
+                        decision: 'accepted'
+                    });
+                }
+            } catch(_) {}
+
+            return merged;
         }
 
         // Fetch application decisions for a user (accepted/pending/declined)
