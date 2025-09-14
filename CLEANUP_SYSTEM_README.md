@@ -64,6 +64,12 @@
 - Reason: Prevent global-variable resolution of unquoted IDs which caused `ReferenceError: <id> is not defined` when clicking like on comments or showcases.
 - Maintenance note: When templating inline handlers with dynamic IDs, always quote and escape the value or prefer `addEventListener` delegation to avoid HTML injection and global lookup pitfalls.
 
+### 2025-09-14 — Community Messageboard re-enabled
+- Scope: `user-portal.html`
+- Change: Removed inline `display:none` from the Team Messaging card and aligned the input id to `messageInput`; send button now calls `sendMessage()` so existing handlers bind correctly.
+- Impact: Restores Community messageboard visibility and functionality with Firestore-backed `messages` collection.
+- Reversion: To hide again, add `style="display:none"` back to `.messaging-board-card` and revert input id/button onclick; note that this will disable Enter-to-send and the UI composer.
+
 ### Scope: `user-portal.html`
 - Primary sections now render multiple items:
   - Jobs tab: `displayCurrentJobs()` maps all jobs to cards with timelines.

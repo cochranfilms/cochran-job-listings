@@ -84,6 +84,22 @@ How to test quickly (old script workflow):
   5. Test tab switching functionality works smoothly
   6. Verify job prioritization logic correctly identifies upcoming vs completed jobs
 ### 2025-09-13 — Community Likes fix (comments + showcases)
+- ### 2025-09-14 — Community Messageboard visibility + input wiring fix
+
+- Files: `user-portal.html`
+- Change:
+  - Unhid the Community → Team Messaging card (removed inline `style="display: none;"`).
+  - Aligned input `id` from `teamMessageInput` to `messageInput` so `initializeMessagingBoard()` binds Enter-to-send.
+  - Enabled the send button to call `sendMessage()` instead of a no-op.
+- Why: The messageboard was missing due to the card being hidden and handlers not bound because of the wrong input id.
+- Test (old script workflow):
+  1) Open `user-portal.html`, sign in, click Community.
+  2) In Team Messaging, type a test message and press Enter → message appears.
+  3) Click the paper plane → message sends; toast “Message sent!”.
+  4) In Firebase Console → Firestore `messages`, verify a new doc with `author`, `authorEmail`, `text`, `timestamp`.
+  5) Like a message → `likes` increments and `likedBy` includes your email.
+  6) Open a second browser as another user; verify real-time updates without refresh.
+
 
 - Files: `user-portal.html`
 - Fix: Quote string IDs in inline handlers and harden like functions.
