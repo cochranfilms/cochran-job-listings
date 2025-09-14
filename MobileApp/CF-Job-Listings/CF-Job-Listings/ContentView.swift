@@ -16,6 +16,10 @@ struct ContentView: View {
 				.tabItem { Label("Portal", systemImage: "person.crop.circle") }
 			NavigationStack { AdminDashboardView() }
 				.tabItem { Label("Admin", systemImage: "gearshape") }
+			NavigationStack { MessagesView() }
+				.tabItem { Label("Messages", systemImage: "bubble.left.and.bubble.right") }
+			NavigationStack { NotificationsView() }
+				.tabItem { Label("Alerts", systemImage: "bell") }
 		}
 	}
 }
