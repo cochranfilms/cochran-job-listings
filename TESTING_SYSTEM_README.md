@@ -1405,3 +1405,19 @@ Old automatic testing system steps (simulated via iOS app):
 Troubleshooting:
 - If jobs do not load: verify `API_BASE_URL` in `Config.plist` and that `/api/jobs-data` returns JSON `{ jobs: [...] }` or `[...]`.
 - If Firebase initialization fails: leave Firebase pods out or ensure `FIREBASE_*` keys are correct; the app will use the Vercel API fallback automatically.
+ 
+### 2025-09-14 — iOS Firebase initialization via AppDelegate (SwiftUI)
+
+- Files: `MobileApp/CF-Job-Listings/CF-Job-Listings/AppDelegate.swift`, `CF_Job_ListingsApp.swift`
+- Change: Added a UIKit `AppDelegate` conforming to `UIApplicationDelegate` that calls `FirebaseApp.configure()` in `application(_:didFinishLaunchingWithOptions:)`. Wired it into the SwiftUI `@main` app using `@UIApplicationDelegateAdaptor(AppDelegate.self)`. Removed redundant configure call from `CF_Job_ListingsApp.init()`.
+- Why: Prevent runtime warning `[FirebaseCore][I-COR000003] The default Firebase app has not yet been configured` and `[GoogleUtilities/AppDelegateSwizzler][I-SWZ001014] App Delegate does not conform to UIApplicationDelegate protocol`.
+
+How to test (old script workflow):
+1) Build & run the iOS app target on Simulator.
+2) In Xcode console, expect to see no I-COR000003 warning. Optional log "Firebase configured: __FIRAPP_DEFAULT" may appear.
+3) Navigate to Jobs → open a job → verify Firestore reads succeed (if pods installed) or API fallback works.
+4) Open Messaging; verify Firestore listeners attach without errors.
+
+Notes:
+- Ensure `GoogleService-Info.plist` is included in the iOS app target and is present in the bundle.
+- If you removed Firebase pods, the code paths are gated with `#if canImport(FirebaseCore)` and will no-op gracefully.

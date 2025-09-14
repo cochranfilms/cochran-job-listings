@@ -6,19 +6,12 @@
 //
 
 import SwiftUI
-#if canImport(FirebaseCore)
-import FirebaseCore
-#endif
 import os.log
 
 @main
 struct CF_Job_ListingsApp: App {
-	init() {
-		#if canImport(FirebaseCore)
-		if FirebaseApp.app() == nil { FirebaseApp.configure() }
-        if let app = FirebaseApp.app() { os_log("Firebase configured: %{public}@", app.name) } else { os_log("Firebase NOT configured") }
-		#endif
-	}
+	@UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+	init() {}
 
 	var body: some Scene {
 		WindowGroup { ContentView() }
