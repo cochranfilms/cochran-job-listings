@@ -13,6 +13,11 @@ struct UserPortalView: View {
 	@State private var showEditProfile = false
 	@State private var editLocation = ""
 	@State private var editRole = ""
+	@State private var equipment: [EquipmentItem] = []
+	@State private var projects: [ProjectShowcaseItem] = []
+	@State private var community: [CommunityPost] = []
+	@State private var performance: [PerformanceEntry] = []
+	@State private var newCommunityMessage = ""
 
 	var body: some View {
 		NavigationStack {
@@ -74,13 +79,13 @@ struct UserPortalView: View {
 												}
 												.padding(.vertical, 6)
 												Divider()
-											}
 										}
-									} else {
-										Text("No jobs assigned yet.").foregroundColor(.secondary)
 									}
+								} else {
+									Text("No jobs assigned yet.").foregroundColor(.secondary)
 								}
 							}
+						}
 
 							CFCard {
 								VStack(alignment: .leading, spacing: 8) {
@@ -98,19 +103,61 @@ struct UserPortalView: View {
 
 							CFCard {
 								VStack(alignment: .leading, spacing: 8) {
-									Text("Notifications").cfSectionHeader()
-									ForEach(notifications) { n in
-										VStack(alignment: .leading, spacing: 4) {
-											Text(n.title).font(.headline)
-											Text(n.message).font(.subheadline)
-											Text(n.timestamp).font(.caption).foregroundColor(.secondary)
+									Text("Equipment Center").cfSectionHeader()
+									if equipment.isEmpty {
+										Text("No equipment available.").foregroundColor(.secondary)
+									} else {
+										ForEach(equipment) { item in
+											HStack {
+												Text(item.name)
+												Spacer()
+												if item.available { Button("Reserve") { Task { try? await PortalDataService.reserveEquipment(id: item.id, userEmail: rec.profile?.email ?? "") } } } else { Text(item.status ?? "Reserved").foregroundColor(.secondary) }
+											}
+											Divider()
 										}
-										.padding(.vertical, 6)
-										Divider()
 									}
-									if notifications.isEmpty { Text("No notifications.").foregroundColor(.secondary) }
 								}
 							}
+
+							CFCard {
+								VStack(alignment: .leading, spacing: 8) {
+									Text("Project Showcase").cfSectionHeader()
+									if projects.isEmpty { Text("No projects.").foregroundColor(.secondary) }
+									ForEach(projects) { p in
+										Text(p.title)
+										Divider()
+									}
+								}
+							}
+
+							CFCard {
+								VStack(alignment: .leading, spacing: 8) {
+									Text("Community").cfSectionHeader()
+									VStack(alignment: .leading, spacing: 6) {
+										TextField("Share an update...", text: $newCommunityMessage)
+										Button("Post") { Task { if !newCommunityMessage.isEmpty { try? await PortalDataService.addCommunityPost(author: rec.profile?.email ?? "", message: newCommunityMessage); newCommunityMessage = ""; community = await PortalDataService.fetchCommunity() } } }
+									}
+									ForEach(community) { post in
+										VStack(alignment: .leading) {
+											Text(post.author).font(.caption).foregroundColor(.secondary)
+											Text(post.message)
+										}
+										Divider()
+									}
+								}
+							}
+
+							CFCard {
+								VStack(alignment: .leading, spacing: 8) {
+									Text("Performance Review").cfSectionHeader()
+									if performance.isEmpty { Text("No data.").foregroundColor(.secondary) }
+									ForEach(performance) { e in
+										HStack { Text(e.metric); Spacer(); Text(e.value).foregroundColor(.secondary) }
+										Divider()
+									}
+								}
+							}
+
 						}
 					}
 					.padding()
@@ -155,9 +202,11 @@ struct UserPortalView: View {
 				}
 				if let initial = try? await UserService.shared.fetchUser(byEmail: email) { self.record = initial }
 				self.notifications = (try? await UserService.shared.fetchNotifications()) ?? []
-				if let files = try? await StorageService.shared.listContracts(ownerEmail: email) {
-					self.contractFiles = files
-				}
+				self.contractFiles = (try? await StorageService.shared.listContracts(ownerEmail: email)) ?? []
+				self.equipment = await PortalDataService.fetchEquipment()
+				self.projects = await PortalDataService.fetchProjects()
+				self.community = await PortalDataService.fetchCommunity()
+				self.performance = await PortalDataService.fetchPerformance(email: email)
 			} catch {
 				errorMessage = (error as NSError).localizedDescription
 			}
