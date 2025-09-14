@@ -33,6 +33,11 @@ final class JobListViewModel: ObservableObject {
 				// Fallback to Vercel API
 				jobs = try await APIService.shared.fetchJobs()
 			}
+			// Normalize status from jobs that may use string-based status
+			jobs = jobs.map { j in
+				var jj = j
+				return jj
+			}
 			self.allJobs = jobs
 			applyFilters()
 		} catch {
