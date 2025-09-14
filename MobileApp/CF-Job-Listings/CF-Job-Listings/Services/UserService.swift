@@ -24,13 +24,25 @@ final class UserService {
 
 	func fetchUser(byEmail email: String) async throws -> UserRecord? {
 		#if canImport(FirebaseCore) && canImport(FirebaseFirestore)
-		let q = Firestore.firestore().collection("users").whereField("profile.email", isEqualTo: email)
-		let snapshot = try await q.limit(to: 1).getDocuments()
-		guard let doc = snapshot.documents.first else { return nil }
-		var data = doc.data()
-		data["name"] = doc.documentID
-		let json = try JSONSerialization.data(withJSONObject: data)
-		return try JSONDecoder().decode(UserRecord.self, from: json)
+		let users = Firestore.firestore().collection("users")
+		// First try exact email
+		var snapshot = try await users.whereField("profile.email", isEqualTo: email).limit(to: 1).getDocuments()
+		if let doc = snapshot.documents.first {
+			var data = doc.data(); data["name"] = doc.documentID
+			let json = try JSONSerialization.data(withJSONObject: data)
+			return try JSONDecoder().decode(UserRecord.self, from: json)
+		}
+		// Fallback: lowercase email
+		let lower = email.lowercased()
+		if lower != email {
+			snapshot = try await users.whereField("profile.email", isEqualTo: lower).limit(to: 1).getDocuments()
+			if let doc = snapshot.documents.first {
+				var data = doc.data(); data["name"] = doc.documentID
+				let json = try JSONSerialization.data(withJSONObject: data)
+				return try JSONDecoder().decode(UserRecord.self, from: json)
+			}
+		}
+		return nil
 		#else
 		throw NSError(domain: "UserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Firestore not available"])
 		#endif

@@ -28,6 +28,10 @@ struct UserPortalView: View {
 							}
 						}
 
+						if auth.isAuthenticated, record == nil {
+							ProgressView("Loading your portal...")
+						}
+
 						if auth.isAuthenticated, let rec = record {
 							CFCard {
 								VStack(alignment: .leading, spacing: 8) {
@@ -110,6 +114,7 @@ struct UserPortalView: View {
 				UserService.shared.listenUser(byEmail: email) { rec in
 					Task { @MainActor in self.record = rec }
 				}
+				if let initial = try? await UserService.shared.fetchUser(byEmail: email) { self.record = initial }
 				self.notifications = (try? await UserService.shared.fetchNotifications()) ?? []
 				if let files = try? await StorageService.shared.listContracts(ownerEmail: email) {
 					self.contractFiles = files
