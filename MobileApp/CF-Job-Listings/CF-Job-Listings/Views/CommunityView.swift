@@ -35,7 +35,10 @@ struct CommunityView: View {
             .navigationTitle("Community")
         }
         .onAppear { Task { await reload() } }
-        .onChange(of: pickerItem) { _ in Task { await uploadShowcase() } }
+        .onChange(of: pickerItem) { oldValue, newValue in
+            guard newValue != nil else { return }
+            Task { await uploadShowcase() }
+        }
     }
 
     private func reload() async {

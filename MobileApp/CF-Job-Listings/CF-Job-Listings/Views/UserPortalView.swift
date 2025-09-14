@@ -209,8 +209,8 @@ struct UserPortalView: View {
 				}
 			}
 		}
-        .onChange(of: photoItem) { newItem in
-            guard newItem != nil else { return }
+        .onChange(of: photoItem) { oldValue, newValue in
+            guard newValue != nil else { return }
             Task { await uploadAvatar() }
         }
 	}
