@@ -65,6 +65,28 @@ final class StorageService {
 		throw NSError(domain: "StorageService", code: -1, userInfo: [NSLocalizedDescriptionKey: "FirebaseStorage not available"]) 
 		#endif
 	}
+
+	func uploadAvatar(data: Data, ownerEmail: String, filename: String, mime: String) async throws -> (url: URL, path: String) {
+		#if canImport(FirebaseStorage)
+		let safeOwner = ownerEmail.replacingOccurrences(of: "[^a-zA-Z0-9@._-]", with: "_", options: .regularExpression)
+		let name = "\(Int(Date().timeIntervalSince1970))-\(filename)"
+		let path = "avatars/\(safeOwner)/\(name)"
+		let ref = storage.reference(withPath: path)
+		let metadata = StorageMetadata(); metadata.contentType = mime
+		_ = try await ref.putDataAsync(data, metadata: metadata)
+		let url = try await ref.downloadURL()
+		return (url, path)
+		#else
+		throw NSError(domain: "StorageService", code: -1, userInfo: [NSLocalizedDescriptionKey: "FirebaseStorage not available"])
+		#endif
+	}
+
+	func deletePath(_ path: String) async {
+		#if canImport(FirebaseStorage)
+		let ref = storage.reference(withPath: path)
+		try? await ref.delete()
+		#endif
+	}
 }
 
 

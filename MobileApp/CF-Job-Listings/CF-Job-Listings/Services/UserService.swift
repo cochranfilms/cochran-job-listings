@@ -79,6 +79,23 @@ final class UserService {
 		if let list = try? JSONDecoder().decode([NotificationItem].self, from: data) { return list }
 		return []
 	}
+
+	func updateProfilePicture(email: String, url: String, path: String) async {
+		#if canImport(FirebaseCore) && canImport(FirebaseFirestore)
+		let users = Firestore.firestore().collection("users")
+		let snapshot = try? await users.whereField("profile.email", isEqualTo: email).limit(to: 1).getDocuments()
+		if let doc = snapshot?.documents.first {
+			try? await users.document(doc.documentID).setData([
+				"profilePicture": url,
+				"profile": [
+					"email": email,
+					"profilePicture": url,
+					"picturePath": path
+				]
+			], merge: true)
+		}
+		#endif
+	}
 }
 
 

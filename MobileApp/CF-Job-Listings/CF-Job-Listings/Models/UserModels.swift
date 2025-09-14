@@ -6,6 +6,8 @@ struct UserProfile: Codable, Hashable {
 	var location: String?
 	var role: String?
 	var approvedDate: String?
+	var profilePicture: String?
+	var picturePath: String?
 }
 
 struct UserContract: Codable, Hashable {

@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct UserPortalView: View {
 	@StateObject private var auth = AuthService.shared
@@ -18,6 +19,8 @@ struct UserPortalView: View {
 	@State private var community: [CommunityPost] = []
 	@State private var performance: [PerformanceEntry] = []
 	@State private var newCommunityMessage = ""
+    @State private var photoItem: PhotosPickerItem?
+    @State private var isUploadingAvatar = false
 
 	var body: some View {
 		NavigationStack {
@@ -48,9 +51,29 @@ struct UserPortalView: View {
 							CFCard {
 								VStack(alignment: .leading, spacing: 8) {
 									Text("Profile").cfSectionHeader()
-									Label(rec.name ?? "", systemImage: "person")
-									Label(rec.profile?.email ?? "", systemImage: "envelope")
-									Label(rec.profile?.location ?? "", systemImage: "mappin.and.ellipse")
+                                    HStack(spacing: 12) {
+                                        if let urlStr = rec.profile?.profilePicture, let url = URL(string: urlStr) {
+                                            AsyncImage(url: url) { phase in
+                                                if let image = phase.image { image.resizable().scaledToFill() } else { Color.gray.opacity(0.2) }
+                                            }
+                                            .frame(width: 44, height: 44)
+                                            .clipShape(Circle())
+                                        } else {
+                                            Image(systemName: "person.circle.fill").resizable().frame(width: 44, height: 44).foregroundColor(.white.opacity(0.6))
+                                        }
+                                        VStack(alignment: .leading) {
+                                            Text(rec.name ?? "").font(.headline)
+                                            Label(rec.profile?.email ?? "", systemImage: "envelope")
+                                            Label(rec.profile?.location ?? "", systemImage: "mappin.and.ellipse")
+                                        }
+                                        Spacer()
+                                        PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
+                                            Label(isUploadingAvatar ? "Uploading…" : "Change", systemImage: "arrow.triangle.2.circlepath")
+                                                .padding(8)
+                                                .background(Color.white.opacity(0.08))
+                                                .cornerRadius(8)
+                                        }.disabled(isUploadingAvatar)
+                                    }
 									Button("Edit Profile") {
 										editLocation = rec.profile?.location ?? ""
 										editRole = rec.profile?.role ?? ""
@@ -185,6 +208,7 @@ struct UserPortalView: View {
 				}
 			}
 		}
+        .onChange(of: photoItem) { _ in Task { await uploadAvatar() } }
 	}
 
 	private func signIn() {
@@ -212,6 +236,23 @@ struct UserPortalView: View {
 			}
 		}
 	}
+}
+
+// MARK: - Avatar Upload
+extension UserPortalView {
+    private func uploadAvatar() async {
+        guard let item = photoItem, let email = auth.currentEmail else { return }
+        isUploadingAvatar = true
+        defer { isUploadingAvatar = false }
+        do {
+            if let data = try await item.loadTransferable(type: Data.self) {
+                let filename = "avatar.jpg"
+                let result = try await StorageService.shared.uploadAvatar(data: data, ownerEmail: email, filename: filename, mime: "image/jpeg")
+                await UserService.shared.updateProfilePicture(email: email, url: result.url.absoluteString, path: result.path)
+                if let rec = try? await UserService.shared.fetchUser(byEmail: email) { await MainActor.run { self.record = rec } }
+            }
+        } catch { }
+    }
 }
 
 
