@@ -3461,7 +3461,39 @@
                     window.users = await window.FirestoreDataManager.getUsers();
                     console.log('✅ Users loaded from Firestore:', Object.keys(window.users || {}).length);
 
-                    // Assignments subcollection removed; rely solely on jobs stored on the user document
+                    // Augment each user’s jobs from normalized sources (applications + contracts)
+                    try {
+                        const [contracts, qapps, apps] = await Promise.all([
+                            window.FirestoreDataManager.getContracts().catch(()=>[]),
+                            window.FirestoreDataManager.getQuickApplications().catch(()=>[]),
+                            (window.FirestoreDataManager.getApplications ? window.FirestoreDataManager.getApplications().catch(()=>[]) : Promise.resolve([]))
+                        ]);
+                        const byEmail = (email) => String(email||'').toLowerCase();
+                        const normalize = (r)=>({
+                            title: r.jobTitle || r.title || r.role || 'Project',
+                            location: r.location || '',
+                            date: r.jobDate || r.date || '',
+                            rate: r.payDisplay || r.rate || r.pay || '',
+                            status: (String(r.status||r.decision||'pending').toLowerCase()==='approved')?'accepted':'pending'
+                        });
+                        Object.keys(window.users||{}).forEach(name=>{
+                            if (name.startsWith('_')) return;
+                            const u = window.users[name];
+                            const email = byEmail(u?.profile?.email);
+                            const src = [];
+                            (qapps||[]).forEach(a=>{ if (byEmail(a?.applicant?.email)===email) src.push(normalize(a)); });
+                            (apps||[]).forEach(a=>{ if (byEmail(a?.applicant?.email||a?.email)===email) src.push(normalize(a)); });
+                            (contracts||[]).forEach(c=>{ if (byEmail(c?.freelancerEmail||c?.userEmail)===email) src.push({ title:c.role||c.title||'Project', location:c.location||'', date:c.signedDate||c.uploadDate||'', rate:c.rate||'', status:'accepted' }); });
+                            const existing = Object.values(u.jobs||{});
+                            const all = [...existing, ...src];
+                            // de-dup by title+date+location
+                            const seen = new Set();
+                            const uniq = [];
+                            const k = (j)=>[(j.title||'').toLowerCase().trim(), (j.date||'').toString(), (j.location||'').toLowerCase().trim()].join('|');
+                            all.forEach(j=>{ const key=k(j); if(!seen.has(key)){ seen.add(key); uniq.push(j);} });
+                            u.jobs = uniq.reduce((acc, j, i)=>{ acc['j'+i]=j; return acc; }, {});
+                        });
+                    } catch(augmentErr) { console.warn('⚠️ Could not augment users with applications/contracts:', augmentErr?.message||augmentErr); }
                 } else {
                     console.warn('⚠️ Firestore not available; users set to empty');
                     window.users = {};

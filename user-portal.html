@@ -2563,6 +2563,23 @@
                 }
             } catch(_) {}
 
+            // Final cross-key de-duplication (id OR normalized title+date+location)
+            const normalizeDateKey = (d) => {
+                try { const dt = parseDateFlexible(d); if (dt && !isNaN(dt)) { const m = (n)=> String(n).padStart(2,'0'); return `${dt.getFullYear()}-${m(dt.getMonth()+1)}-${m(dt.getDate())}`; } } catch(_) {}
+                return String(d||'').trim();
+            };
+            const finalMap = new Map();
+            const finalKey = (j) => {
+                const id = (j.id||'').toString().trim();
+                if (id) return 'id:'+id;
+                const title = (j.title||j.role||'').toString().trim().toLowerCase();
+                const date = normalizeDateKey(j.projectStart || j.date);
+                const loc = (j.location||'').toString().trim().toLowerCase();
+                return 'k:'+[title,date,loc].join('|');
+            };
+            merged.forEach(j => { const k = finalKey(j); if (!finalMap.has(k)) finalMap.set(k, j); });
+            merged = Array.from(finalMap.values());
+
             // Sort jobs: current (in-progress/accepted) first by start date, then upcoming by start date, then completed
             const getStartFor = (job) => parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate());
             const statusOrder = (j) => {
@@ -2698,7 +2715,7 @@
                         <i class="fas fa-star"></i> Current & Upcoming
                     </button>
                     <button class="tab-button${(window.__jobsActiveTab||'current')==='all'?' active':''}" onclick="switchJobsTab('all')" id="allTab">
-                        <i class="fas fa-list"></i> All Jobs (${userJobs.length})
+                        <i class="fas fa-list"></i> All Jobs (${(() => { const seen=new Set(); const key=(j)=>{ const t=(j.title||j.role||'').toLowerCase().trim(); const d=(j.projectStart||j.date||'').toString(); const l=(j.location||'').toLowerCase().trim(); return t+'|'+d+'|'+l; }; (userJobs||[]).forEach(j=>seen.add(key(j))); return seen.size; })()})
                     </button>
                 </div>
             `);
@@ -2712,14 +2729,14 @@
                             ${renderCompactJobCard(nextUp, 'Next Up')}
                         </div>
                     ` : ''}
-                    ${others.filter(j => getJobStatus(getStartFor(j)) !== 'completed').length ? `
+                    ${(() => { const o = others.filter(j => getJobStatus(getStartFor(j)) !== 'completed'); const nk = (x)=>{ const t=(x.title||x.role||'').toLowerCase().trim(); const d=(x.projectStart||x.date||'').toString(); const l=(x.location||'').toLowerCase().trim(); return t+'|'+d+'|'+l; }; const nextKey = nextUp ? nk(nextUp) : null; const uniq = []; const seen=new Set(); o.forEach(j=>{ const k=nk(j); if (k!==nextKey && !seen.has(k)) { seen.add(k); uniq.push(j);} }); return uniq.length ? `
                         <div class="card" style="margin-top: 1rem;">
                             <div class="card-header"><h3 class="card-title">Other Jobs</h3></div>
                             <div class="job-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem;">
-                                ${others.filter(j => getJobStatus(getStartFor(j)) !== 'completed').map(j => `<div class="job-card">${renderCompactJobCard(j)}</div>`).join('')}
+                                ${uniq.map(j => `<div class="job-card">${renderCompactJobCard(j)}</div>`).join('')}
                             </div>
                         </div>
-                    ` : ''}
+                    ` : '' })()}
                     ${currentAndUpcomingJobs.length === 0 ? `
                         <div class="card no-jobs-card">
                             <div class="no-jobs-content">
@@ -16527,19 +16544,27 @@
 
         /* Jobs tab styles */
         .jobs-tabs {
-            display: flex;
+            position: sticky;
+            top: 64px;
+            z-index: 30;
+            display: inline-flex;
             gap: 0.5rem;
             margin-bottom: 1rem;
+            background: linear-gradient(180deg, rgba(10,12,24,0.95), rgba(10,12,24,0.75));
+            padding: 0.5rem;
+            border-radius: 10px;
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 178, 0, 0.15);
         }
 
         .tab-button {
             background: rgba(255, 178, 0, 0.1);
             color: #fff;
             border: 1px solid rgba(255, 178, 0, 0.3);
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.8rem;
             border-radius: 6px;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
@@ -16580,8 +16605,8 @@
             box-shadow: 0 0 0 2px rgba(255, 178, 0, 0.2);
             transform: translateY(-1px);
             /* Ensure consistent sizing */
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
             font-weight: 500;
         }
 
