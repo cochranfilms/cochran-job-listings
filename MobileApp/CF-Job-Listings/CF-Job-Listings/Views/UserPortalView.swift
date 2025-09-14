@@ -9,6 +9,10 @@ struct UserPortalView: View {
 	@State private var isLoading = false
 	@State private var errorMessage: String?
 	@State private var contractFiles: [StorageService.ContractFile] = []
+	@StateObject private var vm = PortalViewModel()
+	@State private var showEditProfile = false
+	@State private var editLocation = ""
+	@State private var editRole = ""
 
 	var body: some View {
 		NavigationStack {
@@ -39,6 +43,12 @@ struct UserPortalView: View {
 									Label(rec.name ?? "", systemImage: "person")
 									Label(rec.profile?.email ?? "", systemImage: "envelope")
 									Label(rec.profile?.location ?? "", systemImage: "mappin.and.ellipse")
+									Button("Edit Profile") {
+										editLocation = rec.profile?.location ?? ""
+										editRole = rec.profile?.role ?? ""
+										showEditProfile = true
+									}
+									.buttonStyle(CFPrimaryButtonStyle())
 								}
 							}
 
@@ -48,11 +58,16 @@ struct UserPortalView: View {
 									if let jobs = rec.jobs, !jobs.isEmpty {
 										ForEach(jobs.keys.sorted(), id: \.self) { key in
 											if let job = rec.jobs?[key] {
-												VStack(alignment: .leading, spacing: 4) {
+												VStack(alignment: .leading, spacing: 6) {
 													Text(job.title ?? job.jobTitle ?? "Assigned Role").font(.headline)
 													Label(job.location ?? "", systemImage: "mappin.and.ellipse")
 													Label(job.date ?? "", systemImage: "calendar")
 													if let pay = (job.pay ?? job.rate), !pay.isEmpty { Label(pay, systemImage: "dollarsign.circle") }
+													HStack {
+														Button("Accept") { Task { await vm.acceptJob(key) } }
+															.buttonStyle(CFPrimaryButtonStyle())
+														Button("Decline") { Task { await vm.declineJob(key) } }
+													}
 												}
 												.padding(.vertical, 6)
 												Divider()
@@ -99,6 +114,26 @@ struct UserPortalView: View {
 				}
 			}
 			.navigationTitle("Portal")
+			.toolbar {
+				ToolbarItem(placement: .navigationBarTrailing) {
+					if auth.isAuthenticated { Button("Logout") { Task { await vm.logout() } } }
+				}
+			}
+		}
+		.sheet(isPresented: $showEditProfile) {
+			NavigationStack {
+				Form {
+					Section("Profile") {
+						TextField("Location", text: $editLocation)
+						TextField("Role", text: $editRole)
+					}
+				}
+				.navigationTitle("Edit Profile")
+				.toolbar {
+					ToolbarItem(placement: .cancellationAction) { Button("Cancel") { showEditProfile = false } }
+					ToolbarItem(placement: .confirmationAction) { Button("Save") { Task { await vm.updateProfile(location: editLocation, role: editRole); showEditProfile = false } } }
+				}
+			}
 		}
 	}
 
@@ -111,6 +146,7 @@ struct UserPortalView: View {
 			do {
 				try await auth.signIn(email: email, password: password)
 				// Start listeners and load data
+				await vm.start(email: email)
 				UserService.shared.listenUser(byEmail: email) { rec in
 					Task { @MainActor in self.record = rec }
 				}
