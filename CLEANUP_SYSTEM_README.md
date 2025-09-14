@@ -1,3 +1,10 @@
+## September 2025 cleanup note
+
+- Namespaced community board helpers to prevent collisions with chat UI handlers.
+- Added lazy initialization guards for `messagingService` in `user-portal.html` to avoid null derefs when posting before chat is initialized.
+- Added a safe fallback implementation for `generateBusinessIntelligenceInsights` used by analytics until a dedicated module is introduced.
+
+No data migrations required. LocalStorage key for the community board remains `cochranMessages`.
 ### Jan 2025 — Messaging System Implementation
 
 - Files: `user-portal.html`, `admin-dashboard.html`, `messaging-service.js`, `firestore.rules`

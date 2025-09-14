@@ -1,3 +1,18 @@
+## Messaging Board vs. Chat System
+
+This release namespaces the community "Team Messaging" board helpers to avoid collisions with the direct-messaging chat subsystem.
+
+- Community board functions are now: `communityLoadMessages`, `communityDisplayMessages`, `communitySendMessage`, `communitySaveMessages`.
+- The chat subsystem continues to use `MessagingService` methods and its own `loadMessages(conversationId)` UI handler.
+- Guards were added so the chat subsystem lazily initializes `messagingService` before `loadMessages`, `selectConversation`, and `sendMessage`.
+
+### How to test
+1. Open `user-portal.html`, sign in.
+2. Switch to Community section; post a message using the board input. Expect no console errors.
+3. Switch to Messaging section; start a conversation with Admin; send a message. Expect no null derefs.
+4. Verify analytics loads; console should not show `generateBusinessIntelligenceInsights is not defined`.
+
+Automated: run `comprehensive-notification-test.js` and `messaging-test.js` to smoke the messaging service. Both should pass without TypeErrors.
 ## Jan 2025 — Messaging System Implementation
 
 ### 2025-01-XX — Real-time Messaging System

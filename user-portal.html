@@ -6205,7 +6205,24 @@
                 };
                 
                 // Generate business intelligence insights
-                const insights = generateBusinessIntelligenceInsights();
+                const insights = (typeof generateBusinessIntelligenceInsights === 'function')
+                    ? generateBusinessIntelligenceInsights()
+                    : (function fallbackInsights(){
+                        try {
+                            const perf = analyticsData.performanceMetrics || {};
+                            const monthly = Array.isArray(perf.monthlyEarnings) ? perf.monthlyEarnings : [];
+                            const last3 = monthly.slice(-3).map(m => m.amount || 0);
+                            const trend = last3.length >= 2 ? (last3[last3.length-1] - last3[0]) : 0;
+                            const trendLabel = trend > 0 ? 'upward' : trend < 0 ? 'downward' : 'flat';
+                            const avgRating = Array.isArray(perf.ratingHistory) && perf.ratingHistory.length
+                                ? perf.ratingHistory.reduce((s,r)=>s+(r.value||0),0)/perf.ratingHistory.length
+                                : 0;
+                            return [
+                                { type: 'trend', title: 'Revenue trend', detail: trendLabel, delta: trend },
+                                { type: 'quality', title: 'Average rating', value: Number(avgRating.toFixed(2)) }
+                            ];
+                        } catch(_) { return []; }
+                    })();
                 analyticsData.businessIntelligence.insights = insights;
                 
                 console.log('✅ Performance insights generated from Firebase:', analyticsData.performanceMetrics);
@@ -8577,7 +8594,7 @@
             if (messageInput) {
                 messageInput.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {
-                        sendMessage();
+                        communitySendMessage();
                     }
                 });
             }
@@ -8587,7 +8604,7 @@
                 // Listen for Firestore data changes
                 window.addEventListener('firestore:dataChange', function(event) {
                     if (event.detail.collection === 'messages') {
-                        loadMessages();
+                        communityLoadMessages();
                     } else if (event.detail.collection === 'replies') {
                         // Merge new replies into messages in memory for rendering
                         const data = event.detail.data || {};
@@ -8597,21 +8614,21 @@
                             const exists = msg._replies.some(r => r.id === event.detail.docId);
                             if (!exists) {
                                 msg._replies.push({ id: event.detail.docId, ...data });
-                                displayMessages();
+                                communityDisplayMessages();
                             }
                         } else {
                             // If message not loaded yet, reload all
-                            loadMessages();
+                            communityLoadMessages();
                         }
                     }
                 });
             }
             
-            loadMessages();
+            communityLoadMessages();
         }
         
-        // Load messages from localStorage
-        async function loadMessages() {
+        // Load messages from localStorage (community board)
+        async function communityLoadMessages() {
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
                     messages = await window.FirestoreDataManager.getMessages();
@@ -8637,7 +8654,7 @@
                         await addSampleMessages();
                     }
                 }
-                displayMessages();
+                communityDisplayMessages();
             } catch (error) {
                 console.error('Error loading messages:', error);
                 messages = [];
@@ -8678,8 +8695,8 @@
             }
         }
         
-        // Display messages (with replies)
-        function displayMessages() {
+        // Display messages (with replies) - community board
+        function communityDisplayMessages() {
             const container = document.getElementById('messagesContainer');
             if (!container) return;
             
@@ -8748,8 +8765,8 @@
             return messageTime.toLocaleDateString();
         }
         
-        // Send message
-        async function sendMessage() {
+        // Send message (community board)
+        async function communitySendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
             
@@ -8773,8 +8790,8 @@
                     message.id = Date.now();
                     message.timestamp = new Date().toISOString();
                     messages.unshift(message);
-                    saveMessages();
-                    displayMessages();
+                    communitySaveMessages();
+                    communityDisplayMessages();
                 }
                 
                 input.value = '';
@@ -8804,7 +8821,7 @@
             // Optimistic UI
             message.likes = newLikes;
             message.likedBy = newLikedBy;
-            displayMessages();
+            communityDisplayMessages();
 
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.db) {
@@ -8823,7 +8840,7 @@
                     }
                 } else {
                     // Fallback persistence
-                    saveMessages();
+                    communitySaveMessages();
                 }
             } catch (err) {
                 console.error('Failed to persist message like:', err);
@@ -8890,8 +8907,8 @@
                     if (msg) {
                         msg._replies = Array.isArray(msg._replies) ? msg._replies : [];
                         msg._replies.push({ ...reply, id: Date.now(), timestamp: new Date().toISOString() });
-                        saveMessages();
-                        displayMessages();
+                        communitySaveMessages();
+                        communityDisplayMessages();
                     }
                 }
                 closeNewMessageModal();
@@ -8955,15 +8972,15 @@
             };
             
             messages.unshift(message);
-            saveMessages();
-            displayMessages();
+            communitySaveMessages();
+            communityDisplayMessages();
             
             closeNewMessageModal();
             showNotification('Message posted!', 'success');
         }
         
-        // Save messages to localStorage
-        function saveMessages() {
+        // Save messages to localStorage (community board)
+        function communitySaveMessages() {
             try {
                 localStorage.setItem('cochranMessages', JSON.stringify(messages));
             } catch (error) {
@@ -9691,6 +9708,8 @@
             if (document.getElementById('calendar-section').classList.contains('active')) {
                 await initializeCalendar();
             }
+            // Ensure messaging service exists for chat subsystem when user opens messaging section later
+            try { if (!messagingService) { messagingService = new MessagingService(); } } catch(_) {}
         }
         
         // Override the existing switchPortalTab function to initialize community features
@@ -19098,7 +19117,7 @@
                         <div class="message-input-container">
                             <div class="message-input">
                                 <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
-                                <button class="btn btn-primary" onclick="sendMessage()">
+                                <button class="btn btn-primary" onclick="communitySendMessage()">
                                     <i class="fas fa-paper-plane"></i>
                                 </button>
                             </div>
@@ -19464,7 +19483,7 @@
                                         onkeydown="handleMessageKeydown(event)"
                                         oninput="autoResizeTextarea(this)"
                                     ></textarea>
-                                    <button class="btn btn-primary send-btn" onclick="sendMessage()">
+                                    <button class="btn btn-primary send-btn" onclick="communitySendMessage()">
                                         <i class="fas fa-paper-plane"></i>
                                     </button>
                                 </div>
@@ -20110,6 +20129,7 @@
     // Select a conversation
     async function selectConversation(conversationId, ev) {
         try {
+            if (!messagingService) { messagingService = new MessagingService(); try { await messagingService.readyPromise; } catch(_) {} }
             currentConversationId = conversationId;
             
             // Update UI
@@ -20143,6 +20163,7 @@
     // Load messages for a conversation
     async function loadMessages(conversationId) {
         try {
+            if (!messagingService) { messagingService = new MessagingService(); try { await messagingService.readyPromise; } catch(_) {} }
             const messages = await messagingService.loadMessages(conversationId);
             displayMessages(messages);
         } catch (error) {
@@ -20306,6 +20327,7 @@
     // Send a message
     async function sendMessage() {
         try {
+            if (!messagingService) { messagingService = new MessagingService(); try { await messagingService.readyPromise; } catch(_) {} }
             const messageInput = document.getElementById('messageInput');
             const content = messageInput.value.trim();
             
@@ -20348,7 +20370,7 @@
     function handleMessageKeydown(event) {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
-            sendMessage();
+            communitySendMessage();
         }
     }
 
