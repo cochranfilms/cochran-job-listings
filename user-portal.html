@@ -2428,33 +2428,52 @@
             }
         }
 
+        // Normalize any raw job/application into a consistent job object
+        function normalizeJobRecord(raw, sourceHint = ''){
+            const safe = raw || {};
+            const id = (safe.jobId || safe.id || safe.__userJobKey || '').toString().trim();
+            const createdAt = safe.createdAt || safe.approvedAt || safe.approvedDate || safe.updatedAt || new Date().toISOString();
+            const projectStart = safe.projectStart || safe.jobDate || safe.date || '';
+            const decisionRaw = (safe.decision || safe.status || safe.applicationStatus || '').toString().toLowerCase();
+            let decision = 'pending';
+            if (decisionRaw === 'approved' || decisionRaw === 'accepted') decision = 'accepted';
+            else if (/denied|rejected|declined/.test(decisionRaw)) decision = 'declined';
+            const normalized = {
+                id: id,
+                title: safe.jobTitle || safe.title || safe.role || 'Project',
+                role: safe.role || safe.jobTitle || safe.title || 'Project',
+                location: safe.location || '',
+                rate: safe.payDisplay || safe.rate || safe.pay || '',
+                projectStart: projectStart,
+                date: projectStart,
+                createdAt: createdAt,
+                source: sourceHint || safe.source || '',
+                decision: decision,
+                projectStatus: safe.projectStatus || safe.status || 'upcoming',
+                paymentStatus: safe.paymentStatus || 'pending'
+            };
+            return normalized;
+        }
+
         // Build unified jobs array for the signed-in user from multiple sources
         async function getDisplayJobsForCurrentUser() {
             const localJobs = Object.entries(currentUser?.jobs || {}).map(([key, job]) => ({ ...job, __userJobKey: key }));
-            let merged = [...localJobs];
+            let merged = localJobs.map(j => normalizeJobRecord({ ...j, id: j.id || j.__userJobKey }, 'assignment'));
 
             // Pull Quick Apply docs for this user's email and fold them in (dedup by jobId/title/date/location)
             try {
                 if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable() && currentUser?.email) {
-                    const allQuick = await window.FirestoreDataManager.getQuickApplications();
+                    const [allQuick, allApps] = await Promise.all([
+                        window.FirestoreDataManager.getQuickApplications(),
+                        (window.FirestoreDataManager.getApplications ? window.FirestoreDataManager.getApplications() : Promise.resolve([]))
+                    ]);
                     const emailLower = String(currentUser.email).toLowerCase();
-                    const mine = (allQuick || []).filter(q => String(q?.applicant?.email || '').toLowerCase() === emailLower);
-                    const mapped = mine.map(q => ({
-                        id: q.jobId || q.id,
-                        title: q.jobTitle || q.title || 'Project',
-                        role: q.jobTitle || q.title || 'Project',
-                        location: q.location || '',
-                        rate: q.payDisplay || q.pay || '',
-                        projectStart: q.jobDate || q.date || '',
-                        date: q.jobDate || q.date || '',
-                        source: 'quick-application',
-                        projectStatus: 'upcoming',
-                        decision: (String(q?.status || '').toLowerCase() === 'approved') ? 'accepted' : (String(q?.status || '').toLowerCase().match(/denied|rejected|declined/) ? 'declined' : 'pending')
-                    }));
+                    const mineQuick = (allQuick || []).filter(q => String(q?.applicant?.email || '').toLowerCase() === emailLower);
+                    const mineApps  = (allApps  || []).filter(a => String(a?.applicant?.email || a?.email || '').toLowerCase() === emailLower);
+                    const mappedQuick = mineQuick.map(q => normalizeJobRecord(q, 'quickApply'));
+                    const mappedApps  = mineApps.map(a => normalizeJobRecord(a, 'applyPage'));
                     const byKey = new Map();
                     const makeKey = (j) => {
-                        const userKey = (j.__userJobKey || '').toString().trim();
-                        if (userKey) return 'userKey:' + userKey;
                         const id = (j.id || '').toString().trim();
                         if (id) return 'id:' + id;
                         const title = (j.title || j.role || '').toString().trim().toLowerCase();
@@ -2462,7 +2481,7 @@
                         const loc = (j.location || '').toString().trim().toLowerCase();
                         return 'composite:' + [title, date, loc].join('|');
                     };
-                    [...merged, ...mapped].forEach(j => { const k = makeKey(j); if (!byKey.has(k)) byKey.set(k, j); });
+                    [...merged, ...mappedQuick, ...mappedApps].forEach(j => { const k = makeKey(j); if (!byKey.has(k)) byKey.set(k, j); });
                     merged = Array.from(byKey.values());
                 }
             } catch (mergeErr) { console.warn('⚠️ Could not merge quick applications into jobs:', mergeErr?.message || mergeErr); }
@@ -2497,6 +2516,35 @@
                     });
                 }
             } catch(_) {}
+
+            // Sort jobs: current (in-progress/accepted) first by start date, then upcoming by start date, then completed
+            const getStartFor = (job) => parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate());
+            const statusOrder = (j) => {
+                const s = getJobStatus(getStartFor(j));
+                if (s === 'in-progress') return 0;
+                if ((j.decision || '').toLowerCase() === 'accepted' && s !== 'completed') return 1;
+                if (s === 'upcoming') return 2;
+                if (s === 'completed') return 3;
+                return 4;
+            };
+            merged.sort((a,b)=>{
+                const ao = statusOrder(a), bo = statusOrder(b);
+                if (ao !== bo) return ao - bo;
+                const ad = getStartFor(a)?.getTime?.() || 0;
+                const bd = getStartFor(b)?.getTime?.() || 0;
+                if (ad && bd && ad !== bd) return ad - bd;
+                return String(a.createdAt||'').localeCompare(String(b.createdAt||''));
+            });
+
+            // Ensure only one job flagged as current
+            let currentMarked = false;
+            merged = merged.map(j => {
+                const s = getJobStatus(getStartFor(j));
+                const isCandidate = s === 'in-progress' || ((j.decision||'').toLowerCase()==='accepted' && s !== 'completed');
+                const isCurrent = !currentMarked && isCandidate;
+                if (isCurrent) currentMarked = true;
+                return { ...j, isCurrent };
+            });
 
             return merged;
         }
@@ -2727,7 +2775,7 @@
         function renderFullJobCard(job, label) {
             const status = getJobStatus(parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate()));
             return `
-                <div class="card job-card">
+                <div class="card job-card" data-job-id="${job.id || ''}">
                     <div class="card-header">
                         <h3 class="card-title">${job.title || job.role || 'Project'}${label ? ` <small style="opacity:.7;font-weight:400">• ${label}</small>` : ''}</h3>
                         <span class="status-badge status-${status}">${status}</span>
@@ -2740,7 +2788,7 @@
                         </div>
                         <div class="job-timeline">
                             <h4>Project Timeline</h4>
-                            <div class="timeline">${renderTimelineSteps(job)}</div>
+                            <div class="timeline" id="timeline-${(job.id||'').replace(/[^a-zA-Z0-9_-]/g,'')}">${renderTimelineSteps(job)}</div>
                         </div>
                         <div class="job-payment-section">
                             <h4>Payment Method</h4>
@@ -2798,17 +2846,19 @@
         function renderTimelineSteps(job) {
             const listingStart = getListingStartDateFor(job) || job?.projectStart || job?.date || getEffectiveProjectStartDate();
             const computedStatus = getJobStatus(listingStart);
+            const decision = (job.decision || '').toLowerCase();
+            const paymentComplete = (job.paymentStatus === 'configured') || (currentUser?.paymentStatus === 'configured') || (currentUser?.paymentMethod && currentUser.paymentMethod !== 'pending');
             const steps = [
-                { title: 'Project Assigned', status: 'completed' },
-                { title: 'In Progress', status: (computedStatus === 'in-progress' || computedStatus === 'completed') ? 'completed' : 'upcoming' },
-                { title: 'Completed', status: computedStatus === 'completed' ? 'completed' : 'upcoming' }
+                { key: 'application', title: 'Application Approved', status: decision === 'accepted' ? 'completed' : (decision === 'pending' ? 'current' : 'upcoming') },
+                { key: 'payment', title: 'Payment Setup', status: decision !== 'accepted' ? 'upcoming' : (paymentComplete ? 'completed' : 'current') },
+                { key: 'inprogress', title: 'In Progress', status: (computedStatus === 'in-progress') ? 'current' : (computedStatus === 'completed' ? 'completed' : 'upcoming') },
+                { key: 'completed', title: 'Completed', status: computedStatus === 'completed' ? 'completed' : 'upcoming' }
             ];
-            
             return steps.map(step => `
-                <div class="timeline-item ${step.status}">
+                <div class="timeline-item ${step.status}" data-step="${step.key}">
                     <div class="timeline-content">
                         <h4>${step.title}</h4>
-                        <p>${step.status === 'completed' ? 'Step completed' : 'Pending'}</p>
+                        <p>${step.status === 'completed' ? 'Step completed' : step.status === 'current' ? 'In progress' : 'Pending'}</p>
                     </div>
                 </div>
             `).join('');
