@@ -77,7 +77,7 @@ struct UserPortalView: View {
 				}
 				.padding()
 			}
-			.background(CFTheme.background.ignoresSafeArea())
+			.cfDarkScreen()
 			.navigationTitle("Portal")
 		}
 	}

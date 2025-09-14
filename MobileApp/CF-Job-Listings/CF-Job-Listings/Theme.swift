@@ -7,7 +7,7 @@ enum CFTheme {
 	static let gold = Color(red: 255/255, green: 215/255, blue: 0/255)
 	static let black = Color.black
 	static let background = Color(red: 11/255, green: 11/255, blue: 16/255)
-	static let card = Color.white.opacity(0.08)
+	static let card = Color.white.opacity(0.14)
 	static let border = Color(red: 255/255, green: 178/255, blue: 0/255).opacity(0.28)
 	static let success = Color(red: 34/255, green: 197/255, blue: 94/255)
 	static let error = Color(red: 239/255, green: 68/255, blue: 68/255)
@@ -28,6 +28,7 @@ struct CFCard<Content: View>: View {
 					.stroke(CFTheme.border, lineWidth: 1)
 			)
 			.cornerRadius(16)
+			.foregroundColor(.white)
 	}
 }
 
@@ -62,6 +63,12 @@ extension View {
 		self
 			.font(.headline)
 			.foregroundColor(CFTheme.primary)
+	}
+
+	func cfDarkScreen() -> some View {
+		self
+			.background(CFTheme.background.ignoresSafeArea())
+			.foregroundColor(.white)
 	}
 }
 
