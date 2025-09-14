@@ -11,7 +11,7 @@ final class FirestoreService {
 
 	static var isAvailable: Bool {
 		#if canImport(FirebaseCore) && canImport(FirebaseFirestore)
-		return true
+		return FirebaseApp.app() != nil
 		#else
 		return false
 		#endif

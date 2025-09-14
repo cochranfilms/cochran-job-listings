@@ -2473,12 +2473,54 @@
             return combined;
         }
 
+        // Fetch application decisions for a user (accepted/pending/declined)
+        async function getApplicationDecisionsForUser(email) {
+            const decisions = new Map();
+            if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+                try {
+                    const [apps, qapps] = await Promise.all([
+                        window.FirestoreDataManager.getApplications().catch(() => []),
+                        window.FirestoreDataManager.getQuickApplications().catch(() => [])
+                    ]);
+                    const emailLower = String(email || '').toLowerCase();
+                    const addFrom = (list) => {
+                        (list || []).forEach(a => {
+                            const ae = String(a?.applicant?.email || a?.email || '').toLowerCase();
+                            if (ae !== emailLower) return;
+                            const raw = (a?.status || a?.applicationStatus || a?.decision || 'pending').toLowerCase();
+                            let d = 'pending';
+                            if (raw === 'approved' || raw === 'accepted') d = 'accepted';
+                            else if (raw === 'denied' || raw === 'rejected' || raw === 'declined') d = 'declined';
+                            const jobId = (a?.jobId || a?.id || '').toString().trim();
+                            if (jobId) decisions.set(jobId, d);
+                            const title = (a?.jobTitle || a?.title || '').toString().trim().toLowerCase();
+                            if (title) decisions.set('title:' + title, d);
+                        });
+                    };
+                    addFrom(apps);
+                    addFrom(qapps);
+                } catch(_) {}
+            }
+            return decisions;
+        }
+
         // Display current jobs for modern layout (multi-job aware)
         async function displayCurrentJobs() {
             const container = document.getElementById('jobsContent');
             if (!container) return;
             
             const userJobs = await getDisplayJobsForCurrentUser();
+            // Classify by application decision
+            const __decisions = await getApplicationDecisionsForUser(currentUser?.email);
+            const __getDecision = (j) => {
+                if (j && j.__userJobKey) return 'accepted';
+                const id = (j && j.id ? String(j.id).trim() : '');
+                const titleKey = 'title:' + String(j?.title || j?.role || '').toLowerCase().trim();
+                return __decisions.get(id) || __decisions.get(titleKey) || 'pending';
+            };
+            const accepted = userJobs.filter(j => __getDecision(j) === 'accepted');
+            const pending = userJobs.filter(j => __getDecision(j) === 'pending');
+            const declined = userJobs.filter(j => __getDecision(j) === 'declined');
             if (!userJobs.length) {
                 container.innerHTML = `
                     <div class="card no-jobs-card">
@@ -2497,19 +2539,19 @@
             const getStartFor = (job) => parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate());
             const now = new Date();
 
-            // Determine primary (active or nearest upcoming), next-up, and others
-            const inProgress = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'in-progress');
-            const upcoming = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'upcoming')
+            // Determine primary (active or nearest upcoming), next-up, and others within accepted
+            const inProgress = accepted.filter(j => getJobStatus(getStartFor(j)) === 'in-progress');
+            const upcoming = accepted.filter(j => getJobStatus(getStartFor(j)) === 'upcoming')
                 .sort((a,b) => getStartFor(a) - getStartFor(b));
-            const completed = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'completed')
+            const completed = accepted.filter(j => getJobStatus(getStartFor(j)) === 'completed')
                 .sort((a,b) => getStartFor(b) - getStartFor(a));
 
-            // For Current & Upcoming, be more inclusive - include any job that's not completed
-            const currentAndUpcomingJobs = userJobs.filter(j => getJobStatus(getStartFor(j)) !== 'completed');
+            // For Current & Upcoming, only accepted jobs that are not completed
+            const currentAndUpcomingJobs = accepted.filter(j => getJobStatus(getStartFor(j)) !== 'completed');
             
-            const primary = inProgress[0] || upcoming[0] || currentAndUpcomingJobs[0] || userJobs[0];
+            const primary = inProgress[0] || upcoming[0] || currentAndUpcomingJobs[0] || pending[0] || accepted[0] || userJobs[0];
             const nextUp = upcoming.find(j => j !== primary) || null;
-            const others = userJobs.filter(j => j !== primary && j !== nextUp);
+            const others = accepted.filter(j => j !== primary && j !== nextUp);
             
             // Debug logging
             console.log('🔍 Job filtering debug:', {
