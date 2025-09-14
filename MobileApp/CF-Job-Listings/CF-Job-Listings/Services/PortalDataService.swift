@@ -141,6 +141,27 @@ enum PortalDataService {
         } catch { }
         return out
     }
+
+    static func fetchSuccessStories() async -> [[String: Any]] {
+        let db = Firestore.firestore()
+        var out: [[String: Any]] = []
+        do {
+            let snap = try await db.collection("successStories").order(by: "createdAt", descending: true).limit(to: 50).getDocuments()
+            for d in snap.documents { out.append(d.data()) }
+        } catch { }
+        return out
+    }
+
+    static func uploadShowcase(ownerEmail: String, data: Data, filename: String, mime: String) async throws -> String {
+        let storage = Storage.storage()
+        let safeOwner = ownerEmail.replacingOccurrences(of: "[^a-zA-Z0-9@._-]", with: "_", options: .regularExpression)
+        let path = "community-showcases/\(safeOwner)/\(Int(Date().timeIntervalSince1970))_\(filename)"
+        let ref = storage.reference(withPath: path)
+        let md = StorageMetadata(); md.contentType = mime
+        _ = try await ref.putDataAsync(data, metadata: md)
+        let url = try await ref.downloadURL()
+        return url.absoluteString
+    }
     #endif
 }
 
