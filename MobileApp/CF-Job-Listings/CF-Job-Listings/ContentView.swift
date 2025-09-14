@@ -14,6 +14,14 @@ struct ContentView: View {
 				.tabItem { Label("Jobs", systemImage: "list.bullet.rectangle") }
 			NavigationStack { UserPortalView() }
 				.tabItem { Label("Portal", systemImage: "person.crop.circle") }
+			NavigationStack { TeamDirectoryView() }
+				.tabItem { Label("Directory", systemImage: "person.3") }
+			NavigationStack { CommunityView() }
+				.tabItem { Label("Community", systemImage: "rectangle.3.group.bubble.left") }
+			NavigationStack { PerformanceView() }
+				.tabItem { Label("Performance", systemImage: "chart.line.uptrend.xyaxis") }
+			NavigationStack { CalendarView() }
+				.tabItem { Label("Calendar", systemImage: "calendar") }
 			NavigationStack { AdminDashboardView() }
 				.tabItem { Label("Admin", systemImage: "gearshape") }
 			NavigationStack { MessagesView() }
