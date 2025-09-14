@@ -624,7 +624,7 @@ How it works:
 
 Firebase Storage uploads:
 - `storage-utils.js` wraps `firebase.storage()` uploads with progress callbacks and returns `{ downloadURL, path, size, contentType }`.
-- Supports `bucketURL` override; the project sets `window.FIREBASE_BUCKET_URL = 'gs://cochran-films.firebasestorage.app'` via `firebase-config.js`.
+-- Supports `bucketURL` override; the project sets `window.FIREBASE_BUCKET_URL = 'gs://cochran-films.firebasestorage.app'` via `firebase-config.js`.
 - The builder uploads to `portfolios/{ownerEmail}/{timestamp-filename}`. The user portal uploads avatars to `avatars/{email}/{timestamp-filename}` and showcases to `community-showcases/{email}/{timestamp-filename}`.
 
 Quick test (old automatic testing system):
