@@ -104,32 +104,16 @@ struct UserPortalView: View {
 			defer { isLoading = false }
 			do {
 				try await auth.signIn(email: email, password: password)
-				// Start listeners
+				// Start listeners and load data
 				UserService.shared.listenUser(byEmail: email) { rec in
 					Task { @MainActor in self.record = rec }
 				}
 				self.notifications = (try? await UserService.shared.fetchNotifications()) ?? []
-			} catch {
-				errorMessage = (error as NSError).localizedDescription
-			}
-		}
-	}
-		Task {
-			isLoading = true
-			errorMessage = nil
-			defer { isLoading = false }
-			do {
-				guard !name.isEmpty, !email.isEmpty else { throw NSError(domain: "Portal", code: 1, userInfo: [NSLocalizedDescriptionKey: "Enter name and email"]) }
-				if let rec = try await UserService.shared.fetchUser(byName: name), (rec.profile?.email ?? "").lowercased() == email.lowercased() {
-					self.record = rec
-					self.notifications = (try? await UserService.shared.fetchNotifications()) ?? []
-				} else {
-					throw NSError(domain: "Portal", code: 2, userInfo: [NSLocalizedDescriptionKey: "No matching user found"])
+				if let files = try? await StorageService.shared.listContracts(ownerEmail: email) {
+					self.contractFiles = files
 				}
 			} catch {
 				errorMessage = (error as NSError).localizedDescription
-				record = nil
-				notifications = []
 			}
 		}
 	}
