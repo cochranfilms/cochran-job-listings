@@ -12,8 +12,6 @@ struct ContentView: View {
 		TabView {
 			NavigationStack { JobListView() }
 				.tabItem { Label("Jobs", systemImage: "list.bullet.rectangle") }
-			NavigationStack { ContractAccessView() }
-				.tabItem { Label("Contract", systemImage: "doc.text") }
 			NavigationStack { UserPortalView() }
 				.tabItem { Label("Portal", systemImage: "person.crop.circle") }
 			NavigationStack { AdminDashboardView() }

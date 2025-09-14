@@ -19,10 +19,17 @@ struct JobListView: View {
 				} else {
 					List(vm.filteredJobs, id: \.self) { job in
 						NavigationLink(value: job) {
-							VStack(alignment: .leading, spacing: 4) {
-								HStack {
+							VStack(alignment: .leading, spacing: 6) {
+								HStack(alignment: .firstTextBaseline, spacing: 8) {
 									Text(job.displayTitle).font(.headline)
-									if job.isActive { Text("Active").font(.caption).foregroundColor(.green) } else { Text("Inactive").font(.caption).foregroundColor(.secondary) }
+									Text(job.isActive ? "Active" : (job.normalizedStatus == "filled" ? "Filled" : "Inactive"))
+										.font(.caption).bold()
+										.padding(.horizontal, 6).padding(.vertical, 2)
+										.background(
+											RoundedRectangle(cornerRadius: 6)
+												.fill(job.isActive ? Color.green.opacity(0.15) : (job.normalizedStatus == "filled" ? Color.orange.opacity(0.15) : Color.gray.opacity(0.15)))
+										)
+										.foregroundColor(job.isActive ? .green : (job.normalizedStatus == "filled" ? .orange : .secondary))
 								}
 								Text(job.location ?? "").font(.subheadline).foregroundColor(.secondary)
 								if !job.displayPay.isEmpty { Text(job.displayPay).font(.subheadline).foregroundColor(.primary) }

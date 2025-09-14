@@ -22,6 +22,20 @@ final class UserService {
 		#endif
 	}
 
+	func fetchUser(byEmail email: String) async throws -> UserRecord? {
+		#if canImport(FirebaseCore) && canImport(FirebaseFirestore)
+		let q = Firestore.firestore().collection("users").whereField("profile.email", isEqualTo: email)
+		let snapshot = try await q.limit(to: 1).getDocuments()
+		guard let doc = snapshot.documents.first else { return nil }
+		var data = doc.data()
+		data["name"] = doc.documentID
+		let json = try JSONSerialization.data(withJSONObject: data)
+		return try JSONDecoder().decode(UserRecord.self, from: json)
+		#else
+		throw NSError(domain: "UserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Firestore not available"])
+		#endif
+	}
+
 	func fetchNotifications() async throws -> [NotificationItem] {
 		// GET {API_BASE_URL}/api/notifications
 		let url = AppConfig.shared.apiBaseURL.appendingPathComponent("api/notifications")

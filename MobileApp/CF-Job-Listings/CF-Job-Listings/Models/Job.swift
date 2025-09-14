@@ -11,6 +11,7 @@ struct Job: Identifiable, Decodable, Hashable {
 	let pay: String?
 	let rate: String?
 	let active: Bool?
+	let status: String?
 
 	var displayTitle: String {
 		let raw = (title?.isEmpty == false ? title : role) ?? "Project"
@@ -25,7 +26,19 @@ struct Job: Identifiable, Decodable, Hashable {
 		(date?.isEmpty == false ? date : projectStart) ?? ""
 	}
 
-	var isActive: Bool { active ?? true }
+	var normalizedStatus: String {
+		(status ?? "")
+			.lowercased()
+			.replacingOccurrences(of: "\"", with: "")
+			.trimmingCharacters(in: .whitespacesAndNewlines)
+	}
+
+	var isActive: Bool {
+		if let active = active { return active }
+		let s = normalizedStatus
+		if s.isEmpty { return true }
+		return s == "active"
+	}
 
 	private enum CodingKeys: String, CodingKey {
 		case id
@@ -38,5 +51,6 @@ struct Job: Identifiable, Decodable, Hashable {
 		case pay
 		case rate
 		case active
+		case status
 	}
 }
