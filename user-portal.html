@@ -8539,7 +8539,7 @@
                 await window.FirestoreDataManager.setUser(userDocId, {
                     email: currentUser.email,
                     name: currentUser.name || '',
-                    profile: { ...(currentUser.profile || {}), email: currentUser.email },
+                    profile: { ...(currentUser.profile || {}), email: currentUser.email, profilePicture: imageData },
                     profilePicture: imageData
                 });
                 currentUser.profilePicture = imageData;

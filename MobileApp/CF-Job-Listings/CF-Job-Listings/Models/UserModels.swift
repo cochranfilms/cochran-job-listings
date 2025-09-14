@@ -38,6 +38,8 @@ struct UserRecord: Codable, Hashable, Identifiable {
 	var jobs: [String: UserJob]?
 	var primaryJob: String?
 	var application: [String: String]?
+	// Fallback avatar if backend stores it at the root as well
+	var profilePicture: String?
 }
 
 struct NotificationItem: Codable, Identifiable, Hashable {

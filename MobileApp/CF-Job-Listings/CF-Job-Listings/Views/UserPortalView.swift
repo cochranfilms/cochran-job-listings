@@ -52,7 +52,8 @@ struct UserPortalView: View {
 								VStack(alignment: .leading, spacing: 8) {
 									Text("Profile").cfSectionHeader()
                                     HStack(spacing: 12) {
-                                        if let urlStr = rec.profile?.profilePicture, let url = URL(string: urlStr) {
+                                        let avatarURLString = rec.profile?.profilePicture ?? rec.profilePicture
+                                        if let urlStr = avatarURLString, let url = URL(string: urlStr) {
                                             AsyncImage(url: url) { phase in
                                                 if let image = phase.image { image.resizable().scaledToFill() } else { Color.gray.opacity(0.2) }
                                             }
