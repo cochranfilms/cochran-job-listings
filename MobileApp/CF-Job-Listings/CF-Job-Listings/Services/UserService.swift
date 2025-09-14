@@ -1,4 +1,10 @@
 import Foundation
+#if canImport(FirebaseCore)
+import FirebaseCore
+#endif
+#if canImport(FirebaseFirestore)
+import FirebaseFirestore
+#endif
 
 final class UserService {
 	static let shared = UserService()
@@ -6,7 +12,7 @@ final class UserService {
 
 	func fetchUser(byName name: String) async throws -> UserRecord? {
 		#if canImport(FirebaseCore) && canImport(FirebaseFirestore)
-		let snapshot = try await FirebaseFirestore.Firestore.firestore().collection("users").document(name).getDocument()
+		let snapshot = try await Firestore.firestore().collection("users").document(name).getDocument()
 		guard snapshot.exists, var data = snapshot.data() else { return nil }
 		data["name"] = name
 		let json = try JSONSerialization.data(withJSONObject: data)
