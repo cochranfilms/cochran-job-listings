@@ -208,7 +208,10 @@ struct UserPortalView: View {
 				}
 			}
 		}
-        .onChange(of: photoItem) { _ in Task { await uploadAvatar() } }
+        .onChange(of: photoItem) { newItem in
+            guard newItem != nil else { return }
+            Task { await uploadAvatar() }
+        }
 	}
 
 	private func signIn() {

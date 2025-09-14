@@ -4,6 +4,8 @@ struct AdminDashboardView: View {
 	@StateObject private var vm = JobListViewModel()
 	@State private var contractsSummary: String = ""
     @State private var selectedJob: Job?
+    @State private var bankLookupEmail: String = ""
+    @State private var bankInfo: String = ""
 
 	var body: some View {
 		NavigationStack {
@@ -18,10 +20,26 @@ struct AdminDashboardView: View {
 						}
 					}
 				}
+                Section("Messaging") {
+                    NavigationLink("Open Messages") { MessagesView() }
+                }
+                Section("Equipment") {
+                    NavigationLink("Equipment (User Center)") { UserPortalView() }
+                    Text("For admin-only actions, use web dashboard.")
+                        .font(.footnote).foregroundColor(.secondary)
+                }
 				Section("Contracts API (summary)") {
 					Text(contractsSummary.isEmpty ? "No data" : contractsSummary)
 						.font(.footnote)
 				}
+                Section("Bank Viewer (lookup)") {
+                    HStack {
+                        TextField("user@email.com", text: $bankLookupEmail)
+                            .keyboardType(.emailAddress)
+                        Button("Lookup") { lookupBank() }
+                    }
+                    if !bankInfo.isEmpty { Text(bankInfo).font(.footnote).foregroundColor(.secondary) }
+                }
 			}
 			.navigationTitle("Admin (Read-Only)")
 		}
@@ -47,6 +65,12 @@ struct AdminDashboardView: View {
 			contractsSummary = String(data: data, encoding: .utf8) ?? ""
 		}
 	}
+
+    private func lookupBank() {
+        guard !bankLookupEmail.isEmpty else { return }
+        // Stub: show guidance; real decryption stays on web admin for security.
+        bankInfo = "Use web admin bank viewer to decrypt details for \(bankLookupEmail)."
+    }
 }
 
 

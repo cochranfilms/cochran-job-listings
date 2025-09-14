@@ -5,6 +5,9 @@ import FirebaseCore
 #if canImport(FirebaseFirestore)
 import FirebaseFirestore
 #endif
+#if canImport(FirebaseStorage)
+import FirebaseStorage
+#endif
 
 struct AssignedJob: Identifiable, Hashable {
     let id: String
@@ -153,6 +156,7 @@ enum PortalDataService {
     }
 
     static func uploadShowcase(ownerEmail: String, data: Data, filename: String, mime: String) async throws -> String {
+        #if canImport(FirebaseStorage)
         let storage = Storage.storage()
         let safeOwner = ownerEmail.replacingOccurrences(of: "[^a-zA-Z0-9@._-]", with: "_", options: .regularExpression)
         let path = "community-showcases/\(safeOwner)/\(Int(Date().timeIntervalSince1970))_\(filename)"
@@ -161,6 +165,9 @@ enum PortalDataService {
         _ = try await ref.putDataAsync(data, metadata: md)
         let url = try await ref.downloadURL()
         return url.absoluteString
+        #else
+        throw NSError(domain: "PortalDataService", code: -1, userInfo: [NSLocalizedDescriptionKey: "FirebaseStorage not available"])
+        #endif
     }
     #endif
 }

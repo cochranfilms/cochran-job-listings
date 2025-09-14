@@ -8341,6 +8341,7 @@
             if (input) {
                 input.addEventListener('change', handleProfilePictureUpload);
             }
+            try { window.openProfilePicker = function(){ const el = document.getElementById('profilePictureInput'); if (el) el.click(); }; } catch(_) {}
             
             // Load existing profile picture
             loadProfilePicture();
@@ -18766,10 +18767,10 @@
                                 <div class="profile-picture-actions">
                                     <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
                                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                                        <button class="btn btn-primary" onclick="document.getElementById('profilePictureInput').click()">
+                                        <button class="btn btn-primary" onclick="openProfilePicker()">
                                             <i class="fas fa-upload"></i> Upload Photo
                                         </button>
-                                        <button class="btn btn-secondary" onclick="document.getElementById('profilePictureInput').click()">
+                                        <button class="btn btn-secondary" onclick="openProfilePicker()">
                                             <i class="fas fa-sync"></i> Change
                                         </button>
                                         <button class="btn btn-secondary" onclick="removeProfilePicture()" id="removePictureBtn" style="display: none;">
