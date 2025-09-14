@@ -49,4 +49,12 @@ struct NotificationItem: Codable, Identifiable, Hashable {
 	var read: Bool
 }
 
+struct TeamUser: Identifiable, Codable, Hashable {
+	var id: String { email ?? UUID().uuidString }
+	var name: String?
+	var email: String?
+	var role: String?
+	var profilePicture: String?
+}
+
 

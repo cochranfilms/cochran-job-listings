@@ -80,6 +80,24 @@ final class UserService {
 		return []
 	}
 
+	func fetchTeam() async -> [TeamUser] {
+		#if canImport(FirebaseCore) && canImport(FirebaseFirestore)
+		var out: [TeamUser] = []
+		let snap = try? await Firestore.firestore().collection("users").getDocuments()
+		snap?.documents.forEach { d in
+			let data = d.data()
+			let name = d.documentID
+			let email = (data["profile"] as? [String: Any])?["email"] as? String ?? data["email"] as? String
+			let role = (data["profile"] as? [String: Any])?["role"] as? String ?? data["role"] as? String
+			let pic = data["profilePicture"] as? String ?? (data["profile"] as? [String: Any])?["profilePicture"] as? String
+			out.append(TeamUser(name: name, email: email, role: role, profilePicture: pic))
+		}
+		return out.sorted { ($0.name ?? "").lowercased() < ($1.name ?? "").lowercased() }
+		#else
+		return []
+		#endif
+	}
+
 	func updateProfilePicture(email: String, url: String, path: String) async {
 		#if canImport(FirebaseCore) && canImport(FirebaseFirestore)
 		let users = Firestore.firestore().collection("users")
