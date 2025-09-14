@@ -22,7 +22,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" as="style" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" crossorigin>
   
   <!-- External Libraries -->
@@ -2121,6 +2121,37 @@
     }
     
     // Data Loader with Firestore Integration (single source of truth)
+    async function fetchJobsFallback() {
+      // Try multiple public sources so the page works without auth
+      const candidates = [
+        '/api/jobs-data',
+        '/jobs-data.json',
+        '/api/github/file/jobs-data.json'
+      ];
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (res.ok) {
+            const json = await res.json().catch(()=>null);
+            const jobs = (json && (json.jobs || json)) || [];
+            if (Array.isArray(jobs) && jobs.length) return jobs;
+          }
+        } catch (_) { /* try next */ }
+      }
+      return [];
+    }
+
+    async function ensureAnonymousAuth() {
+      try {
+        if (firebase && firebase.auth) {
+          const user = firebase.auth().currentUser;
+          if (!user) {
+            await firebase.auth().signInAnonymously().catch(()=>{});
+          }
+        }
+      } catch(_) {}
+    }
+
     async function loadJobsFromJSON(forceRefresh = false) {
       const loadingElement = document.getElementById('loading');
       const jobsGrid = document.getElementById('jobs-grid');
@@ -2145,19 +2176,29 @@
         
         let jobs = [];
 
-        // Load from Firestore (single source)
-        if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-          console.log('🔥 Loading jobs from Firestore jobs collection...');
-          try {
+        // Try Firestore first (anon auth if needed)
+        try {
+          await ensureAnonymousAuth();
+          if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
+            console.log('🔥 Loading jobs from Firestore jobs collection...');
             const firestoreJobs = await window.FirestoreDataManager.getJobListings();
             if (Array.isArray(firestoreJobs) && firestoreJobs.length > 0) {
               console.log('✅ Jobs loaded from Firestore:', firestoreJobs.length);
               jobs = firestoreJobs;
-            } else {
-              console.log('📁 No jobs found in Firestore.');
             }
-          } catch (firestoreError) {
-            console.log('📁 Firestore error:', firestoreError?.message || firestoreError);
+          }
+        } catch (firestoreError) {
+          console.log('📁 Firestore error:', firestoreError?.message || firestoreError);
+        }
+
+        // Fallback to public JSON if Firestore blocked/empty
+        if (!Array.isArray(jobs) || jobs.length === 0) {
+          const fb = await fetchJobsFallback();
+          if (fb.length) {
+            console.log('✅ Jobs loaded from fallback JSON:', fb.length);
+            jobs = fb;
+          } else {
+            console.log('📁 No jobs from fallback sources.');
           }
         }
         
