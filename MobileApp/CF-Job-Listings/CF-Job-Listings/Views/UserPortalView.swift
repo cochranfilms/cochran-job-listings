@@ -1,8 +1,9 @@
 import SwiftUI
 
 struct UserPortalView: View {
-	@State private var name: String = ""
+	@StateObject private var auth = AuthService.shared
 	@State private var email: String = ""
+	@State private var password: String = ""
 	@State private var record: UserRecord?
 	@State private var notifications: [NotificationItem] = []
 	@State private var isLoading = false
@@ -13,20 +14,18 @@ struct UserPortalView: View {
 			ScrollView {
 				VStack(spacing: 16) {
 					Text("Creator Portal").cfHeaderStyle()
-					CFCard {
-						VStack(spacing: 12) {
-							TextField("Full Name", text: $name)
-							TextField("Email", text: $email)
-								.keyboardType(.emailAddress)
-							HStack {
-								Button("Load Portal", action: load)
-									.buttonStyle(CFPrimaryButtonStyle())
+					if !auth.isAuthenticated {
+						CFCard {
+							VStack(spacing: 12) {
+								TextField("Email", text: $email).keyboardType(.emailAddress).textContentType(.username)
+								SecureField("Password", text: $password).textContentType(.password)
+								Button("Sign In") { signIn() }.buttonStyle(CFPrimaryButtonStyle())
+								if let errorMessage { Text(errorMessage).foregroundColor(CFTheme.error) }
 							}
-							if let errorMessage { Text(errorMessage).foregroundColor(CFTheme.error) }
 						}
 					}
 
-					if let rec = record {
+					if auth.isAuthenticated, let rec = record {
 						CFCard {
 							VStack(alignment: .leading, spacing: 8) {
 								Text("Profile").cfSectionHeader()
@@ -82,7 +81,24 @@ struct UserPortalView: View {
 		}
 	}
 
-	private func load() {
+	private func signIn() {
+		Task {
+			guard !email.isEmpty, !password.isEmpty else { errorMessage = "Enter email and password"; return }
+			isLoading = true
+			errorMessage = nil
+			defer { isLoading = false }
+			do {
+				try await auth.signIn(email: email, password: password)
+				// Start listeners
+				UserService.shared.listenUser(byEmail: email) { rec in
+					Task { @MainActor in self.record = rec }
+				}
+				self.notifications = (try? await UserService.shared.fetchNotifications()) ?? []
+			} catch {
+				errorMessage = (error as NSError).localizedDescription
+			}
+		}
+	}
 		Task {
 			isLoading = true
 			errorMessage = nil

@@ -36,6 +36,24 @@ final class UserService {
 		#endif
 	}
 
+	#if canImport(FirebaseCore) && canImport(FirebaseFirestore)
+	private var userListener: ListenerRegistration?
+	#endif
+
+	func listenUser(byEmail email: String, onChange: @escaping (UserRecord?) -> Void) {
+		#if canImport(FirebaseCore) && canImport(FirebaseFirestore)
+		userListener?.remove(); userListener = nil
+		let q = Firestore.firestore().collection("users").whereField("profile.email", isEqualTo: email).limit(to: 1)
+		userListener = q.addSnapshotListener { snapshot, _ in
+			guard let doc = snapshot?.documents.first else { onChange(nil); return }
+			var data = doc.data(); data["name"] = doc.documentID
+			if let json = try? JSONSerialization.data(withJSONObject: data), let rec = try? JSONDecoder().decode(UserRecord.self, from: json) {
+				onChange(rec)
+			} else { onChange(nil) }
+		}
+		#endif
+	}
+
 	func fetchNotifications() async throws -> [NotificationItem] {
 		// GET {API_BASE_URL}/api/notifications
 		let url = AppConfig.shared.apiBaseURL.appendingPathComponent("api/notifications")
