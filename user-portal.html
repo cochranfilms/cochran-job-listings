@@ -2486,6 +2486,45 @@
                 }
             } catch (mergeErr) { console.warn('⚠️ Could not merge quick applications into jobs:', mergeErr?.message || mergeErr); }
 
+            // Include any signed contracts as normalized accepted jobs
+            try {
+                const userEmailLower = (currentUser && currentUser.email) ? String(currentUser.email).toLowerCase() : '';
+                if (userEmailLower && Array.isArray(uploadedContracts) && uploadedContracts.length) {
+                    const myContracts = uploadedContracts.filter(c => String((c.freelancerEmail||c.userEmail)||'').toLowerCase() === userEmailLower);
+                    const mappedContracts = myContracts.map(c => {
+                        const title = c.role || c.jobTitle || c.title || 'Project';
+                        // Try to align contract with listing date
+                        let listingDate = '';
+                        try {
+                            if (Array.isArray(jobsData) && jobsData.length) {
+                                const norm = (s) => String(s||'').trim().toLowerCase();
+                                const m = jobsData.find(j => norm(j.title) === norm(title));
+                                listingDate = m?.date || m?.projectStart || '';
+                            }
+                        } catch(_) {}
+                        return normalizeJobRecord({
+                            jobTitle: title,
+                            role: title,
+                            location: c.location || '',
+                            payDisplay: c.rate || '',
+                            jobDate: listingDate || currentUser?.profile?.projectDate || currentUser?.projectDate || '',
+                            status: 'accepted'
+                        }, 'contract');
+                    });
+                    const byKey = new Map();
+                    const makeKey = (j) => {
+                        const id = (j.id || '').toString().trim();
+                        if (id) return 'id:' + id;
+                        const title = (j.title || j.role || '').toString().trim().toLowerCase();
+                        const date = (j.projectStart || j.date || '').toString().trim();
+                        const loc = (j.location || '').toString().trim().toLowerCase();
+                        return 'composite:' + [title, date, loc].join('|');
+                    };
+                    [...merged, ...mappedContracts].forEach(j => { const k = makeKey(j); if (!byKey.has(k)) byKey.set(k, j); });
+                    merged = Array.from(byKey.values());
+                }
+            } catch (contractErr) { console.warn('⚠️ Could not merge contracts into jobs:', contractErr?.message || contractErr); }
+
             // Always consider adding a synthesized profile job (so OBS Tech Assistant can appear)
             try {
                 const profileRole = currentUser?.profile?.role || currentUser?.role;
