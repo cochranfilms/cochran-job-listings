@@ -6866,6 +6866,11 @@
             if (currentUser && currentUser.profilePicture) {
                 displayProfilePicture(currentUser.profilePicture);
             }
+
+            // Initialize avatar upload handlers when landing on profile or community sections
+            if (tabName === 'profile' || tabName === 'community') {
+                try { initializeProfilePicture(); } catch(_) {}
+            }
             
             // Initialize equipment center when switching to equipment section
             if (tabName === 'equipment') {
@@ -18750,6 +18755,30 @@
                         <div class="profile-info" id="userInfo">
                             <!-- User info will be populated here -->
                         </div>
+                        <div class="card-content" style="padding-top:0.75rem">
+                            <div class="profile-picture-container">
+                                <div class="profile-picture-preview" id="profilePicturePreview">
+                                    <img id="profileImage" src="" alt="Profile Picture" style="display: none;">
+                                    <div class="profile-picture-placeholder" id="profilePicturePlaceholder">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                </div>
+                                <div class="profile-picture-actions">
+                                    <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+                                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                                        <button class="btn btn-primary" onclick="document.getElementById('profilePictureInput').click()">
+                                            <i class="fas fa-upload"></i> Upload Photo
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="document.getElementById('profilePictureInput').click()">
+                                            <i class="fas fa-sync"></i> Change
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="removeProfilePicture()" id="removePictureBtn" style="display: none;">
+                                            <i class="fas fa-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Current Project -->
@@ -19057,31 +19086,7 @@
                     <p>Connect with your team members and build professional relationships</p>
                 </div>
                 
-                <!-- Profile Picture Upload -->
-                <div class="card profile-picture-card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-camera"></i> Profile Picture</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="profile-picture-container">
-                            <div class="profile-picture-preview" id="profilePicturePreview">
-                                <img id="profileImage" src="" alt="Profile Picture" style="display: none;">
-                                <div class="profile-picture-placeholder" id="profilePicturePlaceholder">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                            </div>
-                            <div class="profile-picture-actions">
-                                <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
-                                <button class="btn btn-primary" onclick="document.getElementById('profilePictureInput').click()">
-                                    <i class="fas fa-upload"></i> Upload Photo
-                                </button>
-                                <button class="btn btn-secondary" onclick="removeProfilePicture()" id="removePictureBtn" style="display: none;">
-                                    <i class="fas fa-trash"></i> Remove
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Profile Picture card moved to Profile tab -->
                 
                 <!-- Contractor Directory -->
                 <div class="card contractor-directory-card">
