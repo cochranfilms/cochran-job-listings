@@ -2374,25 +2374,18 @@
             }
         }
 
-        // Helper function to get selected job (prioritizes most recent upcoming job)
+        // Helper function to get selected job (use unified display cache if present)
         function getSelectedJob() {
+            if (window.__displayJobsCache && window.__displayJobsCache.primary) {
+                return window.__displayJobsCache.primary;
+            }
             if (!currentUser || !currentUser.jobs) return null;
             const userJobs = Object.values(currentUser.jobs);
             if (userJobs.length === 0) return null;
-            
-            // Helper: compute start date and status for a job
             const getStartFor = (job) => parseDateFlexible(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate());
-            const now = new Date();
-
-            // Determine primary (active or nearest upcoming), same logic as displayCurrentJobs
             const inProgress = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'in-progress');
-            const upcoming = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'upcoming')
-                .sort((a,b) => getStartFor(a) - getStartFor(b));
-            
-            // Prioritize: in-progress jobs first, then nearest upcoming job
+            const upcoming = userJobs.filter(j => getJobStatus(getStartFor(j)) === 'upcoming').sort((a,b) => getStartFor(a) - getStartFor(b));
             const primary = inProgress[0] || upcoming[0] || userJobs[0];
-            
-            // Normalize fields
             if (primary) {
                 primary.title = primary.title || primary.role || 'Project';
                 primary.projectStart = primary.projectStart || primary.date || currentUser.application?.eventDate || '';
@@ -2573,7 +2566,8 @@
                 const id = (j.id||'').toString().trim();
                 if (id) return 'id:'+id;
                 const title = (j.title||j.role||'').toString().trim().toLowerCase();
-                const date = normalizeDateKey(j.projectStart || j.date);
+                const effectiveDate = getListingStartDateFor(j) || j.projectStart || j.date;
+                const date = normalizeDateKey(effectiveDate);
                 const loc = (j.location||'').toString().trim().toLowerCase();
                 return 'k:'+[title,date,loc].join('|');
             };
@@ -2715,7 +2709,7 @@
                         <i class="fas fa-star"></i> Current & Upcoming
                     </button>
                     <button class="tab-button${(window.__jobsActiveTab||'current')==='all'?' active':''}" onclick="switchJobsTab('all')" id="allTab">
-                        <i class="fas fa-list"></i> All Jobs (${(() => { const seen=new Set(); const key=(j)=>{ const t=(j.title||j.role||'').toLowerCase().trim(); const d=(j.projectStart||j.date||'').toString(); const l=(j.location||'').toLowerCase().trim(); return t+'|'+d+'|'+l; }; (userJobs||[]).forEach(j=>seen.add(key(j))); return seen.size; })()})
+                        <i class="fas fa-list"></i> All Jobs (${(() => { const seen=new Set(); const key=(j)=>{ const t=(j.title||j.role||'').toLowerCase().trim(); const eff=(getListingStartDateFor(j)||j.projectStart||j.date||'').toString(); const l=(j.location||'').toLowerCase().trim(); return t+'|'+eff+'|'+l; }; (userJobs||[]).forEach(j=>seen.add(key(j))); return seen.size; })()})
                     </button>
                 </div>
             `);
@@ -2794,6 +2788,8 @@
             `);
 
             container.innerHTML = parts.join('');
+            // cache for profile/timeline consumers
+            window.__displayJobsCache = { userJobs, primary };
             // Restore active tab selection after re-render
             switchJobsTab(window.__jobsActiveTab || 'current');
         }
