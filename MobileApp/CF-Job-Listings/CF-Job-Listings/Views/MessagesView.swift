@@ -4,6 +4,8 @@ struct MessagesView: View {
 	@StateObject private var auth = AuthService.shared
 	@StateObject private var service = MessagingService.shared
 	@State private var selectedConv: Conversation?
+	@State private var showNewMessageSheet = false
+	@State private var recipientEmail = ""
 
 	var body: some View {
 		NavigationStack {
@@ -22,6 +24,11 @@ struct MessagesView: View {
 				}
 			}
 			.navigationTitle("Messages")
+			.toolbar {
+				ToolbarItemGroup(placement: .navigationBarTrailing) {
+					Button("New") { showNewMessageSheet = true }
+				}
+			}
 		}
 		.sheet(item: $selectedConv) { conv in
 			ThreadView(conversation: conv)
@@ -29,6 +36,37 @@ struct MessagesView: View {
 		.onAppear {
 			if let email = auth.currentEmail { service.listenConversations(forEmail: email) }
 		}
+		.sheet(isPresented: $showNewMessageSheet) {
+			NavigationStack {
+				Form {
+					Section("Start Conversation") {
+						TextField("Recipient email", text: $recipientEmail).keyboardType(.emailAddress)
+						HStack {
+							Button("Admin") { Task { await startAdmin() } }
+							Spacer()
+							Button("Start") { Task { await startDirect() } }
+						}
+					}
+				}
+				.navigationTitle("New Message")
+			}
+		}
+	}
+
+	private func startAdmin() async {
+		guard let me = auth.currentEmail else { return }
+		do {
+			let id = try await service.getOrCreateAdminConversation(currentEmail: me)
+			await MainActor.run { selectedConv = service.conversations.first { $0.id == id } ?? Conversation(id: id, participants: [me, "admin"], jobId: nil, lastMessage: nil, lastMessageTime: nil, isActive: true, unreadCount: nil); showNewMessageSheet = false }
+		} catch { }
+	}
+
+	private func startDirect() async {
+		guard let me = auth.currentEmail, !recipientEmail.isEmpty else { return }
+		do {
+			let id = try await service.getOrCreateUserConversation(currentEmail: me, otherEmail: recipientEmail)
+			await MainActor.run { selectedConv = service.conversations.first { $0.id == id } ?? Conversation(id: id, participants: [me, recipientEmail], jobId: nil, lastMessage: nil, lastMessageTime: nil, isActive: true, unreadCount: nil); showNewMessageSheet = false }
+		} catch { }
 	}
 }
 
@@ -48,6 +86,10 @@ struct ThreadView: View {
 							if let ts = m.timestamp { Text(ts, style: .time).font(.caption2).foregroundColor(.secondary) }
 						}
 						Text(m.content)
+						if (m.senderId == auth.currentEmail) {
+							Button("Delete") { Task { try? await MessagingService.shared.deleteMessage(conversationId: conversation.id, messageId: m.id, requesterEmail: auth.currentEmail ?? "") } }
+							.font(.caption)
+						}
 					}
 				}
 				HStack {

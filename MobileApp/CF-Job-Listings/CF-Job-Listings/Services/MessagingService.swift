@@ -37,6 +37,7 @@ final class MessagingService: ObservableObject {
 	private var convListener: ListenerRegistration?
 	private var msgListener: ListenerRegistration?
 	@Published var threadMessages: [MessageItem] = []
+	private let adminEmails: [String] = ["info@cochranfilms.com","cody@cochranfilms.com","admin@cochranfilms.com"]
 
 	func listenConversations(forEmail email: String) {
 		#if canImport(FirebaseFirestore)
@@ -93,10 +94,14 @@ final class MessagingService: ObservableObject {
 				}
 				self.threadMessages = items
 			}
+		// Mark read for current user when opening
+		if let email = AuthService.shared.currentEmail {
+			Task { try? await markConversationRead(conversationId, email: email) }
+		}
 		#endif
 	}
 
-	func sendMessage(conversationId: String, senderEmail: String, text: String) async throws {
+	func sendMessage(conversationId: String, senderEmail: String, text: String, attachments: [String] = []) async throws {
 		#if canImport(FirebaseFirestore)
 		let db = Firestore.firestore()
 		let msgRef = db.collection("directMessages").document(conversationId).collection("messages").document()
@@ -104,7 +109,7 @@ final class MessagingService: ObservableObject {
 			"id": msgRef.documentID,
 			"senderId": senderEmail,
 			"content": text,
-			"attachments": [],
+			"attachments": attachments,
 			"timestamp": FieldValue.serverTimestamp(),
 			"status": "sent",
 			"readBy": [senderEmail]
@@ -135,6 +140,38 @@ final class MessagingService: ObservableObject {
 		throw NSError(domain: "MessagingService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Firestore not available"])
 		#endif
 	}
+
+    func getOrCreateAdminConversation(currentEmail: String) async throws -> String {
+        #if canImport(FirebaseFirestore)
+        let primary = adminEmails.first ?? "admin@cochranfilms.com"
+        return try await createConversation(participants: [currentEmail, primary])
+        #else
+        throw NSError(domain: "MessagingService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Firestore not available"])
+        #endif
+    }
+
+    func getOrCreateUserConversation(currentEmail: String, otherEmail: String) async throws -> String {
+        try await createConversation(participants: [currentEmail, otherEmail])
+    }
+
+    func deleteMessage(conversationId: String, messageId: String, requesterEmail: String) async throws {
+        #if canImport(FirebaseFirestore)
+        let db = Firestore.firestore()
+        let ref = db.collection("directMessages").document(conversationId).collection("messages").document(messageId)
+        let snap = try await ref.getDocument()
+        if let sender = snap.data()? ["senderId"] as? String, sender == requesterEmail {
+            try await ref.delete()
+        } else {
+            throw NSError(domain: "MessagingService", code: 403, userInfo: [NSLocalizedDescriptionKey: "Only the sender can delete their message."])
+        }
+        #endif
+    }
+
+    private func markConversationRead(_ conversationId: String, email: String) async throws {
+        #if canImport(FirebaseFirestore)
+        _ = try? await Firestore.firestore().collection("directMessages").document(conversationId).collection("messages").whereField("readBy", arrayContains: email).limit(to: 1).getDocuments()
+        #endif
+    }
 }
 
 
