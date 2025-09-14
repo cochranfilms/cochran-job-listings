@@ -8713,6 +8713,40 @@
             }
         }
         
+        // Live avatar cache + listeners (by email)
+        const _liveAvatarCache = Object.create(null);
+        const _liveAvatarUnsubs = Object.create(null);
+        async function ensureLiveAvatarListener(email) {
+            try {
+                const e = String(email || '').toLowerCase();
+                if (!e) return;
+                if (_liveAvatarUnsubs[e]) return; // already listening
+                if (!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable())) return;
+                const id = await window.FirestoreDataManager.findUserIdByEmail(e);
+                if (!id) return;
+                const db = window.FirebaseConfig && window.FirebaseConfig.getFirestore ? window.FirebaseConfig.getFirestore() : null;
+                if (!db) return;
+                const ref = db.collection('users').doc(id);
+                _liveAvatarUnsubs[e] = ref.onSnapshot((snap) => {
+                    const data = (snap && snap.exists) ? (snap.data() || {}) : {};
+                    const url = (data.profilePicture !== undefined && data.profilePicture !== null)
+                        ? data.profilePicture
+                        : (data.profile && data.profile.profilePicture) ? data.profile.profilePicture : null;
+                    _liveAvatarCache[e] = url || null;
+                    try {
+                        document.querySelectorAll(`.avatar[data-email="${e}"] img`).forEach((img) => {
+                            if (url) {
+                                img.src = url;
+                                img.style.display = 'block';
+                                const ph = img.parentElement && img.parentElement.querySelector('.placeholder');
+                                if (ph) ph.style.display = 'none';
+                            }
+                        });
+                    } catch(_) {}
+                });
+            } catch(_) {}
+        }
+
         // Display messages (with replies) - community board
         function communityDisplayMessages() {
             const container = document.getElementById('messagesContainer');
@@ -8724,12 +8758,17 @@
             }
             
             const sortedMessages = messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            const emailsToListen = new Set();
             
             container.innerHTML = sortedMessages.map(message => {
                 const repliesHtml = Array.isArray(message._replies)
-                    ? message._replies.map(r => `
+                    ? message._replies.map(r => {
+                        const rEmail = String(r.authorEmail || '').toLowerCase();
+                        if (rEmail) emailsToListen.add(rEmail);
+                        const cached = _liveAvatarCache[rEmail] || r.authorAvatar || '';
+                        return `
                         <div class="reply-item">
-                            <div class="reply-avatar">${r.authorAvatar ? `<img src="${r.authorAvatar}" alt="${r.author}">` : `<div class=\"placeholder\"><i class=\"fas fa-user\"></i></div>`}</div>
+                            <div class="reply-avatar avatar" data-email="${rEmail}">${cached ? `<img src="${cached}" alt="${r.author}">` : `<div class=\"placeholder\"><i class=\"fas fa-user\"></i></div>`}</div>
                             <div class="reply-content">
                                 <div class="reply-header">
                                     <div class="reply-author">${r.author}</div>
@@ -8737,12 +8776,16 @@
                                 </div>
                                 <div class="reply-text">${r.text}</div>
                             </div>
-                        </div>`).join('') : '';
+                        </div>`;
+                    }).join('') : '';
+                const mEmail = String(message.authorEmail || '').toLowerCase();
+                if (mEmail) emailsToListen.add(mEmail);
+                const mCached = _liveAvatarCache[mEmail] || message.authorAvatar || '';
                 return `
                 <div class="message-item" data-message-id="${message.id}">
-                    <div class="message-avatar">
-                        ${message.authorAvatar ? 
-                            `<img src="${message.authorAvatar}" alt="${message.author}">` : 
+                    <div class="message-avatar avatar" data-email="${mEmail}">
+                        ${mCached ? 
+                            `<img src="${mCached}" alt="${message.author}">` : 
                             `<div class="placeholder"><i class="fas fa-user"></i></div>`
                         }
                     </div>
@@ -8769,6 +8812,8 @@
             
             // Auto-scroll to bottom
             container.scrollTop = container.scrollHeight;
+            // After initial render, ensure listeners are attached for all emails seen
+            try { emailsToListen.forEach((e) => { ensureLiveAvatarListener(e); }); } catch(_) {}
         }
         
         // Format message time
