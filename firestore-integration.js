@@ -117,6 +117,10 @@ const FirestoreIntegration = {
 
 // Auto-initialize when DOM is ready
 function initializeFirestoreIntegration() {
+    if (window && window.PUBLIC_READ_ONLY === true) {
+        console.warn('⚠️ Skipping FirestoreIntegration init (public read-only page)');
+        return;
+    }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             FirestoreIntegration.init().catch(error => {

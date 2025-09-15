@@ -33,6 +33,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   
   <!-- Firebase Configuration and Data Manager -->
+  <script>window.PUBLIC_READ_ONLY = true;</script>
   <script defer src="firebase-config.js"></script>
   <script defer src="firestore-data-manager.js"></script>
   <script defer src="firestore-integration.js"></script>
@@ -2672,15 +2673,16 @@
       }
     }
 
-    // Ensure FirestoreDataManager is ready before loading jobs (prevents empty first render)
-    async function waitForFirestoreReady(timeoutMs = 6000) {
-      const start = Date.now();
-      // Only ensure Firebase SDK is ready; do not initialize data manager here
-      while (!(window.firebase && window.firebase.firestore)) {
-        if (Date.now() - start > timeoutMs) break;
-        await new Promise(r => setTimeout(r, 100));
-      }
-      return !!(window.firebase && window.firebase.firestore);
+    // Ensure Firebase has finished initializing before loading jobs
+    async function waitForFirestoreReady(timeoutMs = 8000) {
+      if (window.FirebaseConfig?.isInitialized) return true;
+      return await new Promise((resolve) => {
+        const t = setTimeout(() => resolve(false), timeoutMs);
+        window.addEventListener('firebase:initialized', () => {
+          clearTimeout(t);
+          resolve(true);
+        }, { once: true });
+      });
     }
 
     // Add some interactive polish
