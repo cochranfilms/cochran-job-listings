@@ -2559,40 +2559,71 @@
         // Update Firebase password for user
         async function updateFirebasePassword(email, newPassword) {
             try {
+                await window.FirebaseConfig.waitForInit();
+                const auth = (window.firebase && window.firebase.auth && window.firebase.auth());
+                if (auth && auth.currentUser) {
+                    await auth.currentUser.updatePassword(newPassword);
+                    return { success: true, updated: true };
+                }
+            } catch (error) {
+                console.warn('⚠️ Client password update failed (will try server if available):', error?.message || error);
+            }
+            // Best-effort server fallback (may be disabled in prod)
+            try {
                 const res = await fetch('/api/firebase', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    // No oldPassword available; this call is server-managed or can be extended
                     body: JSON.stringify({ email, oldPassword: newPassword, newPassword })
                 });
-                const json = await res.json();
-                return json;
-            } catch (error) {
-                console.error('❌ Error updating Firebase password:', error);
-                return { success: false, error: error.message };
-            }
+                if (res.ok) return await res.json();
+            } catch (_) {}
+            return { success: false, error: 'Password update not applied' };
         }
 
         // Ensure a Firebase account exists and set password
         async function ensureFirebaseAccount(email, password) {
             try {
-                // Prefer create first for new collaborators
-                const createRes = await fetch('/api/firebase', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const createJson = await createRes.json();
-                if (createJson && createJson.success) {
-                    return createJson; // Newly created
+                await window.FirebaseConfig.waitForInit();
+                const auth = (window.firebase && window.firebase.auth && window.firebase.auth());
+                if (!auth) throw new Error('Auth not initialized');
+
+                // 1) Try create
+                try {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    return { success: true, created: true };
+                } catch (e) {
+                    if (e && (e.code === 'auth/email-already-in-use' || /EMAIL_EXISTS/i.test(e.message || ''))) {
+                        // 2) Email exists → try sign in with provided password
+                        try {
+                            await auth.signInWithEmailAndPassword(email, password);
+                            return { success: true, exists: true, signedIn: true };
+                        } catch (signErr) {
+                            // 3) If wrong password, send reset email as last resort
+                            try {
+                                await auth.sendPasswordResetEmail(email);
+                                return { success: false, resetSent: true, error: 'Existing account with different password; reset email sent' };
+                            } catch (resetErr) {
+                                console.warn('⚠️ Password reset email failed:', resetErr?.message || resetErr);
+                            }
+                        }
+                    } else {
+                        console.warn('⚠️ Auth create failed:', e?.code || e?.message || e);
+                    }
                 }
-                // If already exists, attempt update with same password as both old/new (best-effort)
-                const updateResult = await updateFirebasePassword(email, password);
-                if (updateResult && updateResult.success) return updateResult;
-                // If still not successful but user likely exists, surface a soft success to not block signing
-                if (createJson && /EMAIL_EXISTS/i.test(createJson.error || '')) {
-                    return { success: true, exists: true };
-                }
-                return { success: false, error: (createJson && createJson.error) || updateResult?.error || 'Unable to set account password' };
+
+                // 4) Optional server fallback if available
+                try {
+                    const createRes = await fetch('/api/firebase', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    if (createRes.ok) {
+                        const createJson = await createRes.json();
+                        if (createJson && createJson.success) return createJson;
+                    }
+                } catch (_) {}
+
+                return { success: false, error: 'Could not create or validate account' };
             } catch (err) {
                 return { success: false, error: err?.message || 'Unknown error' };
             }
