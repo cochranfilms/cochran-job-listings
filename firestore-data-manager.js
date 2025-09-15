@@ -1731,6 +1731,10 @@ const FirestoreDataManager = {
 
 // Auto-initialize when DOM is ready
 function initializeFirestoreDataManager() {
+    if (window && window.PUBLIC_READ_ONLY === true) {
+        console.warn('⚠️ Skipping FirestoreDataManager init (public read-only page)');
+        return;
+    }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             FirestoreDataManager.init().catch(error => {
@@ -1749,6 +1753,10 @@ function initializeFirestoreDataManager() {
 
 // Initialize Firestore Data Manager
 function initializeFirestoreDataManager() {
+    if (window && window.PUBLIC_READ_ONLY === true) {
+        console.warn('⚠️ Skipping FirestoreDataManager init (public read-only page)');
+        return;
+    }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             FirestoreDataManager.init().catch(error => {
