@@ -1641,17 +1641,23 @@
         // Load users data from JSON file
         async function loadUsersData() {
             try {
-                // Prefer Firestore single source of truth
+                // Prefer Firestore single source of truth (only if DataManager is initialized)
                 await window.FirebaseConfig.waitForInit();
                 try {
-                    const fsUsers = await window.FirestoreDataManager.getUsers();
-                    if (fsUsers && Object.keys(fsUsers).length > 0) {
-                        approvedUsers = fsUsers;
-                        console.log('✅ Users data loaded from Firestore:', Object.keys(approvedUsers).length);
-                        return;
+                    if (window.FirestoreDataManager &&
+                        typeof window.FirestoreDataManager.getUsers === 'function' &&
+                        window.FirestoreDataManager.isInitialized === true) {
+                        const fsUsers = await window.FirestoreDataManager.getUsers();
+                        if (fsUsers && Object.keys(fsUsers).length > 0) {
+                            approvedUsers = fsUsers;
+                            console.log('✅ Users data loaded from Firestore:', Object.keys(approvedUsers).length);
+                            return;
+                        }
+                    } else {
+                        throw new Error('FirestoreDataManager not initialized on PUBLIC_READ_ONLY page');
                     }
                 } catch (fsErr) {
-                    console.warn('⚠️ Firestore users load failed, will try API fallback:', fsErr?.message || fsErr);
+                    console.warn('⚠️ Firestore users load skipped/fallback:', fsErr?.message || fsErr);
                 }
 
                 // Fallback to JSON API
@@ -1860,49 +1866,63 @@
                 await window.FirebaseConfig.waitForInit();
                 const db = firebase.firestore();
                 try {
-                    const appsSnap = await db
-                        .collection('applications')
-                        .where('email', '==', email)
-                        .where('status', '==', 'approved')
-                        .limit(1)
-                        .get();
-                    if (!appsSnap.empty) {
+                    const appsColl = db.collection('applications');
+                    let appsSnap = null;
+                    // First try root-level email field
+                    try {
+                        appsSnap = await appsColl
+                            .where('email', '==', email)
+                            .where('status', '==', 'approved')
+                            .limit(1)
+                            .get();
+                    } catch (_) {}
+                    // If empty, try nested applicant.email
+                    if (!appsSnap || appsSnap.empty) {
+                        try {
+                            appsSnap = await appsColl
+                                .where('applicant.email', '==', email)
+                                .where('status', '==', 'approved')
+                                .limit(1)
+                                .get();
+                        } catch (_) {}
+                    }
+                    if (appsSnap && !appsSnap.empty) {
                         const appDoc = appsSnap.docs[0];
                         const a = appDoc.data() || {};
-                        const approvedName = (a.name || a.fullName || name || '').toString().trim();
-                        const approvedEmail = (a.email || email || '').toString().trim().toLowerCase();
+                        const applicant = a.applicant || {};
+                        const approvedName = (a.name || a.fullName || applicant.name || name || '').toString().trim();
+                        const approvedEmail = (a.email || applicant.email || email || '').toString().trim().toLowerCase();
                         // Seed a minimal user-like object so downstream code works unchanged
                         approvedUsers = {
                             [approvedName]: {
                                 profile: {
                                     name: approvedName,
                                     email: approvedEmail,
-                                    role: a.role || a.jobTitle || 'Contractor',
-                                    location: a.location || 'Atlanta Area',
-                                    rate: a.rate || a.payDisplay || '$150/day',
+                                    role: a.role || a.jobTitle || applicant.role || 'Contractor',
+                                    location: a.location || applicant.location || 'Atlanta Area',
+                                    rate: a.rate || a.payDisplay || applicant.rate || '$150/day',
                                     approvedDate: (a.updatedAt || a.createdAt || new Date().toISOString()).slice(0,10)
                                 },
-                                // For quick-apply users, expose a primary job from the approved application
                                 jobs: {
                                     [a.jobId || 'approved-application'] : {
-                                        title: a.jobTitle || a.role || 'Contractor',
-                                        location: a.location || 'Atlanta Area',
+                                        title: a.jobTitle || applicant.role || 'Contractor',
+                                        location: a.location || applicant.location || 'Atlanta Area',
                                         date: a.jobDate || a.projectDate || 'TBD',
-                                        rate: a.rate || a.payDisplay || '$150/day',
-                                        pay: a.payDisplay || a.rate,
+                                        rate: a.rate || a.payDisplay || applicant.rate || '$150/day',
+                                        pay: a.payDisplay || a.rate || applicant.rate,
                                         status: 'approved'
                                     }
                                 },
                                 primaryJob: a.jobId || 'approved-application',
                                 application: {
                                     source: a.source || 'apply_html',
-                                    portfolio: a.portfolio || '',
+                                    portfolio: a.portfolio || applicant.portfolio || '',
                                     description: a.description || ''
                                 },
                                 contract: {}
                             }
                         };
-                        console.log('✅ Approved application found for email; granting access via applications:', { docId: appDoc.id });
+                        console.log('✅ Approved application found; granting access via applications:', { docId: appDoc.id });
                     }
                 } catch (appErr) {
                     console.warn('⚠️ Applications lookup failed:', appErr?.message || appErr);
