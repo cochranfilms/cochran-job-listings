@@ -13039,6 +13039,7 @@
 
         .job-timeline {
             margin-top: var(--spacing-lg);
+            overflow: visible; /* ensure stepper glow/line isn't clipped */
         }
 
         .job-timeline h4 {
@@ -13374,7 +13375,7 @@
             box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4), 0 4px 12px rgba(0,0,0,0.3);
         }
         /* Horizontal stepper for job timeline */
-        .timeline-horizontal { position:relative; display:flex; gap:24px; align-items:center; padding:12px 6px; }
+        .timeline-horizontal { position:relative; display:flex; gap:24px; align-items:center; padding:12px 6px; overflow: visible; }
         .timeline-horizontal::before { content:''; position:absolute; left:8px; right:8px; height:3px; background: linear-gradient(90deg, rgba(255,178,0,0.2), rgba(255,215,0,0.4)); top:22px; border-radius:4px; }
         .timeline-horizontal .step { position:relative; display:flex; flex-direction:column; align-items:center; z-index:1; text-align:center; }
         .timeline-horizontal .step .dot { width:16px; height:16px; border-radius:50%; background:#2a2a2a; border:2px solid #4a4a4a; box-shadow:0 0 0 3px rgba(255,178,0,0); transition:.25s all ease; }
@@ -17161,6 +17162,21 @@
 
         /* Buttons */
         .btn, .login-btn, .btn-small { border-radius: 14px !important; font-weight: 800 !important; letter-spacing: .02em; }
+        /* Compact icon buttons in timeline header */
+        .timeline-header .btn-small {
+            padding: 6px 8px !important;
+            font-size: 12px !important;
+            line-height: 1 !important;
+            height: 36px !important;
+            min-height: 36px !important;
+            width: 42px !important;
+            min-width: 42px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 10px !important;
+            box-shadow: none !important;
+        }
         .btn { background: linear-gradient(135deg, var(--brand-gold), #ffd166) !important; color: #0a0a0a !important; box-shadow: 0 0 40px rgba(255,178,0,0.25) !important; border: 0 !important; }
         .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
         .btn-secondary { background: rgba(15,23,42,0.55) !important; border: 1px solid rgba(99,102,241,0.22) !important; color: var(--text-secondary) !important; }
