@@ -2141,16 +2141,7 @@
       return [];
     }
 
-    async function ensureAnonymousAuth() {
-      try {
-        if (firebase && firebase.auth) {
-          const user = firebase.auth().currentUser;
-          if (!user) {
-            await firebase.auth().signInAnonymously().catch(()=>{});
-          }
-        }
-      } catch(_) {}
-    }
+    // Note: Public page – do not require auth. We will read jobs directly and fall back to JSON.
 
     async function loadJobsFromJSON(forceRefresh = false) {
       const loadingElement = document.getElementById('loading');
@@ -2176,15 +2167,16 @@
         
         let jobs = [];
 
-        // Try Firestore first (anon auth if needed)
+        // Try Firestore directly (public read)
         try {
-          await ensureAnonymousAuth();
-          if (window.FirestoreDataManager && window.FirestoreDataManager.isAvailable()) {
-            console.log('🔥 Loading jobs from Firestore jobs collection...');
-            const firestoreJobs = await window.FirestoreDataManager.getJobListings();
-            if (Array.isArray(firestoreJobs) && firestoreJobs.length > 0) {
-              console.log('✅ Jobs loaded from Firestore:', firestoreJobs.length);
-              jobs = firestoreJobs;
+          if (firebase && firebase.firestore) {
+            console.log('🔥 Loading jobs from Firestore jobs collection (public)...');
+            const db = firebase.firestore();
+            const snap = await db.collection('jobs').get();
+            const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            if (Array.isArray(list) && list.length > 0) {
+              console.log('✅ Jobs loaded from Firestore:', list.length);
+              jobs = list;
             }
           }
         } catch (firestoreError) {
@@ -2673,12 +2665,7 @@
         if (window.FirebaseConfig) {
           await window.FirebaseConfig.init();
           console.log('✅ Firebase initialized in index.html');
-          
-          // Initialize Firestore Integration
-          if (window.FirestoreIntegration) {
-            await window.FirestoreIntegration.init();
-            console.log('✅ Firestore Integration initialized in index.html');
-          }
+          // Public page: avoid admin integrations/listeners
         }
       } catch (error) {
         console.error('❌ Firebase initialization failed:', error);
@@ -2688,19 +2675,12 @@
     // Ensure FirestoreDataManager is ready before loading jobs (prevents empty first render)
     async function waitForFirestoreReady(timeoutMs = 6000) {
       const start = Date.now();
-      try {
-        if (window.FirestoreIntegration && typeof window.FirestoreIntegration.init === 'function') {
-          await window.FirestoreIntegration.init();
-        }
-        if (window.FirestoreDataManager && typeof window.FirestoreDataManager.init === 'function' && !window.FirestoreDataManager.isAvailable()) {
-          try { await window.FirestoreDataManager.init(); } catch (_) {}
-        }
-      } catch (_) {}
-      while (!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable())) {
+      // Only ensure Firebase SDK is ready; do not initialize data manager here
+      while (!(window.firebase && window.firebase.firestore)) {
         if (Date.now() - start > timeoutMs) break;
         await new Promise(r => setTimeout(r, 100));
       }
-      return !!(window.FirestoreDataManager && window.FirestoreDataManager.isAvailable());
+      return !!(window.firebase && window.firebase.firestore);
     }
 
     // Add some interactive polish
