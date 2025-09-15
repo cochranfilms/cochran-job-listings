@@ -13375,15 +13375,16 @@
             box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4), 0 4px 12px rgba(0,0,0,0.3);
         }
         /* Horizontal stepper for job timeline */
-        .timeline-horizontal { position:relative; display:flex; gap:24px; align-items:center; padding:12px 6px; overflow: visible; }
-        .timeline-horizontal::before { content:''; position:absolute; left:8px; right:8px; height:3px; background: linear-gradient(90deg, rgba(255,178,0,0.2), rgba(255,215,0,0.4)); top:22px; border-radius:4px; }
-        .timeline-horizontal .step { position:relative; display:flex; flex-direction:column; align-items:center; z-index:1; text-align:center; }
+        .timeline-horizontal { position:relative; display:flex; gap:16px; align-items:center; padding:12px 16px; overflow: visible; justify-content: space-between; width: 100%; }
+        .timeline-horizontal::before { content:''; position:absolute; left:16px; right:16px; height:3px; background: linear-gradient(90deg, rgba(255,178,0,0.2), rgba(255,215,0,0.4)); top:22px; border-radius:4px; }
+        .timeline-horizontal .step { position:relative; display:flex; flex-direction:column; align-items:center; z-index:1; text-align:center; flex: 1 1 0; min-width: 0; }
         .timeline-horizontal .step .dot { width:16px; height:16px; border-radius:50%; background:#2a2a2a; border:2px solid #4a4a4a; box-shadow:0 0 0 3px rgba(255,178,0,0); transition:.25s all ease; }
         .timeline-horizontal .step .label { margin-top:8px; font-size:12px; color:#d8d8d8; max-width:120px; }
         .timeline-horizontal .step.current .dot { background:#FFB200; border-color:#FFD700; box-shadow:0 0 0 6px rgba(255,178,0,.22); }
         .timeline-horizontal .step.completed .dot { background:#18b26a; border-color:#19c67a; }
         .timeline-horizontal .step.upcoming .dot { background:#2a2a2a; }
-        @media (max-width: 720px) { .timeline-horizontal { flex-direction:column; align-items:flex-start; } .timeline-horizontal::before{ display:none; } }
+        @media (max-width: 980px) { .timeline-horizontal { gap:12px; padding:12px 14px; } .timeline-horizontal::before { left:14px; right:14px; } .timeline-horizontal .step .label { font-size:11px; max-width:100px; } }
+        @media (max-width: 720px) { .timeline-horizontal { flex-direction:column; align-items:flex-start; padding:12px 8px; } .timeline-horizontal::before{ display:none; } }
         
         .error-message {
             background: rgba(239, 68, 68, 0.1);
