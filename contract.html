@@ -1855,25 +1855,74 @@
             
             console.log('📝 Input data:', { name, email });
             
-            // First, load the latest users data from Firestore, fallback to JSON API
+            // First, try approved application lookup by email (public path)
             try {
                 await window.FirebaseConfig.waitForInit();
+                const db = firebase.firestore();
                 try {
-                    // Firestore-only access check: read just this user's doc by name
-                    const db = firebase.firestore();
-                    const docRef = db.collection('users').doc(name);
-                    const snap = await docRef.get();
-                    if (snap && snap.exists) {
-                        const data = snap.data() || {};
-                        approvedUsers = { [name]: data };
-                        console.log('✅ Loaded user from Firestore by name:', name);
-                    } else {
-                        console.warn('⚠️ No Firestore doc for name:', name);
+                    const appsSnap = await db
+                        .collection('applications')
+                        .where('email', '==', email)
+                        .where('status', '==', 'approved')
+                        .limit(1)
+                        .get();
+                    if (!appsSnap.empty) {
+                        const appDoc = appsSnap.docs[0];
+                        const a = appDoc.data() || {};
+                        const approvedName = (a.name || a.fullName || name || '').toString().trim();
+                        const approvedEmail = (a.email || email || '').toString().trim().toLowerCase();
+                        // Seed a minimal user-like object so downstream code works unchanged
+                        approvedUsers = {
+                            [approvedName]: {
+                                profile: {
+                                    name: approvedName,
+                                    email: approvedEmail,
+                                    role: a.role || a.jobTitle || 'Contractor',
+                                    location: a.location || 'Atlanta Area',
+                                    rate: a.rate || a.payDisplay || '$150/day',
+                                    approvedDate: (a.updatedAt || a.createdAt || new Date().toISOString()).slice(0,10)
+                                },
+                                // For quick-apply users, expose a primary job from the approved application
+                                jobs: {
+                                    [a.jobId || 'approved-application'] : {
+                                        title: a.jobTitle || a.role || 'Contractor',
+                                        location: a.location || 'Atlanta Area',
+                                        date: a.jobDate || a.projectDate || 'TBD',
+                                        rate: a.rate || a.payDisplay || '$150/day',
+                                        pay: a.payDisplay || a.rate,
+                                        status: 'approved'
+                                    }
+                                },
+                                primaryJob: a.jobId || 'approved-application',
+                                application: {
+                                    source: a.source || 'apply_html',
+                                    portfolio: a.portfolio || '',
+                                    description: a.description || ''
+                                },
+                                contract: {}
+                            }
+                        };
+                        console.log('✅ Approved application found for email; granting access via applications:', { docId: appDoc.id });
                     }
-                } catch (fsErr) {
-                    console.warn('⚠️ Firestore direct read failed:', fsErr?.message || fsErr);
+                } catch (appErr) {
+                    console.warn('⚠️ Applications lookup failed:', appErr?.message || appErr);
                 }
-                // If not found in Firestore by name, do NOT fall back for gating; require Firestore
+                
+                // If no approved application matched, fall back to direct user doc by exact name (public GET if approved)
+                if (!approvedUsers || Object.keys(approvedUsers).length === 0) {
+                    try {
+                        const userSnap = await db.collection('users').doc(name).get();
+                        if (userSnap && userSnap.exists) {
+                            const data = userSnap.data() || {};
+                            approvedUsers = { [name]: data };
+                            console.log('✅ Loaded user from Firestore by name:', name);
+                        } else {
+                            console.warn('⚠️ No Firestore doc for name:', name);
+                        }
+                    } catch (fsErr) {
+                        console.warn('⚠️ Firestore direct read failed:', fsErr?.message || fsErr);
+                    }
+                }
             } catch (error) {
                 console.warn('⚠️ Could not initialize Firebase/Firestore:', error);
             }
