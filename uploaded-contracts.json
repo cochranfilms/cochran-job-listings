@@ -661,8 +661,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-13",
       "signedDate": "2025-09-13"
+    },
+    {
+      "contractId": "CF-1757904161166-SMC8I",
+      "freelancerName": "Erica Jackson",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "OBS Tech Assistant",
+      "rate": "$400",
+      "location": "Atlanta, GA",
+      "fileName": "Erica Jackson - OBS Tech Assistant - CF-1757904161166-SMC8I.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-09-15T02:42:51.332Z",
+      "status": "uploaded",
+      "fileUrl": null,
+      "storagePath": null,
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-15",
+      "signedDate": "2025-09-14"
     }
   ],
-  "lastUpdated": "2025-09-13T20:11:45.014Z",
-  "totalContracts": 41
+  "lastUpdated": "2025-09-15T02:42:51.332Z",
+  "totalContracts": 42
 }
