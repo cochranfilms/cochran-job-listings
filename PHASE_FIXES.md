@@ -20,9 +20,9 @@ This document tracks the fixes for various issues in the Cochran Films landing p
 
 ### Phases 4 — Read-Me AI Redesign (Round 1)
 - Added AI-styled hero with typewriter and subtle particles.
-- Introduced “What’s New in 2025” featuring Admin Dashboard, Creator Portal, and AI Design System.
+- Introduced "What's New in 2025" featuring Admin Dashboard, Creator Portal, and AI Design System.
 - Updated Technology Stack to include Firestore (Realtime/Scalable/Secure).
-- Navigation updated to include “What’s New”.
+- Navigation updated to include "What's New".
 
 ## Phase 3.12 Fix - Job Status Toggle System Implementation (Latest)
 
@@ -2027,7 +2027,7 @@ async function downloadUserContract(jobId = null) {
 - **On-the-fly Generation**: PDFs generated when needed, no file dependencies
 - **User-Friendly**: Files named after users for easy identification
 - **Centralized Architecture**: All data still centralized in users.json
-- **Consistent Experience**: Same PDF quality and design across all portals
+- ✅ **Consistent Experience**: Same PDF quality and design across all portals
 
 ## Phase 22 Fix - Admin Dashboard PDF Generation Integration
 **Date**: 2025-08-06
@@ -3800,3 +3800,21 @@ Files touched
 Notes
 - All admin actions leverage existing Firebase initialization and notification UI.
 - Realtime listeners emit `firestore:dataChange` events for future live UI updates.
+
+## Phase 0–2 (Sept 15, 2025) — Auth UX, Identity Persistence, Jobs Timeline
+
+- Phase 0 — Auth hygiene
+  - Fixed Firebase bucket to `cochran-films.appspot.com`; corrected `bucketURL`.
+  - Login: added `auth/invalid-credential` mapping and a built‑in Forgot password reset.
+- Phase 1 — Identity persistence
+  - Contract signing writes `profile.name` to user doc; caches recent signature name/email.
+  - First-login backfill writes `profile.name` if missing using cached signature, then refreshes.
+  - Portal prefers `profile.name` for greetings.
+- Phase 2 — Current Jobs redesign
+  - Replaced vertical timeline with horizontal stepper; compact header button group (Details / Download / Message).
+  - Buttons no longer stretch vertically; improved mobile stacking.
+
+Acceptance
+- Wrong password surfaces clear message; reset works.
+- After contract sign or first login, greeting shows the user's real name.
+- Current Jobs timeline is concise, with smooth states and compact controls.

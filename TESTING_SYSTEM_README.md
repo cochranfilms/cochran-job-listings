@@ -110,7 +110,7 @@ How to test quickly (old script workflow):
 - Test (old script workflow):
   1) Open `user-portal.html`, sign in, click Community.
   2) In Team Messaging, type a test message and press Enter → message appears.
-  3) Click the paper plane → message sends; toast “Message sent!”.
+  3) Click the paper plane → message sends; toast "Message sent!".
   4) In Firebase Console → Firestore `messages`, verify a new doc with `author`, `authorEmail`, `text`, `timestamp`.
   5) Like a message → `likes` increments and `likedBy` includes your email.
   6) Open a second browser as another user; verify real-time updates without refresh.
@@ -1421,3 +1421,21 @@ How to test (old script workflow):
 Notes:
 - Ensure `GoogleService-Info.plist` is included in the iOS app target and is present in the bundle.
 - If you removed Firebase pods, the code paths are gated with `#if canImport(FirebaseCore)` and will no-op gracefully.
+
+### 2025-09-15 — Phase 0–2 Portal/Auth updates
+
+- Files: `firebase-config.js`, `user-portal.html`, `contract.html`
+- Phase 0 (Auth hygiene):
+  - Fixed Firebase `storageBucket` to `cochran-films.appspot.com` and bucketURL to `gs://cochran-films.appspot.com`.
+  - Login UX: added mapping for `auth/invalid-credential` and a "Forgot password?" button that calls `sendPasswordResetEmail`.
+- Phase 1 (Identity persistence):
+  - On contract signing, cache `recentSignatureName/email` in session and write `profile.name` to the user doc when updating `contract.*` fields.
+  - On first successful portal login, if `profile.name` is missing but cached signature exists for that email, backfill `profile.name` and refresh.
+  - Portal now prefers `profile.name` over doc id/email for greetings.
+- Phase 2 (Current Jobs UI):
+  - Replaced bulky vertical timeline with a compact horizontal stepper; added a compact button group (Details, Download, Message) in the job card header.
+
+How to test quickly (browser):
+1) Login: enter a wrong password → error should read "Invalid email or password"; use Forgot password to receive email.
+2) Contract: sign a contract with a full name → Firestore `users/{id}.profile.name` is populated; portal greets by name after login.
+3) Jobs: Current Jobs shows a horizontal stepper; buttons are compact and no longer stretch down the page.

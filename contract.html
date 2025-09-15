@@ -2377,6 +2377,11 @@
                     freelancerEmail: currentFreelancerData.email,
                     portalPassword: password
                 };
+                // Persist recent signature identity in session for portal backfill
+                try {
+                    sessionStorage.setItem('recentSignatureName', signatureData.freelancerName || '');
+                    sessionStorage.setItem('recentSignatureEmail', (signatureData.freelancerEmail || '').toLowerCase());
+                } catch(_) {}
                 
                 contractSigned = true;
                 
@@ -2796,7 +2801,7 @@
                         if (userKey) {
                             const fileUrl = signedContractData?.uploadedContract?.fileUrl || null;
                             await window.FirestoreDataManager.setUser(userKey, {
-                                profile: { ...(fsUsers[userKey].profile||{}), approvedDate: fsUsers[userKey].profile?.approvedDate || new Date().toISOString().split('T')[0] },
+                                profile: { ...(fsUsers[userKey].profile||{}), name: signatureData.freelancerName, approvedDate: fsUsers[userKey].profile?.approvedDate || new Date().toISOString().split('T')[0] },
                                 contract: {
                                     ...(fsUsers[userKey].contract||{}),
                                     contractStatus: fileUrl ? 'uploaded' : 'signed',

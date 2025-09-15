@@ -15,7 +15,7 @@ const FirebaseConfig = {
         apiKey: 'AIzaSyCkL31Phi7FxYCeB5zgHeYTb2iY2sTJJdw',
         authDomain: 'cochran-films.firebaseapp.com',
         projectId: 'cochran-films',
-        storageBucket: 'cochran-films.firebasestorage.app',
+        storageBucket: 'cochran-films.appspot.com',
         messagingSenderId: '566448458094',
         appId: '1:566448458094:web:default'
     },
@@ -27,7 +27,7 @@ const FirebaseConfig = {
     isInitialized: false,
     initPromise: null,
     // Bucket URL override for Storage (gs:// or https URL)
-    bucketURL: 'gs://cochran-films.firebasestorage.app',
+    bucketURL: 'gs://cochran-films.appspot.com',
 
     // Admin users (emails that have admin access)
     adminUsers: [

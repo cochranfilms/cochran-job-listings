@@ -1167,3 +1167,9 @@ curl http://localhost:8000/api/health
 - Configuration: `Config.plist` holds `API_BASE_URL` and optional `FIREBASE_*` keys. Keep these synchronized with Vercel environment variables and Firebase project settings. Do not commit secrets elsewhere.
 - Data ownership: Firestore is canonical for jobs and applications; the iOS app uses Firestore first (if Firebase SDK present) and posts a non-blocking backup to `/api/apply`. Jobs fallback to `/api/jobs-data` only when Firestore unavailable.
 - Branding: Reuse existing branding/colors; keep font families aligned with web (system stacks acceptable on iOS).
+
+## Sept 2025 — Auth data handling notes (Phase 0–2)
+- Do not store plaintext passwords in any JSON or Firestore fields. Contract flows only attempt account creation or send a password reset email; passwords are never persisted.
+- Contract signing writes `profile.name` (and preserves existing fields) on the user doc when updating `contract.*`. If the portal detects a missing name on first login and finds a cached recent signature, it backfills `profile.name` once and clears the cache.
+- The portal login UI maps `auth/invalid-credential` to a clear message and provides a built‑in password reset action.
+- Current Jobs uses a compact horizontal stepper and small action buttons; avoid reintroducing tall, full-height buttons in redesigns.
