@@ -15,6 +15,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <!-- Project Firebase config + Firestore data manager (single source of truth) -->
   <script src="/firebase-config.js"></script>
+  <script>window.PUBLIC_READ_ONLY = true;</script>
   <script src="/firestore-data-manager.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded',()=>AOS.init({duration:1000,once:true,offset:100}));
@@ -30,40 +31,30 @@
         const email = (payload.email || '').trim();
         if (!email) throw new Error('Email is required');
 
-        // Normalize structure identical to portal quick apply
+        // Normalize application record for admin queue (no auth required)
         const currentJob = (window.__getCurrentJobPrefill && window.__getCurrentJobPrefill()) || {};
         const normalized = {
+          source: 'apply_html',
+          status: 'new',
           jobId: currentJob.id || (payload.applyingFor || '').toLowerCase().replace(/\s+/g,'-').slice(0,64),
           jobTitle: currentJob.title || payload.applyingFor || 'Project',
           jobDate: currentJob.date || payload.eventDate || '',
           location: currentJob.location || payload.location || '',
           payDisplay: currentJob.pay || payload.pay || '',
           description: payload.description || currentJob.description || '',
-          portfolio: payload.portfolio || '',
-          phone: payload.phone || '',
-          source: 'applyPage',
-          status: 'pending',
           createdAt: new Date().toISOString(),
-          applicant: { email }
+          updatedAt: new Date().toISOString(),
+          applicant: {
+            name: payload.fullName || '',
+            email,
+            phone: payload.phone || '',
+            portfolio: payload.portfolio || ''
+          }
         };
 
-        // Save under jobs/<jobId>/applications and users/<uid>/applications
-        try {
-          const db = firebase.firestore();
-          const jobRef = db.collection('jobs').doc(normalized.jobId).collection('applications').doc();
-          await jobRef.set(normalized, { merge: true });
-        } catch(_) {}
-
-        try {
-          const db = firebase.firestore();
-          // Find or create user by email
-          const q = await db.collection('users').where('profile.email','==', email).limit(1).get();
-          let userRef;
-          if (q.empty){ userRef = await db.collection('users').add({ profile: { email } }); }
-          else { userRef = q.docs[0].ref; }
-          const appRef = userRef.collection('applications').doc(normalized.jobId);
-          await appRef.set(normalized, { merge: true });
-        } catch(_) {}
+        // Write to top-level applications collection (public create)
+        const db = firebase.firestore();
+        await db.collection('applications').add(normalized);
 
         // 2) Best-effort backup write → existing JSON/GitHub API (non-blocking)
         try {
@@ -169,12 +160,11 @@
       const jobsIndex = {};
       try{
         await window.FirebaseConfig.waitForInit();
-        // Prefer Firestore as source of truth
-        const jobs = await window.FirestoreDataManager.getJobListings();
-        (jobs||[]).forEach(job=>{
-          const title = job.title || 'Untitled Job';
-          const o=document.createElement('option'); o.value=title; o.textContent=title; sel.appendChild(o); jobsIndex[title]=job;
-        });
+        // Load jobs directly from Firestore (public read)
+        const db = firebase.firestore();
+        const snap = await db.collection('jobs').get();
+        const jobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        (jobs||[]).forEach(job=>{ const title = job.title || 'Untitled Job'; const o=document.createElement('option'); o.value=title; o.textContent=title; sel.appendChild(o); jobsIndex[title]=job; });
         // Fallback to JSON API if Firestore has no jobs
         if ((!jobs || jobs.length===0)){
           const r=await fetch('/api/jobs-data'); const j=await r.json();
