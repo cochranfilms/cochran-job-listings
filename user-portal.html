@@ -2876,13 +2876,13 @@
                         <h3 class="card-title">${job.title || job.role || 'Project'}${label ? ` <small style="opacity:.7;font-weight:400">• ${label}</small>` : ''}</h3>
                         <span class="status-badge status-${status}">${status}</span>
                     </div>
-                    <div class="job-details">
+                    <div class="job-details two-col">
                         <div class="job-info">
                             <div class="info-item"><span class="label">Location:</span><span class="value">${job.location || 'N/A'}</span></div>
                             <div class="info-item"><span class="label">Rate:</span><span class="value highlight">${job.rate || 'N/A'}</span></div>
                             <div class="info-item"><span class="label">Start Date:</span><span class="value">${formatDisplayDate(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}</span></div>
                         </div>
-                        <div class="job-timeline">
+                        <div class="job-timeline" style="max-width: 100%;">
                             <div class="timeline-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                                 <h4 style="margin:0"><i class="fas fa-route"></i> Project Timeline</h4>
                                 <div class="button-group" style="display:flex; gap:8px;">
@@ -14147,10 +14147,14 @@
 
         .job-details {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 0.75rem;
             margin-bottom: 1rem;
             font-size: 0.9rem;
+        }
+        /* Wider screens: place timeline and info side-by-side */
+        @media (min-width: 1280px) {
+            .job-details.two-col { grid-template-columns: 1.2fr 0.8fr; align-items: start; gap: 1.25rem; }
         }
 
         .job-detail-item {
