@@ -2737,9 +2737,9 @@
             // Build UI with tabs for better organization
             const parts = [];
 
-            // Add tab navigation
+            // Add standalone tab navigation (no background container)
             parts.push(`
-                <div class="jobs-tabs" style="margin-bottom: 0.5rem;">
+                <div class="jobs-tabs-standalone">
                     <button class="tab-button${(window.__jobsActiveTab||'current')==='current'?' active':''}" onclick="switchJobsTab('current')" id="currentTab">
                         <i class="fas fa-star"></i> Current & Upcoming
                     </button>
@@ -2876,36 +2876,34 @@
                         <h3 class="card-title">${job.title || job.role || 'Project'}${label ? ` <small style="opacity:.7;font-weight:400">• ${label}</small>` : ''}</h3>
                         <span class="status-badge status-${status}">${status}</span>
                     </div>
-                    <div class="job-details two-col">
-                        <div class="job-info">
-                            <div class="info-item"><span class="label">Location:</span><span class="value">${job.location || 'N/A'}</span></div>
-                            <div class="info-item"><span class="label">Rate:</span><span class="value highlight">${job.rate || 'N/A'}</span></div>
-                            <div class="info-item"><span class="label">Start Date:</span><span class="value">${formatDisplayDate(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}</span></div>
+                    <!-- Job Info Section - Compact horizontal layout -->
+                    <div class="job-info-compact">
+                        <div class="info-item"><span class="label">Location:</span><span class="value">${job.location || 'N/A'}</span></div>
+                        <div class="info-item"><span class="label">Rate:</span><span class="value highlight">${job.rate || 'N/A'}</span></div>
+                        <div class="info-item"><span class="label">Start Date:</span><span class="value">${formatDisplayDate(getListingStartDateFor(job) || job.projectStart || job.date || getEffectiveProjectStartDate())}</span></div>
+                        <div class="info-item payment-status">
+                            ${currentUser.paymentMethod ? `
+                                <span class="label">Payment:</span><span class="value"><i class="fas fa-check-circle" style="color: #10b981;"></i> ${currentUser.paymentMethod.toUpperCase()}</span>
+                            ` : `
+                                <span class="label">Payment:</span><span class="value warning"><i class="fas fa-exclamation-circle"></i> Not configured</span>
+                            `}
                         </div>
-                        <div class="job-timeline" style="max-width: 100%;">
-                            <div class="timeline-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-                                <h4 style="margin:0"><i class="fas fa-route"></i> Project Timeline</h4>
-                                <div class="button-group" style="display:flex; gap:8px;">
-                                    <button class="btn-small" title="View job details" aria-label="View job details" onclick="showJobDetails && showJobDetails('${job.id||''}')"><i class="fas fa-eye"></i></button>
-                                    <button class="btn-small" title="Download contract" aria-label="Download contract" onclick="downloadContractForJob && downloadContractForJob('${job.id||''}')"><i class="fas fa-file-download"></i></button>
-                                    <button class="btn-small" title="Open messages" aria-label="Open messages" onclick="openMessagesForJob && openMessagesForJob('${job.id||''}')"><i class="fas fa-comments"></i></button>
-                                </div>
+                    </div>
+                    
+                    <!-- Full-width Timeline Section -->
+                    <div class="job-timeline-fullwidth">
+                        <div class="timeline-header-fullwidth">
+                            <div class="timeline-title">
+                                <h4><i class="fas fa-route"></i> Project Timeline</h4>
                             </div>
-                            <div class="timeline-horizontal" id="timeline-${(job.id||'').replace(/[^a-zA-Z0-9_-]/g,'')}">${renderTimelineSteps(job, true)}</div>
-                        </div>
-                        <div class="job-payment-section">
-                            <h4>Payment Method</h4>
-                            <div class="payment-info">
-                                ${currentUser.paymentMethod ? `
-                                    <div class="payment-method"><i class="fas fa-check-circle"></i><span>${currentUser.paymentMethod.toUpperCase()}</span></div>
-                                    <button onclick="showPaymentModal()" class="btn btn-secondary"><i class="fas fa-edit"></i>Update Payment Method</button>
-                                ` : `
-                                    <div class="no-payment"><i class="fas fa-exclamation-circle"></i><p>Payment method not configured</p>
-                                        <button onclick="showPaymentModal()" class="btn btn-primary"><i class="fas fa-plus"></i>Set Payment Method</button>
-                                    </div>
-                                `}
+                            <div class="timeline-actions">
+                                <button class="btn-small" title="View job details" aria-label="View job details" onclick="showJobDetails && showJobDetails('${job.id||''}')"><i class="fas fa-eye"></i></button>
+                                <button class="btn-small" title="Download contract" aria-label="Download contract" onclick="downloadContractForJob && downloadContractForJob('${job.id||''}')"><i class="fas fa-file-download"></i></button>
+                                <button class="btn-small" title="Open messages" aria-label="Open messages" onclick="openMessagesForJob && openMessagesForJob('${job.id||''}')"><i class="fas fa-comments"></i></button>
+                                ${!currentUser.paymentMethod ? `<button class="btn-small btn-payment" title="Set payment method" onclick="showPaymentModal()"><i class="fas fa-credit-card"></i></button>` : ''}
                             </div>
                         </div>
+                        <div class="timeline-horizontal-fullwidth" id="timeline-${(job.id||'').replace(/[^a-zA-Z0-9_-]/g,'')}">${renderTimelineSteps(job, true)}</div>
                     </div>
                 </div>
             `;
@@ -16611,20 +16609,150 @@
         }
 
         /* Jobs tab styles */
-        .jobs-tabs {
-            position: sticky;
-            top: 64px;
-            z-index: 30;
-            display: inline-flex;
+        .jobs-tabs-standalone {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
             align-items: center;
-            gap: 0.4rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(180deg, rgba(10,12,24,0.95), rgba(10,12,24,0.75));
-            padding: 0.35rem 0.4rem;
-            border-radius: 8px;
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 178, 0, 0.15);
-            height: auto;
+        }
+
+        /* Compact job info layout */
+        .job-info-compact {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(17, 24, 39, 0.4);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .job-info-compact .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .job-info-compact .label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        .job-info-compact .value {
+            font-size: 0.95rem;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .job-info-compact .value.highlight {
+            color: #FFB200;
+        }
+
+        .job-info-compact .value.warning {
+            color: #f59e0b;
+        }
+
+        /* Full-width timeline */
+        .job-timeline-fullwidth {
+            background: rgba(17, 24, 39, 0.65);
+            padding: 1.5rem;
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(99,102,241,0.25);
+        }
+
+        .timeline-header-fullwidth {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-title h4 {
+            margin: 0;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .timeline-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .timeline-horizontal-fullwidth {
+            position: relative;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem 0;
+            justify-content: space-between;
+            width: 100%;
+            overflow: visible;
+        }
+
+        .timeline-horizontal-fullwidth::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, rgba(255,178,0,0.2), rgba(255,215,0,0.4));
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 4px;
+        }
+
+        .timeline-horizontal-fullwidth .step {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+            text-align: center;
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
+        .timeline-horizontal-fullwidth .step .dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2a2a2a;
+            border: 2px solid #4a4a4a;
+            box-shadow: 0 0 0 3px rgba(255,178,0,0);
+            transition: .25s all ease;
+        }
+
+        .timeline-horizontal-fullwidth .step.completed .dot {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.3);
+        }
+
+        .timeline-horizontal-fullwidth .step.current .dot {
+            background: linear-gradient(135deg, #FFB200, #FFD700);
+            border-color: #FFB200;
+            box-shadow: 0 0 0 3px rgba(255,178,0,0.4);
+            animation: pulse-glow 2s infinite;
+        }
+
+        .timeline-horizontal-fullwidth .step .label {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: #d8d8d8;
+            font-weight: 500;
+            max-width: 120px;
+            line-height: 1.2;
+        }
+
+        .btn-payment {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            border-color: #10b981 !important;
+        }
+
+        .btn-payment:hover {
+            background: linear-gradient(135deg, #059669, #047857) !important;
         }
 
         .tab-button {
