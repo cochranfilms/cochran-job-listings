@@ -70,6 +70,21 @@ How to test quickly (old script workflow):
 2) From User Portal, use Quick Apply on a priority job. Approve that Quick Apply item in Admin Dashboard.
 3) Verify the acceptance email/contract references the specific job you just approved (not an older job), with the correct rate.
 4) Attempt login with the approved email; access should be granted.
+### 2025-09-16 — Contract Password Set via Admin API
+
+- Files: `api/firebase.js`, `contract.html`
+- Change:
+  - Added secure Admin SDK path in `api/firebase.js` to set passwords without requiring the old password. Endpoint: `PUT /api/firebase { email, newPassword, admin:true }`.
+  - `contract.html` now prefers this server endpoint when setting the portal password after signing. If Admin credentials are not configured, it falls back to client-side update when the user is already signed in, or finally sends a password reset email.
+- Test (old automatic testing system):
+  1. In Admin, approve an application so a Firebase Auth user may already exist.
+  2. Open `contract.html`, sign the contract, set a new password (≥6 chars).
+  3. Expect success with no "password not saved" message. Console should show `admin: true` in the response when Admin credentials are configured.
+  4. Try logging into `user-portal.html` with the new password.
+
+Notes:
+- Server requires `firebase-admin` env vars: `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY` (\n escaped). If missing, endpoint gracefully falls back to REST behavior requiring `oldPassword`.
+
 ### 2025-09-12 — Contract System: Firestore Storage Integration
 
 - Files: `contract.html`, `user-portal.html`

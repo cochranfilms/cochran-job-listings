@@ -2563,6 +2563,21 @@
         
         // Update Firebase password for user
         async function updateFirebasePassword(email, newPassword) {
+            // Prefer secure server-side admin update (does not require old password)
+            try {
+                const res = await fetch('/api/firebase', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, newPassword, admin: true })
+                });
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json && json.success) return { success: true, updated: true, admin: true };
+                }
+            } catch (e) {
+                console.warn('⚠️ Admin password update failed, trying client if signed in:', e?.message || e);
+            }
+            // Client-side update if the user is currently signed in
             try {
                 await window.FirebaseConfig.waitForInit();
                 const auth = (window.firebase && window.firebase.auth && window.firebase.auth());
@@ -2571,17 +2586,8 @@
                     return { success: true, updated: true };
                 }
             } catch (error) {
-                console.warn('⚠️ Client password update failed (will try server if available):', error?.message || error);
+                console.warn('⚠️ Client password update failed:', error?.message || error);
             }
-            // Best-effort server fallback (may be disabled in prod)
-            try {
-                const res = await fetch('/api/firebase', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, oldPassword: newPassword, newPassword })
-                });
-                if (res.ok) return await res.json();
-            } catch (_) {}
             return { success: false, error: 'Password update not applied' };
         }
 
@@ -2592,31 +2598,41 @@
                 const auth = (window.firebase && window.firebase.auth && window.firebase.auth());
                 if (!auth) throw new Error('Auth not initialized');
 
-                // 1) Try create
+                // 1) Try create (client)
                 try {
                     await auth.createUserWithEmailAndPassword(email, password);
                     return { success: true, created: true };
                 } catch (e) {
-                    if (e && (e.code === 'auth/email-already-in-use' || /EMAIL_EXISTS/i.test(e.message || ''))) {
-                        // 2) Email exists → try sign in with provided password
+                    const emailExists = e && (e.code === 'auth/email-already-in-use' || /EMAIL_EXISTS/i.test(e.message || ''));
+                    if (emailExists) {
+                        // 2) Account exists → set password via admin endpoint, then (best-effort) sign in
                         try {
-                            await auth.signInWithEmailAndPassword(email, password);
-                            return { success: true, exists: true, signedIn: true };
-                        } catch (signErr) {
-                            // 3) If wrong password, send reset email as last resort
-                            try {
-                                await auth.sendPasswordResetEmail(email);
-                                return { success: false, resetSent: true, error: 'Existing account with different password; reset email sent' };
-                            } catch (resetErr) {
-                                console.warn('⚠️ Password reset email failed:', resetErr?.message || resetErr);
+                            const resp = await fetch('/api/firebase', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email, newPassword: password, admin: true })
+                            });
+                            const json = await resp.json();
+                            if (resp.ok && json && json.success) {
+                                try { await auth.signInWithEmailAndPassword(email, password); } catch (_) {}
+                                return { success: true, exists: true, passwordSet: true };
                             }
+                        } catch (adminErr) {
+                            console.warn('⚠️ Admin password set failed:', adminErr?.message || adminErr);
+                        }
+                        // 3) As a last resort, send reset email
+                        try {
+                            await auth.sendPasswordResetEmail(email);
+                            return { success: false, resetSent: true, error: 'Existing account; password reset email sent' };
+                        } catch (resetErr) {
+                            console.warn('⚠️ Password reset email failed:', resetErr?.message || resetErr);
                         }
                     } else {
                         console.warn('⚠️ Auth create failed:', e?.code || e?.message || e);
                     }
                 }
 
-                // 4) Optional server fallback if available
+                // 4) Server create fallback
                 try {
                     const createRes = await fetch('/api/firebase', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },

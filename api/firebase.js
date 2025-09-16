@@ -1,5 +1,5 @@
-// Firebase REST API implementation (no Admin SDK required)
-// This approach uses Firebase Auth REST API with a custom token
+// Firebase REST API implementation with optional Admin SDK assist
+// Uses REST by default; if Admin credentials are available, can set passwords without old password
 
 let firebaseConfig = {
     apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyCkL31Phi7FxYCeB5zgHeYTb2iY2sTJJdw',
@@ -12,6 +12,8 @@ let firebaseConfig = {
 
 // Check if we have the necessary configuration
 let firebaseInitialized = false;
+let adminInitialized = false;
+let adminAuth = null;
 
 try {
     if (firebaseConfig.apiKey && firebaseConfig.projectId) {
@@ -24,6 +26,41 @@ try {
 } catch (error) {
     console.error('❌ Error loading Firebase configuration:', error);
     firebaseInitialized = false;
+}
+
+// Optional: Initialize Firebase Admin SDK when credentials are present
+try {
+    // Lazy require to keep function portable
+    const admin = require('firebase-admin');
+
+    if (!admin.apps.length) {
+        // Prefer explicit service account envs; fallback to ADC
+        const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.GCLOUD_PROJECT || firebaseConfig.projectId;
+        const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+        const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY ? process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined;
+
+        if (clientEmail && privateKey && projectId) {
+            admin.initializeApp({
+                credential: admin.credential.cert({ projectId, clientEmail, privateKey })
+            });
+            adminInitialized = true;
+        } else {
+            // Attempt Application Default Credentials (GOOGLE_APPLICATION_CREDENTIALS or metadata)
+            admin.initializeApp({
+                credential: admin.credential.applicationDefault(),
+                projectId
+            });
+            adminInitialized = true;
+        }
+    } else {
+        adminInitialized = true;
+    }
+    adminAuth = require('firebase-admin').auth();
+    if (adminInitialized) console.log('✅ Firebase Admin initialized');
+} catch (e) {
+    // Admin credentials not configured; REST-only mode remains available
+    console.log('ℹ️ Firebase Admin not initialized (server will use REST only):', e && e.message ? e.message : e);
+    adminInitialized = false;
 }
 
 module.exports = async (req, res) => {
@@ -96,10 +133,24 @@ module.exports = async (req, res) => {
             }
         }
 
-        // Update password
-        if (req.method === 'PUT') {
+        // Update password (supports two modes)
+        if (req.method === 'PUT' || req.method === 'PATCH') {
             try {
-                if (!oldPassword || !newPassword) return res.status(400).json({ error: 'oldPassword and newPassword are required' });
+                const adminModeRequested = body.admin === true || (!oldPassword && !!newPassword);
+
+                // If Admin is available and either explicitly requested or oldPassword is not provided, use Admin
+                if (adminModeRequested && adminInitialized && adminAuth) {
+                    try {
+                        const user = await adminAuth.getUserByEmail(email);
+                        await adminAuth.updateUser(user.uid, { password: newPassword });
+                        return res.status(200).json({ success: true, admin: true });
+                    } catch (adminErr) {
+                        return res.status(200).json({ success: false, error: adminErr?.message || 'Admin password update failed' });
+                    }
+                }
+
+                // REST fallback requires oldPassword to obtain idToken
+                if (!oldPassword || !newPassword) return res.status(400).json({ error: 'oldPassword and newPassword are required (or set admin=true)' });
                 const s = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password: oldPassword, returnSecureToken: true })
