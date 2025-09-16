@@ -678,8 +678,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-15",
       "signedDate": "2025-09-14"
+    },
+    {
+      "contractId": "CF-1757982463505-GGJRS",
+      "freelancerName": "Cody Cochran",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "Backdrop Photographer Spotlight",
+      "rate": "$300 + Tip",
+      "location": "Douglasville, GA",
+      "fileName": "Cody Cochran - Backdrop Photographer Spotlight - CF-1757982463505-GGJRS.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-09-16T00:37:58.102Z",
+      "status": "uploaded",
+      "fileUrl": null,
+      "storagePath": null,
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-16",
+      "signedDate": "2025-09-15"
     }
   ],
-  "lastUpdated": "2025-09-15T02:42:51.332Z",
-  "totalContracts": 42
+  "lastUpdated": "2025-09-16T00:37:58.102Z",
+  "totalContracts": 43
 }
