@@ -695,8 +695,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-16",
       "signedDate": "2025-09-15"
+    },
+    {
+      "contractId": "CF-1758085869603-5VDK2",
+      "freelancerName": "Erica Jackson",
+      "freelancerEmail": "dedejackson727@gmail.com",
+      "role": "Backdrop Photographer Spotlight",
+      "rate": "$300 + Tip",
+      "location": "Douglasville, GA",
+      "fileName": "Erica Jackson - Backdrop Photographer Spotlight - CF-1758085869603-5VDK2.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-09-17T05:21:24.632Z",
+      "status": "uploaded",
+      "fileUrl": null,
+      "storagePath": null,
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-17",
+      "signedDate": "2025-09-17"
     }
   ],
-  "lastUpdated": "2025-09-16T00:37:58.102Z",
-  "totalContracts": 43
+  "lastUpdated": "2025-09-17T05:21:24.632Z",
+  "totalContracts": 44
 }
