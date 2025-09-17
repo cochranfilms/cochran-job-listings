@@ -77,7 +77,7 @@
     "Erica Jackson": {
       "profile": {
         "email": "dedejackson727@gmail.com",
-        "location": "Atlanta, GA",
+        "location": "Douglasville, GA",
         "role": "Photographer",
         "projectType": ""
       },
@@ -86,12 +86,12 @@
       },
       "application": {
         "status": "pending",
-        "submittedAt": "2025-09-15T01:50:33.161Z",
-        "jobTitle": "OBS Tech Assistant",
-        "eventDate": "2025-09-15",
-        "pay": "$400",
-        "description": "I need an OBS Tech for the software and connecting via a capture card.",
-        "phone": "(678) 934-2841",
+        "submittedAt": "2025-09-17T05:10:21.863Z",
+        "jobTitle": "Backdrop Photographer Spotlight",
+        "eventDate": "2025-10-24",
+        "pay": "$300 + Tip",
+        "description": "You will be taking pictures for on-site printing at the Douglasville O'Neal Plaza Halloween Block Party from 4-8pm. I will be on site to assist and print the photos.<br><b>(On set by 3:15. I will provide the backdrop and printer. You only need your equipment)</b>",
+        "phone": "6789342841",
         "portfolio": "https://www.coursecreatoracademy.org",
         "source": "apply-html"
       },
@@ -319,7 +319,7 @@
     }
   },
   "statusOptions": {},
-  "lastUpdated": "2025-09-16",
+  "lastUpdated": "2025-09-17",
   "totalUsers": 13,
   "system": {}
 }
