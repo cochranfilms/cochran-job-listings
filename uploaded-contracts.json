@@ -712,8 +712,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-17",
       "signedDate": "2025-09-17"
+    },
+    {
+      "contractId": "CF-1758086231622-QG886",
+      "freelancerName": "Big Dawg",
+      "freelancerEmail": "developer@marketingmousetrapagency.com",
+      "role": "Backdrop Photographer Base",
+      "rate": "$400",
+      "location": "Douglasville, GA",
+      "fileName": "Big Dawg - Backdrop Photographer Base - CF-1758086231622-QG886.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-09-17T05:27:22.322Z",
+      "status": "uploaded",
+      "fileUrl": null,
+      "storagePath": null,
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-17",
+      "signedDate": "2025-09-17"
     }
   ],
-  "lastUpdated": "2025-09-17T05:21:24.632Z",
-  "totalContracts": 44
+  "lastUpdated": "2025-09-17T05:27:22.322Z",
+  "totalContracts": 45
 }
