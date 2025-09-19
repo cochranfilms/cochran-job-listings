@@ -340,10 +340,34 @@
       },
       "jobs": {},
       "primaryJob": null
+    },
+    "Derrick Simons": {
+      "profile": {
+        "email": "codylcochran89@gmail.com",
+        "location": "Atlanta, GA",
+        "role": "",
+        "projectType": ""
+      },
+      "contract": {
+        "contractStatus": "pending"
+      },
+      "application": {
+        "status": "pending",
+        "submittedAt": "2025-09-19T17:00:21.960Z",
+        "jobTitle": "OBS Tech Assistant",
+        "eventDate": "2025-09-15",
+        "pay": "$400",
+        "description": "I need an OBS Tech for the software and connecting via a capture card.",
+        "phone": "4704202169",
+        "portfolio": "https://pitch.cochranfilms.com",
+        "source": "apply-html"
+      },
+      "jobs": {},
+      "primaryJob": null
     }
   },
   "statusOptions": {},
-  "lastUpdated": "2025-09-17",
-  "totalUsers": 14,
+  "lastUpdated": "2025-09-19",
+  "totalUsers": 15,
   "system": {}
 }
