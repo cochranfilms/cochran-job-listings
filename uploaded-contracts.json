@@ -729,8 +729,25 @@
       "notes": "Automatically uploaded via contract signing to Firestore Storage",
       "contractDate": "2025-09-17",
       "signedDate": "2025-09-17"
+    },
+    {
+      "contractId": "CF-1758301401361-KMD6Y",
+      "freelancerName": "Derrick Simons",
+      "freelancerEmail": "codylcochran89@gmail.com",
+      "role": "OBS Tech Assistant",
+      "rate": "$400",
+      "location": "Atlanta, GA",
+      "fileName": "Derrick Simons - OBS Tech Assistant - CF-1758301401361-KMD6Y.pdf",
+      "fileSize": 0,
+      "uploadDate": "2025-09-19T17:13:35.324Z",
+      "status": "uploaded",
+      "fileUrl": null,
+      "storagePath": null,
+      "notes": "Automatically uploaded via contract signing to Firestore Storage",
+      "contractDate": "2025-09-19",
+      "signedDate": "2025-09-19"
     }
   ],
-  "lastUpdated": "2025-09-17T05:27:22.322Z",
-  "totalContracts": 45
+  "lastUpdated": "2025-09-19T17:13:35.324Z",
+  "totalContracts": 46
 }
