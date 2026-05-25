@@ -361,6 +361,11 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Pretty route for the public resume page
+app.get('/resume', (req, res) => {
+    res.sendFile(path.join(__dirname, 'resume.html'));
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`🚀 Local server running on http://localhost:${PORT}`);

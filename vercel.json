@@ -42,6 +42,7 @@
     { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
     { "source": "/user-portal", "destination": "/user-portal.html" },
     { "source": "/contract", "destination": "/contract.html" },
+    { "source": "/resume", "destination": "/resume.html" },
     { "source": "/admin", "destination": "/admin-dashboard.html" },
     { "source": "/backend", "destination": "/backend.html" },
     { "source": "/read-me", "destination": "/Read-Me.html" },
